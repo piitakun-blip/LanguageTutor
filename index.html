@@ -1583,11 +1583,11 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 
     .ml-ja-reading {
         display:block;
-        margin-top:3px;
+        margin-top:4px;
         font-size:12px;
         line-height:1.25;
         font-weight:700;
-        color:#475569;
+        color:#334155;
     }
     .ml-ja-romaji {
         display:block;
@@ -9347,13 +9347,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             f1Label.textContent="Function";
             f1.textContent=item?.label || japaneseLocalFunction(item) || "—";
 
-            f2Label.textContent="Reading";
-            const reading=String(item?.reading||"").trim();
-            const kanaOnly=/^[\u3040-\u30ffー]+$/.test(String(item?.text||""));
-            f2.textContent=reading || (kanaOnly ? String(item.text) : "—");
+            f2Label.textContent="Hiragana";
+            const detailIsAI=(nonGermanParserView.ja||"ai")==="ai";
+            f2.textContent=japaneseTileReading(item,detailIsAI) || "—";
 
             f3Label.textContent="Romaji";
-            f3.textContent=String(item?.romaji||"").trim() || "—";
+            f3.textContent=japaneseTileRomaji(item,detailIsAI) || "—";
 
             if(item?.grammar){
                 grammar.classList.remove("hidden");
@@ -9438,6 +9437,55 @@ Plain text only.`;
         }
     };
 
+    function katakanaToHiragana(text){
+        return String(text||"").replace(/[\u30a1-\u30f6]/g,ch=>
+            String.fromCharCode(ch.charCodeAt(0)-0x60)
+        );
+    }
+
+    function japaneseTileReading(item,isAIView){
+        if(!item || String(item.role||"").toLowerCase()==="punctuation")return "";
+
+        const text=String(item.text||"");
+        const role=String(item.role||"").toLowerCase();
+
+        if(role==="particle"){
+            if(text==="は")return "わ";
+            if(text==="へ")return "え";
+            if(text==="を")return "お";
+        }
+
+        const supplied=String(item.reading||"").trim();
+        if(supplied)return supplied;
+
+        // AI is instructed to supply a reading, but these fallbacks keep kana-only
+        // tokens useful if a provider omits one field.
+        if(isAIView && /^[\u3040-\u309fー]+$/.test(text))return text;
+        if(isAIView && /^[\u30a0-\u30ffー]+$/.test(text))return katakanaToHiragana(text);
+
+        return "";
+    }
+
+    function japaneseTileRomaji(item,isAIView){
+        if(!item || String(item.role||"").toLowerCase()==="punctuation")return "";
+
+        const text=String(item.text||"");
+        const role=String(item.role||"").toLowerCase();
+
+        if(role==="particle"){
+            if(text==="は")return "wa";
+            if(text==="へ")return "e";
+            if(text==="を")return "o";
+        }
+
+        const supplied=String(item.romaji||"").trim();
+        if(supplied)return supplied;
+
+        // The AI prompt requires romaji for all pronounceable items. We do not
+        // invent romanization locally if the provider fails to return it.
+        return "";
+    }
+
     function renderMultilangTiles(items,sourceLabel,options={}){
         const box=document.getElementById("tiles-container");
 
@@ -9475,14 +9523,16 @@ Plain text only.`;
             const tile=document.createElement("div");
             tile.className=`ml-token role-${item.role||"word"}`;
 
-            const reading = String(item.reading || "").trim();
-            const romaji = String(item.romaji || "").trim();
-            const showJapaneseReading = currentStudyLanguage === "ja" && (reading || romaji);
+            const isJapanese=currentStudyLanguage==="ja";
+            const isAIView=isJapanese && /^AI\s/i.test(String(sourceLabel||""));
+            const reading=isJapanese ? japaneseTileReading(item,isAIView) : "";
+            const romaji=isJapanese ? japaneseTileRomaji(item,isAIView) : "";
+            const pronounceable=String(item.role||"").toLowerCase()!=="punctuation";
 
             tile.innerHTML=`
                 <div class="font-bold text-slate-800 break-words">${escapeML(item.text)}</div>
-                ${showJapaneseReading && reading && reading !== item.text ? `<span class="ml-ja-reading">${escapeML(reading)}</span>` : ""}
-                ${showJapaneseReading && romaji ? `<span class="ml-ja-romaji">${escapeML(romaji)}</span>` : ""}
+                ${isJapanese && isAIView && pronounceable ? `<span class="ml-ja-reading">${escapeML(reading||"—")}</span>` : (isJapanese && reading && reading!==item.text ? `<span class="ml-ja-reading">${escapeML(reading)}</span>` : "")}
+                ${isJapanese && isAIView && pronounceable ? `<span class="ml-ja-romaji">${escapeML(romaji||"—")}</span>` : (isJapanese && romaji ? `<span class="ml-ja-romaji">${escapeML(romaji)}</span>` : "")}
                 <span class="ml-token-role">${escapeML(item.label||item.role||"Word")}</span>
                 <button type="button" class="ml-token-speak" title="Listen">🔊</button>`;
 
@@ -9493,15 +9543,7 @@ Plain text only.`;
                 if(currentStudyLanguage==="ja"){
                     // Reading from AI parse is contextual, so it is safer than asking TTS
                     // to infer an isolated kanji reading.
-                    speechText=String(item.reading||item.text||"");
-
-                    // As grammatical particles these are pronounced wa / e / o,
-                    // even though their normal kana readings are ha / he / wo.
-                    if(String(item.role||"").toLowerCase()==="particle"){
-                        if(item.text==="は") speechText="わ";
-                        else if(item.text==="へ") speechText="え";
-                        else if(item.text==="を") speechText="お";
-                    }
+                    speechText=japaneseTileReading(item,isAIView) || String(item.text||"");
                 }
 
                 speakRawText(speechText,targetLocale());
@@ -9603,11 +9645,11 @@ Requirements:
 - Roles: particle|pronoun|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation.
 - label: concise ENGLISH description of the item's function in this sentence, such as "topic marker", "destination marker", "desire auxiliary", "polite copula", or "movement verb".
 - Never use German case or grammatical-gender labels.
-- reading: contextual hiragana ONLY for items containing kanji/mixed kanji-kana; otherwise "".
-- romaji: standard Hepburn for lexical items/particles; "" for punctuation. Use macrons for long vowels.
+- reading: ALWAYS provide the contextual pronunciation entirely in HIRAGANA for every pronounceable item, including words already written in hiragana or katakana. Use "" only for punctuation.
+- romaji: ALWAYS provide standard Hepburn romaji for every pronounceable item. Use "" only for punctuation. Use macrons for long vowels where standard Hepburn calls for them.
+- For grammatical particles, reading/romaji must reflect actual particle pronunciation in context: は→わ / wa, へ→え / e, を→お / o.
 - grammar: concise form information only when useful, such as "たい-form: desire", "polite form", "past negative", or "i-adjective"; otherwise "".
 - meaning: concise contextual English meaning of this item; "" for punctuation.
-- Particle pronunciation: は=wa, へ=e, を=o.
 - No explanation outside JSON.`;
         }
 
@@ -9631,7 +9673,7 @@ Requirements:
     }
 
     // ---------- AI parse cache ----------
-    const AI_PARSE_CACHE_KEY = "languagetutor_ai_parse_cache_v3";
+    const AI_PARSE_CACHE_KEY = "languagetutor_ai_parse_cache_v4";
     const AI_PARSE_CACHE_LIMIT = 120;
 
     function aiParseCacheIdentity(lang,sentence){
