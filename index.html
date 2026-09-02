@@ -1516,6 +1516,41 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
         border-bottom:1px solid #f1f5f9;
     }
     .ml-conj-row:nth-child(odd) { border-right:1px solid #f1f5f9; }
+
+    /* Spanish conjugations need more horizontal room than the generic two-column helper.
+       Keep each person/form on its own row so the speaker never covers the verb text. */
+    .es-conj-grid {
+        grid-template-columns:1fr !important;
+    }
+    .es-conj-grid .ml-conj-row {
+        grid-template-columns:110px minmax(0,1fr) 40px;
+        border-right:0 !important;
+    }
+    .es-conj-grid .ml-conj-row > strong {
+        min-width:0;
+        padding-right:6px;
+        overflow-wrap:anywhere;
+        word-break:normal;
+        line-height:1.25;
+    }
+    .ml-conj-speak {
+        width:34px !important;
+        min-width:34px !important;
+        height:34px !important;
+        min-height:34px !important;
+        padding:0 !important;
+        margin:0 !important;
+        display:flex !important;
+        align-items:center !important;
+        justify-content:center !important;
+        justify-self:end;
+        border-radius:9999px;
+        border:1px solid #bfdbfe;
+        background:#eff6ff;
+        color:#2563eb;
+        line-height:1;
+        position:static !important;
+    }
     .ml-token {
         position:relative;
         min-width:74px;
@@ -1590,6 +1625,12 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
         .ml-conj-grid { grid-template-columns:1fr; }
         .ml-conj-row { grid-template-columns:84px minmax(0,1fr) 38px; min-height:48px; }
         .ml-conj-row:nth-child(odd) { border-right:0; }
+        .es-conj-grid .ml-conj-row {
+            grid-template-columns:82px minmax(0,1fr) 40px;
+            gap:7px;
+            padding-left:9px;
+            padding-right:9px;
+        }
     }
 </style>
 
@@ -4511,30 +4552,71 @@ Plain text only.`;
         }
 
         // Client-side text-to-speech using browser Web Speech API with adjustable rate
-        function speakRawText(text, lang = 'de-DE') {
+        let speechVoicesReadyPromise = null;
+
+        function getSpeechVoicesReady() {
+            if (!('speechSynthesis' in window)) return Promise.resolve([]);
+            const existing = window.speechSynthesis.getVoices();
+            if (existing && existing.length) return Promise.resolve(existing);
+
+            if (!speechVoicesReadyPromise) {
+                speechVoicesReadyPromise = new Promise(resolve => {
+                    let finished = false;
+                    const finish = () => {
+                        if (finished) return;
+                        finished = true;
+                        resolve(window.speechSynthesis.getVoices() || []);
+                    };
+                    window.speechSynthesis.addEventListener("voiceschanged", finish, { once:true });
+                    setTimeout(finish, 700);
+                }).finally(() => { speechVoicesReadyPromise = null; });
+            }
+            return speechVoicesReadyPromise;
+        }
+
+        function chooseVoiceForLocale(voices, lang) {
+            const wanted = String(lang || "").toLowerCase();
+            const base = wanted.split("-")[0];
+            const exact = voices.filter(v => String(v.lang || "").toLowerCase() === wanted);
+            const sameLanguage = voices.filter(v => String(v.lang || "").toLowerCase().startsWith(base + "-") || String(v.lang || "").toLowerCase() === base);
+
+            // Prefer an exact locale and a local/system voice when available.
+            return exact.find(v => v.localService) ||
+                   exact[0] ||
+                   sameLanguage.find(v => v.localService) ||
+                   sameLanguage[0] ||
+                   null;
+        }
+
+        async function speakRawText(text, lang = 'de-DE') {
             const cleanText = String(text || "").trim();
             if (!cleanText) return;
 
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-
-                const utterance = new SpeechSynthesisUtterance(cleanText);
-                utterance.lang = lang;
-
-                const speedId = lang.startsWith('de') ? 'speech-speed-de' : 'speech-speed-en';
-                const speedSlider = document.getElementById(speedId);
-                if (speedSlider) {
-                    utterance.rate = parseFloat(speedSlider.value);
-                }
-
-                const voices = window.speechSynthesis.getVoices();
-                const matchedVoice = voices.find(voice => voice.lang && voice.lang.toLowerCase().startsWith(lang.slice(0,2).toLowerCase()));
-                if (matchedVoice) utterance.voice = matchedVoice;
-
-                window.speechSynthesis.speak(utterance);
-            } else {
+            if (!('speechSynthesis' in window)) {
                 alert("Text-to-speech is unfortunately not supported in this browser version.");
+                return;
             }
+
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.lang = lang;
+
+            const speedId = lang.startsWith('de') ? 'speech-speed-de' : 'speech-speed-en';
+            const speedSlider = document.getElementById(speedId);
+            if (speedSlider) utterance.rate = parseFloat(speedSlider.value);
+
+            const voices = await getSpeechVoicesReady();
+            const matchedVoice = chooseVoiceForLocale(voices, lang);
+
+            // Do not silently fall back to an English/default voice for Japanese.
+            if (lang.toLowerCase().startsWith("ja") && !matchedVoice) {
+                alert("No Japanese speech voice is available in this browser/system. Install or enable a Japanese voice, then reload LanguageTutor.");
+                return;
+            }
+
+            if (matchedVoice) utterance.voice = matchedVoice;
+            window.speechSynthesis.speak(utterance);
         }
 
         function speakText(textareaId, lang = 'en-US') {
@@ -6635,7 +6717,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                   </div>
                   <div class="ml-helper-card">
                     <label class="ml-field">Contrast
-                      <select id="es-contrast" class="ml-input" onchange="renderSpanishContrast()">
+                      <select id="es-contrast" class="ml-input" onchange="renderSpanishContrast(); renderSpanishContrastBuilder()">
                         <option value="ser-estar">ser vs estar</option>
                         <option value="por-para">por vs para</option>
                         <option value="pret-imp">preterite vs imperfect</option>
@@ -6645,6 +6727,17 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                     </label>
                   </div>
                   <div id="es-contrast-result" class="ml-helper-result"></div>
+
+                  <div class="grammar-topic-divider"></div>
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Build a Phrase</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Enter a few words and choose the meaning you want. The builder selects the appropriate side of the contrast and shows the sentence pattern.</p>
+                  </div>
+                  <div id="es-contrast-builder-fields" class="ml-helper-card space-y-3"></div>
+                  <div id="es-contrast-builder-result" class="ml-helper-result"></div>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish contrast phrase builder','es-contrast-builder-result',this)">✨ Ask AI about my phrase</button>
+                  <div id="ai-es-contrast-builder-result" class="grammar-section-ai-result hidden"></div>
+
                   <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish usage contrast','es-contrast-result',this)">✨ Ask AI about this contrast</button>
                   <div id="ai-es-contrast-result" class="grammar-section-ai-result hidden"></div>
                 </div>`
@@ -6658,7 +6751,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             tabs:[
                 ["forms","Verbs & Adjectives"],
                 ["particles","Particles & Roles"],
-                ["counters","Counters & Readings"],
+                ["reading","Kana & Romaji"],
+                ["counters","Counters"],
                 ["politeness","Politeness & Register"]
             ],
             panels:{
@@ -6744,6 +6838,59 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                   <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese particles and particle contrasts','ja-particle-result',this)">✨ Ask AI about particles</button>
                   <div id="ai-ja-particle-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
+                reading:`
+                <div class="ml-panel space-y-4">
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Kana → Hepburn Romaji</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Convert hiragana or katakana locally. Kanji are preserved rather than guessed.</p>
+                  </div>
+                  <div class="ml-helper-card space-y-3">
+                    <label class="ml-field">Japanese kana
+                      <input id="ja-romaji-source" class="ml-input" value="こんにちは" placeholder="e.g. こんにちは, コンピューター" oninput="renderJapaneseRomaji()">
+                    </label>
+                  </div>
+                  <div id="ja-romaji-result" class="ml-helper-result"></div>
+
+                  <div class="grammar-topic-divider"></div>
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Romaji → Hiragana</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Type standard Hepburn-style romaji to see the corresponding hiragana.</p>
+                  </div>
+                  <div class="ml-helper-card space-y-3">
+                    <label class="ml-field">Romaji
+                      <input id="ja-kana-source" class="ml-input" value="tabemasu" placeholder="e.g. tabemasu, gakkou, konnichiwa" oninput="renderJapaneseKana()">
+                    </label>
+                  </div>
+                  <div id="ja-kana-result" class="ml-helper-result"></div>
+
+                  <div class="grammar-topic-divider"></div>
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Contextual Kanji Reading</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Kanji can have multiple readings. This explicit AI helper uses the word and sentence context instead of guessing from the character alone.</p>
+                  </div>
+                  <div class="ml-helper-card space-y-3">
+                    <label class="ml-field">Word / phrase
+                      <input id="ja-reading-phrase" class="ml-input" value="学校" placeholder="e.g. 学校, 行きたい">
+                    </label>
+                    <label class="ml-field">Sentence context
+                      <input id="ja-reading-context" class="ml-input" placeholder="e.g. 明日学校に行きます。">
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                      <button type="button" class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-bold" onclick="fillJapaneseReadingContext()">Use current sentence</button>
+                      <button type="button" class="ml-action" onclick="getJapaneseContextReading(this)">✨ Get contextual reading</button>
+                    </div>
+                  </div>
+                  <div id="ja-context-reading-result" class="hidden ml-helper-result"></div>
+
+                  <div class="ml-helper-card">
+                    <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Useful Hepburn reminders</div>
+                    <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-700">
+                      <span>し → shi</span><span>ち → chi</span><span>つ → tsu</span>
+                      <span>ふ → fu</span><span>しゃ → sha</span><span>ちゃ → cha</span>
+                      <span>じ → ji</span><span>りょ → ryo</span><span>っ → doubles next consonant</span>
+                    </div>
+                  </div>
+                </div>`,
                 counters:`
                 <div class="ml-panel space-y-4">
                   <div>
@@ -6764,8 +6911,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
                   <div class="grammar-topic-divider"></div>
                   <div class="ml-helper-card">
-                    <div class="text-sm font-bold text-slate-800">Reading reminder</div>
-                    <p class="text-[11px] text-slate-600 mt-2">Kanji readings depend on the word and context. Use <strong>Parse with AI</strong> on a sentence to see contextual hiragana and Hepburn romaji on the cards.</p>
+                    <div class="text-sm font-bold text-slate-800">Counter pronunciation</div>
+                    <p class="text-[11px] text-slate-600 mt-2">Counter readings often change sound through contraction or consonant doubling, so the helper shows kanji, hiragana, and romaji together.</p>
                   </div>
                   <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese counters and readings','ja-counter-result',this)">✨ Ask AI about this counter</button>
                   <div id="ai-ja-counter-result" class="grammar-section-ai-result hidden"></div>
@@ -6826,11 +6973,14 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             renderSpanishReflexive();
             renderSpanishArticleAgreement();
             renderSpanishContrast();
+            renderSpanishContrastBuilder();
         } else {
             renderJapaneseParticle();
             renderJapaneseRole();
             renderJapaneseParticleContrast();
             renderJapaneseAdjective();
+            renderJapaneseRomaji();
+            renderJapaneseKana();
             renderJapaneseCounter();
             renderJapaneseRegister();
         }
@@ -7333,7 +7483,23 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
             tile.querySelector("button").addEventListener("click",e=>{
                 e.stopPropagation();
-                speakRawText(item.text,targetLocale());
+
+                let speechText=String(item.text||"");
+                if(currentStudyLanguage==="ja"){
+                    // Reading from AI parse is contextual, so it is safer than asking TTS
+                    // to infer an isolated kanji reading.
+                    speechText=String(item.reading||item.text||"");
+
+                    // As grammatical particles these are pronounced wa / e / o,
+                    // even though their normal kana readings are ha / he / wo.
+                    if(String(item.role||"").toLowerCase()==="particle"){
+                        if(item.text==="は") speechText="わ";
+                        else if(item.text==="へ") speechText="え";
+                        else if(item.text==="を") speechText="お";
+                    }
+                }
+
+                speakRawText(speechText,targetLocale());
             });
             tile.addEventListener("click",()=>{ currentSelectedPhrase=item.text; });
             box.appendChild(tile);
@@ -7391,71 +7557,150 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     function buildNonGermanParsePrompt(lang,cfg,sentence){
         if(lang==="ja"){
-            return `You are an expert Japanese grammar parser for an English-speaking learner.
-Analyze this Japanese sentence:
+            return `Parse this Japanese sentence for an English-speaking learner:
 "${sentence}"
 
-Return ONLY valid JSON:
-{"items":[{"text":"exact chunk from sentence","role":"particle|pronoun|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation","label":"short English Japanese-grammar label","reading":"contextual hiragana reading","romaji":"standard Hepburn romaji"}]}
+Return JSON only:
+{"items":[{"text":"","role":"","label":"","reading":"","romaji":""}]}
 
-Rules:
-- Preserve sentence order and represent every visible element exactly once.
-- Isolate grammatical particles when possible.
-- Describe PARTICLE FUNCTION and SENTENCE ROLE, not German grammatical case.
-- Useful labels include: Topic particle, Subject particle, Direct-object particle, Destination/Time particle, Location/Means particle, Possessive/Modifier particle, Noun, Adjective, Adverb, Verb / predicate, Auxiliary, Phrase, Punctuation.
-- NEVER use Nominative, Accusative, Dative, Genitive, Masculine, Feminine, or Neuter.
-- For every item containing kanji, give its correct reading IN THIS SENTENCE in hiragana.
-- Give standard Hepburn romaji when useful; use macrons for long vowels, e.g. がっこう → gakkō.
-- For particles use actual pronunciation where relevant: は → wa, へ → e, を → o.
-- No markdown or explanation outside JSON.`;
+Requirements:
+- Keep exact sentence order; cover every visible element once.
+- Isolate particles when useful and label their Japanese function (topic, subject/focus, object, destination/time, action-place/means, etc.).
+- Roles: particle|pronoun|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation.
+- Never use German case or gender labels.
+- reading: contextual hiragana ONLY for items containing kanji/mixed kanji-kana; otherwise "".
+- romaji: standard Hepburn for lexical items/particles; "" for punctuation. Use macrons for long vowels.
+- Particle pronunciation: は=wa, へ=e, を=o.
+- No explanation outside JSON.`;
         }
 
-        return `You are an expert Spanish grammar parser for an English-speaking learner.
-Analyze this Spanish sentence:
+        return `Parse this Spanish sentence for an English-speaking learner:
 "${sentence}"
 
-Return ONLY valid JSON:
-{"items":[{"text":"exact chunk from sentence","role":"article|pronoun|preposition|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation","label":"short English Spanish-grammar label","reading":"","romaji":""}]}
+Return JSON only:
+{"items":[{"text":"","role":"","label":"","reading":"","romaji":""}]}
 
-Rules:
-- Preserve sentence order and represent every visible word/punctuation mark exactly once.
-- Identify Spanish verb forms, tense/mood when clear, subject/direct-object/indirect-object pronouns, determiners, prepositions, nouns, adjectives, adverbs, and useful phrases.
-- Spanish grammatical gender/number may be mentioned only when it is relevant to AGREEMENT.
-- Do NOT use German Nominative, Accusative, Dative, or Genitive case labels.
-- Do NOT use German-style labels such as "(NEUT)", "(MASC)", or "(FEM)".
-- Prefer labels such as Present-tense verb, Preterite verb, Subject pronoun, Direct-object pronoun, Indirect-object pronoun, Article / determiner, Noun, Adjective, Preposition, Adverb, Phrase, or Punctuation.
-- No markdown or explanation outside JSON.`;
+Requirements:
+- Keep exact order; cover every word/punctuation mark once.
+- Roles: article|pronoun|preposition|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation.
+- Use Spanish labels: tense/mood when clear, pronoun function, determiner, agreement, preposition, etc.
+- Do not use German Nominative/Accusative/Dative/Genitive labels or German-style gender tags.
+- reading and romaji must be "".
+- No explanation outside JSON.`;
+    }
+
+    // ---------- AI parse cache ----------
+    const AI_PARSE_CACHE_KEY = "languagetutor_ai_parse_cache_v2";
+    const AI_PARSE_CACHE_LIMIT = 120;
+
+    function aiParseCacheIdentity(lang,sentence){
+        const provider = typeof getSelectedAIProvider==="function" ? getSelectedAIProvider() : "ai";
+        const model = typeof getProviderModel==="function" ? getProviderModel(provider) : "";
+        return [lang,provider,model,String(sentence||"").trim()].join("|||");
+    }
+
+    function readAIParseCache(){
+        try{
+            const raw = typeof safeStorageGet==="function"
+                ? safeStorageGet(AI_PARSE_CACHE_KEY)
+                : localStorage.getItem(AI_PARSE_CACHE_KEY);
+            const parsed = raw ? JSON.parse(raw) : {};
+            return parsed && typeof parsed==="object" && !Array.isArray(parsed) ? parsed : {};
+        }catch(e){
+            console.warn("AI parse cache unavailable:",e);
+            return {};
+        }
+    }
+
+    function getCachedAIParse(lang,sentence){
+        const cache=readAIParseCache();
+        const hit=cache[aiParseCacheIdentity(lang,sentence)];
+        return hit && Array.isArray(hit.items) && hit.items.length ? hit.items : null;
+    }
+
+    function saveCachedAIParse(lang,sentence,items){
+        try{
+            const cache=readAIParseCache();
+            const key=aiParseCacheIdentity(lang,sentence);
+            cache[key]={timestamp:Date.now(),items};
+
+            const entries=Object.entries(cache)
+                .sort((a,b)=>(b[1]?.timestamp||0)-(a[1]?.timestamp||0))
+                .slice(0,AI_PARSE_CACHE_LIMIT);
+            const trimmed=Object.fromEntries(entries);
+            const raw=JSON.stringify(trimmed);
+
+            if(typeof safeStorageSet==="function") safeStorageSet(AI_PARSE_CACHE_KEY,raw);
+            else localStorage.setItem(AI_PARSE_CACHE_KEY,raw);
+        }catch(e){
+            console.warn("Could not save AI parse cache:",e);
+        }
     }
 
     // ---------- Generic explicit AI parser ----------
     async function parseSelectedLanguageWithAI(){
         if(currentStudyLanguage==="de") return originalGermanParseAI();
+
         const btn=document.getElementById("ai-parse-btn");
         if(!getActiveAIKey()){ alert("Add an AI API key in Settings first."); return; }
+
         const cfg=langConfig();
+        const lang=currentStudyLanguage;
         const sentence=(currentGermanSentence||document.getElementById("target-text")?.value||"").trim();
         if(!sentence){ alert(`Translate or enter a ${cfg.name} sentence first.`); return; }
-        const old=btn.textContent;
-        btn.disabled=true; btn.textContent="Parsing with AI…";
+
+        // Exact same sentence + same provider/model = instant cached result.
+        const cached=getCachedAIParse(lang,sentence);
+        if(cached){
+            renderMultilangTiles(cached,"AI Parse • Cached");
+            if(btn){
+                const prior=btn.textContent;
+                btn.textContent="✓ Cached AI parse";
+                setTimeout(()=>{ if(btn) btn.textContent=prior||"✨ Parse with AI"; },900);
+            }
+            return;
+        }
+
+        // Keep useful local cards on screen while the slower accuracy-oriented AI parse runs.
+        if(lang==="ja"){
+            renderMultilangTiles(parseJapaneseLocal(sentence),"Local Japanese Parse • AI refining…");
+        }else{
+            renderMultilangTiles(parseSpanishLocal(sentence),"Local Spanish Parse • AI refining…");
+        }
+
+        const old=btn?.textContent||"✨ Parse with AI";
+        if(btn){ btn.disabled=true; btn.textContent="Parsing with AI…"; }
+
         try{
-            const prompt=buildNonGermanParsePrompt(currentStudyLanguage,cfg,sentence);
+            const prompt=buildNonGermanParsePrompt(lang,cfg,sentence);
             const result=await callAIJson(prompt);
+
             const items=(result?.items||[]).map(x=>{
                 const role=String(x.role||"word").toLowerCase();
                 return {
                     text:String(x.text||""),
                     role,
-                    label:sanitizeNonGermanParseLabel(x.label,role,currentStudyLanguage),
-                    reading:currentStudyLanguage==="ja" ? String(x.reading||"") : "",
-                    romaji:currentStudyLanguage==="ja" ? String(x.romaji||"") : ""
+                    label:sanitizeNonGermanParseLabel(x.label,role,lang),
+                    reading:lang==="ja" ? String(x.reading||"") : "",
+                    romaji:lang==="ja" ? String(x.romaji||"") : ""
                 };
             }).filter(x=>x.text);
+
             if(!items.length) throw new Error("AI returned no parse items.");
+
+            // If the user changed language/sentence while AI was working, do not replace the new view.
+            const stillSameLanguage = currentStudyLanguage===lang;
+            const currentSentence=(currentGermanSentence||document.getElementById("target-text")?.value||"").trim();
+            if(!stillSameLanguage || currentSentence!==sentence) return;
+
+            saveCachedAIParse(lang,sentence,items);
             renderMultilangTiles(items,"AI Parse");
         }catch(e){
+            console.error("AI parse failed:",e);
+            // Leave the already-rendered local parse visible instead of wiping it out.
             alert("AI parse failed: "+((e&&e.message)?e.message:String(e)));
         }finally{
-            btn.disabled=false; btn.textContent=old||"✨ Parse with AI";
+            if(btn){ btn.disabled=false; btn.textContent=old; }
         }
     }
 
@@ -7538,7 +7783,7 @@ Rules:
         status.textContent="";
         result.classList.remove("hidden");
         result.innerHTML=`<div class="flex flex-wrap items-baseline justify-between gap-2 mb-3"><div><span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Infinitive</span><div class="text-xl font-bold text-red-700">${escapeML(inf)}</div></div><span class="ml-rule-chip">${escapeML(tense)}</span></div>
-        <div class="ml-conj-grid">${forms.map((f,i)=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${ES_PRONOUN_LABELS[i]}</span><strong>${escapeML(f)}</strong><button type="button" onclick="speakRawText('${f.replace(/'/g,"\\'")}','es-ES')">🔊</button></div>`).join("")}</div>`;
+        <div class="ml-conj-grid es-conj-grid">${forms.map((f,i)=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${ES_PRONOUN_LABELS[i]}</span><strong>${escapeML(f)}</strong><button type="button" class="ml-conj-speak" aria-label="Listen to ${escapeML(f)}" title="Listen" onclick="speakRawText('${f.replace(/'/g,"\\'")}','es-ES')">🔊</button></div>`).join("")}</div>`;
     };
 
     window.updateSpanishPronounBuilder=function(){
@@ -7579,6 +7824,171 @@ Rules:
         const key=document.getElementById("es-contrast")?.value||"ser-estar";
         const d=ES_CONTRASTS[key], out=document.getElementById("es-contrast-result"); if(!out)return;
         out.innerHTML=`<div class="text-lg font-bold text-red-700">${d.title}</div><p class="text-[12px] text-slate-700 mt-2">${d.rule}</p><div class="mt-3 space-y-2">${d.examples.map(x=>`<div class="rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px]">${escapeML(x)}</div>`).join("")}</div>`;
+    };
+
+    const ES_BUILDER_SUBJECTS=[
+      ["yo","Yo",0],["tu","Tú",1],["el","Él / ella / usted",2],
+      ["nosotros","Nosotros/as",3],["vosotros","Vosotros/as",4],["ellos","Ellos / ellas / ustedes",5]
+    ];
+
+    function spanishSubjectOptions(selected="yo"){
+        return ES_BUILDER_SUBJECTS.map(([value,label]) =>
+            `<option value="${value}" ${value===selected?"selected":""}>${label}</option>`
+        ).join("");
+    }
+
+    function spanishSubjectIndex(value){
+        const hit=ES_BUILDER_SUBJECTS.find(x=>x[0]===value);
+        return hit ? hit[2] : 0;
+    }
+
+    function spanishSubjectDisplay(value){
+        const hit=ES_BUILDER_SUBJECTS.find(x=>x[0]===value);
+        if(!hit)return "Yo";
+        const map={yo:"Yo",tu:"Tú",el:"Él",nosotros:"Nosotros",vosotros:"Vosotros",ellos:"Ellos"};
+        return map[value]||hit[1];
+    }
+
+    function capitalizeSpanishSentence(text){
+        let t=String(text||"").trim().replace(/\s+/g," ");
+        if(!t)return "";
+        t=t.charAt(0).toLocaleUpperCase("es-ES")+t.slice(1);
+        if(!/[.!?…]$/.test(t))t+=".";
+        return t;
+    }
+
+    window.renderSpanishContrastBuilder=function(){
+        const key=document.getElementById("es-contrast")?.value||"ser-estar";
+        const fields=document.getElementById("es-contrast-builder-fields");
+        const out=document.getElementById("es-contrast-builder-result");
+        if(!fields||!out)return;
+
+        if(key==="ser-estar"){
+            fields.innerHTML=`
+              <label class="ml-field">Subject<select id="es-cb-subject" class="ml-input" onchange="buildSpanishContrastPhrase()">${spanishSubjectOptions("el")}</select></label>
+              <label class="ml-field">Complement<input id="es-cb-complement" class="ml-input" value="cansado" placeholder="e.g. médico, cansado, en Madrid" oninput="buildSpanishContrastPhrase()"></label>
+              <label class="ml-field">Meaning
+                <select id="es-cb-choice" class="ml-input" onchange="buildSpanishContrastPhrase()">
+                  <option value="ser">identity / classification / defining characteristic → ser</option>
+                  <option value="estar" selected>state / condition / location → estar</option>
+                </select>
+              </label>`;
+        } else if(key==="por-para"){
+            fields.innerHTML=`
+              <label class="ml-field">Words before por/para<input id="es-cb-before" class="ml-input" value="Este regalo es" placeholder="e.g. Lo hago, Caminamos, Este regalo es" oninput="buildSpanishContrastPhrase()"></label>
+              <label class="ml-field">Words after por/para<input id="es-cb-after" class="ml-input" value="ti" placeholder="e.g. ti, Madrid, dos horas" oninput="buildSpanishContrastPhrase()"></label>
+              <label class="ml-field">Meaning
+                <select id="es-cb-choice" class="ml-input" onchange="buildSpanishContrastPhrase()">
+                  <option value="por">cause / means / exchange / duration / through → por</option>
+                  <option value="para" selected>purpose / destination / recipient / deadline → para</option>
+                </select>
+              </label>`;
+        } else if(key==="pret-imp"){
+            fields.innerHTML=`
+              <label class="ml-field">Subject<select id="es-cb-subject" class="ml-input" onchange="buildSpanishContrastPhrase()">${spanishSubjectOptions("yo")}</select></label>
+              <label class="ml-field">Infinitive<input id="es-cb-verb" class="ml-input" value="comer" placeholder="e.g. hablar, comer, vivir, tener" oninput="buildSpanishContrastPhrase()"></label>
+              <label class="ml-field">Time / context words<input id="es-cb-context" class="ml-input" value="ayer" placeholder="e.g. ayer, todos los viernes, cuando era niño" oninput="buildSpanishContrastPhrase()"></label>
+              <label class="ml-field">Meaning
+                <select id="es-cb-choice" class="ml-input" onchange="buildSpanishContrastPhrase()">
+                  <option value="preterite">completed / bounded event → preterite</option>
+                  <option value="imperfect">habit / background / ongoing past → imperfect</option>
+                </select>
+              </label>`;
+        } else if(key==="hay-estar"){
+            fields.innerHTML=`
+              <label class="ml-field">Thing / noun phrase<input id="es-cb-thing" class="ml-input" value="un libro" placeholder="e.g. un libro, el libro, muchos estudiantes" oninput="buildSpanishContrastPhrase()"></label>
+              <label class="ml-field">Location<input id="es-cb-location" class="ml-input" value="en la mesa" placeholder="e.g. en la mesa, aquí, cerca de la escuela" oninput="buildSpanishContrastPhrase()"></label>
+              <label class="ml-field">Meaning
+                <select id="es-cb-choice" class="ml-input" onchange="buildSpanishContrastPhrase()">
+                  <option value="hay">introduce / say something exists → hay</option>
+                  <option value="estar">locate a specific known thing → estar</option>
+                </select>
+              </label>`;
+        } else {
+            fields.innerHTML=`
+              <label class="ml-field">Subject<select id="es-cb-subject" class="ml-input" onchange="buildSpanishContrastPhrase()">${spanishSubjectOptions("yo")}</select></label>
+              <label class="ml-field">What is known<input id="es-cb-object" class="ml-input" value="Madrid" placeholder="e.g. la respuesta, nadar, Madrid, María" oninput="buildSpanishContrastPhrase()"></label>
+              <label class="ml-field">Meaning
+                <select id="es-cb-choice" class="ml-input" onchange="buildSpanishContrastPhrase()">
+                  <option value="saber">fact / information / know how → saber</option>
+                  <option value="conocer" selected>person / place / familiarity → conocer</option>
+                </select>
+              </label>`;
+        }
+
+        buildSpanishContrastPhrase();
+    };
+
+    window.buildSpanishContrastPhrase=function(){
+        const key=document.getElementById("es-contrast")?.value||"ser-estar";
+        const out=document.getElementById("es-contrast-builder-result");
+        if(!out)return;
+
+        let sentence="", note="";
+
+        if(key==="ser-estar"){
+            const subj=document.getElementById("es-cb-subject")?.value||"el";
+            const complement=(document.getElementById("es-cb-complement")?.value||"").trim();
+            const choice=document.getElementById("es-cb-choice")?.value||"estar";
+            const idx=spanishSubjectIndex(subj);
+            const forms=ES_IRREGULAR[choice]?.present;
+            const verb=forms ? forms[idx] : choice;
+            sentence=`${spanishSubjectDisplay(subj)} ${verb} ${complement}`;
+            note=choice==="ser"
+                ?"Use this pattern for identity, classification, origin, time, or a defining characteristic."
+                :"Use this pattern for a state/condition or location. Some adjectives change meaning depending on ser vs estar.";
+        } else if(key==="por-para"){
+            const before=(document.getElementById("es-cb-before")?.value||"").trim();
+            const after=(document.getElementById("es-cb-after")?.value||"").trim();
+            const choice=document.getElementById("es-cb-choice")?.value||"para";
+            sentence=`${before} ${choice} ${after}`;
+            note=choice==="por"
+                ?"Por commonly marks cause, means, exchange, duration, or movement through."
+                :"Para commonly marks purpose, destination, recipient, deadline, or intended use.";
+        } else if(key==="pret-imp"){
+            const subj=document.getElementById("es-cb-subject")?.value||"yo";
+            const inf=(document.getElementById("es-cb-verb")?.value||"").trim().toLowerCase();
+            const context=(document.getElementById("es-cb-context")?.value||"").trim();
+            const choice=document.getElementById("es-cb-choice")?.value||"preterite";
+            const forms=spanishConjugate(inf,choice);
+            if(!forms){
+                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">I cannot conjugate that verb locally in this tense. Try a regular verb or one already supported by the verb conjugator.</p>`;
+                return;
+            }
+            const verb=forms[spanishSubjectIndex(subj)];
+            sentence=`${spanishSubjectDisplay(subj)} ${verb}${context ? " "+context : ""}`;
+            note=choice==="preterite"
+                ?"Preterite presents the event as completed or bounded."
+                :"Imperfect presents a habitual, background, or ongoing past situation.";
+        } else if(key==="hay-estar"){
+            const thing=(document.getElementById("es-cb-thing")?.value||"").trim();
+            const location=(document.getElementById("es-cb-location")?.value||"").trim();
+            const choice=document.getElementById("es-cb-choice")?.value||"hay";
+            if(choice==="hay"){
+                sentence=`Hay ${thing} ${location}`;
+                note="Hay introduces the existence or presence of something; it does not agree in number with the following noun.";
+            }else{
+                sentence=`${thing} está ${location}`;
+                note="Estar locates a specific or already identified singular thing. Adjust está/están if your noun phrase is plural.";
+            }
+        } else {
+            const subj=document.getElementById("es-cb-subject")?.value||"yo";
+            const object=(document.getElementById("es-cb-object")?.value||"").trim();
+            const choice=document.getElementById("es-cb-choice")?.value||"conocer";
+            const idx=spanishSubjectIndex(subj);
+            const forms=spanishConjugate(choice,"present");
+            const verb=forms ? forms[idx] : choice;
+            sentence=`${spanishSubjectDisplay(subj)} ${verb} ${object}`;
+            note=choice==="saber"
+                ?"Saber is used for facts, information, and knowing how to do something. For an activity, normally follow saber with an infinitive."
+                :"Conocer is used for people, places, and things you are acquainted or familiar with.";
+        }
+
+        const finished=capitalizeSpanishSentence(sentence);
+        out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Built phrase</div>
+          <div class="text-xl font-bold text-red-700 mt-1">${escapeML(finished)}</div>
+          <p class="text-[11px] text-slate-600 mt-2">${escapeML(note)}</p>
+          <button type="button" class="mt-3 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="speakRawText('${finished.replace(/'/g,"\\'")}','es-ES')">🔊 Listen</button>`;
     };
 
 
@@ -7768,22 +8178,273 @@ Rules:
         out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">${escapeML(f.type)}</div><div class="ml-conj-grid">${rows.map(([lab,val])=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${lab}</span><strong>${escapeML(val)}</strong><button type="button" onclick="speakRawText('${val.replace(/'/g,"\\'")}','ja-JP')">🔊</button></div>`).join("")}</div>`;
     };
 
+
+    // ---------- Japanese Kana / Romaji helpers ----------
+    const JA_HIRA_TO_ROMAJI = {
+      "あ":"a","い":"i","う":"u","え":"e","お":"o",
+      "か":"ka","き":"ki","く":"ku","け":"ke","こ":"ko",
+      "さ":"sa","し":"shi","す":"su","せ":"se","そ":"so",
+      "た":"ta","ち":"chi","つ":"tsu","て":"te","と":"to",
+      "な":"na","に":"ni","ぬ":"nu","ね":"ne","の":"no",
+      "は":"ha","ひ":"hi","ふ":"fu","へ":"he","ほ":"ho",
+      "ま":"ma","み":"mi","む":"mu","め":"me","も":"mo",
+      "や":"ya","ゆ":"yu","よ":"yo",
+      "ら":"ra","り":"ri","る":"ru","れ":"re","ろ":"ro",
+      "わ":"wa","を":"o","ん":"n",
+      "が":"ga","ぎ":"gi","ぐ":"gu","げ":"ge","ご":"go",
+      "ざ":"za","じ":"ji","ず":"zu","ぜ":"ze","ぞ":"zo",
+      "だ":"da","ぢ":"ji","づ":"zu","で":"de","ど":"do",
+      "ば":"ba","び":"bi","ぶ":"bu","べ":"be","ぼ":"bo",
+      "ぱ":"pa","ぴ":"pi","ぷ":"pu","ぺ":"pe","ぽ":"po",
+      "ゔ":"vu","ゐ":"wi","ゑ":"we",
+      "ぁ":"a","ぃ":"i","ぅ":"u","ぇ":"e","ぉ":"o",
+      "ゃ":"ya","ゅ":"yu","ょ":"yo","ゎ":"wa"
+    };
+
+    const JA_HIRA_DIGRAPH_TO_ROMAJI = {
+      "きゃ":"kya","きゅ":"kyu","きょ":"kyo",
+      "しゃ":"sha","しゅ":"shu","しょ":"sho",
+      "ちゃ":"cha","ちゅ":"chu","ちょ":"cho",
+      "にゃ":"nya","にゅ":"nyu","にょ":"nyo",
+      "ひゃ":"hya","ひゅ":"hyu","ひょ":"hyo",
+      "みゃ":"mya","みゅ":"myu","みょ":"myo",
+      "りゃ":"rya","りゅ":"ryu","りょ":"ryo",
+      "ぎゃ":"gya","ぎゅ":"gyu","ぎょ":"gyo",
+      "じゃ":"ja","じゅ":"ju","じょ":"jo",
+      "びゃ":"bya","びゅ":"byu","びょ":"byo",
+      "ぴゃ":"pya","ぴゅ":"pyu","ぴょ":"pyo",
+      "ゔぁ":"va","ゔぃ":"vi","ゔぇ":"ve","ゔぉ":"vo",
+      "ふぁ":"fa","ふぃ":"fi","ふぇ":"fe","ふぉ":"fo",
+      "てぃ":"ti","でぃ":"di","しぇ":"she","ちぇ":"che","じぇ":"je",
+      "うぃ":"wi","うぇ":"we","うぉ":"wo"
+    };
+
+    function katakanaToHiragana(text){
+        return Array.from(String(text||"")).map(ch=>{
+            const cp=ch.codePointAt(0);
+            return cp>=0x30A1 && cp<=0x30F6 ? String.fromCodePoint(cp-0x60) : ch;
+        }).join("");
+    }
+
+    function macronizeLastRomajiVowel(text){
+        const chars=Array.from(String(text||""));
+        const map={a:"ā",i:"ī",u:"ū",e:"ē",o:"ō",A:"Ā",I:"Ī",U:"Ū",E:"Ē",O:"Ō"};
+        for(let i=chars.length-1;i>=0;i--){
+            if(map[chars[i]]){ chars[i]=map[chars[i]]; break; }
+            if(/[a-zA-Zāīūēō]/.test(chars[i])) continue;
+            break;
+        }
+        return chars.join("");
+    }
+
+    function peekKanaRomaji(hira,index){
+        const pair=hira.slice(index,index+2);
+        return JA_HIRA_DIGRAPH_TO_ROMAJI[pair] || JA_HIRA_TO_ROMAJI[hira[index]] || "";
+    }
+
+    function kanaToHepburn(text){
+        const hira=katakanaToHiragana(text);
+        let out="", geminate=false;
+
+        for(let i=0;i<hira.length;i++){
+            const ch=hira[i];
+
+            if(ch==="っ"){
+                geminate=true;
+                continue;
+            }
+
+            if(ch==="ー"){
+                out=macronizeLastRomajiVowel(out);
+                continue;
+            }
+
+            if(ch==="ん"){
+                const next=peekKanaRomaji(hira,i+1);
+                out += /^[aeiouy]/.test(next) ? "n'" : "n";
+                continue;
+            }
+
+            const pair=hira.slice(i,i+2);
+            let roma=JA_HIRA_DIGRAPH_TO_ROMAJI[pair];
+            if(roma) i++;
+            else roma=JA_HIRA_TO_ROMAJI[ch];
+
+            if(!roma){
+                out += ch;
+                geminate=false;
+                continue;
+            }
+
+            if(geminate){
+                if(roma.startsWith("ch")) out += "t";
+                else if(/^[bcdfghjklmpqrstvwxyz]/.test(roma)) out += roma[0];
+                geminate=false;
+            }
+            out += roma;
+        }
+        return out;
+    }
+
+    const JA_ROMAJI_TO_HIRA = {
+      "kya":"きゃ","kyu":"きゅ","kyo":"きょ","sha":"しゃ","shu":"しゅ","sho":"しょ",
+      "cha":"ちゃ","chu":"ちゅ","cho":"ちょ","nya":"にゃ","nyu":"にゅ","nyo":"にょ",
+      "hya":"ひゃ","hyu":"ひゅ","hyo":"ひょ","mya":"みゃ","myu":"みゅ","myo":"みょ",
+      "rya":"りゃ","ryu":"りゅ","ryo":"りょ","gya":"ぎゃ","gyu":"ぎゅ","gyo":"ぎょ",
+      "bya":"びゃ","byu":"びゅ","byo":"びょ","pya":"ぴゃ","pyu":"ぴゅ","pyo":"ぴょ",
+      "ja":"じゃ","ju":"じゅ","jo":"じょ","shi":"し","chi":"ち","tsu":"つ","fu":"ふ",
+      "she":"しぇ","che":"ちぇ","je":"じぇ","fa":"ふぁ","fi":"ふぃ","fe":"ふぇ","fo":"ふぉ",
+      "va":"ゔぁ","vi":"ゔぃ","vu":"ゔ","ve":"ゔぇ","vo":"ゔぉ",
+      "ka":"か","ki":"き","ku":"く","ke":"け","ko":"こ",
+      "sa":"さ","su":"す","se":"せ","so":"そ","ta":"た","te":"て","to":"と",
+      "na":"な","ni":"に","nu":"ぬ","ne":"ね","no":"の",
+      "ha":"は","hi":"ひ","he":"へ","ho":"ほ","ma":"ま","mi":"み","mu":"む","me":"め","mo":"も",
+      "ya":"や","yu":"ゆ","yo":"よ","ra":"ら","ri":"り","ru":"る","re":"れ","ro":"ろ",
+      "wa":"わ","wo":"を","ga":"が","gi":"ぎ","gu":"ぐ","ge":"げ","go":"ご",
+      "za":"ざ","ji":"じ","zu":"ず","ze":"ぜ","zo":"ぞ","da":"だ","de":"で","do":"ど",
+      "ba":"ば","bi":"び","bu":"ぶ","be":"べ","bo":"ぼ","pa":"ぱ","pi":"ぴ","pu":"ぷ","pe":"ぺ","po":"ぽ",
+      "a":"あ","i":"い","u":"う","e":"え","o":"お"
+    };
+
+    function normalizeRomajiInput(text){
+        return String(text||"").toLowerCase()
+            .replace(/ā/g,"aa").replace(/ī/g,"ii").replace(/ū/g,"uu")
+            .replace(/ē/g,"ee").replace(/ō/g,"ou");
+    }
+
+    function romajiToHiragana(text){
+        const src=normalizeRomajiInput(text);
+        let out="", i=0;
+        const keys=Object.keys(JA_ROMAJI_TO_HIRA).sort((a,b)=>b.length-a.length);
+
+        while(i<src.length){
+            const rest=src.slice(i);
+
+            if(rest.startsWith("n'")){
+                out+="ん"; i+=2; continue;
+            }
+
+            if(rest.startsWith("tch")){
+                out+="っ"; i+=1; continue;
+            }
+
+            if(i+1<src.length && src[i]===src[i+1] && /[bcdfghjklmpqrstvwxyz]/.test(src[i]) && src[i]!=="n"){
+                out+="っ"; i+=1; continue;
+            }
+
+            if(src[i]==="n"){
+                const next=src[i+1]||"";
+                if(!next || (!/[aeiouy]/.test(next))){
+                    out+="ん"; i+=1; continue;
+                }
+            }
+
+            let matched="";
+            for(const key of keys){
+                if(rest.startsWith(key)){ matched=key; break; }
+            }
+            if(matched){
+                out+=JA_ROMAJI_TO_HIRA[matched];
+                i+=matched.length;
+            }else{
+                out+=src[i];
+                i++;
+            }
+        }
+        return out;
+    }
+
+    window.renderJapaneseRomaji=function(){
+        const raw=document.getElementById("ja-romaji-source")?.value||"";
+        const out=document.getElementById("ja-romaji-result");
+        if(!out)return;
+
+        const romaji=kanaToHepburn(raw);
+        const containsKanji=/[\u3400-\u9fff]/.test(raw);
+        out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Hepburn romaji</div>
+          <div class="text-2xl font-bold text-rose-700 mt-1">${escapeML(romaji||"—")}</div>
+          ${containsKanji ? `<p class="text-[11px] text-amber-700 mt-2 font-semibold">Kanji were left unchanged. Use Contextual Kanji Reading below for an accurate reading.</p>` : ""}
+          <button type="button" class="mt-3 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="speakRawText(document.getElementById('ja-romaji-source').value,'ja-JP')">🔊 Listen</button>`;
+    };
+
+    window.renderJapaneseKana=function(){
+        const raw=document.getElementById("ja-kana-source")?.value||"";
+        const out=document.getElementById("ja-kana-result");
+        if(!out)return;
+        const hira=romajiToHiragana(raw);
+        out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Hiragana</div>
+          <div class="text-2xl font-bold text-rose-700 mt-1">${escapeML(hira||"—")}</div>
+          <button type="button" class="mt-3 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="speakRawText('${hira.replace(/'/g,"\\'")}','ja-JP')">🔊 Listen</button>`;
+    };
+
+    window.fillJapaneseReadingContext=function(){
+        const context=document.getElementById("ja-reading-context");
+        if(!context)return;
+        context.value=(currentGermanSentence||document.getElementById("target-text")?.value||"").trim();
+    };
+
+    window.getJapaneseContextReading=async function(button){
+        const phrase=(document.getElementById("ja-reading-phrase")?.value||"").trim();
+        const context=(document.getElementById("ja-reading-context")?.value||"").trim();
+        const out=document.getElementById("ja-context-reading-result");
+        if(!out||!phrase)return;
+
+        if(!getActiveAIKey()){
+            out.classList.remove("hidden");
+            out.textContent="Add an AI API key in Settings first.";
+            return;
+        }
+
+        const old=button?.textContent||"";
+        if(button){button.disabled=true;button.textContent="Checking reading…";}
+        out.classList.remove("hidden");
+        out.textContent="AI is checking the contextual reading…";
+
+        try{
+            const prompt=`Give the contextual Japanese reading of this exact word or phrase.
+
+Phrase: "${phrase}"
+Sentence context: "${context || "(no sentence supplied)"}"
+
+Return ONLY valid JSON:
+{"reading":"hiragana","romaji":"standard Hepburn with macrons where appropriate","meaning":"concise English meaning in this context"}
+
+Use the sentence context to resolve ambiguous kanji readings. Do not guess from an isolated kanji character when context changes the reading.`;
+            const result=await callAIJson(prompt);
+            const reading=String(result?.reading||"").trim();
+            const romaji=String(result?.romaji||"").trim();
+            const meaning=String(result?.meaning||"").trim();
+            if(!reading || !romaji) throw new Error("AI returned an incomplete reading.");
+
+            out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Contextual reading</div>
+              <div class="text-2xl font-bold text-rose-700 mt-1">${escapeML(phrase)}</div>
+              <div class="text-lg font-bold text-slate-700 mt-1">${escapeML(reading)}</div>
+              <div class="text-[12px] italic text-slate-500">${escapeML(romaji)}</div>
+              ${meaning ? `<div class="text-[12px] text-slate-700 mt-2">${escapeML(meaning)}</div>` : ""}
+              <button type="button" class="mt-3 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="speakRawText('${reading.replace(/'/g,"\\'")}','ja-JP')">🔊 Listen</button>`;
+        }catch(e){
+            out.textContent="Contextual reading failed: "+((e&&e.message)?e.message:String(e));
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
+        }
+    };
+
     const JA_COUNTERS={
       people:[
         ["一人","ひとり","hitori"],["二人","ふたり","futari"],["三人","さんにん","sannin"],["四人","よにん","yonin"],["五人","ごにん","gonin"],
-        ["六人","ろくにん","rokunin"],["七人","しちにん / ななにん","shichinin / nananin"],["八人","はちにん","hachinin"],["九人","きゅうにん","kyuunin"],["十人","じゅうにん","juunin"]],
+        ["六人","ろくにん","rokunin"],["七人","しちにん / ななにん","shichinin / nananin"],["八人","はちにん","hachinin"],["九人","きゅうにん","kyūnin"],["十人","じゅうにん","jūnin"]],
       long:[
         ["一本","いっぽん","ippon"],["二本","にほん","nihon"],["三本","さんぼん","sanbon"],["四本","よんほん","yonhon"],["五本","ごほん","gohon"],
-        ["六本","ろっぽん","roppon"],["七本","ななほん","nanahon"],["八本","はっぽん","happon"],["九本","きゅうほん","kyuuhon"],["十本","じゅっぽん","juppon"]],
+        ["六本","ろっぽん","roppon"],["七本","ななほん","nanahon"],["八本","はっぽん","happon"],["九本","きゅうほん","kyūhon"],["十本","じゅっぽん","juppon"]],
       flat:[
         ["一枚","いちまい","ichimai"],["二枚","にまい","nimai"],["三枚","さんまい","sanmai"],["四枚","よんまい","yonmai"],["五枚","ごまい","gomai"],
-        ["六枚","ろくまい","rokumai"],["七枚","ななまい","nanamai"],["八枚","はちまい","hachimai"],["九枚","きゅうまい","kyuumai"],["十枚","じゅうまい","juumai"]],
+        ["六枚","ろくまい","rokumai"],["七枚","ななまい","nanamai"],["八枚","はちまい","hachimai"],["九枚","きゅうまい","kyūmai"],["十枚","じゅうまい","jūmai"]],
       small:[
         ["一個","いっこ","ikko"],["二個","にこ","niko"],["三個","さんこ","sanko"],["四個","よんこ","yonko"],["五個","ごこ","goko"],
-        ["六個","ろっこ","rokko"],["七個","ななこ","nanako"],["八個","はっこ","hakko"],["九個","きゅうこ","kyuuko"],["十個","じゅっこ","jukko"]],
+        ["六個","ろっこ","rokko"],["七個","ななこ","nanako"],["八個","はっこ","hakko"],["九個","きゅうこ","kyūko"],["十個","じゅっこ","jukko"]],
       general:[
         ["一つ","ひとつ","hitotsu"],["二つ","ふたつ","futatsu"],["三つ","みっつ","mittsu"],["四つ","よっつ","yottsu"],["五つ","いつつ","itsutsu"],
-        ["六つ","むっつ","muttsu"],["七つ","ななつ","nanatsu"],["八つ","やっつ","yattsu"],["九つ","ここのつ","kokonotsu"],["十","とお","too"]]
+        ["六つ","むっつ","muttsu"],["七つ","ななつ","nanatsu"],["八つ","やっつ","yattsu"],["九つ","ここのつ","kokonotsu"],["十","とお","tō"]]
     };
     window.renderJapaneseCounter=function(){
         const n=parseInt(document.getElementById("ja-counter-number")?.value||"1",10);
@@ -7900,8 +8561,8 @@ Current work: ${context||"No sentence has been entered yet."}`;
         updateVisibleLanguageUI();
 
         // Initialize non-German helper output lazily but safely.
-        if(currentStudyLanguage==="es"){ updateSpanishPronounBuilder(); updateSpanishAdjective(); renderSpanishReflexive(); renderSpanishArticleAgreement(); renderSpanishContrast(); }
-        if(currentStudyLanguage==="ja"){ renderJapaneseParticle(); renderJapaneseRole(); renderJapaneseParticleContrast(); renderJapaneseAdjective(); renderJapaneseCounter(); renderJapaneseRegister(); }
+        if(currentStudyLanguage==="es"){ updateSpanishPronounBuilder(); updateSpanishAdjective(); renderSpanishReflexive(); renderSpanishArticleAgreement(); renderSpanishContrast(); renderSpanishContrastBuilder(); }
+        if(currentStudyLanguage==="ja"){ renderJapaneseParticle(); renderJapaneseRole(); renderJapaneseParticleContrast(); renderJapaneseAdjective(); renderJapaneseRomaji(); renderJapaneseKana(); renderJapaneseCounter(); renderJapaneseRegister(); }
     }
 
     if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",bootMultilang);
