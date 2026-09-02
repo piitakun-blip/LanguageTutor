@@ -1413,6 +1413,25 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
             height:18px;
             flex:0 0 auto;
         }
+
+    .adjective-builder-grid {
+        display:grid;
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        gap:9px;
+    }
+    @media (max-width:640px) {
+        .adjective-builder-grid {
+            grid-template-columns:1fr;
+        }
+        #adjective-tool-case,
+        #adjective-tool-gender,
+        #adjective-tool-determiner,
+        #adjective-tool-possessive,
+        #adjective-tool-adjective,
+        #adjective-tool-noun {
+            font-size:16px !important;
+        }
+    }
 </style>
 
 <style id="multilanguage-extension-styles">
@@ -2180,10 +2199,11 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         <div class="text-[10px] text-slate-500 mt-0.5">Choose the grammar area you want to work with.</div>
                         
 
-                        <div class="grammar-main-tabs grammar-main-tabs-three mt-3" role="tablist" aria-label="Grammar topics">
+                        <div class="grammar-main-tabs mt-3" role="tablist" aria-label="Grammar topics">
                             <button type="button" id="grammar-tab-verbs" class="grammar-main-tab active" onclick="setGrammarMainTab('verbs')" role="tab" aria-selected="true">Verbs</button>
                             <button type="button" id="grammar-tab-cases" class="grammar-main-tab" onclick="setGrammarMainTab('cases')" role="tab" aria-selected="false">Prepositions & Cases</button>
                             <button type="button" id="grammar-tab-articles" class="grammar-main-tab" onclick="setGrammarMainTab('articles')" role="tab" aria-selected="false">Articles & Endings</button>
+                            <button type="button" id="grammar-tab-adjectives" class="grammar-main-tab" onclick="setGrammarMainTab('adjectives')" role="tab" aria-selected="false">Adjectives</button>
                         </div>
                     </div>
 
@@ -2597,6 +2617,124 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                     
                         
 
+                        </section>
+
+                        <section id="grammar-main-adjectives" class="grammar-main-panel hidden" role="tabpanel" aria-labelledby="grammar-tab-adjectives">
+                            <div class="grammar-topic-intro">
+                                <div class="text-sm font-bold text-slate-800">Adjective Declension</div>
+                                <p class="text-[11px] text-slate-500 mt-1">
+                                    German adjectives before nouns change their endings according to case, gender/number, and the determiner before them. Adjectives after <em>sein</em>, <em>werden</em>, or <em>bleiben</em> normally stay uninflected.
+                                </p>
+                            </div>
+
+                            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                                <div class="text-sm font-bold text-slate-800">Adjective Ending Builder</div>
+                                <div class="text-[11px] text-slate-500">
+                                    Choose the grammatical situation, then enter the adjective and noun. The builder shows the determiner + adjective ending pattern.
+                                </div>
+
+                                <div class="adjective-builder-grid">
+                                    <label class="case-builder-field">Case
+                                        <select id="adjective-tool-case" class="case-builder-input" onchange="renderGermanAdjectiveBuilder()">
+                                            <option value="Nominative">Nominative</option>
+                                            <option value="Accusative">Accusative</option>
+                                            <option value="Dative">Dative</option>
+                                            <option value="Genitive">Genitive</option>
+                                        </select>
+                                    </label>
+
+                                    <label class="case-builder-field">Gender / number
+                                        <select id="adjective-tool-gender" class="case-builder-input" onchange="renderGermanAdjectiveBuilder()">
+                                            <option value="masculine">Masculine</option>
+                                            <option value="feminine">Feminine</option>
+                                            <option value="neuter">Neuter</option>
+                                            <option value="plural">Plural</option>
+                                        </select>
+                                    </label>
+
+                                    <label class="case-builder-field">Determiner
+                                        <select id="adjective-tool-determiner" class="case-builder-input" onchange="renderGermanAdjectiveBuilder()">
+                                            <option value="definite">the — der-word</option>
+                                            <option value="indefinite">a/an — ein-word</option>
+                                            <option value="kein">kein — ein-word pattern</option>
+                                            <option value="possessive">possessive — mein-word pattern</option>
+                                            <option value="none">no article</option>
+                                        </select>
+                                    </label>
+
+                                    <label id="adjective-tool-possessive-wrap" class="case-builder-field hidden">Possessive
+                                        <select id="adjective-tool-possessive" class="case-builder-input" onchange="renderGermanAdjectiveBuilder()">
+                                            <option value="mein">mein</option>
+                                            <option value="dein">dein</option>
+                                            <option value="sein">sein</option>
+                                            <option value="ihr">ihr</option>
+                                            <option value="unser">unser</option>
+                                            <option value="euer">euer</option>
+                                        </select>
+                                    </label>
+
+                                    <label class="case-builder-field">Adjective
+                                        <input id="adjective-tool-adjective" type="text" value="gut" class="case-builder-input" placeholder="e.g. gut, klein, hoch" oninput="renderGermanAdjectiveBuilder()">
+                                    </label>
+
+                                    <label class="case-builder-field">Noun
+                                        <input id="adjective-tool-noun" type="text" value="Mann" class="case-builder-input" placeholder="e.g. Mann" oninput="renderGermanAdjectiveBuilder()">
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div id="adjective-tool-card" class="grammar-case-card rounded-xl border p-4 mt-3">
+                                <div class="grammar-case-card-label text-[10px] uppercase tracking-wider font-bold">Correct adjective pattern</div>
+                                <div id="adjective-tool-result" data-grammar-gender-text class="text-xl font-bold mt-1 break-words">der gute Mann</div>
+                                <div id="adjective-tool-ending" class="mt-2 inline-block text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-full bg-white/70 border border-slate-200"></div>
+                                <div id="adjective-tool-rule" class="text-[11px] text-slate-600 mt-2"></div>
+                                <button type="button" class="mt-3 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="speakRawText(document.getElementById('adjective-tool-result').textContent,'de-DE')">🔊 Listen</button>
+                            </div>
+
+                            <div id="adjective-tool-warning" class="hidden mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800"></div>
+
+                            <div class="grammar-section-ai">
+                                <button type="button" onclick="askGrammarSectionAI('adjective', this)" class="grammar-section-ai-btn">✨ Ask AI about this adjective ending</button>
+                                <div id="grammar-ai-adjective" class="grammar-section-ai-result hidden"></div>
+                            </div>
+
+                            <div class="grammar-topic-divider"></div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div class="rounded-xl border border-indigo-100 bg-indigo-50 p-3">
+                                    <div class="text-[10px] uppercase tracking-wider font-bold text-indigo-600">Weak endings</div>
+                                    <div class="text-sm font-bold text-slate-800 mt-1">after der-words</div>
+                                    <p class="text-[11px] text-slate-600 mt-1">The determiner already shows case/gender clearly, so the adjective is mostly <strong>-e</strong> or <strong>-en</strong>.</p>
+                                </div>
+                                <div class="rounded-xl border border-amber-100 bg-amber-50 p-3">
+                                    <div class="text-[10px] uppercase tracking-wider font-bold text-amber-700">Mixed endings</div>
+                                    <div class="text-sm font-bold text-slate-800 mt-1">after ein-words</div>
+                                    <p class="text-[11px] text-slate-600 mt-1">When the determiner lacks a visible case/gender ending, the adjective supplies more information.</p>
+                                </div>
+                                <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+                                    <div class="text-[10px] uppercase tracking-wider font-bold text-emerald-700">Strong endings</div>
+                                    <div class="text-sm font-bold text-slate-800 mt-1">with no article</div>
+                                    <p class="text-[11px] text-slate-600 mt-1">The adjective carries most of the visible case/gender information itself.</p>
+                                </div>
+                            </div>
+
+                            <div class="grammar-topic-divider"></div>
+
+                            <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                <div class="text-sm font-bold text-slate-800">Before a noun vs after <em>sein</em></div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                        <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Attributive → ending</div>
+                                        <div class="text-base font-bold text-indigo-700 mt-1">der gute Mann</div>
+                                        <p class="text-[11px] text-slate-600 mt-1"><em>gut</em> is directly before the noun, so it declines.</p>
+                                    </div>
+                                    <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                        <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Predicative → no ending</div>
+                                        <div class="text-base font-bold text-indigo-700 mt-1">Der Mann ist gut.</div>
+                                        <p class="text-[11px] text-slate-600 mt-1">After <em>sein</em>, the adjective normally stays in its base form.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </section>
                     </div>
                 </div>
@@ -5522,6 +5660,139 @@ Do not include pronouns inside the form strings.`;
             }
         };
 
+
+        const germanAdjectiveEndings = {
+            weak: {
+                Nominative:{masculine:"e", feminine:"e", neuter:"e", plural:"en"},
+                Accusative:{masculine:"en", feminine:"e", neuter:"e", plural:"en"},
+                Dative:{masculine:"en", feminine:"en", neuter:"en", plural:"en"},
+                Genitive:{masculine:"en", feminine:"en", neuter:"en", plural:"en"}
+            },
+            mixed: {
+                Nominative:{masculine:"er", feminine:"e", neuter:"es", plural:"en"},
+                Accusative:{masculine:"en", feminine:"e", neuter:"es", plural:"en"},
+                Dative:{masculine:"en", feminine:"en", neuter:"en", plural:"en"},
+                Genitive:{masculine:"en", feminine:"en", neuter:"en", plural:"en"}
+            },
+            strong: {
+                Nominative:{masculine:"er", feminine:"e", neuter:"es", plural:"e"},
+                Accusative:{masculine:"en", feminine:"e", neuter:"es", plural:"e"},
+                Dative:{masculine:"em", feminine:"er", neuter:"em", plural:"en"},
+                Genitive:{masculine:"en", feminine:"er", neuter:"en", plural:"er"}
+            }
+        };
+
+        const germanEinWordSuffixes = {
+            Nominative:{masculine:"", feminine:"e", neuter:"", plural:"e"},
+            Accusative:{masculine:"en", feminine:"e", neuter:"", plural:"e"},
+            Dative:{masculine:"em", feminine:"er", neuter:"em", plural:"en"},
+            Genitive:{masculine:"es", feminine:"er", neuter:"es", plural:"er"}
+        };
+
+        function inflectGermanEinWord(root, caseName, gender) {
+            const suffix = germanEinWordSuffixes[caseName][gender];
+            let stem = String(root || "");
+            // euer + ending normally contracts: eure, euren, eurem, eurer...
+            if (stem === "euer" && suffix) stem = "eur";
+            return stem + suffix;
+        }
+
+        function germanAdjectiveStem(adjective) {
+            const raw = String(adjective || "").trim().toLowerCase();
+            const commonStemChanges = {
+                hoch:"hoh",
+                teuer:"teur",
+                sauer:"saur",
+                dunkel:"dunkl",
+                edel:"edl"
+            };
+            return commonStemChanges[raw] || raw;
+        }
+
+        function germanAdjectivePatternForDeterminer(type) {
+            if (type === "definite") return "weak";
+            if (type === "none") return "strong";
+            return "mixed";
+        }
+
+        function germanAdjectiveDeterminer(type, caseName, gender) {
+            if (type === "none") return "";
+            if (type === "definite") return caseArticles.definite[caseName][gender];
+            if (type === "indefinite") return caseArticles.indefinite[caseName][gender];
+            if (type === "kein") return inflectGermanEinWord("kein", caseName, gender);
+            if (type === "possessive") {
+                const root = document.getElementById("adjective-tool-possessive")?.value || "mein";
+                return inflectGermanEinWord(root, caseName, gender);
+            }
+            return "";
+        }
+
+        function renderGermanAdjectiveBuilder() {
+            const caseName = document.getElementById("adjective-tool-case")?.value || "Nominative";
+            const gender = document.getElementById("adjective-tool-gender")?.value || "masculine";
+            const determinerType = document.getElementById("adjective-tool-determiner")?.value || "definite";
+            const adjective = (document.getElementById("adjective-tool-adjective")?.value || "gut").trim();
+            const noun = (document.getElementById("adjective-tool-noun")?.value || "Noun").trim();
+
+            const possessiveWrap = document.getElementById("adjective-tool-possessive-wrap");
+            if (possessiveWrap) possessiveWrap.classList.toggle("hidden", determinerType !== "possessive");
+
+            const resultEl = document.getElementById("adjective-tool-result");
+            const endingEl = document.getElementById("adjective-tool-ending");
+            const ruleEl = document.getElementById("adjective-tool-rule");
+            const warningEl = document.getElementById("adjective-tool-warning");
+            const card = document.getElementById("adjective-tool-card");
+            if (!resultEl || !endingEl || !ruleEl) return;
+
+            if (warningEl) {
+                warningEl.classList.add("hidden");
+                warningEl.textContent = "";
+            }
+
+            // German has no plural equivalent of the indefinite article "a/an".
+            if (determinerType === "indefinite" && gender === "plural") {
+                resultEl.textContent = "No plural a/an form";
+                endingEl.textContent = "Choose no article, kein, or a possessive";
+                ruleEl.textContent = "German has no plural indefinite article equivalent to English “a/an.”";
+                if (warningEl) {
+                    warningEl.textContent = "For plural noun phrases, choose no article for strong adjective endings, or use an ein-word such as keine / meine for mixed endings.";
+                    warningEl.classList.remove("hidden");
+                }
+                applyGrammarColorScheme(card, caseName, gender);
+                return;
+            }
+
+            const pattern = germanAdjectivePatternForDeterminer(determinerType);
+            const ending = germanAdjectiveEndings[pattern][caseName][gender];
+            const stem = germanAdjectiveStem(adjective);
+            const declinedAdjective = stem + ending;
+            const determiner = germanAdjectiveDeterminer(determinerType, caseName, gender);
+            const phrase = [determiner, declinedAdjective, noun].filter(Boolean).join(" ");
+
+            resultEl.textContent = phrase;
+            endingEl.textContent = `${pattern} ending: -${ending}`;
+            applyGrammarColorScheme(card, caseName, gender);
+
+            const patternExplanation = {
+                weak:"The determiner already carries a clear case/gender ending, so the adjective uses the weak pattern.",
+                mixed:"This is an ein-word pattern. The adjective supplies a stronger ending where the determiner does not fully mark case/gender.",
+                strong:"With no article, the adjective carries the main visible case/gender ending."
+            };
+
+            let note = `${caseName} · ${gender}. ${patternExplanation[pattern]} Therefore ${adjective} → ${declinedAdjective}.`;
+            if (["hoch","teuer","sauer","dunkel","edel"].includes(adjective.toLowerCase())) {
+                note += " This adjective also uses a common stem adjustment before the ending.";
+            }
+            ruleEl.textContent = note;
+
+            if (warningEl && ((caseName === "Genitive" && ["masculine","neuter"].includes(gender)) || (caseName === "Dative" && gender === "plural"))) {
+                warningEl.textContent = caseName === "Genitive"
+                    ? "The noun itself may also need a Genitive ending (often -s or -es for masculine/neuter nouns). This builder is focusing on the adjective ending."
+                    : "Dative plural nouns usually add -n when possible. This builder is focusing on the adjective ending.";
+                warningEl.classList.remove("hidden");
+            }
+        }
+
         let articleGenderOverrideActive = false;
 
         function toggleArticleGenderOverride() {
@@ -5892,6 +6163,19 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                 };
             }
 
+            if (kind === "adjective") {
+                const phrase = document.getElementById("adjective-tool-result")?.textContent.trim() || "";
+                const ending = document.getElementById("adjective-tool-ending")?.textContent.trim() || "";
+                const rule = document.getElementById("adjective-tool-rule")?.textContent.trim() || "";
+                const caseName = document.getElementById("adjective-tool-case")?.value || "";
+                const gender = document.getElementById("adjective-tool-gender")?.value || "";
+                const determiner = document.getElementById("adjective-tool-determiner")?.value || "";
+                return {
+                    title: "German adjective declension",
+                    context: `Case: ${caseName}. Gender/number: ${gender}. Determiner pattern: ${determiner}. Built phrase: "${phrase}". Ending shown: "${ending}". App rule: "${rule}".`
+                };
+            }
+
             return {
                 title: "German article system",
                 context: "The learner is viewing the definite and indefinite article tables for Nominative, Accusative, Dative, and Genitive across masculine, feminine, neuter, and plural."
@@ -5972,6 +6256,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             renderPrepositionExplorer();
             updateCaseBuilder();
             updateArticleFinder();
+            renderGermanAdjectiveBuilder();
 
             const verbInput = document.getElementById("verb-tool-input");
             if (verbInput && !verbInput.dataset.bound) {
@@ -6324,7 +6609,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
         // Toggle Grammar Grammar Tools visibility
         function setGrammarMainTab(name) {
-            const names = ["verbs", "cases", "articles"];
+            const names = ["verbs", "cases", "articles", "adjectives"];
 
             names.forEach(tabName => {
                 const panel = document.getElementById("grammar-main-" + tabName);
@@ -6344,6 +6629,9 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             }
             if (name === "articles") {
                 updateArticleFinder();
+            }
+            if (name === "adjectives") {
+                renderGermanAdjectiveBuilder();
             }
         }
 
