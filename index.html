@@ -1867,7 +1867,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                             <div class="bg-slate-100/80 px-4 py-2 flex justify-between items-center border border-slate-200 border-b-0 rounded-t-xl text-xs font-bold text-slate-600">
                                 <span id="target-translation-label" class="text-slate-700">German Translation</span>
                                 <div class="flex flex-col items-center shrink-0 ml-4">
-                                    <button onclick="speakText('target-text', 'de-DE')" class="text-blue-600 hover:text-blue-800 transition p-1 rounded-full hover:bg-slate-200 flex items-center justify-center" title="Listen (German)">
+                                    <button onclick="speakSelectedTarget('target-text')" class="text-blue-600 hover:text-blue-800 transition p-1 rounded-full hover:bg-slate-200 flex items-center justify-center" title="Listen (target language)">
                                         <svg class="w-5 h-5 text-blue-600 hover:text-blue-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"></path></svg>
                                     </button>
                                     <input type="range" id="speech-speed-de" min="0.4" max="1.6" step="0.1" value="1.0" class="w-14 h-1 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-700" title="Adjust speed">
@@ -4272,13 +4272,11 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                           !/^[.,!?;]+$/.test(t[i])) {
                         words.push(t[i++]);
 
-                        // Stop once we have reached the head noun/place and the next token
-                        // clearly starts another grammatical unit.
+                        // A normal German prepositional phrase ends at its head noun/place.
+                        // Do not absorb a following predicate adjective/adverb, e.g.
+                        // "in einer Stunde bereit sein" -> "in einer Stunde" + "bereit" + "sein".
                         if(gpIsNoun(words[words.length-1])) {
-                            if(i>=t.length) break;
-                            const next=t[i].toLowerCase();
-                            if(gpPrep.has(next)||gpIsDet(next)||gpPronouns.has(next)||gpModal.has(next)||gpAux.has(next)||gpVerb.has(next))
-                                break;
+                            break;
                         }
                     }
 
@@ -4838,9 +4836,11 @@ Before returning, verify that the explanation itself is English.`;
 
                 // Context-sensitive translation is an explicit AI action.
                 if (getActiveAIKey()) {
+                    const activeLanguage =
+                        (typeof activeAppLanguage==="function" ? activeAppLanguage() : "de");
                     const languageName =
-                        (typeof LANGUAGE_MODES !== "undefined" && LANGUAGE_MODES[currentStudyLanguage])
-                            ? LANGUAGE_MODES[currentStudyLanguage].name
+                        (typeof STUDY_LANGUAGE_META!=="undefined" && STUDY_LANGUAGE_META[activeLanguage])
+                            ? STUDY_LANGUAGE_META[activeLanguage].name
                             : "German";
 
                     const prompt = `You are translating ONE selected ${languageName} word or phrase for an English-speaking learner.
@@ -4859,7 +4859,9 @@ Plain text only.`;
                     // Without AI, only use a known local meaning. We deliberately do not
                     // send the isolated token to a machine translator because that loses context.
                     const cleanText = phraseText.toLowerCase().replace(/[.,!?;]+$/g, "");
-                    translation = currentStudyLanguage === "de"
+                    const activeLanguage =
+                        (typeof activeAppLanguage==="function" ? activeAppLanguage() : "de");
+                    translation = activeLanguage === "de"
                         ? (offlineWordTranslations[cleanText] || "")
                         : "";
                     if (!translation) {
@@ -5348,7 +5350,7 @@ Plain text only.`;
             if(secondQuestion) secondQuestion.textContent=ui.question;
 
             if(emptyMessage){
-                emptyMessage.textContent=`Save at least one ${meta.name} item to use Translation Flashcards. ${ui.note}`;
+                emptyMessage.textContent=`Save at least one ${meta.name} item to use Translation Flashcards. The ${ui.tab} challenge also includes built-in practice, so it works without saved items. ${ui.note}`;
             }
         }
 
@@ -5471,6 +5473,53 @@ Plain text only.`;
             return candidates;
         }
 
+        function spanishQuizFallbackParse(sentence){
+            // Self-contained fallback so Spanish practice still works even if the
+            // multilanguage parser hook is unavailable for any reason.
+            const articles=new Set(["el","la","los","las","un","una","unos","unas"]);
+            const preps=new Set(["a","ante","bajo","con","contra","de","desde","durante","en","entre","hacia","hasta","para","por","según","sin","sobre","tras"]);
+            const subjects=new Set(["yo","tú","él","ella","usted","nosotros","nosotras","vosotros","vosotras","ellos","ellas","ustedes"]);
+            const direct=new Set(["lo"]);
+            const indirect=new Set(["le","les"]);
+            const clitics=new Set(["me","te","se","nos","os"]);
+            const conjunctions=new Set(["y","e","o","u","pero","sino","aunque","porque","que","si","mientras"]);
+            const commonVerbs=new Set([
+                "soy","eres","es","somos","sois","son",
+                "estoy","estás","está","estamos","estáis","están",
+                "voy","vas","va","vamos","vais","van",
+                "tengo","tienes","tiene","tenemos","tenéis","tienen",
+                "hago","haces","hace","hacemos","hacéis","hacen",
+                "quiero","quieres","quiere","queremos","queréis","quieren",
+                "puedo","puedes","puede","podemos","podéis","pueden",
+                "doy","das","da","damos","dais","dan",
+                "veo","ves","ve","vemos","veis","ven",
+                "como","comes","come","comemos","coméis","comen",
+                "hablo","hablas","habla","hablamos","habláis","hablan",
+                "vivo","vives","vive","vivimos","vivís","viven",
+                "gusta","gustan","hay","sé","sabe","sabes","sabemos"
+            ]);
+
+            const tokens=String(sentence||"").match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+|[0-9]+|[¿¡!?.,;:]/g)||[];
+            return tokens.map(tok=>{
+                const low=tok.toLowerCase();
+                if(/^[¿¡!?.,;:]$/.test(tok)) return {text:tok,role:"punctuation",label:"Punctuation"};
+                if(articles.has(low)){
+                    if(["la","los","las"].includes(low)) return {text:tok,role:"word",label:"Article or direct-object pronoun"};
+                    return {text:tok,role:"article",label:"Article / determiner"};
+                }
+                if(preps.has(low)) return {text:tok,role:"preposition",label:"Preposition"};
+                if(subjects.has(low)) return {text:tok,role:"pronoun",label:"Subject pronoun"};
+                if(direct.has(low)) return {text:tok,role:"pronoun",label:"Direct-object pronoun"};
+                if(indirect.has(low)) return {text:tok,role:"pronoun",label:"Indirect-object pronoun"};
+                if(clitics.has(low)) return {text:tok,role:"pronoun",label:"Object / reflexive clitic"};
+                if(conjunctions.has(low)) return {text:tok,role:"conjunction",label:"Conjunction"};
+                if(commonVerbs.has(low) || /(ar|er|ir|ando|iendo|ado|ido|aba|ía|aste|iste|aron|ieron|amos|emos|imos|an|en)$/.test(low)){
+                    return {text:tok,role:"verb",label:"Verb / verb form"};
+                }
+                return {text:tok,role:"word",label:"Lexical word"};
+            });
+        }
+
         function spanishQuizCandidates(items){
             const candidates=[];
 
@@ -5485,41 +5534,44 @@ Plain text only.`;
                 verb:"Verb / verb form",
                 ambiguous_article_object:"Article or direct-object pronoun"
             };
-
             const categoryChoices=Object.entries(categoryLabels).map(([value,label])=>({value,label}));
 
             function roleForToken(token){
                 const text=String(token?.text||"");
+                const label=String(token?.label||"").toLowerCase();
+                const role=String(token?.role||"").toLowerCase();
+
+                if(role==="article" || label==="article / determiner") return "article";
+                if(role==="preposition" || label==="preposition") return "preposition";
+                if(role==="conjunction" || label==="conjunction") return "conjunction";
+                if(role==="verb" || label.includes("verb")) return "verb";
+                if(label.includes("subject pronoun")) return "subject_pronoun";
+                if(label.includes("direct-object pronoun")) return "direct_object";
+                if(label.includes("indirect-object pronoun")) return "indirect_object";
+                if(label.includes("object / reflexive clitic")) return "clitic";
+                if(label.includes("article or direct-object pronoun")) return "ambiguous_article_object";
+
+                // A provider/parser can give a generic pronoun label; preserve a few
+                // locally safe distinctions from the written form without needing
+                // access to the extension's private ES_* sets.
                 const low=text.toLowerCase();
-                const label=String(token?.label||"");
-
-                if(token?.role==="article") return "article";
-                if(token?.role==="preposition") return "preposition";
-                if(token?.role==="conjunction") return "conjunction";
-                if(token?.role==="verb") return "verb";
-
-                if(token?.role==="pronoun"){
-                    if(ES_SUBJECT_PRONOUNS.has(low)) return "subject_pronoun";
-                    if(low==="lo") return "direct_object";
-                    if(ES_INDIRECT_OBJECT_CLITICS.has(low)) return "indirect_object";
-                    if(ES_AMBIGUOUS_CLITICS.has(low)) return "clitic";
-                }
-
-                if(/article or direct-object pronoun/i.test(label)){
-                    return "ambiguous_article_object";
-                }
+                if(["yo","tú","él","ella","usted","nosotros","nosotras","vosotros","vosotras","ellos","ellas","ustedes"].includes(low)) return "subject_pronoun";
+                if(low==="lo") return "direct_object";
+                if(["le","les"].includes(low)) return "indirect_object";
+                if(["me","te","se","nos","os"].includes(low)) return "clitic";
                 return "";
             }
 
             function addCategoryQuestion(item,sentence,token,answer){
-                if(!answer || !categoryLabels[answer])return;
+                if(!answer || !categoryLabels[answer]) return;
                 const correct={value:answer,label:categoryLabels[answer]};
                 const wrong=shuffleQuizArray(categoryChoices.filter(x=>x.value!==answer)).slice(0,3);
+                if(wrong.length<3)return;
 
                 candidates.push({
                     item,
                     sentence,
-                    focus:token.text,
+                    focus:String(token.text||""),
                     answer,
                     choices:[correct,...wrong],
                     header:"Spanish Forms & Functions",
@@ -5528,45 +5580,52 @@ Plain text only.`;
                 });
             }
 
-            function addArticleAgreementQuestion(item,sentence,token){
+            function addGenderNumberQuestion(item,sentence,token){
                 const low=String(token?.text||"").toLowerCase();
-                const articleAgreement={
-                    "el":"Masculine singular",
-                    "un":"Masculine singular",
-                    "la":"Feminine singular",
-                    "una":"Feminine singular",
-                    "los":"Masculine plural",
-                    "unos":"Masculine plural",
-                    "las":"Feminine plural",
-                    "unas":"Feminine plural"
+                const agreement={
+                    el:"Masculine singular",
+                    un:"Masculine singular",
+                    la:"Feminine singular",
+                    una:"Feminine singular",
+                    los:"Masculine plural",
+                    unos:"Masculine plural",
+                    las:"Feminine plural",
+                    unas:"Feminine plural"
                 };
-                const answerLabel=articleAgreement[low];
-                if(!answerLabel)return;
-
+                const answer=agreement[low];
+                if(!answer)return;
                 const labels=["Masculine singular","Feminine singular","Masculine plural","Feminine plural"];
+
                 candidates.push({
                     item,
                     sentence,
-                    focus:token.text,
-                    answer:answerLabel,
+                    focus:String(token.text||""),
+                    answer,
                     choices:labels.map(label=>({value:label,label})),
                     header:"Spanish Gender & Number",
-                    question:"What gender and number does this highlighted form mark?",
-                    explanation:`“${token.text}” marks ${answerLabel.toLowerCase()} when used as an article/determiner or matching object clitic form.`
+                    question:"What gender and number does the highlighted form mark?",
+                    explanation:`“${token.text}” marks ${answer.toLowerCase()}.`
                 });
             }
 
             items.forEach(item=>{
                 const sentence=studyItemTarget(item);
-                const parsed=parseSpanishLocal(sentence).filter(x=>x.role!=="punctuation");
+                let parsed=[];
 
-                parsed.forEach(token=>{
-                    const answer=roleForToken(token);
-                    if(answer) addCategoryQuestion(item,sentence,token,answer);
+                try{
+                    parsed=(typeof window.parseSpanishLocalForQuiz==="function")
+                        ? window.parseSpanishLocalForQuiz(sentence)
+                        : spanishQuizFallbackParse(sentence);
+                }catch(e){
+                    console.warn("Spanish quiz parser hook failed; using fallback parser.",e);
+                    parsed=spanishQuizFallbackParse(sentence);
+                }
 
-                    // Gender/number agreement is genuinely important in Spanish.
+                (parsed||[]).filter(x=>x && x.role!=="punctuation").forEach(token=>{
+                    addCategoryQuestion(item,sentence,token,roleForToken(token));
+
                     if(["el","la","los","las","un","una","unos","unas"].includes(String(token.text||"").toLowerCase())){
-                        addArticleAgreementQuestion(item,sentence,token);
+                        addGenderNumberQuestion(item,sentence,token);
                     }
                 });
             });
@@ -5683,6 +5742,312 @@ Plain text only.`;
             return japaneseQuizCandidates(items);
         }
 
+        function builtInLanguageQuizCandidates(language){
+            const synthetic=(lang,sentence)=>({
+                id:`builtin-${lang}-${sentence}`,
+                language:lang,
+                target:sentence,
+                german:lang==="de" ? sentence : "",
+                english:"",
+                timestamp:"Built-in practice"
+            });
+
+            if(language==="de"){
+                const choices=[
+                    {value:"nominative",label:"Nominative"},
+                    {value:"accusative",label:"Accusative"},
+                    {value:"dative",label:"Dative"},
+                    {value:"genitive",label:"Genitive"}
+                ];
+                return [
+                    {
+                        item:synthetic("de","Der Hund schläft."),
+                        sentence:"Der Hund schläft.",
+                        focus:"Der Hund",
+                        answer:"nominative",
+                        choices,
+                        header:"German Case Guesser",
+                        question:"What grammatical case is the highlighted phrase?",
+                        explanation:"“Der Hund” is the subject, so it is nominative."
+                    },
+                    {
+                        item:synthetic("de","Ich sehe den Hund."),
+                        sentence:"Ich sehe den Hund.",
+                        focus:"den Hund",
+                        answer:"accusative",
+                        choices,
+                        header:"German Case Guesser",
+                        question:"What grammatical case is the highlighted phrase?",
+                        explanation:"“den Hund” is the direct object of sehen, so it is accusative."
+                    },
+                    {
+                        item:synthetic("de","Ich helfe dem Kind."),
+                        sentence:"Ich helfe dem Kind.",
+                        focus:"dem Kind",
+                        answer:"dative",
+                        choices,
+                        header:"German Case Guesser",
+                        question:"What grammatical case is the highlighted phrase?",
+                        explanation:"helfen takes a dative object, so “dem Kind” is dative."
+                    },
+                    {
+                        item:synthetic("de","Das Ende des Tages ist nah."),
+                        sentence:"Das Ende des Tages ist nah.",
+                        focus:"des Tages",
+                        answer:"genitive",
+                        choices,
+                        header:"German Case Guesser",
+                        question:"What grammatical case is the highlighted phrase?",
+                        explanation:"“des Tages” marks a possessive/relational genitive phrase."
+                    }
+                ];
+            }
+
+            if(language==="es"){
+                const functionChoices=[
+                    {value:"subject_pronoun",label:"Subject pronoun"},
+                    {value:"direct_object",label:"Direct-object pronoun"},
+                    {value:"indirect_object",label:"Indirect-object pronoun"},
+                    {value:"clitic",label:"Object / reflexive clitic"}
+                ];
+                const syntaxChoices=[
+                    {value:"article",label:"Article / determiner"},
+                    {value:"preposition",label:"Preposition"},
+                    {value:"conjunction",label:"Conjunction"},
+                    {value:"verb",label:"Verb / verb form"}
+                ];
+                const agreementChoices=[
+                    {value:"Masculine singular",label:"Masculine singular"},
+                    {value:"Feminine singular",label:"Feminine singular"},
+                    {value:"Masculine plural",label:"Masculine plural"},
+                    {value:"Feminine plural",label:"Feminine plural"}
+                ];
+
+                return [
+                    {
+                        item:synthetic("es","Yo hablo español."),
+                        sentence:"Yo hablo español.",
+                        focus:"Yo",
+                        answer:"subject_pronoun",
+                        choices:functionChoices,
+                        header:"Spanish Forms & Functions",
+                        question:"What is the highlighted Spanish form doing here?",
+                        explanation:"“Yo” is the subject pronoun identifying who performs the verb."
+                    },
+                    {
+                        item:synthetic("es","Lo veo."),
+                        sentence:"Lo veo.",
+                        focus:"Lo",
+                        answer:"direct_object",
+                        choices:functionChoices,
+                        header:"Spanish Forms & Functions",
+                        question:"What is the highlighted Spanish form doing here?",
+                        explanation:"“Lo” is a direct-object pronoun: it receives the action of veo."
+                    },
+                    {
+                        item:synthetic("es","Le doy el libro."),
+                        sentence:"Le doy el libro.",
+                        focus:"Le",
+                        answer:"indirect_object",
+                        choices:functionChoices,
+                        header:"Spanish Forms & Functions",
+                        question:"What is the highlighted Spanish form doing here?",
+                        explanation:"“Le” is an indirect-object pronoun marking the recipient of the book."
+                    },
+                    {
+                        item:synthetic("es","Me llamo Ana."),
+                        sentence:"Me llamo Ana.",
+                        focus:"Me",
+                        answer:"clitic",
+                        choices:functionChoices,
+                        header:"Spanish Forms & Functions",
+                        question:"What is the highlighted Spanish form doing here?",
+                        explanation:"“Me” is the reflexive clitic used with llamarse."
+                    },
+                    {
+                        item:synthetic("es","Voy a Madrid."),
+                        sentence:"Voy a Madrid.",
+                        focus:"a",
+                        answer:"preposition",
+                        choices:syntaxChoices,
+                        header:"Spanish Forms & Functions",
+                        question:"What type of form is highlighted?",
+                        explanation:"“a” is a preposition introducing the destination Madrid."
+                    },
+                    {
+                        item:synthetic("es","Ella canta y baila."),
+                        sentence:"Ella canta y baila.",
+                        focus:"y",
+                        answer:"conjunction",
+                        choices:syntaxChoices,
+                        header:"Spanish Forms & Functions",
+                        question:"What type of form is highlighted?",
+                        explanation:"“y” is a conjunction joining two verb phrases."
+                    },
+                    {
+                        item:synthetic("es","Quiero comer."),
+                        sentence:"Quiero comer.",
+                        focus:"Quiero",
+                        answer:"verb",
+                        choices:syntaxChoices,
+                        header:"Spanish Forms & Functions",
+                        question:"What type of form is highlighted?",
+                        explanation:"“Quiero” is a conjugated verb form of querer."
+                    },
+                    {
+                        item:synthetic("es","Una casa bonita."),
+                        sentence:"Una casa bonita.",
+                        focus:"Una",
+                        answer:"Feminine singular",
+                        choices:agreementChoices,
+                        header:"Spanish Gender & Number",
+                        question:"What gender and number does the highlighted form mark?",
+                        explanation:"“Una” is feminine singular."
+                    },
+                    {
+                        item:synthetic("es","Los libros son nuevos."),
+                        sentence:"Los libros son nuevos.",
+                        focus:"Los",
+                        answer:"Masculine plural",
+                        choices:agreementChoices,
+                        header:"Spanish Gender & Number",
+                        question:"What gender and number does the highlighted form mark?",
+                        explanation:"“Los” is masculine plural."
+                    }
+                ];
+            }
+
+            const particleFunctionChoices=[
+                {value:"topic",label:"Topic / contrast"},
+                {value:"subject",label:"Subject / focus"},
+                {value:"object",label:"Direct object"},
+                {value:"destination",label:"Destination / target"}
+            ];
+            const locationParticleChoices=[
+                {value:"destination",label:"Destination / target"},
+                {value:"action-place",label:"Place of action / means"},
+                {value:"direction",label:"Direction toward"},
+                {value:"companion",label:"Companion / quotation"}
+            ];
+            const readingChoicesWa=[
+                {value:"wa",label:"わ (wa)"},
+                {value:"ha",label:"は (ha)"},
+                {value:"ga",label:"が (ga)"},
+                {value:"o",label:"を (o)"}
+            ];
+            const readingChoicesE=[
+                {value:"e",label:"え (e)"},
+                {value:"he",label:"へ (he)"},
+                {value:"ni",label:"に (ni)"},
+                {value:"de",label:"で (de)"}
+            ];
+            const readingChoicesO=[
+                {value:"o",label:"お (o)"},
+                {value:"wo",label:"を (wo)"},
+                {value:"wa",label:"わ (wa)"},
+                {value:"ni",label:"に (ni)"}
+            ];
+            const predicateChoices=[
+                {value:"polite-nonpast",label:"Polite non-past"},
+                {value:"polite-past",label:"Polite past"},
+                {value:"polite-negative",label:"Polite non-past negative"},
+                {value:"desire",label:"Desire / want to (たい-form)"}
+            ];
+
+            return [
+                {
+                    item:synthetic("ja","私は学生です。"),
+                    sentence:"私は学生です。",
+                    focus:"は",
+                    answer:"topic",
+                    choices:particleFunctionChoices,
+                    header:"Japanese Particle Function",
+                    question:"What is the highlighted particle doing in this sentence?",
+                    explanation:"は marks 私 as the topic of the sentence."
+                },
+                {
+                    item:synthetic("ja","本を読みます。"),
+                    sentence:"本を読みます。",
+                    focus:"を",
+                    answer:"object",
+                    choices:particleFunctionChoices,
+                    header:"Japanese Particle Function",
+                    question:"What is the highlighted particle doing in this sentence?",
+                    explanation:"を marks 本 as the direct object of 読みます."
+                },
+                {
+                    item:synthetic("ja","学校に行きます。"),
+                    sentence:"学校に行きます。",
+                    focus:"に",
+                    answer:"destination",
+                    choices:locationParticleChoices,
+                    header:"Japanese Particle Function",
+                    question:"What is the highlighted particle doing in this sentence?",
+                    explanation:"に marks 学校 as the destination."
+                },
+                {
+                    item:synthetic("ja","学校で勉強します。"),
+                    sentence:"学校で勉強します。",
+                    focus:"で",
+                    answer:"action-place",
+                    choices:locationParticleChoices,
+                    header:"Japanese Particle Function",
+                    question:"What is the highlighted particle doing in this sentence?",
+                    explanation:"で marks 学校 as the place where the action occurs."
+                },
+                {
+                    item:synthetic("ja","私は学生です。"),
+                    sentence:"私は学生です。",
+                    focus:"は",
+                    answer:"wa",
+                    choices:readingChoicesWa,
+                    header:"Japanese Particle Reading",
+                    question:"How is this highlighted particle pronounced here?",
+                    explanation:"As a grammatical particle, は is pronounced わ (wa)."
+                },
+                {
+                    item:synthetic("ja","学校へ行きます。"),
+                    sentence:"学校へ行きます。",
+                    focus:"へ",
+                    answer:"e",
+                    choices:readingChoicesE,
+                    header:"Japanese Particle Reading",
+                    question:"How is this highlighted particle pronounced here?",
+                    explanation:"As a grammatical particle, へ is pronounced え (e)."
+                },
+                {
+                    item:synthetic("ja","本を読みます。"),
+                    sentence:"本を読みます。",
+                    focus:"を",
+                    answer:"o",
+                    choices:readingChoicesO,
+                    header:"Japanese Particle Reading",
+                    question:"How is this highlighted particle pronounced here?",
+                    explanation:"As a grammatical particle, を is pronounced お (o)."
+                },
+                {
+                    item:synthetic("ja","本を読みます。"),
+                    sentence:"本を読みます。",
+                    focus:"読みます",
+                    answer:"polite-nonpast",
+                    choices:predicateChoices,
+                    header:"Japanese Predicate Form",
+                    question:"What grammatical form does the highlighted predicate use?",
+                    explanation:"読みます is a polite non-past verb form."
+                },
+                {
+                    item:synthetic("ja","海に行きたい。"),
+                    sentence:"海に行きたい。",
+                    focus:"行きたい",
+                    answer:"desire",
+                    choices:predicateChoices,
+                    header:"Japanese Predicate Form",
+                    question:"What grammatical form does the highlighted predicate use?",
+                    explanation:"行きたい uses the たい-form to express desire."
+                }
+            ];
+        }
+
         function initQuiz(){
             const quizLanguage=syncQuizLanguageToTutor();
             if(renderedQuizLanguage!==quizLanguage) resetLanguageQuizCard(quizLanguage);
@@ -5691,7 +6056,10 @@ Plain text only.`;
             const items=getStudyItems(quizLanguage);
             updateQuizLanguageUI();
 
-            if(!items.length){
+            // Translation Flashcards require saved Study Board material.
+            // The language-specific grammar challenge does not: it falls back to
+            // curated built-in practice when no saved items are available.
+            if(!items.length && quizType==="flashcard"){
                 resetLanguageQuizCard(quizLanguage);
                 emptyState?.classList.remove("hidden");
                 activeSuite?.classList.add("hidden");
@@ -5725,8 +6093,21 @@ Plain text only.`;
                 return;
             }
 
-            const candidates=languageQuizCandidates(items,quizLanguage);
             const sentenceBox=document.getElementById("quiz-case-sentence-container");
+            let candidates=[];
+            try{
+                candidates=languageQuizCandidates(items,quizLanguage) || [];
+            }catch(e){
+                console.error(`${quizLanguage} quiz generation failed from saved items:`,e);
+                candidates=[];
+            }
+
+            // Guaranteed language-specific fallback. This makes Forms & Functions,
+            // Particles & Readings, and Case Guesser usable even before the learner
+            // has saved vocabulary, and prevents an empty arena.
+            if(!candidates.length){
+                candidates=builtInLanguageQuizCandidates(quizLanguage);
+            }
 
             if(!candidates.length){
                 const messages={
@@ -9566,6 +9947,11 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             return {text:tok,role,label};
         });
     }
+
+    // Public read-only parser hook used by the Study Board quiz.
+    // The quiz lives in the base script, so it cannot directly access the
+    // block-scoped ES_* sets inside this multilanguage extension.
+    window.parseSpanishLocalForQuiz=parseSpanishLocal;
 
     const JA_PARTICLES=["から","まで","より","って","では","には","は","が","を","に","で","へ","と","も","の","ね","よ"];
     const JA_PARTICLE_INFO_LOCAL={
