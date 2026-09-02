@@ -1910,8 +1910,11 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         Grammar Parser
                     </h3>
                     <div class="flex flex-wrap items-center gap-2">
-                    <button id="ai-parse-btn" type="button" class="text-xs text-amber-800 hover:text-amber-950 font-semibold flex items-center gap-1 bg-amber-50 hover:bg-amber-100 py-1.5 px-3 rounded-lg border border-amber-200 transition shadow-sm shrink-0" title="Analyze the current German sentence using your selected AI provider">
-                        ✨ Parse with AI
+                    <button id="ai-parse-btn" type="button" onclick="setNonGermanParserView('ai')" class="text-xs text-amber-800 hover:text-amber-950 font-semibold inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 py-1.5 px-3 rounded-lg border border-amber-200 transition shadow-sm shrink-0" title="Show or create the detailed AI parser">
+                        ✨ AI Parse
+                    </button>
+                    <button id="local-parse-view-btn" type="button" onclick="setNonGermanParserView('local')" class="hidden text-xs text-slate-700 hover:text-slate-900 font-semibold items-center gap-1 bg-slate-50 hover:bg-slate-100 py-1.5 px-3 rounded-lg border border-slate-200 transition shadow-sm shrink-0" title="Return to the non-AI parser">
+                        ↩ Local Parse
                     </button>
                     <button id="toggle-legend-btn" onclick="toggleLegend()" class="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1 bg-blue-50 hover:bg-blue-100 py-1.5 px-3 rounded-lg border border-blue-100 transition shadow-sm shrink-0">
                         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"></path></svg> Show Legend
@@ -7874,6 +7877,116 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     // sentence it analyzed. A late local-render callback must never overwrite it.
     let activeNonGermanAIParse = null;
 
+    // Japanese/Spanish can keep both parser representations available.
+    // AI is the preferred view whenever an AI result exists for the exact sentence.
+    const nonGermanParserView = {es:"ai", ja:"ai"};
+
+    function currentParserSentence(){
+        return String(
+            currentGermanSentence ||
+            document.getElementById("target-text")?.value ||
+            document.getElementById("german-source-text")?.value ||
+            ""
+        ).trim();
+    }
+
+    function localParseForLanguage(lang,sentence){
+        if(lang==="ja") return parseJapaneseLocal(sentence);
+        if(lang==="es") return parseSpanishLocal(sentence);
+        return [];
+    }
+
+    function updateNonGermanParserControls(){
+        const aiBtn=document.getElementById("ai-parse-btn");
+        const localBtn=document.getElementById("local-parse-view-btn");
+        if(!aiBtn || !localBtn)return;
+
+        if(currentStudyLanguage==="de"){
+            aiBtn.style.display="inline-flex";
+            localBtn.style.display="none";
+            aiBtn.textContent="✨ Parse with AI";
+            aiBtn.className="text-xs text-amber-800 hover:text-amber-950 font-semibold inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 py-1.5 px-3 rounded-lg border border-amber-200 transition shadow-sm shrink-0";
+            aiBtn.setAttribute("aria-pressed","false");
+            return;
+        }
+
+        aiBtn.style.display="inline-flex";
+        localBtn.style.display="inline-flex";
+
+        const sentence=currentParserSentence();
+        const cached=sentence ? getCachedAIParse(currentStudyLanguage,sentence) : null;
+        const hasAI=Boolean(
+            sentence &&
+            (hasActiveNonGermanAIParse(currentStudyLanguage,sentence) || cached)
+        );
+        const selected=nonGermanParserView[currentStudyLanguage]||"ai";
+        const aiSelected=selected==="ai";
+
+        aiBtn.textContent=hasAI ? "✨ AI Parse" : "✨ AI Parse";
+        aiBtn.title=hasAI
+            ? "Show the detailed AI parse for this sentence"
+            : `Create a detailed AI parse for the current ${langConfig().name} sentence`;
+
+        localBtn.textContent="↩ Local Parse";
+        localBtn.title="Return to the non-AI parser";
+        localBtn.disabled=false;
+
+        aiBtn.setAttribute("aria-pressed",aiSelected?"true":"false");
+        localBtn.setAttribute("aria-pressed",aiSelected?"false":"true");
+
+        aiBtn.className="text-xs font-semibold inline-flex items-center gap-1 py-1.5 px-3 rounded-lg border transition shadow-sm shrink-0 " +
+            (aiSelected
+                ? "bg-amber-100 text-amber-900 border-amber-400 ring-1 ring-amber-200"
+                : "bg-amber-50 hover:bg-amber-100 text-amber-700 hover:text-amber-900 border-amber-200");
+
+        localBtn.className="text-xs font-semibold inline-flex items-center gap-1 py-1.5 px-3 rounded-lg border transition shadow-sm shrink-0 " +
+            (!aiSelected
+                ? "bg-slate-200 text-slate-900 border-slate-400 ring-1 ring-slate-200"
+                : "bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border-slate-200");
+    }
+
+    window.setNonGermanParserView=function(view){
+        if(currentStudyLanguage==="de"){
+            if(view==="ai") parseSelectedLanguageWithAI();
+            return;
+        }
+        const lang=currentStudyLanguage;
+        const sentence=currentParserSentence();
+        if(!sentence){
+            alert(`Translate or enter a ${langConfig().name} sentence first.`);
+            return;
+        }
+
+        if(view==="local"){
+            nonGermanParserView[lang]="local";
+            updateNonGermanParserControls();
+            renderMultilangTiles(localParseForLanguage(lang,sentence),`Local Structure • ${langConfig().name}`,{forceView:true});
+            return;
+        }
+
+        nonGermanParserView[lang]="ai";
+        updateNonGermanParserControls();
+
+        if(hasActiveNonGermanAIParse(lang,sentence)){
+            renderMultilangTiles(
+                activeNonGermanAIParse.items,
+                activeNonGermanAIParse.sourceLabel || "AI Parse",
+                {forceView:true}
+            );
+            return;
+        }
+
+        const cached=getCachedAIParse(lang,sentence);
+        if(cached){
+            setActiveNonGermanAIParse(lang,sentence,cached,"AI Parse • Cached");
+            renderMultilangTiles(cached,"AI Parse • Cached",{forceView:true});
+            updateNonGermanParserControls();
+            return;
+        }
+
+        parseSelectedLanguageWithAI();
+    };
+
     function clearActiveNonGermanAIParse(){
         activeNonGermanAIParse = null;
     }
@@ -8810,6 +8923,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
 
         updateParserLegendForLanguage();
+        updateNonGermanParserControls();
 
         const parserEmpty=document.getElementById("parser-empty-message");
         if(parserEmpty && !currentGermanSentence){
@@ -9124,8 +9238,27 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         return items;
     }
 
-    function renderMultilangTiles(items,sourceLabel){
+    function renderMultilangTiles(items,sourceLabel,options={}){
         const box=document.getElementById("tiles-container");
+
+        // Protect the preferred detailed AI view from late/local callbacks.
+        // This is the main safeguard against the detailed Japanese cards
+        // reverting to the broader grey local chunks.
+        if(!options.forceView && currentStudyLanguage!=="de"){
+            const sentence=currentParserSentence();
+            const selected=nonGermanParserView[currentStudyLanguage]||"ai";
+            const incomingLocal=/^Local\s/i.test(String(sourceLabel||""));
+
+            if(selected==="ai" && incomingLocal && hasActiveNonGermanAIParse(currentStudyLanguage,sentence)){
+                items=activeNonGermanAIParse.items;
+                sourceLabel=activeNonGermanAIParse.sourceLabel || "AI Parse";
+            }else if(selected==="local" && !incomingLocal && sentence){
+                items=localParseForLanguage(currentStudyLanguage,sentence);
+                sourceLabel=`Local Structure • ${langConfig().name}`;
+            }
+        }
+
+        updateNonGermanParserControls();
         const germanDetailCard=document.getElementById("tile-detail-card");
         if(germanDetailCard) germanDetailCard.classList.add("hidden");
         box.innerHTML="";
@@ -9181,15 +9314,33 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     window.renderGrammarTiles=function(sentence){
         if(currentStudyLanguage==="de") return originalGermanRenderGrammarTiles(sentence);
 
-        if(hasActiveNonGermanAIParse(currentStudyLanguage,sentence)){
-            return renderMultilangTiles(
-                activeNonGermanAIParse.items,
-                activeNonGermanAIParse.sourceLabel || "AI Parse"
-            );
+        const lang=currentStudyLanguage;
+        const selected=nonGermanParserView[lang]||"ai";
+
+        if(selected==="ai"){
+            if(hasActiveNonGermanAIParse(lang,sentence)){
+                updateNonGermanParserControls();
+                return renderMultilangTiles(
+                    activeNonGermanAIParse.items,
+                    activeNonGermanAIParse.sourceLabel || "AI Parse",
+                    {forceView:true}
+                );
+            }
+
+            const cached=getCachedAIParse(lang,sentence);
+            if(cached){
+                setActiveNonGermanAIParse(lang,sentence,cached,"AI Parse • Cached");
+                updateNonGermanParserControls();
+                return renderMultilangTiles(cached,"AI Parse • Cached",{forceView:true});
+            }
         }
 
-        if(currentStudyLanguage==="es") return renderMultilangTiles(parseSpanishLocal(sentence),"Local Spanish Parse");
-        return renderMultilangTiles(parseJapaneseLocal(sentence),"Local Japanese Parse");
+        updateNonGermanParserControls();
+        return renderMultilangTiles(
+            localParseForLanguage(lang,sentence),
+            `Local Structure • ${langConfig().name}`,
+            {forceView:true}
+        );
     };
 
 
@@ -9332,21 +9483,18 @@ Requirements:
         // Exact same sentence + same provider/model = instant cached result.
         const cached=getCachedAIParse(lang,sentence);
         if(cached){
+            nonGermanParserView[lang]="ai";
             setActiveNonGermanAIParse(lang,sentence,cached,"AI Parse • Cached");
-            renderMultilangTiles(cached,"AI Parse • Cached");
-            if(btn){
-                const prior=btn.textContent;
-                btn.textContent="✓ Cached AI parse";
-                setTimeout(()=>{ if(btn) btn.textContent=prior||"✨ Parse with AI"; },900);
-            }
+            renderMultilangTiles(cached,"AI Parse • Cached",{forceView:true});
+            updateNonGermanParserControls();
             return;
         }
 
         // Keep useful local cards on screen while the slower accuracy-oriented AI parse runs.
         if(lang==="ja"){
-            renderMultilangTiles(parseJapaneseLocal(sentence),"Local Japanese Parse • AI refining…");
+            renderMultilangTiles(parseJapaneseLocal(sentence),"Local Japanese Parse • AI refining…",{forceView:true});
         }else{
-            renderMultilangTiles(parseSpanishLocal(sentence),"Local Spanish Parse • AI refining…");
+            renderMultilangTiles(parseSpanishLocal(sentence),"Local Spanish Parse • AI refining…",{forceView:true});
         }
 
         const old=btn?.textContent||"✨ Parse with AI";
@@ -9376,13 +9524,20 @@ Requirements:
 
             saveCachedAIParse(lang,sentence,items);
             setActiveNonGermanAIParse(lang,sentence,items,"AI Parse");
-            renderMultilangTiles(items,"AI Parse");
+
+            // If the learner switched to Local Structure while the AI was working,
+            // keep that choice. The completed AI parse remains available instantly.
+            if(nonGermanParserView[lang]==="ai"){
+                renderMultilangTiles(items,"AI Parse",{forceView:true});
+            }
+            updateNonGermanParserControls();
         }catch(e){
             console.error("AI parse failed:",e);
             // Leave the already-rendered local parse visible instead of wiping it out.
             alert("AI parse failed: "+((e&&e.message)?e.message:String(e)));
         }finally{
-            if(btn){ btn.disabled=false; btn.textContent=old; }
+            if(btn){ btn.disabled=false; }
+            updateNonGermanParserControls();
         }
     }
 
@@ -10879,11 +11034,9 @@ Current work: ${context||"No sentence has been entered yet."}`;
     };
 
     function rebindAIParser(){
-        const old=document.getElementById("ai-parse-btn");
-        if(!old)return;
-        const clone=old.cloneNode(true);
-        old.parentNode.replaceChild(clone,old);
-        clone.addEventListener("click",parseSelectedLanguageWithAI);
+        // ai-parse-btn now has a stable inline route through setNonGermanParserView().
+        // Keep this function for boot compatibility without adding a second click handler.
+        updateNonGermanParserControls();
     }
 
     function bootMultilang(){
