@@ -1765,12 +1765,12 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                 <svg class="w-5 h-5 text-rose-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.233-1.89 1.328-2.937L13.33 4.737c-.77-1.025-2.22-1.025-2.99 0L3.61 16.063c-.904 1.047-.21 2.937 1.328 2.937z"></path></svg>
                 <div>
                     <span class="font-bold text-sm block">Corporate Proxy or CORS Policy Restriction Detected</span>
-                    <p class="font-normal text-slate-600 mt-0.5 leading-relaxed">
-                        Your computer's corporate firewall or browser security is blocking automated translation requests. You can bypass this entirely by using the **German Input Console** right next to the English console to type or paste your German text directly! All offline parsing, audio pronunciations, and quiz arenas will still work perfectly offline.
+                    <p id="network-alert-message" class="font-normal text-slate-600 mt-0.5 leading-relaxed">
+                        Your computer's corporate firewall or browser security is blocking automated translation requests. Use the German Input area to type or paste German directly.
                     </p>
                 </div>
             </div>
-            <button onclick="document.getElementById('german-source-text').scrollIntoView({ behavior: 'smooth', block: 'nearest' })" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg shrink-0 transition shadow-sm">
+            <button id="network-alert-input-btn" onclick="document.getElementById('german-source-text').scrollIntoView({ behavior: 'smooth', block: 'nearest' })" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg shrink-0 transition shadow-sm">
                 Scroll to German Input
             </button>
         </div>
@@ -2177,7 +2177,6 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         <div class="flex flex-wrap items-start justify-between gap-2">
                             <div>
                                 <div id="voice-tutor-heading" class="text-sm font-bold text-slate-800">German Voice Conversation</div>
-                                <div class="text-[10px] text-slate-500 mt-0.5">Your microphone is transcribed in the selected language, sent to the configured AI as text, and the tutor's reply is spoken aloud.</div>
                             </div>
                             <span id="voice-tutor-language-badge" class="rounded-lg bg-slate-900 text-white px-2 py-1 text-[9px] font-bold">DE</span>
                         </div>
@@ -2265,9 +2264,6 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         </div>
                     </div>
 
-                    <div id="voice-browser-note" class="shrink-0 text-[9px] text-slate-400">
-                        Voice recognition depends on browser/device support and microphone permission. Conversation history sent to the AI is intentionally limited to recent turns.
-                    </div>
                 </div>
             </div>
 
@@ -2389,7 +2385,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                             <div>
                                 <div class="text-sm font-bold text-slate-800">Build a phrase</div>
                                 <div class="text-[11px] text-slate-500 mt-0.5">
-                                    Choose the preposition first, then the article meaning and noun. Enter the noun in German or English. Enter the noun in German. If it is English, check “Noun entered in English.” The app uses one quick noun lookup to get the German noun, article, gender, and number together.
+                                    Choose the preposition first, then the article meaning and noun. Enter the noun in German or English. If it is English, check “Noun entered in English.” The app uses one quick noun lookup to get the German noun, article, gender, and number together.
                                 </div>
                             </div>
 
@@ -4856,7 +4852,7 @@ Plain text only.`;
             const utterance = new SpeechSynthesisUtterance(cleanText);
             utterance.lang = lang;
 
-            const speedId = lang.startsWith('de') ? 'speech-speed-de' : 'speech-speed-en';
+            const speedId = String(lang||'').toLowerCase().startsWith('en') ? 'speech-speed-en' : 'speech-speed-de';
             const speedSlider = document.getElementById(speedId);
             if (speedSlider) utterance.rate = parseFloat(speedSlider.value);
 
@@ -4887,7 +4883,7 @@ Plain text only.`;
                 utterance.lang = lang;
 
                 // Adjust speak rate based on the language speed slider
-                const speedId = lang.startsWith('de') ? 'speech-speed-de' : 'speech-speed-en';
+                const speedId = String(lang||'').toLowerCase().startsWith('en') ? 'speech-speed-en' : 'speech-speed-de';
                 const speedSlider = document.getElementById(speedId);
                 if (speedSlider) {
                     utterance.rate = parseFloat(speedSlider.value);
@@ -7011,7 +7007,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
             if (container.classList.contains("hidden")) {
                 container.classList.remove("hidden");
-                btn.innerHTML = `<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><pnejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Hide Legend`;
+                btn.innerHTML = `<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Hide Legend`;
             } else {
                 container.classList.add("hidden");
                 btn.innerHTML = `<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"></path></svg> Show Legend`;
@@ -7204,6 +7200,9 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     const VOICE_TUTOR_SETTINGS_KEY = "languagetutor_voice_tutor_settings_v1";
     let tutorInteractionMode = "text";
     const voiceTutorHistories = {de:[],es:[],ja:[]};
+    const textTutorHistories = {de:[],es:[],ja:[]};
+    const textTutorBusy = {de:false,es:false,ja:false};
+
     const voiceTutorState = {
         active:false,
         recognition:null,
@@ -7334,16 +7333,14 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
         const ctor=voiceRecognitionConstructor();
         const start=document.getElementById("voice-start-btn");
-        const note=document.getElementById("voice-browser-note");
         if(start){
             start.disabled=!ctor;
             start.classList.toggle("opacity-50",!ctor);
             start.classList.toggle("cursor-not-allowed",!ctor);
+            start.title=ctor ? "" : "Speech recognition is not available in this browser/device.";
         }
-        if(note){
-            note.textContent=ctor
-                ? `Target-language microphone: ${cfg.locale}. “Ask in English” uses en-US for one turn and then returns to ${cfg.name}. The AI receives the transcription, not continuous microphone audio.`
-                : "Speech recognition is not exposed by this browser/device. Try a browser with SpeechRecognition support; text chat and spoken playback still work.";
+        if(!ctor && tutorInteractionMode==="voice" && !voiceTutorState.active){
+            voiceTutorStatus("Speech recognition is not available in this browser/device.","error");
         }
     }
 
@@ -7457,7 +7454,13 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     function voiceTutorPrompt(userText,inputMode="target"){
         const cfg=langConfig();
         const settings=voiceTutorSettings();
-        const history=voiceTutorHistory().slice(-10);
+        const history=voiceTutorHistory().slice(-11);
+        const newest=history[history.length-1];
+        if(newest && newest.role==="user" && newest.text===userText &&
+           (newest.inputMode||"target")===inputMode){
+            history.pop();
+        }
+        const recentHistory=history.slice(-10);
         const modeInstructions={
             natural:"Have a natural everyday conversation. Respond like a patient native-speaking conversation partner, not a worksheet.",
             beginner:"Use short, high-frequency sentences and ask one simple follow-up question at a time. Keep the conversation easy to continue.",
@@ -7480,7 +7483,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             target:`Use only ${cfg.name}, even when the learner deliberately asks a question in English.`
         };
 
-        const transcript=history.map(h=>{
+        const transcript=recentHistory.map(h=>{
             if(h.role==="user"){
                 const tag=h.inputMode==="english" ? "Learner (English question)" : `Learner (${cfg.name})`;
                 return `${tag}: ${h.text}`;
@@ -7559,7 +7562,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const utterance=new SpeechSynthesisUtterance(clean);
         utterance.lang=replyLanguage==="en" ? "en-US" : langConfig().locale;
 
-        const speedId=utterance.lang.startsWith("de") ? "speech-speed-de" : "speech-speed-en";
+        const speedId=utterance.lang.toLowerCase().startsWith("en") ? "speech-speed-en" : "speech-speed-de";
         const speed=document.getElementById(speedId);
         if(speed) utterance.rate=parseFloat(speed.value)||1;
 
@@ -7646,14 +7649,19 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 voiceTutorStatus("I didn't catch anything. Listening again…");
                 return;
             }
+            if(error==="aborted")return;
+            voiceTutorState.phase="idle";
             voiceTutorStatus(`Speech recognition error: ${error||"unknown error"}`,"error");
+            document.getElementById("voice-listen-now-btn")?.classList.remove("hidden");
+            document.getElementById("voice-english-turn-btn")?.classList.remove("hidden");
         };
 
         rec.onend=()=>{
             setVoiceMicIndicator(false);
             if(!voiceTutorState.active)return;
             if(voiceTutorState.phase==="listening"){
-                setTimeout(()=>resumeVoiceRecognition(false,"target"),450);
+                const retryMode=voiceTutorState.inputMode;
+                setTimeout(()=>resumeVoiceRecognition(false,retryMode),450);
             }
         };
 
@@ -7663,7 +7671,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
     window.resumeVoiceRecognition=function(manual=false,inputMode="target"){
         if(!voiceTutorState.active)return;
-        if(voiceTutorState.speaking)return;
+        if(voiceTutorState.speaking || voiceTutorState.phase==="processing")return;
 
         const requestedMode=inputMode==="english" ? "english" : "target";
         const requestedLocale=requestedMode==="english" ? "en-US" : langConfig().locale;
@@ -7678,8 +7686,16 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         voiceTutorState.inputMode=requestedMode;
         voiceTutorState.phase="listening";
 
-        document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
-        document.getElementById("voice-english-turn-btn")?.classList.add("hidden");
+        const targetBtn=document.getElementById("voice-listen-now-btn");
+        const englishBtn=document.getElementById("voice-english-turn-btn");
+
+        if(requestedMode==="english"){
+            englishBtn?.classList.add("hidden");
+            targetBtn?.classList.remove("hidden");
+        }else{
+            targetBtn?.classList.add("hidden");
+            englishBtn?.classList.remove("hidden");
+        }
 
         try{
             rec.lang=requestedLocale;
@@ -7687,11 +7703,14 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }catch(e){
             if(String(e?.name||"")!=="InvalidStateError"){
                 voiceTutorStatus("Could not start microphone recognition.","error");
+                targetBtn?.classList.remove("hidden");
+                englishBtn?.classList.remove("hidden");
             }
         }
     };
 
     window.askVoiceTutorInEnglish=function(){
+        if(voiceTutorState.phase==="processing" || voiceTutorState.speaking)return;
         if(!getActiveAIKey()){
             alert("Add an AI API key in Settings first.");
             return;
@@ -7719,6 +7738,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
     async function handleVoiceTutorUtterance(text,inputMode="target"){
         if(!voiceTutorState.active)return;
+        document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
+        document.getElementById("voice-english-turn-btn")?.classList.add("hidden");
         const live=document.getElementById("voice-live-transcript");
         if(live)live.textContent=text;
 
@@ -8627,6 +8648,52 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
     }
 
+    function textTutorWelcomeText(code=currentStudyLanguage){
+        if(code==="de") return "Guten Tag! I can explain German grammar or help with the sentence you are working on.";
+        if(code==="es") return "¡Hola! I can explain Spanish grammar or help with the sentence you are working on.";
+        return "こんにちは！ I can explain Japanese grammar or help with the sentence you are working on.";
+    }
+
+    function renderTextTutorHistory(){
+        const log=document.getElementById("chat-messages-log");
+        if(!log)return;
+        const cfg=langConfig();
+        log.innerHTML="";
+
+        const welcome=document.createElement("div");
+        welcome.id="ai-tutor-welcome";
+        welcome.className="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[90%] self-start";
+        welcome.innerHTML=`<p id="ai-tutor-welcome-label" class="font-bold mb-1 text-[10px] text-indigo-700">${escapeML(cfg.name.toUpperCase())} GRAMMAR TUTOR</p><span id="ai-tutor-welcome-text">${escapeML(textTutorWelcomeText(currentStudyLanguage))}</span>`;
+        log.appendChild(welcome);
+
+        (textTutorHistories[currentStudyLanguage]||[]).forEach(entry=>{
+            const bubble=document.createElement("div");
+            if(entry.role==="user"){
+                bubble.className="bg-slate-100 text-slate-800 rounded-xl p-3 leading-relaxed max-w-[95%] self-end text-xs";
+                bubble.textContent=entry.text;
+            }else{
+                bubble.className="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[95%] self-start text-xs";
+                const label=document.createElement("p");
+                label.className="font-bold mb-1 text-[10px] text-indigo-700";
+                label.textContent=`${cfg.name.toUpperCase()} TUTOR`;
+                const body=document.createElement("div");
+                body.textContent=entry.text;
+                bubble.append(label,body);
+            }
+            log.appendChild(bubble);
+        });
+
+        if(textTutorBusy[currentStudyLanguage]){
+            const loading=document.createElement("div");
+            loading.id=`chat-loading-bubble-${currentStudyLanguage}`;
+            loading.className="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[95%] self-start font-semibold text-[11px] animate-pulse";
+            loading.textContent="AI Tutor is thinking...";
+            log.appendChild(loading);
+        }
+
+        log.scrollTop=log.scrollHeight;
+    }
+
     function updateVisibleLanguageUI(){
         const cfg=langConfig();
         const header=document.getElementById("language-header");
@@ -8707,6 +8774,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             }
         }
 
+        renderTextTutorHistory();
+
         const sel=document.getElementById("study-language-select");
         if(sel) sel.value=currentStudyLanguage;
 
@@ -8728,6 +8797,11 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         const translationSettings=document.querySelector("#settings-panel p.text-xs.text-slate-300");
         if(translationSettings) translationSettings.textContent=`Translation and AI are separate. Routine English ↔ ${cfg.name} translation uses the configured translation service. AI is used only when you explicitly request an AI grammar explanation, verification, parse, or Tutor response.`;
+
+        const networkMessage=document.getElementById("network-alert-message");
+        if(networkMessage) networkMessage.textContent=`Your computer's corporate firewall or browser security is blocking automated translation requests. Use the ${cfg.name} Input area to type or paste ${cfg.name} directly.`;
+        const networkBtn=document.getElementById("network-alert-input-btn");
+        if(networkBtn) networkBtn.textContent=`Scroll to ${cfg.name} Input`;
 
         const outputSpeak=document.querySelector('#target-text')?.parentElement?.querySelector('button');
         if(outputSpeak){
@@ -10741,22 +10815,20 @@ Use English, no more than 4 short sentences, plain text only.`;
     // ---------- Multilingual Tutor ----------
     window.sendChatMessage=async function(){
         const inputEl=document.getElementById("chat-user-input");
-        const logEl=document.getElementById("chat-messages-log");
-        const userText=inputEl.value.trim();
+        const userText=inputEl?.value.trim()||"";
         if(!userText)return;
-        const cfg=langConfig();
 
-        const userBubble=document.createElement("div");
-        userBubble.className="bg-slate-100 text-slate-800 rounded-xl p-3 leading-relaxed max-w-[95%] self-end animate-fadeIn text-xs";
-        userBubble.innerText=userText; logEl.appendChild(userBubble);
-        inputEl.value=""; logEl.scrollTop=logEl.scrollHeight;
-        chatHistory.push({role:"user",text:userText});
+        const requestLang=currentStudyLanguage;
+        if(textTutorBusy[requestLang])return;
 
-        const loading=document.createElement("div");
-        loading.id="chat-loading-bubble";
-        loading.className="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[95%] self-start font-semibold text-[11px] animate-pulse";
-        loading.textContent="AI Tutor is thinking...";
-        logEl.appendChild(loading);
+        const cfg=LANGUAGE_MODES[requestLang];
+        const history=textTutorHistories[requestLang];
+        history.push({role:"user",text:userText});
+        if(history.length>30)history.splice(0,history.length-30);
+
+        inputEl.value="";
+        textTutorBusy[requestLang]=true;
+        if(currentStudyLanguage===requestLang)renderTextTutorHistory();
 
         try{
             const en=document.getElementById("source-text")?.value.trim()||"";
@@ -10772,23 +10844,29 @@ Help an English-speaking learner understand ${cfg.grammarFocus}.
 Keep answers concise and pedagogical, usually 1-3 sentences.
 Use English for explanations unless the learner asks otherwise.
 Current work: ${context||"No sentence has been entered yet."}`;
+
             const parts=[system,"--- Conversation History ---"];
-            chatHistory.slice(-6).forEach(h=>parts.push(`${h.role==="user"?"Student":"AI Tutor"}: ${h.text}`));
+            history.slice(-7,-1).forEach(h=>parts.push(`${h.role==="user"?"Student":"AI Tutor"}: ${h.text}`));
+            parts.push(`Student: ${userText}`);
             parts.push("AI Tutor:");
+
             const response=String(await callAI(parts.join("\n\n"))).trim();
-            document.getElementById("chat-loading-bubble")?.remove();
-            const bubble=document.createElement("div");
-            bubble.className="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[95%] self-start animate-fadeIn text-xs";
-            bubble.innerHTML=`<p class="font-bold mb-1 text-[10px] text-indigo-700">${escapeML(cfg.name.toUpperCase())} TUTOR</p>${escapeML(response)}`;
-            logEl.appendChild(bubble); chatHistory.push({role:"model",text:response});
+            history.push({role:"model",text:response});
+            if(history.length>30)history.splice(0,history.length-30);
         }catch(e){
-            document.getElementById("chat-loading-bubble")?.remove();
-            const error=document.createElement("div");
-            error.className="bg-rose-50 border border-rose-100 text-rose-800 rounded-xl p-3 text-xs font-semibold";
-            error.textContent="I had trouble reaching the AI tutor. Check the API key and network connection.";
-            logEl.appendChild(error);
+            console.error("Text Tutor request failed:",e);
+            if(currentStudyLanguage===requestLang){
+                const log=document.getElementById("chat-messages-log");
+                const error=document.createElement("div");
+                error.className="bg-rose-50 border border-rose-100 text-rose-800 rounded-xl p-3 text-xs font-semibold";
+                error.textContent="I had trouble reaching the AI tutor. Check the API key and network connection.";
+                log?.appendChild(error);
+                if(log)log.scrollTop=log.scrollHeight;
+            }
+        }finally{
+            textTutorBusy[requestLang]=false;
+            if(currentStudyLanguage===requestLang)renderTextTutorHistory();
         }
-        logEl.scrollTop=logEl.scrollHeight;
     };
 
     window.speakQuizGerman=function(){
