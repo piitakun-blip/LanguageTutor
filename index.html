@@ -1986,6 +1986,49 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                     </div>
                     <div id="detail-explanation" class="pt-2"></div>
                 </div>
+
+                <!-- Spanish/Japanese parser detail card: intentionally separate from German Case/Gender -->
+                <div id="ml-tile-detail-card" class="hidden bg-slate-100 border border-slate-200 rounded-xl p-4 animate-fadeIn space-y-3">
+                    <div class="flex justify-between items-start gap-3">
+                        <h4 class="text-base font-bold text-slate-800 flex flex-wrap items-center gap-2">
+                            <span id="ml-detail-title-label">Analysis:</span>
+                            <span id="ml-detail-word" class="font-mono text-base text-blue-700 bg-white px-3 py-1 rounded shadow-sm border border-slate-200"></span>
+                        </h4>
+                        <button type="button" onclick="closeMultilangDetailCard()" class="text-slate-400 hover:text-slate-600 shrink-0" aria-label="Close analysis">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+                        <div>
+                            <span id="ml-detail-field1-label" class="block font-bold uppercase tracking-wider text-slate-400 text-[10px]">Function</span>
+                            <span id="ml-detail-field1" class="block mt-1 text-sm font-semibold text-slate-800"></span>
+                        </div>
+                        <div>
+                            <span id="ml-detail-field2-label" class="block font-bold uppercase tracking-wider text-slate-400 text-[10px]">Reading</span>
+                            <span id="ml-detail-field2" class="block mt-1 text-sm font-semibold text-slate-800"></span>
+                        </div>
+                        <div>
+                            <span id="ml-detail-field3-label" class="block font-bold uppercase tracking-wider text-slate-400 text-[10px]">Romaji</span>
+                            <span id="ml-detail-field3" class="block mt-1 text-sm font-semibold text-slate-800"></span>
+                        </div>
+                        <div>
+                            <span class="block font-bold uppercase tracking-wider text-slate-400 text-[10px]">English meaning</span>
+                            <div class="mt-1 space-y-2">
+                                <span id="ml-detail-translation" class="block text-sm font-semibold text-slate-500 italic">Not translated yet.</span>
+                                <button id="ml-detail-translate-context-btn" type="button"
+                                    onclick="translateMultilangSelectedPhraseInContext(this)"
+                                    class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
+                                    Translate in context
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ml-detail-grammar" class="hidden rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700"></div>
+                    <div id="ml-detail-note" class="pt-1"></div>
+                </div>
+
                             <div class="pt-2">
                     <button id="save-vocab-btn" onclick="saveToVocabulary()" class="hidden px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg shadow-sm transition duration-150 flex items-center gap-2">
                         <svg class="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"></path></svg> Save to Study List
@@ -4512,13 +4555,6 @@ Rules:
             const dExplanation = document.getElementById("detail-explanation");
 
             if (!detailCard || !dWord || !dCase || !dGender || !dExplanation) return;
-
-            // German's most useful noun-phrase information remains Case + Gender.
-            document.getElementById("detail-title-label").textContent = "German Phrase Analysis:";
-            document.getElementById("detail-case-label").textContent = "Case";
-            document.getElementById("detail-gender-label").textContent = "Gender";
-            document.getElementById("detail-translation-label").textContent = "English meaning";
-            document.getElementById("detail-extra-field")?.classList.add("hidden");
 
             currentSelectedPhrase = phraseText;
             dWord.textContent = phraseText;
@@ -8949,11 +8985,11 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             parserEmpty.textContent=`Tiles will be generated here once you translate or enter a ${cfg.name} phrase above...`;
         }
 
-        // The detailed Case/Gender card is German-specific. Never leave it visible
-        // after switching to Spanish or Japanese.
-        const germanDetailCard=document.getElementById("tile-detail-card");
-        if(currentStudyLanguage!=="de" && germanDetailCard){
-            germanDetailCard.classList.add("hidden");
+        // German uses Case/Gender detail; Spanish/Japanese use their own card.
+        if(currentStudyLanguage!=="de"){
+            document.getElementById("tile-detail-card")?.classList.add("hidden");
+        }else{
+            document.getElementById("ml-tile-detail-card")?.classList.add("hidden");
         }
 
         renderLanguageGrammarShell();
@@ -8971,8 +9007,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         if(typeof setStudyBoardLanguage==="function") setStudyBoardLanguage(code);
         currentGermanSentence="";
         currentSelectedPhrase="";
-        const detailCard=document.getElementById("tile-detail-card");
-        if(detailCard) detailCard.classList.add("hidden");
+        document.getElementById("tile-detail-card")?.classList.add("hidden");
+        document.getElementById("ml-tile-detail-card")?.classList.add("hidden");
         const tiles=document.getElementById("tiles-container");
         if(tiles) tiles.innerHTML=`<span id="parser-empty-message" class="text-slate-400 text-sm italic">Tiles will be generated here once you translate or enter a ${langConfig().name} phrase above...</span>`;
         document.getElementById("target-text").value="";
@@ -9274,100 +9310,133 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         return String(item?.label||fallbackRoleLabel(item?.role,"ja"));
     }
 
+    function closeMultilangDetailCard(){
+        document.getElementById("ml-tile-detail-card")?.classList.add("hidden");
+    }
+    window.closeMultilangDetailCard=closeMultilangDetailCard;
+
     function showMultilangTileDetail(item){
         const lang=currentStudyLanguage;
         if(lang==="de")return;
 
-        const card=document.getElementById("tile-detail-card");
-        const word=document.getElementById("detail-word");
-        const extraField=document.getElementById("detail-extra-field");
-        const translation=document.getElementById("detail-translation");
-        const translateBtn=document.getElementById("detail-translate-context-btn");
-        const explanation=document.getElementById("detail-explanation");
-        if(!card || !word || !translation || !explanation)return;
+        // Make absolutely sure the German Case/Gender detail card is never visible
+        // for Japanese or Spanish.
+        document.getElementById("tile-detail-card")?.classList.add("hidden");
+
+        const card=document.getElementById("ml-tile-detail-card");
+        const word=document.getElementById("ml-detail-word");
+        const f1Label=document.getElementById("ml-detail-field1-label");
+        const f1=document.getElementById("ml-detail-field1");
+        const f2Label=document.getElementById("ml-detail-field2-label");
+        const f2=document.getElementById("ml-detail-field2");
+        const f3Label=document.getElementById("ml-detail-field3-label");
+        const f3=document.getElementById("ml-detail-field3");
+        const translation=document.getElementById("ml-detail-translation");
+        const grammar=document.getElementById("ml-detail-grammar");
+        const note=document.getElementById("ml-detail-note");
+        if(!card || !word || !f1Label || !f1 || !f2Label || !f2 || !f3Label || !f3 || !translation || !grammar || !note)return;
 
         currentSelectedPhrase=String(item?.text||"");
         word.textContent=currentSelectedPhrase;
-        explanation.innerHTML="";
-        extraField?.classList.remove("hidden");
-        if(translateBtn){
-            translateBtn.classList.remove("hidden");
-            translateBtn.textContent="Translate in context";
-        }
+        note.innerHTML="";
+        grammar.classList.add("hidden");
+        grammar.textContent="";
 
         if(lang==="ja"){
-            document.getElementById("detail-title-label").textContent="Japanese Analysis:";
-            setDetailField(
-                "detail-case-label","detail-case",
-                "Function",
-                item?.label || japaneseLocalFunction(item)
-            );
-            setDetailField(
-                "detail-gender-label","detail-gender",
-                "Reading",
-                item?.reading || (/^[\u3040-\u30ff]+$/.test(String(item?.text||"")) ? String(item.text) : "")
-            );
-            setDetailField(
-                "detail-extra-label","detail-extra",
-                "Romaji",
-                item?.romaji || ""
-            );
-            document.getElementById("detail-translation-label").textContent="English meaning";
+            document.getElementById("ml-detail-title-label").textContent="Japanese Analysis:";
+            f1Label.textContent="Function";
+            f1.textContent=item?.label || japaneseLocalFunction(item) || "—";
 
-            if(item?.meaning){
-                translation.textContent=item.meaning;
-                translation.className="block text-sm font-bold text-emerald-700";
-            }else{
-                translation.textContent="Not translated yet.";
-                translation.className="block text-sm font-semibold text-slate-500 italic";
-            }
+            f2Label.textContent="Reading";
+            const reading=String(item?.reading||"").trim();
+            const kanaOnly=/^[\u3040-\u30ffー]+$/.test(String(item?.text||""));
+            f2.textContent=reading || (kanaOnly ? String(item.text) : "—");
+
+            f3Label.textContent="Romaji";
+            f3.textContent=String(item?.romaji||"").trim() || "—";
 
             if(item?.grammar){
-                const note=document.createElement("div");
-                note.className="rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-slate-700";
-                note.innerHTML=`<span class="font-bold text-rose-700">Grammar form:</span> ${escapeML(item.grammar)}`;
-                explanation.appendChild(note);
+                grammar.classList.remove("hidden");
+                grammar.innerHTML=`<span class="font-bold text-rose-700">Grammar form:</span> ${escapeML(item.grammar)}`;
             }
         }else{
-            document.getElementById("detail-title-label").textContent="Spanish Analysis:";
-            setDetailField(
-                "detail-case-label","detail-case",
-                "Role",
-                item?.label || fallbackRoleLabel(item?.role,"es")
-            );
-            setDetailField(
-                "detail-gender-label","detail-gender",
-                "Form / agreement",
-                item?.grammar || String(item?.label||"")
-            );
-            setDetailField(
-                "detail-extra-label","detail-extra",
-                "Base form",
-                item?.lemma || ""
-            );
-            document.getElementById("detail-translation-label").textContent="English meaning";
+            document.getElementById("ml-detail-title-label").textContent="Spanish Analysis:";
+            f1Label.textContent="Role";
+            f1.textContent=item?.label || fallbackRoleLabel(item?.role,"es") || "—";
 
-            if(item?.meaning){
-                translation.textContent=item.meaning;
-                translation.className="block text-sm font-bold text-emerald-700";
-            }else{
-                translation.textContent="Not translated yet.";
-                translation.className="block text-sm font-semibold text-slate-500 italic";
-            }
+            f2Label.textContent="Form / agreement";
+            f2.textContent=String(item?.grammar||"").trim() || "—";
+
+            f3Label.textContent="Base form";
+            f3.textContent=String(item?.lemma||"").trim() || "—";
         }
 
-        // A local parse can have less detail than an AI parse. Make that transparent
-        // rather than filling the card with irrelevant German fields.
-        if(!item?.meaning && !item?.grammar && !item?.lemma && !item?.reading && !item?.romaji){
-            const localNote=document.createElement("div");
-            localNote.className="text-[11px] text-slate-500";
-            localNote.textContent="Local parse shows structural information. Use AI Parse for richer morphology/readings, or Translate in context for the selected item.";
-            explanation.appendChild(localNote);
+        if(item?.meaning){
+            translation.textContent=item.meaning;
+            translation.className="block text-sm font-bold text-emerald-700";
+        }else{
+            translation.textContent="Not translated yet.";
+            translation.className="block text-sm font-semibold text-slate-500 italic";
+        }
+
+        const hasRichDetail=Boolean(
+            item?.meaning || item?.grammar || item?.lemma || item?.reading || item?.romaji
+        );
+        if(!hasRichDetail){
+            const p=document.createElement("div");
+            p.className="text-[11px] text-slate-500";
+            p.textContent=lang==="ja"
+                ? "Local parse shows the phrase/particle structure. AI Parse adds contextual readings, romaji, grammar form, and meaning."
+                : "Local parse shows word roles. AI Parse adds base forms, morphology/agreement, and contextual meaning.";
+            note.appendChild(p);
         }
 
         card.classList.remove("hidden");
         card.scrollIntoView({behavior:"smooth",block:"nearest"});
     }
+
+    window.translateMultilangSelectedPhraseInContext=async function(button){
+        const transText=document.getElementById("ml-detail-translation");
+        const phraseText=String(currentSelectedPhrase||"").trim();
+        const sentenceText=String(currentParserSentence()||"").trim();
+        if(!transText || !phraseText)return;
+
+        const languageName=langConfig().name;
+        const old=button?.textContent||"Translate in context";
+        if(button){button.disabled=true;button.textContent="Translating…";}
+        transText.textContent="Checking context…";
+        transText.className="block text-sm font-semibold text-blue-600 italic";
+
+        try{
+            if(!getActiveAIKey()){
+                throw new Error("Context translation needs an AI key. Add one in Settings.");
+            }
+
+            const prompt=`You are translating ONE selected ${languageName} word or phrase for an English-speaking learner.
+
+Selected ${languageName} word/phrase: "${phraseText}"
+Full ${languageName} sentence: "${sentenceText}"
+
+Return ONLY the concise English meaning of the selected item AS USED IN THIS SENTENCE.
+Do not translate the whole sentence.
+Do not give grammar explanations.
+Plain text only.`;
+
+            const translation=cleanAiExplanation(await callAI(prompt));
+            if(String(currentSelectedPhrase||"").trim()!==phraseText)return;
+
+            transText.textContent=translation;
+            transText.className="block text-sm font-bold text-emerald-700 animate-fadeIn";
+        }catch(e){
+            transText.textContent=(e&&e.message)?e.message:String(e);
+            transText.className="block text-sm font-semibold text-rose-600 italic";
+        }finally{
+            if(button){
+                button.disabled=false;
+                button.textContent=old;
+            }
+        }
+    };
 
     function renderMultilangTiles(items,sourceLabel,options={}){
         const box=document.getElementById("tiles-container");
@@ -9390,8 +9459,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
 
         updateNonGermanParserControls();
-        const detailCard=document.getElementById("tile-detail-card");
-        if(detailCard) detailCard.classList.add("hidden");
+        document.getElementById("tile-detail-card")?.classList.add("hidden");
+        document.getElementById("ml-tile-detail-card")?.classList.add("hidden");
         box.innerHTML="";
         if(!items.length){
             box.innerHTML=`<span class="text-slate-400 text-sm italic">No local parse items were found.</span>`;
