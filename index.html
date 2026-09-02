@@ -2081,9 +2081,9 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                     <!-- Messages Log -->
                     <div id="chat-messages-log" class="flex-grow overflow-y-auto pr-2 space-y-3 pb-3 text-xs flex flex-col">
                         <!-- Initial Message -->
-                        <div class="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[90%] self-start">
-                            <p class="font-bold mb-1 text-[10px] text-indigo-700">AI GRAMMAR TUTOR</p>
-                            Guten Tag! I can explain any grammatical structure or answer questions about the sentence you are typing or click on. Try asking me: <em>"Why is this Accusative?"</em> or <em>"Can you break down this sentence?"</em>
+                        <div id="ai-tutor-welcome" class="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[90%] self-start">
+                            <p id="ai-tutor-welcome-label" class="font-bold mb-1 text-[10px] text-indigo-700">AI GRAMMAR TUTOR</p>
+                            <span id="ai-tutor-welcome-text">Guten Tag! I can explain any German grammatical structure or answer questions about the sentence you are typing or click on. Try asking me: <em>"Why is this Accusative?"</em> or <em>"Can you break down this sentence?"</em></span>
                         </div>
                     </div>
 
@@ -6685,7 +6685,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(badge){
             badge.textContent=cfg.badge;
             badge.parentElement.style.background=currentStudyLanguage==="ja" ? "#f8fafc" : "#b8bec7";
-            badge.parentElement.style.color=currentStudyLanguage==="de" ? "#f59e0b" : (currentStudyLanguage==="ja" ? "#bc002d" : "#111");
+            badge.parentElement.style.color=currentStudyLanguage==="de" ? "#111111" : (currentStudyLanguage==="ja" ? "#bc002d" : "#111");
         }
         const title=document.getElementById("language-title");
         if(title){
@@ -6700,17 +6700,31 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const statusText=document.getElementById("api-status-text");
         const statusWrap=statusText?.parentElement;
         const settingsBtn=document.querySelector('button[title^="Settings"]');
+
+        // Keep service/API status readable against each flag-inspired banner.
         if(currentStudyLanguage==="ja"){
             if(statusText) statusText.style.color="#111827";
             if(statusWrap){
                 statusWrap.style.color="#111827";
-                statusWrap.style.background="rgba(255,255,255,.78)";
+                statusWrap.style.background="rgba(255,255,255,.82)";
                 statusWrap.style.borderColor="#cbd5e1";
             }
             if(settingsBtn){
                 settingsBtn.style.color="#111827";
-                settingsBtn.style.background="rgba(255,255,255,.82)";
+                settingsBtn.style.background="rgba(255,255,255,.86)";
                 settingsBtn.style.borderColor="#cbd5e1";
+            }
+        } else if(currentStudyLanguage==="es"){
+            if(statusText) statusText.style.color="#4a1717";
+            if(statusWrap){
+                statusWrap.style.color="#4a1717";
+                statusWrap.style.background="rgba(255,247,214,.92)";
+                statusWrap.style.borderColor="#8f1d22";
+            }
+            if(settingsBtn){
+                settingsBtn.style.color="#ffffff";
+                settingsBtn.style.background="rgba(122,16,20,.38)";
+                settingsBtn.style.borderColor="rgba(255,255,255,.34)";
             }
         } else {
             if(statusText) statusText.style.color="";
@@ -6723,6 +6737,20 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                 settingsBtn.style.color="";
                 settingsBtn.style.background="";
                 settingsBtn.style.borderColor="";
+            }
+        }
+
+        // Change the Tutor greeting/examples to the grammar of the selected language.
+        const tutorLabel=document.getElementById("ai-tutor-welcome-label");
+        const tutorText=document.getElementById("ai-tutor-welcome-text");
+        if(tutorLabel) tutorLabel.textContent=`${cfg.name.toUpperCase()} GRAMMAR TUTOR`;
+        if(tutorText){
+            if(currentStudyLanguage==="de"){
+                tutorText.innerHTML='Guten Tag! I can explain any German grammatical structure or answer questions about the sentence you are typing or click on. Try asking me: <em>"Why is this Accusative?"</em> or <em>"Can you break down this sentence?"</em>';
+            } else if(currentStudyLanguage==="es"){
+                tutorText.innerHTML='¡Hola! I can explain Spanish grammar or answer questions about the sentence you are typing or click on. Try asking me: <em>"Why is estar used here?"</em> or <em>"Why is this verb in the preterite?"</em>';
+            } else {
+                tutorText.innerHTML='こんにちは！ I can explain Japanese grammar or answer questions about the sentence you are typing or click on. Try asking me: <em>"Why is に used here?"</em> or <em>"Can you explain this verb form?"</em>';
             }
         }
 
