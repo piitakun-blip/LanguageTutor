@@ -2161,6 +2161,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                             <!-- LANGUAGE-SPECIFIC QUIZ VIEW -->
                             <div id="quiz-case-mode" class="hidden w-full space-y-4">
                                 <div id="quiz-second-header" class="text-xs text-indigo-600 font-bold tracking-wider uppercase">Grammar Challenge</div>
+                                <div id="quiz-generation-status" class="text-[10px] text-slate-400 font-semibold">Preparing question…</div>
 
                                 <div id="quiz-case-sentence-container" class="text-base font-bold text-slate-800 flex flex-wrap gap-1.5 justify-center items-center">
                                     <!-- Populated dynamically -->
@@ -5264,6 +5265,8 @@ Plain text only.`;
 
             if(header) header.textContent=ui.header;
             if(question) question.textContent=ui.question;
+            const status=document.getElementById("quiz-generation-status");
+            if(status) status.textContent=`Preparing ${meta.name} question…`;
             if(sentence) sentence.innerHTML=`<span class="text-slate-400 text-xs italic">${meta.name} question will appear here.</span>`;
             if(targetWord){
                 targetWord.textContent="";
@@ -5368,11 +5371,15 @@ Plain text only.`;
                 secondBtn.className="pb-2 px-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition";
                 flashMode.classList.remove("hidden");
                 secondMode.classList.add("hidden");
+                flashMode.style.display="";
+                secondMode.style.display="none";
             }else{
                 secondBtn.className="pb-2 px-4 border-b-2 border-blue-600 text-blue-600 font-bold transition";
                 flashBtn.className="pb-2 pr-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition";
                 secondMode.classList.remove("hidden");
                 flashMode.classList.add("hidden");
+                secondMode.style.display="";
+                flashMode.style.display="none";
             }
             initQuiz();
         }
@@ -5613,12 +5620,12 @@ Plain text only.`;
                 let parsed=[];
 
                 try{
-                    parsed=(typeof window.parseSpanishLocalForQuiz==="function")
-                        ? window.parseSpanishLocalForQuiz(sentence)
-                        : spanishQuizFallbackParse(sentence);
-                }catch(e){
-                    console.warn("Spanish quiz parser hook failed; using fallback parser.",e);
+                    // Quiz parsing is intentionally self-contained. This path does
+                    // not depend on the later multilingual parser IIFE.
                     parsed=spanishQuizFallbackParse(sentence);
+                }catch(e){
+                    console.warn("Spanish saved-item quiz parsing failed.",e);
+                    parsed=[];
                 }
 
                 (parsed||[]).filter(x=>x && x.role!=="punctuation").forEach(token=>{
@@ -6056,6 +6063,22 @@ Plain text only.`;
             const items=getStudyItems(quizLanguage);
             updateQuizLanguageUI();
 
+            const flashMode=document.getElementById("quiz-flashcard-mode");
+            const languageMode=document.getElementById("quiz-case-mode");
+            const generationStatus=document.getElementById("quiz-generation-status");
+
+            if(quizType==="language"){
+                languageMode?.classList.remove("hidden");
+                flashMode?.classList.add("hidden");
+                if(languageMode) languageMode.style.display="";
+                if(flashMode) flashMode.style.display="none";
+            }else{
+                flashMode?.classList.remove("hidden");
+                languageMode?.classList.add("hidden");
+                if(flashMode) flashMode.style.display="";
+                if(languageMode) languageMode.style.display="none";
+            }
+
             // Translation Flashcards require saved Study Board material.
             // The language-specific grammar challenge does not: it falls back to
             // curated built-in practice when no saved items are available.
@@ -6094,19 +6117,33 @@ Plain text only.`;
             }
 
             const sentenceBox=document.getElementById("quiz-case-sentence-container");
-            let candidates=[];
+            let savedCandidates=[];
             try{
-                candidates=languageQuizCandidates(items,quizLanguage) || [];
+                savedCandidates=languageQuizCandidates(items,quizLanguage) || [];
             }catch(e){
                 console.error(`${quizLanguage} quiz generation failed from saved items:`,e);
-                candidates=[];
+                savedCandidates=[];
             }
 
-            // Guaranteed language-specific fallback. This makes Forms & Functions,
-            // Particles & Readings, and Case Guesser usable even before the learner
-            // has saved vocabulary, and prevents an empty arena.
-            if(!candidates.length){
-                candidates=builtInLanguageQuizCandidates(quizLanguage);
+            const builtInCandidates=builtInLanguageQuizCandidates(quizLanguage) || [];
+            let candidates=[];
+
+            if(quizLanguage==="es" || quizLanguage==="ja"){
+                // Keep saved-item practice first, but always include a reliable
+                // language-specific bank so the arena can never be blank.
+                candidates=[...savedCandidates,...builtInCandidates];
+            }else{
+                candidates=savedCandidates.length ? savedCandidates : builtInCandidates;
+            }
+
+            if(generationStatus){
+                const savedCount=savedCandidates.length;
+                generationStatus.textContent=
+                    quizLanguage==="es"
+                        ? `Spanish question pool: ${savedCount} from your saved items + ${builtInCandidates.length} built-in`
+                        : quizLanguage==="ja"
+                            ? `Japanese question pool: ${savedCount} from your saved items + ${builtInCandidates.length} built-in`
+                            : `${savedCount || builtInCandidates.length} German case questions available`;
             }
 
             if(!candidates.length){
@@ -6137,9 +6174,26 @@ Plain text only.`;
             const quizQuestion=document.getElementById("quiz-second-question-text");
             if(quizHeader) quizHeader.textContent=q.header;
             if(quizQuestion) quizQuestion.textContent=q.question;
-            document.getElementById("quiz-case-target-word").textContent=q.focus;
+
+            const targetWord=document.getElementById("quiz-case-target-word");
+            if(targetWord){
+                targetWord.textContent=q.focus;
+                targetWord.classList.add("hidden");
+            }
+
             renderHighlightedQuizSentence(q.sentence,q.focus);
             setQuizChoices(q.choices,q.answer);
+
+            // Last-mile visibility enforcement for Safari/mobile.
+            if(languageMode){
+                languageMode.classList.remove("hidden");
+                languageMode.style.display="block";
+            }
+            document.querySelectorAll("#quiz-case-mode .choice-btn").forEach(btn=>{
+                btn.style.display="block";
+                btn.style.visibility="visible";
+                btn.style.opacity="1";
+            });
         }
 
         function revealFlashcard(){
