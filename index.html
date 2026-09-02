@@ -5202,11 +5202,20 @@ Plain text only.`;
 
         /* ---------- Study List / Quiz Arena ---------- */
 
+        function syncQuizLanguageToTutor(){
+            const active=activeAppLanguage();
+            if(STUDY_LANGUAGE_META[active]) studyBoardLanguage=active;
+            return studyBoardLanguage;
+        }
+
         function setVocabTab(tab){
             const listBtn=document.getElementById("vocab-tab-list-btn");
             const quizBtn=document.getElementById("vocab-tab-quiz-btn");
             const listView=document.getElementById("vocab-tab-list-view");
             const quizView=document.getElementById("vocab-tab-quiz-view");
+
+            syncQuizLanguageToTutor();
+            updateQuizLanguageUI();
 
             if(tab==="list"){
                 listBtn.className="px-3.5 py-1.5 rounded-lg transition duration-150 bg-white text-blue-700 shadow-sm";
@@ -5223,7 +5232,8 @@ Plain text only.`;
         }
 
         function updateQuizLanguageUI(){
-            const meta=STUDY_LANGUAGE_META[studyBoardLanguage];
+            const quizLanguage=syncQuizLanguageToTutor();
+            const meta=STUDY_LANGUAGE_META[quizLanguage];
             const targetLabel=document.getElementById("quiz-target-language-label");
             const secondLabel=document.getElementById("quiz-type-second-label");
             const secondHeader=document.getElementById("quiz-second-header");
@@ -5239,21 +5249,21 @@ Plain text only.`;
                     tab:"Case Guesser",
                     header:"German Case Guesser",
                     question:"What grammatical case is the highlighted phrase?",
-                    note:"The Case Guesser uses only phrases for which the German local parser returns one exact case."
+                    note:"German practice focuses on the four-case system because case is central to articles, pronouns, adjective endings, and noun-phrase function."
                 },
                 es:{
-                    tab:"Grammar Function",
-                    header:"Spanish Grammar Function",
-                    question:"What is the highlighted form doing in this sentence?",
-                    note:"The Spanish challenge uses clear functions such as subject pronoun, direct/indirect-object pronoun, article/determiner, preposition, conjunction, and verb."
+                    tab:"Forms & Functions",
+                    header:"Spanish Forms & Functions",
+                    question:"What is the highlighted Spanish form doing here?",
+                    note:"Spanish practice focuses on pronoun function, clitics, articles/determiners, prepositions, conjunctions, and verb forms—not German-style case labels."
                 },
                 ja:{
-                    tab:"Particle Function",
-                    header:"Japanese Particle Function",
-                    question:"Which common function best matches the highlighted particle?",
-                    note:"The Japanese challenge focuses on particle function rather than German-style case or gender labels."
+                    tab:"Particles & Readings",
+                    header:"Japanese Particles & Readings",
+                    question:"What does the highlighted Japanese particle do or how is it pronounced?",
+                    note:"Japanese practice focuses on particle function and particle pronunciation, especially は / へ / を—not German-style case or noun gender."
                 }
-            }[studyBoardLanguage];
+            }[quizLanguage];
 
             if(secondLabel) secondLabel.textContent=ui.tab;
             if(secondHeader) secondHeader.textContent=ui.header;
@@ -5265,6 +5275,8 @@ Plain text only.`;
         }
 
         function setQuizType(type){
+            syncQuizLanguageToTutor();
+            updateQuizLanguageUI();
             quizType=type==="flashcard" ? "flashcard" : "language";
             const flashBtn=document.getElementById("quiz-type-flash-btn");
             const secondBtn=document.getElementById("quiz-type-case-btn");
@@ -5377,7 +5389,7 @@ Plain text only.`;
             };
             const allChoices=Object.entries(labels).map(([value,label])=>({value,label}));
 
-            function addCandidate(item,sentence,word,role){
+            function addCandidate(item,sentence,word,role,explanation=""){
                 if(!role || !labels[role])return;
                 const correct={value:role,label:labels[role]};
                 const wrong=shuffleQuizArray(allChoices.filter(x=>x.value!==role)).slice(0,3);
@@ -5385,32 +5397,49 @@ Plain text only.`;
                     item,sentence,focus:word,
                     answer:role,
                     choices:[correct,...wrong],
-                    header:"Spanish Grammar Function",
-                    question:"What is the highlighted form doing in this sentence?",
-                    explanation:`“${word}” is best treated here as: ${labels[role]}.`
+                    header:"Spanish Forms & Functions",
+                    question:"What is the highlighted Spanish form doing here?",
+                    explanation:explanation || `“${word}” is functioning as ${labels[role].toLowerCase()} here.`
                 });
             }
 
             items.forEach(item=>{
                 const sentence=studyItemTarget(item);
                 const words=sentence.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/g)||[];
+
                 words.forEach(word=>{
                     const low=word.toLowerCase();
-                    let role="";
+                    let role="", explanation="";
 
-                    // Use only locally reliable distinctions. Forms such as la/los/las
-                    // can be article OR object pronoun, so the no-AI quiz does not
-                    // force a guess for those ambiguous spellings.
-                    if(ES_UNAMBIGUOUS_ARTICLES.has(low)) role="article";
-                    else if(ES_SUBJECT_PRONOUNS.has(low)) role="subject_pronoun";
-                    else if(low==="lo") role="direct_object";
-                    else if(ES_INDIRECT_OBJECT_CLITICS.has(low)) role="indirect_object";
-                    else if(ES_AMBIGUOUS_CLITICS.has(low)) role="clitic";
-                    else if(ES_PREPS.has(low)) role="preposition";
-                    else if(ES_CONJUNCTIONS.has(low)) role="conjunction";
-                    else if(ES_COMMON_VERBS.has(low)) role="verb";
+                    if(ES_UNAMBIGUOUS_ARTICLES.has(low)){
+                        role="article";
+                        explanation=`“${word}” is an article/determiner introducing or quantifying a noun phrase.`;
+                    }else if(ES_SUBJECT_PRONOUNS.has(low)){
+                        role="subject_pronoun";
+                        explanation=`“${word}” is a subject pronoun identifying who performs or experiences the predicate.`;
+                    }else if(low==="lo"){
+                        role="direct_object";
+                        explanation="“lo” is the unambiguous masculine-singular direct-object clitic.";
+                    }else if(ES_INDIRECT_OBJECT_CLITICS.has(low)){
+                        role="indirect_object";
+                        explanation=`“${word}” is an indirect-object clitic, commonly marking the recipient/beneficiary.`;
+                    }else if(ES_AMBIGUOUS_CLITICS.has(low)){
+                        role="clitic";
+                        explanation=`“${word}” is a clitic pronoun; exact reflexive/direct/indirect function depends on sentence context.`;
+                    }else if(ES_PREPS.has(low)){
+                        role="preposition";
+                        explanation=`“${word}” is a preposition linking its complement to the rest of the sentence.`;
+                    }else if(ES_CONJUNCTIONS.has(low)){
+                        role="conjunction";
+                        explanation=`“${word}” functions as a conjunction connecting words, phrases, or clauses.`;
+                    }else if(ES_COMMON_VERBS.has(low)){
+                        role="verb";
+                        explanation=`“${word}” is a conjugated verb form.`;
+                    }
 
-                    addCandidate(item,sentence,word,role);
+                    // la / los / las are intentionally excluded here without AI context:
+                    // they can be articles or direct-object clitics.
+                    addCandidate(item,sentence,word,role,explanation);
                 });
             });
             return candidates;
@@ -5439,43 +5468,67 @@ Plain text only.`;
         function japaneseQuizCandidates(items){
             const candidates=[];
             const allEntries=Object.entries(JA_QUIZ_PARTICLE_LABELS);
+            const specialReadings={
+                "は":{answer:"wa",label:"わ (wa)",wrong:["は (ha)","が (ga)","を (o)"]},
+                "へ":{answer:"e",label:"え (e)",wrong:["へ (he)","に (ni)","で (de)"]},
+                "を":{answer:"o",label:"お (o)",wrong:["を (wo)","わ (wa)","に (ni)"]}
+            };
 
             items.forEach(item=>{
                 const sentence=studyItemTarget(item);
                 const particles=sentence.match(/では|には|から|まで|より|って|は|が|を|に|で|へ|と|も|の|ね|よ/g)||[];
 
                 particles.forEach(particle=>{
-                    if(!JA_QUIZ_PARTICLE_LABELS[particle])return;
-                    const correct={value:particle,label:JA_QUIZ_PARTICLE_LABELS[particle]};
+                    const functionLabel=JA_QUIZ_PARTICLE_LABELS[particle];
+                    if(!functionLabel)return;
+
+                    const correct={value:`fn:${particle}`,label:functionLabel};
                     const wrong=shuffleQuizArray(
                         allEntries
                             .filter(([p])=>p!==particle)
-                            .map(([p,label])=>({value:p,label}))
+                            .map(([p,label])=>({value:`fn:${p}`,label}))
                     ).slice(0,3);
 
                     candidates.push({
                         item,sentence,focus:particle,
-                        answer:particle,
+                        answer:`fn:${particle}`,
                         choices:[correct,...wrong],
                         header:"Japanese Particle Function",
-                        question:"Which common function best matches the highlighted particle?",
-                        explanation:`${particle} commonly functions as: ${JA_QUIZ_PARTICLE_LABELS[particle]}. The exact interpretation can depend on sentence context.`
+                        question:"What is the highlighted particle doing in this sentence?",
+                        explanation:`${particle} commonly functions as: ${functionLabel}. Context can refine the exact interpretation.`
                     });
+
+                    const reading=specialReadings[particle];
+                    if(reading){
+                        const readingChoices=[
+                            {value:`read:${reading.answer}`,label:reading.label},
+                            ...reading.wrong.map((label,index)=>({value:`read:wrong${index}`,label}))
+                        ];
+                        candidates.push({
+                            item,sentence,focus:particle,
+                            answer:`read:${reading.answer}`,
+                            choices:readingChoices,
+                            header:"Japanese Particle Reading",
+                            question:"How is this highlighted particle pronounced here?",
+                            explanation:`As a grammatical particle, ${particle} is pronounced ${reading.label}.`
+                        });
+                    }
                 });
             });
             return candidates;
         }
 
-        function languageQuizCandidates(items){
-            if(studyBoardLanguage==="de") return germanQuizCandidates(items);
-            if(studyBoardLanguage==="es") return spanishQuizCandidates(items);
+        function languageQuizCandidates(items,language=syncQuizLanguageToTutor()){
+            if(language==="de") return germanQuizCandidates(items);
+            if(language==="es") return spanishQuizCandidates(items);
             return japaneseQuizCandidates(items);
         }
 
         function initQuiz(){
+            const quizLanguage=syncQuizLanguageToTutor();
             const emptyState=document.getElementById("quiz-empty-state");
             const activeSuite=document.getElementById("quiz-active-suite");
-            const items=getStudyItems();
+            const items=getStudyItems(quizLanguage);
             updateQuizLanguageUI();
 
             if(!items.length){
@@ -5506,7 +5559,7 @@ Plain text only.`;
                 return;
             }
 
-            const candidates=languageQuizCandidates(items);
+            const candidates=languageQuizCandidates(items,quizLanguage);
             const sentenceBox=document.getElementById("quiz-case-sentence-container");
 
             if(!candidates.length){
@@ -5515,7 +5568,7 @@ Plain text only.`;
                     es:"No locally unambiguous Spanish grammar-function item was found in this Español list yet. Translation Flashcards are still available.",
                     ja:"No supported Japanese particle was found in this 日本語 list yet. Save a sentence containing a particle such as は, が, を, に, で, or へ."
                 };
-                if(sentenceBox) sentenceBox.innerHTML=`<span class="text-rose-600 italic text-xs">${escapeHtml(messages[studyBoardLanguage])}</span>`;
+                if(sentenceBox) sentenceBox.innerHTML=`<span class="text-rose-600 italic text-xs">${escapeHtml(messages[quizLanguage])}</span>`;
                 document.getElementById("quiz-second-question-text").textContent="";
                 document.querySelectorAll(".choice-btn").forEach(btn=>{
                     btn.disabled=true;
@@ -5529,8 +5582,10 @@ Plain text only.`;
             quizSecondAnswer=q.answer;
             quizSecondExplanation=q.explanation;
 
-            document.getElementById("quiz-second-header").textContent=q.header;
-            document.getElementById("quiz-second-question-text").textContent=q.question;
+            const quizHeader=document.getElementById("quiz-second-header");
+            const quizQuestion=document.getElementById("quiz-second-question-text");
+            if(quizHeader) quizHeader.textContent=q.header;
+            if(quizQuestion) quizQuestion.textContent=q.question;
             document.getElementById("quiz-case-target-word").textContent=q.focus;
             renderHighlightedQuizSentence(q.sentence,q.focus);
             setQuizChoices(q.choices,q.answer);
@@ -9049,6 +9104,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         try{ safeStorageSet("deutschlerner_study_language",code); }catch(e){}
         updateVisibleLanguageUI();
         if(typeof setStudyBoardLanguage==="function") setStudyBoardLanguage(code);
+        if(typeof updateQuizLanguageUI==="function") updateQuizLanguageUI();
         currentGermanSentence="";
         currentSelectedPhrase="";
         document.getElementById("tile-detail-card")?.classList.add("hidden");
@@ -11499,3 +11555,4 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
 </body>
 </html>
+                            
