@@ -6350,7 +6350,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     const LANGUAGE_MODES = {
         de: {
             code:"de", locale:"de-DE", name:"German", native:"Deutsch",
-            title:"DeutschLerner", badge:"DE",
+            title:"DeutschTutor", badge:"DE",
             subtitle:"Interactive German Grammar & Translation Companion",
             header:"linear-gradient(180deg,#111111 0%,#111111 72%,#dd0000 72%,#dd0000 86%,#ffcc00 86%,#ffcc00 100%)",
             titleColor:"#fbbf24", subtitleColor:"#fde68a",
@@ -6358,7 +6358,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         },
         es: {
             code:"es", locale:"es-ES", name:"Spanish", native:"Español",
-            title:"EspañolLerner", badge:"ES",
+            title:"Tutor de Español", badge:"ES",
             subtitle:"Interactive Spanish Grammar & Translation Companion",
             header:"linear-gradient(180deg,#aa151b 0%,#aa151b 28%,#f1bf00 28%,#f1bf00 78%,#aa151b 78%,#aa151b 100%)",
             titleColor:"#fff7d6", subtitleColor:"#fff7d6",
@@ -6366,7 +6366,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         },
         ja: {
             code:"ja", locale:"ja-JP", name:"Japanese", native:"日本語",
-            title:"日本語Lerner", badge:"JP",
+            title:"日本語チューター", badge:"JP",
             subtitle:"Interactive Japanese Grammar & Translation Companion",
             header:"radial-gradient(circle at 18% 50%,#bc002d 0 24px,transparent 25px),linear-gradient(180deg,#ffffff 0%,#ffffff 88%,#bc002d 88%,#bc002d 100%)",
             titleColor:"#bc002d", subtitleColor:"#475569",
@@ -6685,7 +6685,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(badge){
             badge.textContent=cfg.badge;
             badge.parentElement.style.background=currentStudyLanguage==="ja" ? "#f8fafc" : "#b8bec7";
-            badge.parentElement.style.color=currentStudyLanguage==="ja" ? "#bc002d" : "#111";
+            badge.parentElement.style.color=currentStudyLanguage==="de" ? "#f59e0b" : (currentStudyLanguage==="ja" ? "#bc002d" : "#111");
         }
         const title=document.getElementById("language-title");
         if(title){
@@ -6695,6 +6695,36 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         }
         const sub=document.getElementById("language-subtitle");
         if(sub){ sub.textContent=cfg.subtitle; sub.style.color=cfg.subtitleColor; }
+
+        // Japanese header is mostly white, so make the service status and settings control dark.
+        const statusText=document.getElementById("api-status-text");
+        const statusWrap=statusText?.parentElement;
+        const settingsBtn=document.querySelector('button[title^="Settings"]');
+        if(currentStudyLanguage==="ja"){
+            if(statusText) statusText.style.color="#111827";
+            if(statusWrap){
+                statusWrap.style.color="#111827";
+                statusWrap.style.background="rgba(255,255,255,.78)";
+                statusWrap.style.borderColor="#cbd5e1";
+            }
+            if(settingsBtn){
+                settingsBtn.style.color="#111827";
+                settingsBtn.style.background="rgba(255,255,255,.82)";
+                settingsBtn.style.borderColor="#cbd5e1";
+            }
+        } else {
+            if(statusText) statusText.style.color="";
+            if(statusWrap){
+                statusWrap.style.color="";
+                statusWrap.style.background="";
+                statusWrap.style.borderColor="";
+            }
+            if(settingsBtn){
+                settingsBtn.style.color="";
+                settingsBtn.style.background="";
+                settingsBtn.style.borderColor="";
+            }
+        }
 
         const sel=document.getElementById("study-language-select");
         if(sel) sel.value=currentStudyLanguage;
