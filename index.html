@@ -1990,7 +1990,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
                         <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499c.197-.39 1.14-.39 1.337 0l1.851 3.665 4.062.535c.446.059.625.597.287.904l-2.985 2.7.777 4.025c.086.444-.394.79-.769.56l-3.559-1.92-3.559 1.92a.66.66 0 01-.769-.56l.777-4.025-2.985-2.7c-.338-.307-.159-.845.287-.904l4.062-.535 1.851-3.665z"></path></svg>
-                        Study Board & Practice Arena
+                        <span id="study-board-title">Deutsch Study Board & Practice Arena</span>
                     </h3>
 
                     <!-- Sub-tabs within Study Board -->
@@ -2004,20 +2004,11 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                     </div>
                 </div>
 
-                <p class="text-xs text-slate-400">
-                    Saved items are separated by language. The Study List and Quiz Arena use only the language tab selected below.
-                </p>
-
-                <div id="study-board-language-tabs" class="grid grid-cols-3 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1" role="tablist" aria-label="Study language">
-                    <button type="button" id="study-board-lang-de" onclick="setStudyBoardLanguage('de')" class="rounded-lg px-2 py-2 text-xs font-bold transition" aria-selected="true">
-                        Deutsch <span id="study-count-de" class="ml-1 text-[9px] opacity-70">0</span>
-                    </button>
-                    <button type="button" id="study-board-lang-es" onclick="setStudyBoardLanguage('es')" class="rounded-lg px-2 py-2 text-xs font-bold transition" aria-selected="false">
-                        Español <span id="study-count-es" class="ml-1 text-[9px] opacity-70">0</span>
-                    </button>
-                    <button type="button" id="study-board-lang-ja" onclick="setStudyBoardLanguage('ja')" class="rounded-lg px-2 py-2 text-xs font-bold transition" aria-selected="false">
-                        日本語 <span id="study-count-ja" class="ml-1 text-[9px] opacity-70">0</span>
-                    </button>
+                <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                    <p id="study-board-language-note" class="text-xs text-slate-500">
+                        This board belongs to the Deutsch tutor. Items saved here stay in Deutsch.
+                    </p>
+                    <span id="study-board-language-badge" class="shrink-0 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white">DE</span>
                 </div>
 
                 <!-- TAB 1: My Study List View -->
@@ -3447,8 +3438,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                 try {
                     vocabularyList = normalizeVocabularyList(JSON.parse(stored));
                     persistVocabulary();
-                    const savedStudyLang=localStorage.getItem(STUDY_BOARD_LANGUAGE_KEY);
-                    studyBoardLanguage=STUDY_LANGUAGE_META[savedStudyLang] ? savedStudyLang : "de";
+                    studyBoardLanguage=activeAppLanguage();
                     renderVocabulary();
                 } catch (e) {
                     console.error("Error reading saved vocabulary from local storage:", e);
@@ -4405,6 +4395,7 @@ Rules:
 
             persistVocabulary();
             studyBoardLanguage="de";
+            renderStudyLanguageIndicator();
             renderVocabulary();
             return true;
         }
@@ -4816,7 +4807,6 @@ Plain text only.`;
         }
 
         // ---------- Language-scoped Study Board ----------
-        const STUDY_BOARD_LANGUAGE_KEY = "languagetutor_study_board_language_v1";
         const STUDY_LANGUAGE_META = {
             de:{name:"Deutsch",badge:"DE",locale:"de-DE",targetLabel:"German Sentence"},
             es:{name:"Español",badge:"ES",locale:"es-ES",targetLabel:"Spanish Sentence"},
@@ -4866,26 +4856,28 @@ Plain text only.`;
             return vocabularyList.filter(item=>studyItemLanguage(item)===language);
         }
 
-        function renderStudyLanguageTabs(){
-            ["de","es","ja"].forEach(code=>{
-                const btn=document.getElementById("study-board-lang-"+code);
-                const count=document.getElementById("study-count-"+code);
-                const active=code===studyBoardLanguage;
-                if(count) count.textContent=String(getStudyItems(code).length);
-                if(btn){
-                    btn.setAttribute("aria-selected",active?"true":"false");
-                    btn.className="rounded-lg px-2 py-2 text-xs font-bold transition " +
-                        (active
-                            ? "bg-white text-indigo-700 shadow-sm border border-slate-200"
-                            : "text-slate-500 hover:text-slate-800");
-                }
-            });
+        function renderStudyLanguageIndicator(){
+            const meta=STUDY_LANGUAGE_META[studyBoardLanguage];
+            const title=document.getElementById("study-board-title");
+            const note=document.getElementById("study-board-language-note");
+            const badge=document.getElementById("study-board-language-badge");
+
+            if(title) title.textContent=`${meta.name} Study Board & Practice Arena`;
+            if(note) note.textContent=`This board belongs to the ${meta.name} tutor. Items saved here stay in ${meta.name}.`;
+            if(badge){
+                badge.textContent=meta.badge;
+                const classes={
+                    de:"shrink-0 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white",
+                    es:"shrink-0 rounded-lg bg-red-100 px-2 py-1 text-[10px] font-bold text-red-700",
+                    ja:"shrink-0 rounded-lg bg-rose-100 px-2 py-1 text-[10px] font-bold text-rose-700"
+                };
+                badge.className=classes[studyBoardLanguage];
+            }
         }
 
         function setStudyBoardLanguage(code){
-            if(!STUDY_LANGUAGE_META[code]) code="de";
+            if(!STUDY_LANGUAGE_META[code]) code=activeAppLanguage();
             studyBoardLanguage=code;
-            try{ localStorage.setItem(STUDY_BOARD_LANGUAGE_KEY,code); }catch(e){}
 
             quizScore=0;
             quizTotal=0;
@@ -4893,7 +4885,7 @@ Plain text only.`;
             quizSecondAnswer="";
             updateQuizScoreboard();
 
-            renderStudyLanguageTabs();
+            renderStudyLanguageIndicator();
             renderVocabulary();
             updateQuizLanguageUI();
 
@@ -4939,8 +4931,7 @@ Plain text only.`;
 
             persistVocabulary();
             studyBoardLanguage=language;
-            try{ localStorage.setItem(STUDY_BOARD_LANGUAGE_KEY,language); }catch(e){}
-            renderStudyLanguageTabs();
+            renderStudyLanguageIndicator();
             renderVocabulary();
 
             const saveBtn=document.getElementById("save-vocab-btn");
@@ -4964,10 +4955,13 @@ Plain text only.`;
             const countEl=document.getElementById("vocab-count-indicator");
             if(!container)return;
 
+            const tutorLanguage=activeAppLanguage();
+            if(STUDY_LANGUAGE_META[tutorLanguage]) studyBoardLanguage=tutorLanguage;
+
             const meta=STUDY_LANGUAGE_META[studyBoardLanguage];
             const items=getStudyItems();
 
-            renderStudyLanguageTabs();
+            renderStudyLanguageIndicator();
             updateQuizLanguageUI();
 
             container.innerHTML="";
