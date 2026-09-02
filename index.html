@@ -2511,11 +2511,24 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         
 
                         <!-- Quick Reference Table: Definite & Indefinite Articles -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 space-y-4">
-                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84a50.58 50.57 0 00-2.657.814m-15.482 0A50.697 50.57 0 0112 13.489a50.702 50.57 0 017.74-2.528M12 15.75v5.25"></path></svg>
-                    Article Reference
-                </h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5">
+                    <button type="button"
+                            id="article-reference-toggle"
+                            onclick="toggleGermanArticleReference()"
+                            aria-expanded="false"
+                            aria-controls="article-reference-body"
+                            class="w-full flex items-center justify-between gap-3 text-left rounded-xl px-1 py-1.5">
+                        <span class="flex items-center gap-2 min-w-0">
+                            <svg class="w-5 h-5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84a50.58 50.58 0 00-2.657.814m-15.482 0A50.697 50.57 0 0112 13.489a50.702 50.57 0 017.74-2.528M12 15.75v5.25"></path></svg>
+                            <span>
+                                <span class="block text-base font-bold text-slate-800">Article Reference</span>
+                                <span id="article-reference-toggle-label" class="block text-[10px] font-semibold text-indigo-600 mt-0.5">Show reference tables</span>
+                            </span>
+                        </span>
+                        <span id="article-reference-arrow" class="text-slate-400 text-lg font-bold shrink-0">⌄</span>
+                    </button>
+
+                    <div id="article-reference-body" class="hidden mt-4 space-y-4 animate-fadeIn">
 
                 <!-- Table for Definite Articles (der, die, das) -->
                 <div class="space-y-3">
@@ -2613,6 +2626,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                     <span class="font-bold block">💡 Easy German Gender Shortcut:</span>
                     <p>In German, all nouns have genders (masculine 🔵, feminine 🔴, or neuter 🟢). When nouns become plural, they all use **the same articles and pronouns as feminine nouns** in the Nominative and Accusative (e.g., *die* Kinder), but require specific plural-ending changes in the Dative (*den* Kindern).</p>
                 </div>
+                    </div>
             </div>
                     
                         
@@ -6607,6 +6621,22 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             ruleEl.textContent = note;
         }
 
+        function toggleGermanArticleReference(forceOpen) {
+            const body = document.getElementById("article-reference-body");
+            const button = document.getElementById("article-reference-toggle");
+            const label = document.getElementById("article-reference-toggle-label");
+            const arrow = document.getElementById("article-reference-arrow");
+            if (!body || !button) return;
+
+            const currentlyOpen = !body.classList.contains("hidden");
+            const opening = typeof forceOpen === "boolean" ? forceOpen : !currentlyOpen;
+
+            body.classList.toggle("hidden", !opening);
+            button.setAttribute("aria-expanded", opening ? "true" : "false");
+            if (label) label.textContent = opening ? "Hide reference tables" : "Show reference tables";
+            if (arrow) arrow.textContent = opening ? "⌃" : "⌄";
+        }
+
         // Toggle Grammar Grammar Tools visibility
         function setGrammarMainTab(name) {
             const names = ["verbs", "cases", "articles", "adjectives"];
@@ -7057,9 +7087,9 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                     <p class="text-[11px] text-slate-500 mt-1">Enter a dictionary-form verb. Common ichidan, godan, and irregular patterns are handled locally.</p>
                   </div>
                   <div class="ml-helper-card space-y-3">
-                    <label class="ml-field">Dictionary form<input id="ja-verb-input" class="ml-input" value="食べる" placeholder="e.g. 食べる, 行く, 読む"></label>
-                    <label class="case-builder-language-check"><input id="ja-verb-english" type="checkbox"><span>Verb entered in English</span></label>
-                    <button class="ml-action" onclick="runJapaneseVerbTool()">Show forms</button>
+                    <label class="ml-field">Dictionary form<input id="ja-verb-input" class="ml-input" value="食べる" placeholder="食べる / taberu / eat"></label>
+                    <div class="text-[10px] text-slate-500">Uses the <strong>Japanese grammar input</strong> mode above.</div>
+                    <button class="ml-action" onclick="runJapaneseVerbTool(this)">Show forms</button>
                     <div id="ja-verb-status" class="text-[11px] text-slate-500"></div>
                   </div>
                   <div id="ja-verb-result" class="hidden ml-helper-result"></div>
@@ -7070,8 +7100,10 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                     <p class="text-[11px] text-slate-500 mt-1">Practice present, negative, past, and past-negative forms of い- and な-adjectives.</p>
                   </div>
                   <div class="ml-helper-card space-y-3">
-                    <label class="ml-field">Adjective<input id="ja-adj-input" class="ml-input" value="高い" oninput="renderJapaneseAdjective()"></label>
-                    <label class="ml-field">Type<select id="ja-adj-type" class="ml-input" onchange="renderJapaneseAdjective()"><option value="i">い-adjective</option><option value="na">な-adjective</option></select></label>
+                    <label class="ml-field">Adjective<input id="ja-adj-input" class="ml-input" value="高い" placeholder="高い / takai / high"></label>
+                    <label class="ml-field">Type<select id="ja-adj-type" class="ml-input"><option value="i">い-adjective</option><option value="na">な-adjective</option></select></label>
+                    <div class="text-[10px] text-slate-500">Uses the <strong>Japanese grammar input</strong> mode above.</div>
+                    <button type="button" class="ml-action" onclick="renderJapaneseAdjective(this)">Show adjective forms</button>
                   </div>
                   <div id="ja-adj-result" class="ml-helper-result"></div>
                   <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese verb and adjective forms','ja-verb-result',this)">✨ Ask AI about these forms</button>
@@ -7099,15 +7131,16 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
                   <div class="ml-helper-card space-y-3">
                     <div class="text-sm font-bold text-slate-800">Try this particle in a sentence</div>
+                    <div class="text-[10px] text-slate-500">These fields use the <strong>Japanese grammar input</strong> mode above.</div>
                     <div class="ml-grid-2">
                       <label class="ml-field">Phrase before the particle
-                        <input id="ja-particle-try-left" class="ml-input" value="私" placeholder="e.g. 私">
+                        <input id="ja-particle-try-left" class="ml-input" value="私" placeholder="私 / watashi / I">
                       </label>
                       <label class="ml-field">Rest of the sentence
-                        <input id="ja-particle-try-right" class="ml-input" value="学生です" placeholder="e.g. 学生です">
+                        <input id="ja-particle-try-right" class="ml-input" value="学生です" placeholder="学生です / gakusei desu / am a student">
                       </label>
                     </div>
-                    <button type="button" class="ml-action" onclick="renderJapaneseParticlePractice()">Build with selected particle</button>
+                    <button type="button" class="ml-action" onclick="renderJapaneseParticlePractice(this)">Build with selected particle</button>
                   </div>
                   <div id="ja-particle-practice-result" class="hidden ml-helper-result"></div>
                   <div class="flex flex-wrap gap-2">
@@ -7123,15 +7156,64 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                   <div class="ml-helper-card">
                     <label class="ml-field">Role
                       <select id="ja-role" class="ml-input" onchange="renderJapaneseRole()">
-                        <option value="topic">topic</option><option value="subject">subject / new focus</option>
-                        <option value="object">direct object</option><option value="destination">destination / target</option>
-                        <option value="action-place">place where an action happens</option><option value="direction">direction toward</option>
-                        <option value="companion">with a person</option><option value="possession">possession / noun modifier</option>
-                        <option value="source">source / from</option><option value="endpoint">endpoint / until</option>
+                        <option value="topic">topic → は</option><option value="subject">subject / new focus → が</option>
+                        <option value="object">direct object → を</option><option value="destination">destination / target → に</option>
+                        <option value="action-place">place where an action happens → で</option><option value="direction">direction toward → へ</option>
+                        <option value="companion">with a person → と</option><option value="possession">possession / noun modifier → の</option>
+                        <option value="source">source / from → から</option><option value="endpoint">endpoint / until → まで</option>
                       </select>
                     </label>
                   </div>
                   <div id="ja-role-result" class="ml-helper-result"></div>
+
+                  <div class="grammar-topic-divider"></div>
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Particle Swap Lab</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Keep the same word or phrase and swap the particle. The lab shows what relationship each particle would signal and how the phrase changes.</p>
+                  </div>
+
+                  <div class="ml-helper-card space-y-3">
+                    <div class="text-[10px] text-slate-500">Free-text inputs use the <strong>Japanese grammar input</strong> mode above.</div>
+
+                    <label class="ml-field">Word / phrase
+                      <input id="ja-particle-swap-word" class="ml-input" value="学校" placeholder="学校 / gakkou / school">
+                    </label>
+
+                    <label class="ml-field">Rest of sentence <span class="font-normal text-slate-400">(optional, but useful)</span>
+                      <input id="ja-particle-swap-rest" class="ml-input" value="行きます" placeholder="行きます / ikimasu / go">
+                    </label>
+
+                    <label class="ml-field">Particle to examine
+                      <select id="ja-particle-swap-particle" class="ml-input" onchange="renderJapaneseParticleSwap()">
+                        <option value="は">は — topic / contrast</option>
+                        <option value="が">が — subject / focus</option>
+                        <option value="を">を — direct object</option>
+                        <option value="に" selected>に — destination / time / target</option>
+                        <option value="で">で — place of action / means</option>
+                        <option value="へ">へ — direction toward</option>
+                        <option value="と">と — with / and / quotation</option>
+                        <option value="も">も — also / too</option>
+                        <option value="の">の — possession / noun modification</option>
+                        <option value="から">から — from / because</option>
+                        <option value="まで">まで — until / as far as</option>
+                      </select>
+                    </label>
+
+                    <div class="flex flex-wrap gap-2">
+                      <button type="button" class="ml-action" onclick="renderJapaneseParticleSwap(this)">Examine particle</button>
+                      <button type="button" class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 font-bold text-xs" onclick="renderJapaneseParticleSwapGrid(this)">Compare common particles</button>
+                    </div>
+                  </div>
+
+                  <div id="ja-particle-swap-result" class="hidden ml-helper-result"></div>
+                  <div id="ja-particle-swap-grid" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+
+                  <div class="flex flex-wrap gap-2">
+                    <button type="button" class="px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="translateGrammarOutput('ja-particle-swap-result','ja',this)">Translate selected example</button>
+                    <button type="button" class="ml-ai-action !mt-0" onclick="askLanguageHelperAI('Japanese particle choice in context','ja-particle-swap-result',this)">✨ Ask AI about this choice</button>
+                  </div>
+                  <div id="ja-particle-swap-result-translation" class="hidden grammar-section-ai-result"></div>
+                  <div id="ai-ja-particle-swap-result" class="grammar-section-ai-result hidden"></div>
 
                   <div class="grammar-topic-divider"></div>
                   <div>
@@ -7158,14 +7240,13 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                   </div>
 
                   <div class="ml-helper-card space-y-3">
-                    <label class="case-builder-language-check">
-                      <input id="ja-builder-english" type="checkbox">
-                      <span>My content words are in English — translate them when I press Build</span>
-                    </label>
+                    <div class="rounded-lg border border-rose-100 bg-white px-3 py-2 text-[10px] text-slate-600">
+                      Free-text words use the <strong>Japanese grammar input</strong> mode above. Choose Romaji to type <em>watashi / hon / yomu</em>, or English to type <em>I / book / read</em>.
+                    </div>
 
                     <div class="ml-grid-2">
                       <label class="ml-field">Topic / subject
-                        <input id="ja-builder-subject" class="ml-input" value="私" placeholder="e.g. 私 or I">
+                        <input id="ja-builder-subject" class="ml-input" value="私" placeholder="私 / watashi / I">
                       </label>
                       <label class="ml-field">Role
                         <select id="ja-builder-subject-role" class="ml-input">
@@ -7178,7 +7259,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
                     <div class="ml-grid-2">
                       <label class="ml-field">Object / companion
-                        <input id="ja-builder-object" class="ml-input" value="本" placeholder="e.g. 本 or book">
+                        <input id="ja-builder-object" class="ml-input" value="本" placeholder="本 / hon / book">
                       </label>
                       <label class="ml-field">Role
                         <select id="ja-builder-object-role" class="ml-input">
@@ -7191,7 +7272,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
                     <div class="ml-grid-2">
                       <label class="ml-field">Place / destination / time
-                        <input id="ja-builder-place" class="ml-input" placeholder="e.g. 学校 or school">
+                        <input id="ja-builder-place" class="ml-input" placeholder="学校 / gakkou / school">
                       </label>
                       <label class="ml-field">Role
                         <select id="ja-builder-place-role" class="ml-input">
@@ -7206,7 +7287,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
                     <div class="ml-grid-2">
                       <label class="ml-field">Verb / predicate
-                        <input id="ja-builder-verb" class="ml-input" value="読む" placeholder="e.g. 読む or read">
+                        <input id="ja-builder-verb" class="ml-input" value="読む" placeholder="読む / yomu / read">
                       </label>
                       <label class="ml-field">Register
                         <select id="ja-builder-register" class="ml-input">
@@ -7266,11 +7347,12 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                   </div>
                   <div class="ml-helper-card space-y-3">
                     <label class="ml-field">Word / phrase
-                      <input id="ja-reading-phrase" class="ml-input" value="学校" placeholder="e.g. 学校, 行きたい">
+                      <input id="ja-reading-phrase" class="ml-input" value="学校" placeholder="学校 / gakkou / school">
                     </label>
                     <label class="ml-field">Sentence context
-                      <input id="ja-reading-context" class="ml-input" placeholder="e.g. 明日学校に行きます。">
+                      <input id="ja-reading-context" class="ml-input" placeholder="明日学校に行きます / ashita gakkou ni ikimasu / I go to school tomorrow">
                     </label>
+                    <div class="text-[10px] text-slate-500">Typed phrase/context uses the <strong>Japanese grammar input</strong> mode above.</div>
                     <div class="flex flex-wrap gap-2">
                       <button type="button" class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-bold" onclick="fillJapaneseReadingContext()">Use current sentence</button>
                       <button type="button" class="ml-action" onclick="getJapaneseContextReading(this)">✨ Get contextual reading</button>
@@ -7320,7 +7402,9 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                     <p class="text-[11px] text-slate-500 mt-1">Compare ordinary plain forms with ます-style polite forms. This is separate from counting because register is a social/grammatical choice, not a number system.</p>
                   </div>
                   <div class="ml-helper-card space-y-3">
-                    <label class="ml-field">Dictionary-form verb<input id="ja-register-verb" class="ml-input" value="食べる" oninput="renderJapaneseRegister()"></label>
+                    <label class="ml-field">Dictionary-form verb<input id="ja-register-verb" class="ml-input" value="食べる" placeholder="食べる / taberu / eat"></label>
+                    <div class="text-[10px] text-slate-500">Uses the <strong>Japanese grammar input</strong> mode above.</div>
+                    <button type="button" class="ml-action" onclick="renderJapaneseRegister(this)">Show register forms</button>
                   </div>
                   <div id="ja-register-result" class="ml-helper-result"></div>
 
@@ -7364,7 +7448,27 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
               <button type="button" class="ml-action shrink-0" onclick="runGrammarQuickTranslation(this)">Translate</button>
             </div>
             <div id="ml-grammar-translate-result" class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800"></div>
-          </div>`;
+          </div>
+          ${currentStudyLanguage==="ja" ? `
+          <div class="rounded-xl border border-rose-100 bg-rose-50/60 p-3 space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <div class="text-[10px] uppercase tracking-wider font-bold text-rose-700">Japanese grammar input</div>
+                <div class="text-[10px] text-slate-500">Choose how free-text grammar fields should interpret Latin letters. Japanese script always remains Japanese.</div>
+              </div>
+              <select id="ja-grammar-input-mode" class="ml-input sm:!w-auto" onchange="setJapaneseGrammarInputMode(this.value)">
+                <option value="ja">Japanese script</option>
+                <option value="romaji">Romaji / Latin letters</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div id="ja-grammar-input-note" class="text-[10px] text-slate-500"></div>
+          </div>` : ""}`;
+        if(currentStudyLanguage==="ja"){
+            const mode=document.getElementById("ja-grammar-input-mode");
+            if(mode) mode.value=japaneseGrammarInputMode();
+            updateJapaneseGrammarInputModeNote();
+        }
     }
 
     window.runGrammarQuickTranslation=async function(button){
@@ -7454,6 +7558,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         } else {
             renderJapaneseParticle();
             renderJapaneseRole();
+            renderJapaneseParticleSwap();
             renderJapaneseParticleContrast();
             renderJapaneseAdjective();
             renderJapaneseRomaji();
@@ -8529,24 +8634,44 @@ Requirements:
         else if(end==="す"){te=st+"して";past=st+"した";}
         return {type:"Godan",polite:st+row.i+"ます",negative:st+row.a+"ない",past,te,potential:st+row.e+"る"};
     }
-    window.runJapaneseVerbTool=async function(){
+    window.runJapaneseVerbTool=async function(button){
         const raw=document.getElementById("ja-verb-input")?.value.trim();
         const status=document.getElementById("ja-verb-status");
         const out=document.getElementById("ja-verb-result");
         if(!raw)return;
-        let v=raw;
-        if(document.getElementById("ja-verb-english")?.checked){
-            status.textContent="Translating English verb…";
-            try{v=String(await googleTranslateApiCall(raw.replace(/^to\s+/i,""),"en","ja")).trim().replace(/[。.!?]$/,"").split(/[、,\s]/)[0];}
-            catch(e){status.textContent="Translation failed.";return;}
+
+        const old=button?.textContent||"Show forms";
+        if(button){button.disabled=true;button.textContent="Preparing…";}
+        if(status)status.textContent="";
+
+        try{
+            const resolved=await resolveJapaneseGrammarInput(raw,"verb");
+            const warning=japaneseInputModeWarning(resolved);
+            if(warning){
+                if(status)status.textContent=warning;
+                out?.classList.add("hidden");
+                return;
+            }
+
+            const v=resolved.text.replace(/[。.!?]$/,"").split(/[、,]/)[0].trim();
+            const f=japaneseVerbForms(v);
+            if(!f){
+                if(status)status.textContent=`I interpreted “${raw}” as “${v}”, but could not classify that verb locally. Try Ask AI for an irregular or ambiguous verb.`;
+                out.classList.add("hidden");
+                return;
+            }
+
+            if(status)status.textContent=resolved.source==="Japanese script" ? "" : `Interpreted as: ${v} (${resolved.source})`;
+            out.classList.remove("hidden");
+            const rows=[["Polite",f.polite],["Negative",f.negative],["Past",f.past],["て-form",f.te],["Potential",f.potential]];
+            out.innerHTML=`<div class="flex flex-wrap items-baseline gap-2 mb-3"><div><div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Verb class</div><div class="text-lg font-bold text-rose-700">${escapeML(f.type)}</div></div></div>
+            <div class="ml-conj-grid">${rows.map(([lab,val])=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${lab}</span><strong>${escapeML(val)}</strong><button type="button" onclick="speakRawText('${val.replace(/'/g,"\\'")}','ja-JP')">🔊</button></div>`).join("")}</div>`;
+        }catch(e){
+            if(status)status.textContent="Input conversion failed: "+((e&&e.message)?e.message:String(e));
+            out?.classList.add("hidden");
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
         }
-        const f=japaneseVerbForms(v);
-        if(!f){status.textContent="I could not classify that verb locally. Try Ask AI for an irregular or ambiguous verb.";out.classList.add("hidden");return;}
-        status.textContent="";
-        out.classList.remove("hidden");
-        const rows=[["Dictionary",v],["Polite",f.polite],["Negative",f.negative],["Past",f.past],["て-form",f.te],["Potential",f.potential]];
-        out.innerHTML=`<div class="flex justify-between items-baseline gap-2 mb-3"><div><div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Verb class</div><div class="text-lg font-bold text-rose-700">${escapeML(f.type)}</div></div></div>
-        <div class="ml-conj-grid">${rows.map(([lab,val])=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${lab}</span><strong>${escapeML(val)}</strong><button type="button" onclick="speakRawText('${val.replace(/'/g,"\\'")}','ja-JP')">🔊</button></div>`).join("")}</div>`;
     };
 
     const JA_PARTICLE_DATA={
@@ -8568,6 +8693,203 @@ Requirements:
         if(!document.getElementById("ja-particle-practice-result")?.classList.contains("hidden")) renderJapaneseParticlePractice();
     };
 
+
+    const JA_PARTICLE_SWAP_INFO = {
+      "は":{
+        role:"topic / contrast",
+        sense:"Sets this phrase as what the sentence is about, or contrasts it with something else.",
+        cue:"As for … / speaking of …",
+        warning:"は is a discourse marker, so its English meaning is often not a separate translated word."
+      },
+      "が":{
+        role:"subject / focus",
+        sense:"Marks or identifies the grammatical subject, especially new, focused, or answering-who/what information.",
+        cue:"… is the one that / … does",
+        warning:"The difference between は and が depends heavily on information context."
+      },
+      "を":{
+        role:"direct object",
+        sense:"Marks the thing directly affected by a transitive action.",
+        cue:"verb acts on …",
+        warning:"It normally needs a transitive predicate; with an incompatible verb the sentence may sound unnatural."
+      },
+      "に":{
+        role:"destination / time / target",
+        sense:"Can mark a destination, recipient/target, specific time, or location of existence.",
+        cue:"to / at / on, depending on context",
+        warning:"Its exact interpretation comes from the noun and predicate."
+      },
+      "で":{
+        role:"place of action / means",
+        sense:"Marks where an action happens or the means/instrument used to perform it.",
+        cue:"at / in / by / with",
+        warning:"For simple existence or destination, に is usually more appropriate than で."
+      },
+      "へ":{
+        role:"direction",
+        sense:"Marks movement oriented toward a destination, with more emphasis on direction than arrival.",
+        cue:"toward / to",
+        warning:"With movement verbs, に and へ may both work but can differ slightly in emphasis."
+      },
+      "と":{
+        role:"companion / and / quotation",
+        sense:"Can mark a companion, connect nouns exhaustively, or mark quoted content.",
+        cue:"with / and / saying that …",
+        warning:"The interpretation depends strongly on what follows."
+      },
+      "も":{
+        role:"also / too",
+        sense:"Adds the idea that this phrase is included too; it often replaces は, が, or を.",
+        cue:"also / too / even",
+        warning:"Because も may replace another particle, the underlying grammatical role can be inferred from context."
+      },
+      "の":{
+        role:"possession / noun modification",
+        sense:"Links this phrase to a following noun so it possesses, classifies, or describes that noun.",
+        cue:"of / ’s / noun modifier",
+        warning:"の normally links nouns; a following verb predicate will usually not fit this pattern directly."
+      },
+      "から":{
+        role:"source / starting point",
+        sense:"Marks where something starts in space or time; after a clause it can also mean because.",
+        cue:"from / since",
+        warning:"The 'because' use applies to clauses, not just an isolated noun."
+      },
+      "まで":{
+        role:"endpoint / limit",
+        sense:"Marks the endpoint or limit of movement, range, or time.",
+        cue:"until / as far as / up to",
+        warning:"It often pairs conceptually with から, but it can also appear by itself."
+      }
+    };
+
+    function japaneseParticlePhrase(word, particle, rest){
+        const joined=`${word}${particle}${rest||""}`;
+        return /[。！？!?]$/.test(joined) ? joined : joined+"。";
+    }
+
+    async function resolveJapaneseParticleSwapInputs(){
+        const rawWord=(document.getElementById("ja-particle-swap-word")?.value||"").trim();
+        const rawRest=(document.getElementById("ja-particle-swap-rest")?.value||"").trim();
+        if(!rawWord) return {error:"Enter a word or phrase first."};
+
+        const [wordR,restR]=await Promise.all([
+            resolveJapaneseGrammarInput(rawWord,"text"),
+            resolveJapaneseGrammarInput(rawRest,"sentence")
+        ]);
+
+        const modeWarning=[wordR,restR].map(japaneseInputModeWarning).find(Boolean);
+        if(modeWarning) return {error:modeWarning};
+
+        return {
+            rawWord,rawRest,
+            word:wordR.text,
+            rest:restR.text,
+            wordSource:wordR.source,
+            restSource:restR.source
+        };
+    }
+
+    window.renderJapaneseParticleSwap=async function(button){
+        const out=document.getElementById("ja-particle-swap-result");
+        if(!out)return;
+
+        const particle=document.getElementById("ja-particle-swap-particle")?.value||"に";
+        const info=JA_PARTICLE_SWAP_INFO[particle];
+        const old=button?.textContent||"Examine particle";
+        if(button){button.disabled=true;button.textContent="Examining…";}
+
+        try{
+            const input=await resolveJapaneseParticleSwapInputs();
+            out.classList.remove("hidden");
+
+            if(input.error){
+                out.dataset.translateText="";
+                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">${escapeML(input.error)}</p>`;
+                return;
+            }
+
+            const phrase=`${input.word}${particle}`;
+            const sentence=japaneseParticlePhrase(input.word,particle,input.rest);
+            out.dataset.translateText=sentence;
+
+            const conversionNotes=[
+                input.wordSource!=="Japanese script" ? `${input.rawWord} → ${input.word}` : "",
+                input.rawRest && input.restSource!=="Japanese script" ? `${input.rawRest} → ${input.rest}` : ""
+            ].filter(Boolean);
+
+            out.innerHTML=`
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Particle phrase</div>
+                  <div class="text-2xl font-bold text-rose-700 mt-1">${escapeML(phrase)}</div>
+                  ${input.rest ? `<div class="text-base font-bold text-slate-800 mt-1">${escapeML(sentence)}</div>` : ""}
+                </div>
+                <span class="ml-rule-chip">${escapeML(info.role)}</span>
+              </div>
+              ${conversionNotes.length ? `<div class="text-[10px] text-slate-500 mt-2">${escapeML(conversionNotes.join(" · "))}</div>` : ""}
+              <div class="mt-3 rounded-lg border border-rose-100 bg-rose-50 p-3">
+                <div class="text-[10px] uppercase tracking-wider font-bold text-rose-700">What changes</div>
+                <p class="text-[12px] text-slate-700 mt-1">${escapeML(info.sense)}</p>
+                <div class="text-[11px] font-bold text-slate-700 mt-2">English cue: ${escapeML(info.cue)}</div>
+              </div>
+              <p class="text-[11px] text-amber-700 mt-2">${escapeML(info.warning)}</p>
+              <button type="button" class="mt-3 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="speakRawText('${sentence.replace(/'/g,"\\'")}','ja-JP')">🔊 Listen</button>`;
+        }catch(e){
+            out.classList.remove("hidden");
+            out.dataset.translateText="";
+            out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">Could not examine the particle: ${escapeML((e&&e.message)?e.message:String(e))}</p>`;
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
+        }
+    };
+
+    window.renderJapaneseParticleSwapGrid=async function(button){
+        const grid=document.getElementById("ja-particle-swap-grid");
+        if(!grid)return;
+
+        const old=button?.textContent||"Compare common particles";
+        if(button){button.disabled=true;button.textContent="Comparing…";}
+
+        try{
+            const input=await resolveJapaneseParticleSwapInputs();
+            grid.classList.remove("hidden");
+
+            if(input.error){
+                grid.innerHTML=`<div class="sm:col-span-2 text-[11px] text-rose-600 font-semibold">${escapeML(input.error)}</div>`;
+                return;
+            }
+
+            const particles=["は","が","を","に","で","へ","と","も","の","から","まで"];
+            grid.innerHTML=particles.map(p=>{
+                const info=JA_PARTICLE_SWAP_INFO[p];
+                const phrase=`${input.word}${p}`;
+                return `<button type="button"
+                    class="text-left rounded-xl border border-slate-200 bg-white p-3 hover:border-rose-200 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    onclick="selectJapaneseParticleSwap('${p}')">
+                    <div class="flex items-baseline justify-between gap-2">
+                      <span class="text-lg font-bold text-rose-700">${escapeML(phrase)}</span>
+                      <span class="text-[9px] uppercase font-bold text-slate-400">${escapeML(p)}</span>
+                    </div>
+                    <div class="text-[10px] font-bold text-slate-700 mt-1">${escapeML(info.role)}</div>
+                    <div class="text-[10px] text-slate-500 mt-1">${escapeML(info.cue)}</div>
+                </button>`;
+            }).join("");
+        }catch(e){
+            grid.classList.remove("hidden");
+            grid.innerHTML=`<div class="sm:col-span-2 text-[11px] text-rose-600 font-semibold">Comparison failed: ${escapeML((e&&e.message)?e.message:String(e))}</div>`;
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
+        }
+    };
+
+    window.selectJapaneseParticleSwap=function(particle){
+        const select=document.getElementById("ja-particle-swap-particle");
+        if(select) select.value=particle;
+        renderJapaneseParticleSwap();
+        document.getElementById("ja-particle-swap-result")?.scrollIntoView({behavior:"smooth",block:"nearest"});
+    };
+
     const JA_ROLE_DATA={
       topic:["は","topic / contrast","私は先生です。"],
       subject:["が","subject / focused information","猫がいます。"],
@@ -8582,7 +8904,15 @@ Requirements:
     };
     window.renderJapaneseRole=function(){
         const key=document.getElementById("ja-role")?.value||"topic", d=JA_ROLE_DATA[key], out=document.getElementById("ja-role-result");if(!out)return;
-        out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Suggested particle</div><div class="text-3xl font-bold text-rose-700 mt-1">${d[0]}</div><p class="text-[12px] text-slate-700 mt-2">${d[1]}</p><div class="rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] mt-3">${escapeML(d[2])}</div>`;
+        out.innerHTML=`<div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Suggested particle</div>
+            <div class="text-3xl font-bold text-rose-700 mt-1">${d[0]}</div>
+          </div>
+          <span class="ml-rule-chip">${escapeML(key)} → ${d[0]}</span>
+        </div>
+        <p class="text-[12px] text-slate-700 mt-2">${d[1]}</p>
+        <div class="rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] mt-3">${escapeML(d[2])}</div>`;
     };
 
 
@@ -8615,49 +8945,172 @@ Requirements:
         out.innerHTML=`<div class="text-lg font-bold text-rose-700">${d.title}</div><p class="text-[12px] text-slate-700 mt-2">${d.rule}</p><div class="mt-3 space-y-2">${d.examples.map(x=>`<div class="rounded-lg border border-rose-100 bg-rose-50 p-2 text-[11px]">${escapeML(x)}</div>`).join("")}</div>`;
     };
 
-    window.renderJapaneseAdjective=function(){
+    window.renderJapaneseAdjective=async function(button){
         const raw=(document.getElementById("ja-adj-input")?.value||"").trim();
         const type=document.getElementById("ja-adj-type")?.value||"i";
-        const out=document.getElementById("ja-adj-result"); if(!out||!raw)return;
-        let rows=[];
-        if(type==="i"){
-            if(!raw.endsWith("い")){
-                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">For the local い-adjective helper, enter a dictionary form ending in い.</p>`;
+        const out=document.getElementById("ja-adj-result");
+        if(!out||!raw)return;
+
+        const old=button?.textContent||"Show adjective forms";
+        if(button){button.disabled=true;button.textContent="Preparing…";}
+
+        try{
+            const resolved=await resolveJapaneseGrammarInput(raw,"adjective");
+            const warning=japaneseInputModeWarning(resolved);
+            if(warning){
+                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">${escapeML(warning)}</p>`;
                 return;
             }
-            const stem=raw.slice(0,-1);
-            rows=[["Present",raw],["Negative",stem+"くない"],["Past",stem+"かった"],["Past negative",stem+"くなかった"]];
-        }else{
-            const stem=raw.replace(/だ$/,"").replace(/な$/,"");
-            rows=[["Present",stem+"だ"],["Negative",stem+"ではない"],["Past",stem+"だった"],["Past negative",stem+"ではなかった"]];
+
+            let adjective=resolved.text.replace(/[。.!?]$/,"").trim();
+            let rows=[];
+
+            if(type==="i"){
+                if(!adjective.endsWith("い")){
+                    out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">I interpreted “${escapeML(raw)}” as “${escapeML(adjective)}”. For the local い-adjective helper, the Japanese dictionary form must end in い. If this is a な-adjective, switch the Type selector.</p>`;
+                    return;
+                }
+                const stem=adjective.slice(0,-1);
+                rows=[["Present",adjective],["Negative",stem+"くない"],["Past",stem+"かった"],["Past negative",stem+"くなかった"]];
+            }else{
+                const stem=adjective.replace(/だ$/,"").replace(/な$/,"");
+                rows=[["Present",stem+"だ"],["Negative",stem+"ではない"],["Past",stem+"だった"],["Past negative",stem+"ではなかった"]];
+            }
+
+            const resolvedNote=resolved.source==="Japanese script" ? "" :
+                `<div class="text-[10px] text-slate-500 mb-2">Interpreted as: <strong>${escapeML(adjective)}</strong> (${escapeML(resolved.source)})</div>`;
+            out.innerHTML=`${resolvedNote}<div class="ml-conj-grid">${rows.map(([lab,val])=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${lab}</span><strong>${escapeML(val)}</strong><button type="button" onclick="speakRawText('${val.replace(/'/g,"\\'")}','ja-JP')">🔊</button></div>`).join("")}</div>`;
+        }catch(e){
+            out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">Input conversion failed: ${escapeML((e&&e.message)?e.message:String(e))}</p>`;
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
         }
-        out.innerHTML=`<div class="ml-conj-grid">${rows.map(([lab,val])=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${lab}</span><strong>${escapeML(val)}</strong><button type="button" onclick="speakRawText('${val.replace(/'/g,"\\'")}','ja-JP')">🔊</button></div>`).join("")}</div>`;
     };
 
-    window.renderJapaneseRegister=function(){
-        const v=(document.getElementById("ja-register-verb")?.value||"").trim();
-        const out=document.getElementById("ja-register-result"); if(!out||!v)return;
-        const f=japaneseVerbForms(v);
-        if(!f){
-            out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">I could not classify this verb locally. Use Ask AI for irregular or ambiguous forms.</p>`;
-            return;
+    window.renderJapaneseRegister=async function(button){
+        const raw=(document.getElementById("ja-register-verb")?.value||"").trim();
+        const out=document.getElementById("ja-register-result");
+        if(!out||!raw)return;
+
+        const old=button?.textContent||"Show register forms";
+        if(button){button.disabled=true;button.textContent="Preparing…";}
+
+        try{
+            const resolved=await resolveJapaneseGrammarInput(raw,"verb");
+            const warning=japaneseInputModeWarning(resolved);
+            if(warning){
+                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">${escapeML(warning)}</p>`;
+                return;
+            }
+
+            const v=resolved.text.replace(/[。.!?]$/,"").trim();
+            const f=japaneseVerbForms(v);
+            if(!f){
+                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">I interpreted “${escapeML(raw)}” as “${escapeML(v)}”, but could not classify this verb locally. Use Ask AI for irregular or ambiguous forms.</p>`;
+                return;
+            }
+
+            let politePast="", politeNegPast="";
+            if(f.polite.endsWith("ます")){
+                const stem=f.polite.slice(0,-2);
+                politePast=stem+"ました";
+                politeNegPast=stem+"ませんでした";
+            }
+            const rows=[
+                ["Plain present",v],["Polite present",f.polite],
+                ["Plain negative",f.negative],["Polite negative",f.polite.replace(/ます$/,"ません")],
+                ["Plain past",f.past],["Polite past",politePast],
+                ["Polite past negative",politeNegPast]
+            ];
+            const resolvedNote=resolved.source==="Japanese script" ? "" :
+                `<div class="text-[10px] text-slate-500 mb-2">Interpreted as: <strong>${escapeML(v)}</strong> (${escapeML(resolved.source)})</div>`;
+            out.innerHTML=`${resolvedNote}<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">${escapeML(f.type)}</div><div class="ml-conj-grid">${rows.map(([lab,val])=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${lab}</span><strong>${escapeML(val)}</strong><button type="button" onclick="speakRawText('${val.replace(/'/g,"\\'")}','ja-JP')">🔊</button></div>`).join("")}</div>`;
+        }catch(e){
+            out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">Input conversion failed: ${escapeML((e&&e.message)?e.message:String(e))}</p>`;
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
         }
-        let politePast="", politeNegPast="";
-        if(f.polite.endsWith("ます")){
-            const stem=f.polite.slice(0,-2);
-            politePast=stem+"ました";
-            politeNegPast=stem+"ませんでした";
-        }
-        const rows=[
-            ["Plain present",v],["Polite present",f.polite],
-            ["Plain negative",f.negative],["Polite negative",f.polite.replace(/ます$/,"ません")],
-            ["Plain past",f.past],["Polite past",politePast],
-            ["Polite past negative",politeNegPast]
-        ];
-        out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">${escapeML(f.type)}</div><div class="ml-conj-grid">${rows.map(([lab,val])=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${lab}</span><strong>${escapeML(val)}</strong><button type="button" onclick="speakRawText('${val.replace(/'/g,"\\'")}','ja-JP')">🔊</button></div>`).join("")}</div>`;
     };
 
 
+    const JA_GRAMMAR_INPUT_MODE_KEY = "languagetutor_ja_grammar_input_mode_v1";
+
+    function japaneseGrammarInputMode(){
+        const live=document.getElementById("ja-grammar-input-mode")?.value;
+        const saved=safeStorageGet(JA_GRAMMAR_INPUT_MODE_KEY);
+        return ["ja","romaji","en"].includes(live) ? live :
+               ["ja","romaji","en"].includes(saved) ? saved : "ja";
+    }
+
+    window.setJapaneseGrammarInputMode=function(mode){
+        const clean=["ja","romaji","en"].includes(mode) ? mode : "ja";
+        safeStorageSet(JA_GRAMMAR_INPUT_MODE_KEY,clean);
+        updateJapaneseGrammarInputModeNote();
+    };
+
+    function updateJapaneseGrammarInputModeNote(){
+        const note=document.getElementById("ja-grammar-input-note");
+        if(!note)return;
+        const mode=japaneseGrammarInputMode();
+        const messages={
+            ja:"Japanese script mode: type kana or kanji directly.",
+            romaji:"Romaji mode: Latin-letter Japanese is converted locally to hiragana when you run a helper.",
+            en:"English mode: English content words are translated to Japanese only when you press a helper button."
+        };
+        note.textContent=messages[mode];
+    }
+
+    function containsJapaneseWriting(text){
+        return /[\u3040-\u30ff\u3400-\u9fff]/.test(String(text||""));
+    }
+
+    function removeJapaneseInputSpaces(text){
+        return String(text||"").replace(/\s+/g,"").trim();
+    }
+
+    async function resolveJapaneseGrammarInput(raw, kind="text"){
+        const entered=String(raw||"").trim();
+        if(!entered)return {text:"",source:"empty",original:""};
+
+        // Existing Japanese input always wins, regardless of the selected mode.
+        // This prevents a saved English/Romaji setting from corrupting Japanese defaults.
+        if(containsJapaneseWriting(entered)){
+            return {text:entered,source:"Japanese script",original:entered};
+        }
+
+        const mode=japaneseGrammarInputMode();
+
+        if(mode==="romaji"){
+            const converted=removeJapaneseInputSpaces(romajiToHiragana(entered));
+            return {text:converted,source:"Romaji → hiragana",original:entered};
+        }
+
+        if(mode==="en"){
+            let translated=String(await googleTranslateApiCall(
+                kind==="verb" ? entered.replace(/^to\s+/i,"") : entered,
+                "en","ja"
+            )).trim();
+            translated=cleanJapaneseTranslationFragment(translated);
+
+            // For individual grammar fields, avoid trailing punctuation/spaces.
+            if(kind!=="sentence") translated=removeJapaneseInputSpaces(translated);
+            return {text:translated,source:"English → Japanese",original:entered};
+        }
+
+        // Japanese mode + Latin letters: don't guess whether the user meant English
+        // or Romaji; tell them to select the intended mode.
+        return {
+            text:entered,
+            source:"Latin letters in Japanese-script mode",
+            original:entered,
+            needsMode:true
+        };
+    }
+
+    function japaneseInputModeWarning(result){
+        if(!result?.needsMode)return "";
+        return 'This field contains Latin letters. Choose “Romaji / Latin letters” or “English” in Japanese grammar input above, then try again.';
+    }
 
     const JA_SENTENCE_PARTICLES = {
         topic:"は",
@@ -8687,35 +9140,43 @@ Requirements:
         const status=document.getElementById("ja-builder-status");
         if(!out)return;
 
-        const english=document.getElementById("ja-builder-english")?.checked;
-        let subject=(document.getElementById("ja-builder-subject")?.value||"").trim();
-        let object=(document.getElementById("ja-builder-object")?.value||"").trim();
-        let place=(document.getElementById("ja-builder-place")?.value||"").trim();
-        let verb=(document.getElementById("ja-builder-verb")?.value||"").trim();
+        const rawSubject=(document.getElementById("ja-builder-subject")?.value||"").trim();
+        const rawObject=(document.getElementById("ja-builder-object")?.value||"").trim();
+        const rawPlace=(document.getElementById("ja-builder-place")?.value||"").trim();
+        const rawVerb=(document.getElementById("ja-builder-verb")?.value||"").trim();
 
         const subjectRole=document.getElementById("ja-builder-subject-role")?.value||"topic";
         const objectRole=document.getElementById("ja-builder-object-role")?.value||"object";
         const placeRole=document.getElementById("ja-builder-place-role")?.value||"none";
         const register=document.getElementById("ja-builder-register")?.value||"polite";
 
-        if(!verb){
+        if(!rawVerb){
             if(status)status.textContent="Enter a verb or predicate.";
             return;
         }
 
         const old=button?.textContent||"Build sentence";
-        if(button){button.disabled=true;button.textContent=english?"Translating & building…":"Building…";}
+        if(button){button.disabled=true;button.textContent="Preparing & building…";}
         if(status)status.textContent="";
 
         try{
-            if(english){
-                [subject,object,place,verb]=await Promise.all([
-                    translateJapaneseBuilderFragment(subject),
-                    translateJapaneseBuilderFragment(object),
-                    translateJapaneseBuilderFragment(place),
-                    translateJapaneseBuilderFragment(verb)
-                ]);
+            const [subjectR,objectR,placeR,verbR]=await Promise.all([
+                resolveJapaneseGrammarInput(rawSubject,"text"),
+                resolveJapaneseGrammarInput(rawObject,"text"),
+                resolveJapaneseGrammarInput(rawPlace,"text"),
+                resolveJapaneseGrammarInput(rawVerb,"verb")
+            ]);
+
+            const modeWarning=[subjectR,objectR,placeR,verbR].map(japaneseInputModeWarning).find(Boolean);
+            if(modeWarning){
+                if(status)status.textContent=modeWarning;
+                return;
             }
+
+            const subject=subjectR.text;
+            const object=objectR.text;
+            const place=placeR.text;
+            const verb=verbR.text;
 
             let predicate=verb;
             let verbNote="";
@@ -8737,10 +9198,18 @@ Requirements:
             let sentence=chunks.join("");
             if(!/[。！？!?]$/.test(sentence))sentence+="。";
 
+            const conversions=[
+                rawSubject && subjectR.source!=="Japanese script" ? `${rawSubject} → ${subject}` : "",
+                rawObject && objectR.source!=="Japanese script" ? `${rawObject} → ${object}` : "",
+                rawPlace && placeR.source!=="Japanese script" ? `${rawPlace} → ${place}` : "",
+                rawVerb && verbR.source!=="Japanese script" ? `${rawVerb} → ${verb}` : ""
+            ].filter(Boolean);
+
             out.classList.remove("hidden");
             out.dataset.translateText=sentence;
             out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Built sentence</div>
               <div class="text-2xl font-bold text-rose-700 mt-1">${escapeML(sentence)}</div>
+              ${conversions.length ? `<div class="text-[10px] text-slate-500 mt-2">${escapeML(conversions.join(" · "))}</div>` : ""}
               <div class="text-[11px] text-slate-600 mt-2">Particles mark the selected roles: ${escapeML([
                   subject&&subjectRole!=="none" ? `${subject} + ${JA_SENTENCE_PARTICLES[subjectRole]}` : "",
                   object&&objectRole!=="none" ? `${object} + ${JA_SENTENCE_PARTICLES[objectRole]}` : "",
@@ -8771,21 +9240,53 @@ Requirements:
         parser?.scrollIntoView({behavior:"smooth",block:"start"});
     };
 
-    window.renderJapaneseParticlePractice=function(){
+    window.renderJapaneseParticlePractice=async function(button){
         const p=document.getElementById("ja-particle")?.value||"は";
-        const left=(document.getElementById("ja-particle-try-left")?.value||"").trim();
-        const right=(document.getElementById("ja-particle-try-right")?.value||"").trim();
+        const rawLeft=(document.getElementById("ja-particle-try-left")?.value||"").trim();
+        const rawRight=(document.getElementById("ja-particle-try-right")?.value||"").trim();
         const out=document.getElementById("ja-particle-practice-result");
-        if(!out||!left||!right)return;
+        if(!out||!rawLeft||!rawRight)return;
 
-        let sentence=`${left}${p}${right}`;
-        if(!/[。！？!?]$/.test(sentence))sentence+="。";
-        out.classList.remove("hidden");
-        out.dataset.translateText=sentence;
-        out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Practice sentence</div>
-          <div class="text-xl font-bold text-rose-700 mt-1">${escapeML(sentence)}</div>
-          <p class="text-[11px] text-slate-600 mt-2">This shows the selected particle in context. Whether the sentence is natural still depends on the meaning of the phrases and predicate.</p>
-          <button type="button" class="mt-3 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="speakRawText('${sentence.replace(/'/g,"\\'")}','ja-JP')">🔊 Listen</button>`;
+        const old=button?.textContent||"Build with selected particle";
+        if(button){button.disabled=true;button.textContent="Preparing…";}
+
+        try{
+            const [leftR,rightR]=await Promise.all([
+                resolveJapaneseGrammarInput(rawLeft,"text"),
+                resolveJapaneseGrammarInput(rawRight,"sentence")
+            ]);
+            const modeWarning=[leftR,rightR].map(japaneseInputModeWarning).find(Boolean);
+            if(modeWarning){
+                out.classList.remove("hidden");
+                out.dataset.translateText="";
+                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">${escapeML(modeWarning)}</p>`;
+                return;
+            }
+
+            const left=leftR.text;
+            const right=rightR.text;
+            let sentence=`${left}${p}${right}`;
+            if(!/[。！？!?]$/.test(sentence))sentence+="。";
+
+            const conversions=[
+                leftR.source!=="Japanese script" ? `${rawLeft} → ${left}` : "",
+                rightR.source!=="Japanese script" ? `${rawRight} → ${right}` : ""
+            ].filter(Boolean);
+
+            out.classList.remove("hidden");
+            out.dataset.translateText=sentence;
+            out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Practice sentence</div>
+              <div class="text-xl font-bold text-rose-700 mt-1">${escapeML(sentence)}</div>
+              ${conversions.length ? `<div class="text-[10px] text-slate-500 mt-2">${escapeML(conversions.join(" · "))}</div>` : ""}
+              <p class="text-[11px] text-slate-600 mt-2">This shows the selected particle in context. Whether the sentence is natural still depends on the meaning of the phrases and predicate.</p>
+              <button type="button" class="mt-3 px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="speakRawText('${sentence.replace(/'/g,"\\'")}','ja-JP')">🔊 Listen</button>`;
+        }catch(e){
+            out.classList.remove("hidden");
+            out.dataset.translateText="";
+            out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">Input conversion failed: ${escapeML((e&&e.message)?e.message:String(e))}</p>`;
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
+        }
     };
 
     // ---------- Japanese Kana / Romaji helpers ----------
@@ -8993,10 +9494,10 @@ Requirements:
     };
 
     window.getJapaneseContextReading=async function(button){
-        const phrase=(document.getElementById("ja-reading-phrase")?.value||"").trim();
-        const context=(document.getElementById("ja-reading-context")?.value||"").trim();
+        const rawPhrase=(document.getElementById("ja-reading-phrase")?.value||"").trim();
+        const rawContext=(document.getElementById("ja-reading-context")?.value||"").trim();
         const out=document.getElementById("ja-context-reading-result");
-        if(!out||!phrase)return;
+        if(!out||!rawPhrase)return;
 
         if(!getActiveAIKey()){
             out.classList.remove("hidden");
@@ -9007,9 +9508,21 @@ Requirements:
         const old=button?.textContent||"";
         if(button){button.disabled=true;button.textContent="Checking reading…";}
         out.classList.remove("hidden");
-        out.textContent="AI is checking the contextual reading…";
+        out.textContent="Preparing input and checking the contextual reading…";
 
         try{
+            const [phraseR,contextR]=await Promise.all([
+                resolveJapaneseGrammarInput(rawPhrase,"text"),
+                resolveJapaneseGrammarInput(rawContext,"sentence")
+            ]);
+            const modeWarning=[phraseR,contextR].map(japaneseInputModeWarning).find(Boolean);
+            if(modeWarning){
+                out.textContent=modeWarning;
+                return;
+            }
+
+            const phrase=phraseR.text;
+            const context=contextR.text;
             const prompt=`Give the contextual Japanese reading of this exact word or phrase.
 
 Phrase: "${phrase}"
@@ -9025,8 +9538,13 @@ Use the sentence context to resolve ambiguous kanji readings. Do not guess from 
             const meaning=String(result?.meaning||"").trim();
             if(!reading || !romaji) throw new Error("AI returned an incomplete reading.");
 
+            const converted = phraseR.source!=="Japanese script"
+                ? `<div class="text-[10px] text-slate-500 mt-1">${escapeML(rawPhrase)} → ${escapeML(phrase)} (${escapeML(phraseR.source)})</div>`
+                : "";
+
             out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Contextual reading</div>
               <div class="text-2xl font-bold text-rose-700 mt-1">${escapeML(phrase)}</div>
+              ${converted}
               <div class="text-lg font-bold text-slate-700 mt-1">${escapeML(reading)}</div>
               <div class="text-[12px] italic text-slate-500">${escapeML(romaji)}</div>
               ${meaning ? `<div class="text-[12px] text-slate-700 mt-2">${escapeML(meaning)}</div>` : ""}
