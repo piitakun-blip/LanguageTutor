@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeutschLerner - Free German Translation & Grammar Learning App (V27 (Gemini AI Key Integrated))</title>
+    <meta name="application-name" content="LanguageTutor">
+    <meta name="apple-mobile-web-app-title" content="LanguageTutor">
+    <title>LanguageTutor</title>
     <!-- Tailwind CSS for rich, modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for beautiful icons -->
@@ -1524,6 +1526,23 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
         background:#f8fafc;
         box-shadow:0 1px 2px rgba(15,23,42,.05);
     }
+
+    .ml-ja-reading {
+        display:block;
+        margin-top:3px;
+        font-size:12px;
+        line-height:1.25;
+        font-weight:700;
+        color:#475569;
+    }
+    .ml-ja-romaji {
+        display:block;
+        margin-top:1px;
+        font-size:11px;
+        line-height:1.25;
+        font-style:italic;
+        color:#64748b;
+    }
     .ml-token-role {
         display:block;
         margin-top:4px;
@@ -1588,7 +1607,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                 </div>
                 <div>
                     <h1 id="language-title" class="text-2xl font-bold tracking-tight" style="color:#fbbf24 !important;">
-                        DeutschLerner
+                        LanguageTutor
                         <span style="font-size:9px;font-weight:500;color:#cbd5e1;letter-spacing:.04em;white-space:nowrap;vertical-align:baseline;margin-left:7px;">by Peter Ward, Ed.D.</span>
                     </h1>
                     <p id="language-subtitle" class="text-xs text-amber-100">Interactive German Grammar & Translation Companion</p>
@@ -1863,11 +1882,6 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         </div>
                     </div>
                 </div>
-
-                <div id="parse-source-status" class="hidden text-[10px] uppercase tracking-wider font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 w-fit">
-                    AI Parse
-                </div>
-
                 <!-- Generated Tiles Container -->
                 <div id="tiles-container" class="min-h-[100px] border border-dashed border-slate-200 rounded-xl flex flex-wrap gap-3 p-4 items-center justify-center bg-slate-50/50">
                     <span id="parser-empty-message" class="text-slate-400 text-sm italic">Tiles will be generated here once you translate or enter a German phrase above...</span>
@@ -1892,8 +1906,13 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         </div>
                         <div>
                             <span class="block font-bold uppercase tracking-wider text-slate-400 text-[10px]">Translation</span>
-                            <div class="mt-1.5">
-                                <span id="detail-translation" class="text-sm font-bold text-emerald-700 italic">Translating...</span>
+                            <div class="mt-1.5 space-y-2">
+                                <span id="detail-translation" class="block text-sm font-semibold text-slate-500 italic">Not translated yet.</span>
+                                <button id="detail-translate-context-btn" type="button"
+                                    onclick="translateSelectedPhraseInContext(this)"
+                                    class="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
+                                    Translate in context
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -2548,7 +2567,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 
     <!-- Page Footer -->
     <footer class="bg-slate-800 text-slate-400 py-6 border-t border-slate-700 text-center text-xs">
-        <p>&copy; 2026 DeutschLerner App. Built for seamless browser-only execution without API keys.</p>
+        <p>&copy; 2026 LanguageTutor App. Built for seamless browser-only execution without API keys.</p>
     </footer>
 
     <!-- Interactive Javascript Logic -->
@@ -3499,6 +3518,28 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
         // 1) official Google Cloud Translation if configured,
         // 2) existing public Google endpoint,
         // 3) MyMemory fallback.
+        function looksLikeUntranslatedEnglishSentence(sourceText, translatedText, sl, tl) {
+            if (sl !== "en" || tl === "en") return false;
+
+            const normalize = value => String(value || "")
+                .toLowerCase()
+                .replace(/[“”"'’‘.,!?;:()[\]{}]/g, "")
+                .replace(/\s+/g, " ")
+                .trim();
+
+            const source = normalize(sourceText);
+            const translated = normalize(translatedText);
+            if (!source || source !== translated) return false;
+
+            const words = source.split(" ").filter(Boolean);
+            if (words.length < 2) return false;
+
+            // If an English sentence comes back essentially unchanged, it is probably
+            // an untranslated response rather than a legitimate target-language result.
+            const englishSignals = /\b(how|what|where|when|why|who|which|do|does|did|you|your|i|we|they|he|she|it|is|are|am|was|were|have|has|had|can|could|would|should|will|the|a|an|to|from|with|for|of|in|on)\b/i;
+            return englishSignals.test(source);
+        }
+
         async function googleTranslateApiCall(text, sl, tl, retries = 2, delayMs = 1000) {
             const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -3524,7 +3565,14 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                             if (row && row[0]) combinedText += row[0];
                         });
                     }
-                    if (combinedText) return sanitizeTranslation(combinedText);
+                    if (combinedText) {
+                        const cleaned = sanitizeTranslation(combinedText);
+                        if (looksLikeUntranslatedEnglishSentence(text, cleaned, sl, tl)) {
+                            console.warn("Public Google Translation returned the English sentence unchanged; using fallback translator.");
+                            break;
+                        }
+                        return cleaned;
+                    }
                     throw new Error("Public Google Translation returned no text.");
                 } catch (err) {
                     console.warn(`Public Google Translate attempt ${attempt} failed:`, err);
@@ -4288,10 +4336,15 @@ Before returning, verify that the explanation itself is English.`;
                 dExplanation.appendChild(aiButton);
             }
 
-            try {
-                triggerAutoPhraseTranslation(phraseText);
-            } catch (e) {
-                console.warn("Phrase translation unavailable:", e);
+            const translationEl = document.getElementById("detail-translation");
+            const translationBtn = document.getElementById("detail-translate-context-btn");
+            if (translationEl) {
+                translationEl.textContent = "Not translated yet.";
+                translationEl.className = "block text-sm font-semibold text-slate-500 italic";
+            }
+            if (translationBtn) {
+                translationBtn.disabled = false;
+                translationBtn.textContent = "Translate in context";
             }
         }
 
@@ -4378,38 +4431,77 @@ Before returning, verify that the explanation itself is English.`;
             "vor": "before / in front of",
             "hinter": "behind",
             "neben": "next to",
-            "zwischen": "between"
+            "zwischen": "between",
+            "jetzt": "now",
+            "werde": "will / am going to",
+            "arbeiten": "to work"
         };
 
-        // Auto Phrase Translator (Loads translation instantly when card is pressed)
-        async function triggerAutoPhraseTranslation(phraseText) {
+        // Explicit contextual phrase translator.
+        // This never runs just because a grammar card was opened.
+        let phraseTranslationRequestId = 0;
+
+        async function translateSelectedPhraseInContext(button) {
             const transText = document.getElementById("detail-translation");
-            if (!phraseText) return;
+            const phraseText = String(currentSelectedPhrase || "").trim();
+            const sentenceText = String(currentGermanSentence || document.getElementById("target-text")?.value || "").trim();
+            if (!transText || !phraseText) return;
 
-            const cleanText = phraseText.trim().toLowerCase().replace(/[.,!?;]+$/g, "");
+            const requestId = ++phraseTranslationRequestId;
+            const oldButtonText = button ? button.textContent : "";
 
-            // Check offline lookup table first to prevent bizzare machine translation hallucinations
-            if (offlineWordTranslations[cleanText] !== undefined) {
-                const localTrans = offlineWordTranslations[cleanText];
-                transText.innerText = `"${localTrans}"`;
-                transText.className = "text-sm font-bold text-emerald-700 italic animate-fadeIn";
-                return;
+            const isStillCurrent = () =>
+                requestId === phraseTranslationRequestId &&
+                String(currentSelectedPhrase || "").trim() === phraseText;
+
+            if (button) {
+                button.disabled = true;
+                button.textContent = "Translating in context…";
             }
-
-            // Show quiet loading state using inline SVG
-            transText.innerHTML = `<span class="flex items-center gap-1.5 text-blue-600 font-bold animate-pulse text-[11px]"><svg class="animate-spin h-3.5 w-3.5 text-blue-600 inline shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Translating...</span>`;
-            transText.className = "text-sm italic";
+            transText.textContent = "Checking the phrase in its sentence…";
+            transText.className = "block text-sm font-semibold text-blue-600 italic";
 
             try {
-                // German to English translation for specific card phrase
-                const translation = await googleTranslateApiCall(phraseText, "de", "en");
+                let translation = "";
 
-                transText.innerText = `"${translation}"`;
-                transText.className = "text-sm font-bold text-emerald-700 italic animate-fadeIn";
+                // Context-sensitive translation is an explicit AI action.
+                if (getActiveAIKey()) {
+                    const prompt = `You are translating ONE selected German word or phrase for an English-speaking learner.
+
+Selected German word/phrase: "${phraseText}"
+Full German sentence: "${sentenceText}"
+
+Return ONLY the concise English meaning of the selected word/phrase AS IT IS USED IN THIS SENTENCE.
+Do not translate the whole sentence.
+Do not give grammar explanations.
+Do not give alternatives unless the context is genuinely ambiguous.
+Plain text only.`;
+
+                    translation = cleanAiExplanation(await callAI(prompt));
+                } else {
+                    // Without AI, only use a known local meaning. We deliberately do not
+                    // send the isolated token to a machine translator because that loses context.
+                    const cleanText = phraseText.toLowerCase().replace(/[.,!?;]+$/g, "");
+                    translation = offlineWordTranslations[cleanText] || "";
+                    if (!translation) {
+                        throw new Error("Context translation needs an AI key. Add one in Settings, or use Ask AI about this phrase.");
+                    }
+                }
+
+                if (!isStillCurrent()) return;
+
+                transText.textContent = `"${translation}"`;
+                transText.className = "block text-sm font-bold text-emerald-700 italic animate-fadeIn";
             } catch (err) {
-                console.error("Phrase translation failed:", err);
-                transText.innerText = "Network busy. Try again.";
-                transText.className = "text-sm font-semibold text-rose-600 italic animate-fadeIn";
+                console.error("Context phrase translation failed:", err);
+                if (!isStillCurrent()) return;
+                transText.textContent = (err && err.message) ? err.message : "Context translation failed.";
+                transText.className = "block text-sm font-semibold text-rose-600 italic animate-fadeIn";
+            } finally {
+                if (button && isStillCurrent()) {
+                    button.disabled = false;
+                    button.textContent = oldButtonText || "Translate in context";
+                }
             }
         }
 
@@ -6422,11 +6514,12 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     function spanishShell(){
         return {
-            subtitle:"Spanish uses agreement, pronouns, tense and mood rather than German-style noun cases.",
+            subtitle:"Spanish grammar centers on verb tense/mood, pronouns, agreement, and high-frequency usage contrasts.",
             tabs:[
                 ["verbs","Verbs & Tenses"],
-                ["pronouns","Pronouns & Objects"],
-                ["agreement","Agreement & Contrasts"]
+                ["pronouns","Pronouns"],
+                ["agreement","Agreement"],
+                ["contrasts","Core Contrasts"]
             ],
             panels:{
                 verbs:`
@@ -6452,14 +6545,14 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                     <div id="es-verb-status" class="text-[11px] text-slate-500"></div>
                   </div>
                   <div id="es-verb-result" class="hidden ml-helper-result"></div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish verb tool','es-verb-result',this)">✨ Ask AI about this verb</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish verb tense and mood','es-verb-result',this)">✨ Ask AI about this verb</button>
                   <div id="ai-es-verb-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
                 pronouns:`
                 <div class="ml-panel space-y-4">
                   <div>
                     <div class="text-sm font-bold text-slate-800">Object Pronoun Builder</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Spanish normally places indirect-object pronouns before direct-object pronouns. <strong>le/les</strong> becomes <strong>se</strong> before lo/la/los/las.</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Indirect-object pronouns normally come before direct-object pronouns. <strong>le/les</strong> becomes <strong>se</strong> before lo/la/los/las.</p>
                   </div>
                   <div class="ml-helper-card space-y-3">
                     <div class="ml-grid-2">
@@ -6480,19 +6573,30 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                     <label class="ml-field">Conjugated verb<input id="es-pronoun-verb" class="ml-input" value="doy" oninput="updateSpanishPronounBuilder()"></label>
                   </div>
                   <div id="es-pronoun-result" class="ml-helper-result"></div>
-                  <div class="ml-helper-card">
-                    <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Core pronoun order</div>
-                    <div class="mt-2 text-sm font-bold text-slate-800">[indirect] + [direct] + verb</div>
-                    <p class="text-[11px] text-slate-600 mt-2">Example: <strong>Se lo doy.</strong> = I give it to him/her.</p>
+
+                  <div class="grammar-topic-divider"></div>
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Reflexive Pronoun Finder</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Match the subject with the reflexive pronoun used in verbs such as <em>levantarse</em>.</p>
                   </div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish object pronouns','es-pronoun-result',this)">✨ Ask AI about these pronouns</button>
+                  <div class="ml-helper-card">
+                    <label class="ml-field">Subject
+                      <select id="es-reflexive-subject" class="ml-input" onchange="renderSpanishReflexive()">
+                        <option value="yo">yo</option><option value="tú">tú</option><option value="el">él / ella / usted</option>
+                        <option value="nosotros">nosotros/as</option><option value="vosotros">vosotros/as</option>
+                        <option value="ellos">ellos / ellas / ustedes</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div id="es-reflexive-result" class="ml-helper-result"></div>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish object and reflexive pronouns','es-pronoun-result',this)">✨ Ask AI about pronouns</button>
                   <div id="ai-es-pronoun-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
                 agreement:`
                 <div class="ml-panel space-y-4">
                   <div>
                     <div class="text-sm font-bold text-slate-800">Adjective Agreement</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Many Spanish adjectives change for gender and number.</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Many adjectives change for gender and number.</p>
                   </div>
                   <div class="ml-helper-card space-y-3">
                     <label class="ml-field">Base adjective<input id="es-adj-input" class="ml-input" value="bonito" oninput="updateSpanishAdjective()"></label>
@@ -6505,8 +6609,29 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
                   <div class="grammar-topic-divider"></div>
                   <div>
+                    <div class="text-sm font-bold text-slate-800">Article Agreement Builder</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Choose definite or indefinite article plus noun gender and number.</p>
+                  </div>
+                  <div class="ml-helper-card space-y-3">
+                    <label class="ml-field">Article type
+                      <select id="es-article-type" class="ml-input" onchange="renderSpanishArticleAgreement()">
+                        <option value="def">Definite — the</option><option value="indef">Indefinite — a/an/some</option>
+                      </select>
+                    </label>
+                    <div class="ml-grid-2">
+                      <label class="ml-field">Gender<select id="es-article-gender" class="ml-input" onchange="renderSpanishArticleAgreement()"><option value="m">Masculine</option><option value="f">Feminine</option></select></label>
+                      <label class="ml-field">Number<select id="es-article-number" class="ml-input" onchange="renderSpanishArticleAgreement()"><option value="s">Singular</option><option value="p">Plural</option></select></label>
+                    </div>
+                  </div>
+                  <div id="es-article-result" class="ml-helper-result"></div>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish agreement','es-adj-result',this)">✨ Ask AI about agreement</button>
+                  <div id="ai-es-adj-result" class="grammar-section-ai-result hidden"></div>
+                </div>`,
+                contrasts:`
+                <div class="ml-panel space-y-4">
+                  <div>
                     <div class="text-sm font-bold text-slate-800">Usage Contrast Explorer</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Explore distinctions that cause frequent errors.</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Explore distinctions that cause frequent errors and change sentence meaning.</p>
                   </div>
                   <div class="ml-helper-card">
                     <label class="ml-field">Contrast
@@ -6514,6 +6639,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                         <option value="ser-estar">ser vs estar</option>
                         <option value="por-para">por vs para</option>
                         <option value="pret-imp">preterite vs imperfect</option>
+                        <option value="hay-estar">hay vs estar</option>
+                        <option value="saber-conocer">saber vs conocer</option>
                       </select>
                     </label>
                   </div>
@@ -6527,11 +6654,12 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     function japaneseShell(){
         return {
-            subtitle:"Japanese grammar centers on particles, predicate forms, readings, counters, and level of politeness.",
+            subtitle:"Japanese grammar centers on predicate forms, particles, readings/counters, and register. These are separated because they solve different learner problems.",
             tabs:[
                 ["forms","Verbs & Adjectives"],
                 ["particles","Particles & Roles"],
-                ["reading","Counters & Politeness"]
+                ["counters","Counters & Readings"],
+                ["politeness","Politeness & Register"]
             ],
             panels:{
                 forms:`
@@ -6547,24 +6675,25 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                     <div id="ja-verb-status" class="text-[11px] text-slate-500"></div>
                   </div>
                   <div id="ja-verb-result" class="hidden ml-helper-result"></div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese verb forms','ja-verb-result',this)">✨ Ask AI about these forms</button>
-                  <div id="ai-ja-verb-result" class="grammar-section-ai-result hidden"></div>
 
                   <div class="grammar-topic-divider"></div>
-                  <div class="ml-helper-card">
-                    <div class="text-sm font-bold text-slate-800">Adjective pattern reminder</div>
-                    <div class="mt-2 flex flex-wrap gap-2">
-                      <span class="ml-rule-chip">い-adjective: 高い → 高くない → 高かった</span>
-                      <span class="ml-rule-chip">な-adjective: 静かだ → 静かではない → 静かだった</span>
-                    </div>
-                    <p class="text-[11px] text-slate-600 mt-2">Japanese adjectives can function as predicates and carry tense/negation themselves.</p>
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Adjective Form Helper</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Practice present, negative, past, and past-negative forms of い- and な-adjectives.</p>
                   </div>
+                  <div class="ml-helper-card space-y-3">
+                    <label class="ml-field">Adjective<input id="ja-adj-input" class="ml-input" value="高い" oninput="renderJapaneseAdjective()"></label>
+                    <label class="ml-field">Type<select id="ja-adj-type" class="ml-input" onchange="renderJapaneseAdjective()"><option value="i">い-adjective</option><option value="na">な-adjective</option></select></label>
+                  </div>
+                  <div id="ja-adj-result" class="ml-helper-result"></div>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese verb and adjective forms','ja-verb-result',this)">✨ Ask AI about these forms</button>
+                  <div id="ai-ja-verb-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
                 particles:`
                 <div class="ml-panel space-y-4">
                   <div>
                     <div class="text-sm font-bold text-slate-800">Particle Explorer</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Particles mark the role of the phrase before them.</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Particles mark the role or discourse function of the phrase before them.</p>
                   </div>
                   <div class="ml-helper-card">
                     <label class="ml-field">Particle
@@ -6573,7 +6702,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                         <option value="を">を — direct object</option><option value="に">に — destination/time/target</option>
                         <option value="で">で — place of action/means</option><option value="へ">へ — direction</option>
                         <option value="と">と — with/and/quotation</option><option value="も">も — also</option>
-                        <option value="の">の — possession/modification</option><option value="から">から — from</option>
+                        <option value="の">の — possession/modification</option><option value="から">から — from/because</option>
                         <option value="まで">まで — until/to</option>
                       </select>
                     </label>
@@ -6597,14 +6726,29 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                     </label>
                   </div>
                   <div id="ja-role-result" class="ml-helper-result"></div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese particles','ja-particle-result',this)">✨ Ask AI about this particle</button>
+
+                  <div class="grammar-topic-divider"></div>
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Particle Contrast Explorer</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Compare particles that English speakers often confuse.</p>
+                  </div>
+                  <div class="ml-helper-card">
+                    <select id="ja-particle-contrast" class="ml-input" onchange="renderJapaneseParticleContrast()">
+                      <option value="wa-ga">は vs が</option>
+                      <option value="ni-de">に vs で</option>
+                      <option value="ni-e">に vs へ</option>
+                      <option value="to-ya">と vs や</option>
+                    </select>
+                  </div>
+                  <div id="ja-particle-contrast-result" class="ml-helper-result"></div>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese particles and particle contrasts','ja-particle-result',this)">✨ Ask AI about particles</button>
                   <div id="ai-ja-particle-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
-                reading:`
+                counters:`
                 <div class="ml-panel space-y-4">
                   <div>
                     <div class="text-sm font-bold text-slate-800">Counter Helper</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Japanese uses different counters depending on what is being counted, and some readings change irregularly.</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Japanese uses different counters depending on what is counted, and some number+counter readings change irregularly.</p>
                   </div>
                   <div class="ml-helper-card">
                     <div class="ml-grid-2">
@@ -6620,17 +6764,36 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
                   <div class="grammar-topic-divider"></div>
                   <div class="ml-helper-card">
-                    <div class="text-sm font-bold text-slate-800">Politeness / Register</div>
-                    <div class="mt-3 space-y-2 text-[12px] text-slate-700">
-                      <div><strong>Plain:</strong> 食べる。 → eat / will eat</div>
-                      <div><strong>Polite:</strong> 食べます。 → eat / will eat</div>
-                      <div><strong>Plain negative:</strong> 食べない。</div>
-                      <div><strong>Polite negative:</strong> 食べません。</div>
-                    </div>
-                    <p class="text-[11px] text-slate-500 mt-3">The core meaning can stay the same while the social register changes.</p>
+                    <div class="text-sm font-bold text-slate-800">Reading reminder</div>
+                    <p class="text-[11px] text-slate-600 mt-2">Kanji readings depend on the word and context. Use <strong>Parse with AI</strong> on a sentence to see contextual hiragana and Hepburn romaji on the cards.</p>
                   </div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese counters and politeness','ja-counter-result',this)">✨ Ask AI about this helper</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese counters and readings','ja-counter-result',this)">✨ Ask AI about this counter</button>
                   <div id="ai-ja-counter-result" class="grammar-section-ai-result hidden"></div>
+                </div>`,
+                politeness:`
+                <div class="ml-panel space-y-4">
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Plain ↔ Polite Register Helper</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Compare ordinary plain forms with ます-style polite forms. This is separate from counting because register is a social/grammatical choice, not a number system.</p>
+                  </div>
+                  <div class="ml-helper-card space-y-3">
+                    <label class="ml-field">Dictionary-form verb<input id="ja-register-verb" class="ml-input" value="食べる" oninput="renderJapaneseRegister()"></label>
+                  </div>
+                  <div id="ja-register-result" class="ml-helper-result"></div>
+
+                  <div class="grammar-topic-divider"></div>
+                  <div class="ml-helper-card">
+                    <div class="text-sm font-bold text-slate-800">Common register patterns</div>
+                    <div class="mt-3 space-y-2 text-[12px] text-slate-700">
+                      <div><strong>Noun / な-adjective plain:</strong> 学生だ。 / 静かだ。</div>
+                      <div><strong>Polite:</strong> 学生です。 / 静かです。</div>
+                      <div><strong>Question:</strong> 行く？ → 行きますか。</div>
+                      <div><strong>Request:</strong> 見て。 → 見てください。</div>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-3">Plain speech is not automatically rude; appropriateness depends on relationship and setting.</p>
+                  </div>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese politeness and register','ja-register-result',this)">✨ Ask AI about register</button>
+                  <div id="ai-ja-register-result" class="grammar-section-ai-result hidden"></div>
                 </div>`
             }
         };
@@ -6660,11 +6823,16 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(currentStudyLanguage==="es"){
             updateSpanishPronounBuilder();
             updateSpanishAdjective();
+            renderSpanishReflexive();
+            renderSpanishArticleAgreement();
             renderSpanishContrast();
         } else {
             renderJapaneseParticle();
             renderJapaneseRole();
+            renderJapaneseParticleContrast();
+            renderJapaneseAdjective();
             renderJapaneseCounter();
+            renderJapaneseRegister();
         }
     }
 
@@ -6673,6 +6841,55 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         document.getElementById("ml-panel-"+id)?.classList.remove("hidden");
         document.querySelectorAll(".ml-tool-tab").forEach(x=>x.classList.toggle("active",x.dataset.mlTab===id));
     };
+
+
+    function updateParserLegendForLanguage(){
+        const legend=document.getElementById("unified-legend-container");
+        const button=document.getElementById("toggle-legend-btn");
+        if(!legend || !button) return;
+
+        if(currentStudyLanguage==="de"){
+            legend.innerHTML=`
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold">
+                    <div class="space-y-1.5">
+                        <span class="text-[11px] font-bold text-slate-600 block border-b border-slate-200 pb-1">Tile Background color = Noun Case</span>
+                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-md case-nom"><span class="w-2 h-2 rounded-full bg-blue-600"></span> Nominative (Subject)</span>
+                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-md case-acc"><span class="w-2 h-2 rounded-full bg-emerald-600"></span> Accusative (Direct Obj)</span>
+                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-md case-dat"><span class="w-2 h-2 rounded-full bg-amber-600"></span> Dative (Indirect Obj)</span>
+                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-md case-gen"><span class="w-2 h-2 rounded-full bg-purple-600"></span> Genitive (Possessive)</span>
+                    </div>
+                    <div class="space-y-1.5">
+                        <span class="text-[11px] font-bold text-slate-600 block border-b border-slate-200 pb-1">Text color = Word Gender</span>
+                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-sky-400 text-sky-600">Masculine</span>
+                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-pink-400 text-pink-600">Feminine</span>
+                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-teal-400 text-teal-600">Neuter</span>
+                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-violet-400 text-violet-600">Plural</span>
+                    </div>
+                </div>`;
+        } else if(currentStudyLanguage==="es"){
+            legend.innerHTML=`
+                <div class="space-y-3 text-xs font-semibold">
+                    <div class="text-[11px] font-bold text-slate-700 border-b border-slate-200 pb-1">Spanish parser labels</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600">
+                        <span>Verb / tense / mood</span><span>Subject or object pronoun</span>
+                        <span>Article / determiner</span><span>Noun / adjective</span>
+                        <span>Preposition / adverb</span><span>Phrase / conjunction</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 font-medium">Spanish uses grammatical gender and number for agreement, but these cards do not use German Nominative / Accusative / Dative / Genitive case labels.</p>
+                </div>`;
+        } else {
+            legend.innerHTML=`
+                <div class="space-y-3 text-xs font-semibold">
+                    <div class="text-[11px] font-bold text-slate-700 border-b border-slate-200 pb-1">Japanese parser labels</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600">
+                        <span>Topic / subject / object particles</span><span>Destination / location / means particles</span>
+                        <span>Noun / adjective / adverb</span><span>Verb / auxiliary / predicate</span>
+                        <span>Hiragana reading</span><span>Hepburn romaji</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 font-medium">Japanese does not use German grammatical gender or the German four-case labeling system. Particle function and sentence role are shown instead.</p>
+                </div>`;
+        }
+    }
 
     function updateVisibleLanguageUI(){
         const cfg=langConfig();
@@ -6782,6 +6999,15 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             outputSpeak.title=`Listen (${cfg.name})`;
         }
 
+        updateParserLegendForLanguage();
+
+        // The detailed Case/Gender card is German-specific. Never leave it visible
+        // after switching to Spanish or Japanese.
+        const germanDetailCard=document.getElementById("tile-detail-card");
+        if(currentStudyLanguage!=="de" && germanDetailCard){
+            germanDetailCard.classList.add("hidden");
+        }
+
         renderLanguageGrammarShell();
     }
 
@@ -6792,6 +7018,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         updateVisibleLanguageUI();
         currentGermanSentence="";
         currentSelectedPhrase="";
+        const detailCard=document.getElementById("tile-detail-card");
+        if(detailCard) detailCard.classList.add("hidden");
         const tiles=document.getElementById("tiles-container");
         if(tiles) tiles.innerHTML=`<span id="parser-empty-message" class="text-slate-400 text-sm italic">Tiles will be generated here once you translate or enter a ${langConfig().name} phrase above...</span>`;
         document.getElementById("target-text").value="";
@@ -6805,6 +7033,159 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     };
 
     // ---------- Generic translation routers ----------
+
+    // ---------- Conservative translation validation ----------
+    // This layer sits around the existing translators; it does not change parser behavior.
+    function normalizeValidationText(value){
+        return String(value || "")
+            .toLowerCase()
+            .replace(/[“”"'’‘.,!?;:()[\]{}]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function containsJapaneseScript(value){
+        return /[\u3040-\u30ff\u3400-\u9fff]/.test(String(value || ""));
+    }
+
+    function hasSuspiciousJapaneseInsertion(sourceText,targetText){
+        const source=String(sourceText||"");
+        const target=String(targetText||"");
+
+        // A translator should not spontaneously inject a parenthetical kanji name/tag
+        // when the English source contained no parentheses. This catches output such as （山田）.
+        if(!/[()（）]/.test(source) && /[（(]\s*[\u3400-\u9fff]{2,5}\s*[）)]/.test(target)) return true;
+
+        // Reject obvious Latin/English fragments in an otherwise Japanese translation,
+        // but allow ordinary numbers and punctuation.
+        const latinWords=(target.match(/[A-Za-z]{2,}/g)||[]);
+        if(latinWords.length>=2) return true;
+
+        return false;
+    }
+
+    function targetShapeLooksValid(sourceText,targetText,targetCode){
+        const source=String(sourceText||"").trim();
+        const target=String(targetText||"").trim();
+        if(!target) return false;
+
+        const srcNorm=normalizeValidationText(source);
+        const tgtNorm=normalizeValidationText(target);
+
+        // Existing all-language safeguard: an English sentence should not come back unchanged.
+        if(targetCode!=="en" && srcNorm && srcNorm===tgtNorm && srcNorm.split(" ").length>1) return false;
+
+        if(targetCode==="ja"){
+            // For an ordinary English sentence, Japanese output should contain Japanese script.
+            if(/[A-Za-z]/.test(source) && !containsJapaneseScript(target)) return false;
+            if(hasSuspiciousJapaneseInsertion(source,target)) return false;
+        }
+
+        return true;
+    }
+
+    function validationKeywords(value){
+        const stop=new Set([
+            "i","me","my","you","your","he","she","it","we","they","a","an","the",
+            "to","of","in","on","at","for","from","with","and","or","but","is","am","are",
+            "was","were","be","been","being","do","does","did","have","has","had"
+        ]);
+        return normalizeValidationText(value).split(" ")
+            .filter(w=>w.length>1 && !stop.has(w));
+    }
+
+    function roundTripLooksReasonable(sourceEnglish,backEnglish){
+        const src=validationKeywords(sourceEnglish);
+        const back=validationKeywords(backEnglish);
+        if(!src.length || !back.length) return true;
+
+        const backSet=new Set(back);
+        const matched=src.filter(w=>backSet.has(w)).length;
+
+        // Conservative: only reject when essentially none of the meaningful English survives.
+        // This avoids rejecting valid paraphrases such as "want" vs "would like".
+        return matched>=1 || (src.length<=2 && back.length<=3);
+    }
+
+    async function publicGoogleTranslationRaw(text,sl,tl){
+        const response=await fetch(
+            `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${encodeURIComponent(sl)}&tl=${encodeURIComponent(tl)}&dt=t&q=${encodeURIComponent(text)}`
+        );
+        if(!response.ok) throw new Error("Public Google Translation HTTP "+response.status);
+        const result=await response.json();
+        let combined="";
+        if(Array.isArray(result)&&result[0]){
+            result[0].forEach(row=>{ if(row&&row[0]) combined+=row[0]; });
+        }
+        if(!combined) throw new Error("Public Google Translation returned no text.");
+        return sanitizeTranslation(combined);
+    }
+
+    async function myMemoryTranslationRaw(text,sl,tl){
+        const response=await fetch(
+            `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(sl+"|"+tl)}`
+        );
+        if(!response.ok) throw new Error("MyMemory HTTP "+response.status);
+        const data=await response.json();
+        const translated=data?.responseData?.translatedText;
+        if(!translated) throw new Error("MyMemory returned no translated text.");
+        return sanitizeTranslation(decodeHtmlEntities(translated));
+    }
+
+    async function validateCandidateTranslation(sourceEnglish,candidate,targetCode){
+        if(!targetShapeLooksValid(sourceEnglish,candidate,targetCode)) return {ok:false,reason:"shape"};
+
+        try{
+            // Use the existing translation route only for a sanity-check back translation.
+            // Failure of the check itself does not automatically reject an otherwise sane target.
+            const back=await googleTranslateApiCall(candidate,targetCode,"en");
+            if(!roundTripLooksReasonable(sourceEnglish,back)) return {ok:false,reason:"round-trip"};
+            return {ok:true,back};
+        }catch(e){
+            console.warn("Translation validation back-check unavailable:",e);
+            return {ok:true,back:""};
+        }
+    }
+
+    async function translateEnglishToTargetValidated(sourceEnglish,targetCode){
+        const candidates=[];
+
+        // Candidate 1: preserve the app's existing preferred translation route.
+        try{
+            candidates.push(await googleTranslateApiCall(sourceEnglish,"en",targetCode));
+        }catch(e){
+            console.warn("Preferred translation route failed:",e);
+        }
+
+        // Candidate 2/3 are only tried when needed and are deliberately separate,
+        // so a malformed successful response does not block a cleaner fallback.
+        for(const candidate of candidates){
+            const verdict=await validateCandidateTranslation(sourceEnglish,candidate,targetCode);
+            if(verdict.ok) return {translation:candidate,back:verdict.back,source:"preferred"};
+            console.warn("Rejected suspicious translation candidate:",verdict.reason,candidate);
+        }
+
+        try{
+            const candidate=await publicGoogleTranslationRaw(sourceEnglish,"en",targetCode);
+            const verdict=await validateCandidateTranslation(sourceEnglish,candidate,targetCode);
+            if(verdict.ok) return {translation:candidate,back:verdict.back,source:"public-google"};
+            console.warn("Rejected suspicious public translation:",verdict.reason,candidate);
+        }catch(e){
+            console.warn("Public translation fallback unavailable:",e);
+        }
+
+        try{
+            const candidate=await myMemoryTranslationRaw(sourceEnglish,"en",targetCode);
+            const verdict=await validateCandidateTranslation(sourceEnglish,candidate,targetCode);
+            if(verdict.ok) return {translation:candidate,back:verdict.back,source:"mymemory"};
+            console.warn("Rejected suspicious MyMemory translation:",verdict.reason,candidate);
+        }catch(e){
+            console.warn("MyMemory translation fallback unavailable:",e);
+        }
+
+        throw new Error("The translation services returned a result that did not pass the language sanity check. Please try again.");
+    }
+
     window.processEnglishTranslation=async function(){
         const sourceText=document.getElementById("source-text").value.trim();
         const tiles=document.getElementById("tiles-container");
@@ -6816,12 +7197,14 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         document.getElementById("german-english-translation").value="Checking English meaning...";
 
         try{
-            let targetSentence=await googleTranslateApiCall(sourceText,"en",cfg.code);
-            targetSentence=normalizeTargetText(targetSentence,cfg.code);
+            const validated=await translateEnglishToTargetValidated(sourceText,cfg.code);
+            let targetSentence=normalizeTargetText(validated.translation,cfg.code);
             document.getElementById("target-text").value=targetSentence;
             document.getElementById("german-source-text").value=targetSentence;
 
-            let back=await googleTranslateApiCall(targetSentence,cfg.code,"en");
+            // Reuse the validator's back-translation when available; otherwise perform the
+            // same meaning check the app already used.
+            let back=validated.back || await googleTranslateApiCall(targetSentence,cfg.code,"en");
             back=normalizeSentencePresentation(back,"en");
             document.getElementById("german-english-translation").value=back;
 
@@ -6887,6 +7270,12 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     }
 
     const JA_PARTICLES=["から","まで","より","って","では","には","は","が","を","に","で","へ","と","も","の","ね","よ"];
+    const JA_PARTICLE_READING = {
+        "は":["は","wa"], "が":["が","ga"], "を":["を","o"], "に":["に","ni"], "で":["で","de"],
+        "へ":["へ","e"], "と":["と","to"], "も":["も","mo"], "の":["の","no"], "ね":["ね","ne"], "よ":["よ","yo"],
+        "から":["から","kara"], "まで":["まで","made"], "より":["より","yori"], "って":["って","tte"],
+        "では":["では","dewa"], "には":["には","niwa"]
+    };
     function parseJapaneseLocal(sentence){
         let rest=String(sentence||"").trim();
         const items=[];
@@ -6897,7 +7286,15 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             const chunk=rest.slice(last,m.index).trim();
             if(chunk) items.push({text:chunk,role:/ます$|ました$|ません$|ない$|た$|る$|う$|く$|ぐ$|す$|つ$|ぬ$|ぶ$|む$/.test(chunk)?"verb":"word",label:/ます$|ました$|ません$|ない$|た$|る$|う$|く$|ぐ$|す$|つ$|ぬ$|ぶ$|む$/.test(chunk)?"Predicate / verb":"Phrase"});
             const p=m[0];
-            items.push({text:p,role:/[。！？!?、]/.test(p)?"punctuation":"particle",label:/[。！？!?、]/.test(p)?"Punctuation":"Particle"});
+            const isPunctuation=/[。！？!?、]/.test(p);
+            const particleReading=JA_PARTICLE_READING[p] || ["",""];
+            items.push({
+                text:p,
+                role:isPunctuation?"punctuation":"particle",
+                label:isPunctuation?"Punctuation":"Particle",
+                reading:isPunctuation?"":particleReading[0],
+                romaji:isPunctuation?"":particleReading[1]
+            });
             last=re.lastIndex;
         }
         const tail=rest.slice(last).trim();
@@ -6907,6 +7304,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     function renderMultilangTiles(items,sourceLabel){
         const box=document.getElementById("tiles-container");
+        const germanDetailCard=document.getElementById("tile-detail-card");
+        if(germanDetailCard) germanDetailCard.classList.add("hidden");
         box.innerHTML="";
         if(!items.length){
             box.innerHTML=`<span class="text-slate-400 text-sm italic">No local parse items were found.</span>`;
@@ -6920,8 +7319,22 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         items.forEach(item=>{
             const tile=document.createElement("div");
             tile.className=`ml-token role-${item.role||"word"}`;
-            tile.innerHTML=`<div class="font-bold text-slate-800 break-words">${escapeML(item.text)}</div><span class="ml-token-role">${escapeML(item.label||item.role||"Word")}</span><button type="button" class="ml-token-speak" title="Listen">🔊</button>`;
-            tile.querySelector("button").addEventListener("click",e=>{e.stopPropagation();speakRawText(item.text,targetLocale());});
+
+            const reading = String(item.reading || "").trim();
+            const romaji = String(item.romaji || "").trim();
+            const showJapaneseReading = currentStudyLanguage === "ja" && (reading || romaji);
+
+            tile.innerHTML=`
+                <div class="font-bold text-slate-800 break-words">${escapeML(item.text)}</div>
+                ${showJapaneseReading && reading && reading !== item.text ? `<span class="ml-ja-reading">${escapeML(reading)}</span>` : ""}
+                ${showJapaneseReading && romaji ? `<span class="ml-ja-romaji">${escapeML(romaji)}</span>` : ""}
+                <span class="ml-token-role">${escapeML(item.label||item.role||"Word")}</span>
+                <button type="button" class="ml-token-speak" title="Listen">🔊</button>`;
+
+            tile.querySelector("button").addEventListener("click",e=>{
+                e.stopPropagation();
+                speakRawText(item.text,targetLocale());
+            });
             tile.addEventListener("click",()=>{ currentSelectedPhrase=item.text; });
             box.appendChild(tile);
         });
@@ -6932,6 +7345,87 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(currentStudyLanguage==="es") return renderMultilangTiles(parseSpanishLocal(sentence),"Local Spanish Parse");
         return renderMultilangTiles(parseJapaneseLocal(sentence),"Local Japanese Parse");
     };
+
+
+    function fallbackRoleLabel(role,lang){
+        const r=String(role||"word").toLowerCase();
+        if(lang==="ja"){
+            const labels={
+                particle:"Particle", noun:"Noun", adjective:"Adjective", verb:"Verb / predicate",
+                auxiliary:"Auxiliary", adverb:"Adverb", conjunction:"Conjunction",
+                pronoun:"Pronoun", phrase:"Phrase", punctuation:"Punctuation", word:"Word"
+            };
+            return labels[r]||"Word";
+        }
+        if(lang==="es"){
+            const labels={
+                article:"Article / determiner", pronoun:"Pronoun", preposition:"Preposition",
+                noun:"Noun", adjective:"Adjective", verb:"Verb / verb form", auxiliary:"Auxiliary verb",
+                adverb:"Adverb", conjunction:"Conjunction", phrase:"Phrase",
+                punctuation:"Punctuation", word:"Word"
+            };
+            return labels[r]||"Word";
+        }
+        return cap(r);
+    }
+
+    function sanitizeNonGermanParseLabel(label,role,lang){
+        let value=String(label||"").trim();
+        if(!value) return fallbackRoleLabel(role,lang);
+
+        // Strip German-case carryover if a model returns it despite the language prompt.
+        const germanCase=/\b(nominative|accusative|dative|genitive)\b/i;
+        if(germanCase.test(value)) return fallbackRoleLabel(role,lang);
+
+        if(lang==="ja"){
+            // Japanese has no grammatical gender categories corresponding to German noun gender.
+            if(/\b(masculine|feminine|neuter|neut\.?|masc\.?|fem\.?)\b/i.test(value)){
+                return fallbackRoleLabel(role,lang);
+            }
+        }
+
+        // Remove compact German-parser suffixes such as "(NEUT)" or "(MASC)".
+        value=value.replace(/\s*\((?:NEUT|MASC|FEM|PL)\)\s*$/i,"").trim();
+        return value || fallbackRoleLabel(role,lang);
+    }
+
+    function buildNonGermanParsePrompt(lang,cfg,sentence){
+        if(lang==="ja"){
+            return `You are an expert Japanese grammar parser for an English-speaking learner.
+Analyze this Japanese sentence:
+"${sentence}"
+
+Return ONLY valid JSON:
+{"items":[{"text":"exact chunk from sentence","role":"particle|pronoun|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation","label":"short English Japanese-grammar label","reading":"contextual hiragana reading","romaji":"standard Hepburn romaji"}]}
+
+Rules:
+- Preserve sentence order and represent every visible element exactly once.
+- Isolate grammatical particles when possible.
+- Describe PARTICLE FUNCTION and SENTENCE ROLE, not German grammatical case.
+- Useful labels include: Topic particle, Subject particle, Direct-object particle, Destination/Time particle, Location/Means particle, Possessive/Modifier particle, Noun, Adjective, Adverb, Verb / predicate, Auxiliary, Phrase, Punctuation.
+- NEVER use Nominative, Accusative, Dative, Genitive, Masculine, Feminine, or Neuter.
+- For every item containing kanji, give its correct reading IN THIS SENTENCE in hiragana.
+- Give standard Hepburn romaji when useful; use macrons for long vowels, e.g. がっこう → gakkō.
+- For particles use actual pronunciation where relevant: は → wa, へ → e, を → o.
+- No markdown or explanation outside JSON.`;
+        }
+
+        return `You are an expert Spanish grammar parser for an English-speaking learner.
+Analyze this Spanish sentence:
+"${sentence}"
+
+Return ONLY valid JSON:
+{"items":[{"text":"exact chunk from sentence","role":"article|pronoun|preposition|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation","label":"short English Spanish-grammar label","reading":"","romaji":""}]}
+
+Rules:
+- Preserve sentence order and represent every visible word/punctuation mark exactly once.
+- Identify Spanish verb forms, tense/mood when clear, subject/direct-object/indirect-object pronouns, determiners, prepositions, nouns, adjectives, adverbs, and useful phrases.
+- Spanish grammatical gender/number may be mentioned only when it is relevant to AGREEMENT.
+- Do NOT use German Nominative, Accusative, Dative, or Genitive case labels.
+- Do NOT use German-style labels such as "(NEUT)", "(MASC)", or "(FEM)".
+- Prefer labels such as Present-tense verb, Preterite verb, Subject pronoun, Direct-object pronoun, Indirect-object pronoun, Article / determiner, Noun, Adjective, Preposition, Adverb, Phrase, or Punctuation.
+- No markdown or explanation outside JSON.`;
+    }
 
     // ---------- Generic explicit AI parser ----------
     async function parseSelectedLanguageWithAI(){
@@ -6944,20 +7438,18 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const old=btn.textContent;
         btn.disabled=true; btn.textContent="Parsing with AI…";
         try{
-            const prompt=`You are an expert ${cfg.name} grammar parser for an English-speaking learner.
-Analyze this ${cfg.name} sentence:
-"${sentence}"
-Return ONLY valid JSON:
-{"items":[{"text":"exact chunk from sentence","role":"particle|article|pronoun|preposition|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation","label":"short English grammar label"}]}
-Rules:
-- Preserve sentence order.
-- Every visible word/character should be represented exactly once.
-- Group meaningful phrases when useful.
-- For Japanese, isolate grammatical particles when possible.
-- For Spanish, identify verb forms, pronouns, determiners, agreement-bearing words, and useful phrase groups.
-- No markdown or explanation outside JSON.`;
+            const prompt=buildNonGermanParsePrompt(currentStudyLanguage,cfg,sentence);
             const result=await callAIJson(prompt);
-            const items=(result?.items||[]).map(x=>({text:String(x.text||""),role:String(x.role||"word"),label:String(x.label||x.role||"Word")})).filter(x=>x.text);
+            const items=(result?.items||[]).map(x=>{
+                const role=String(x.role||"word").toLowerCase();
+                return {
+                    text:String(x.text||""),
+                    role,
+                    label:sanitizeNonGermanParseLabel(x.label,role,currentStudyLanguage),
+                    reading:currentStudyLanguage==="ja" ? String(x.reading||"") : "",
+                    romaji:currentStudyLanguage==="ja" ? String(x.romaji||"") : ""
+                };
+            }).filter(x=>x.text);
             if(!items.length) throw new Error("AI returned no parse items.");
             renderMultilangTiles(items,"AI Parse");
         }catch(e){
@@ -7079,12 +7571,43 @@ Rules:
     const ES_CONTRASTS={
       "ser-estar":{title:"ser vs estar",rule:"Use ser mainly for identity, classification, origin, time, and defining characteristics. Use estar mainly for location, temporary/resulting states, and ongoing conditions.",examples:["Ella es médica. — She is a doctor.","Ella está cansada. — She is tired.","Madrid está en España. — Madrid is in Spain."]},
       "por-para":{title:"por vs para",rule:"Por commonly expresses cause, exchange, duration, means, or movement through. Para commonly expresses purpose, destination, recipient, deadline, or intended use.",examples:["Lo hago por ti. — I do it because of/for you.","Este regalo es para ti. — This gift is for you.","Salgo para Madrid. — I leave for Madrid."]},
-      "pret-imp":{title:"preterite vs imperfect",rule:"Preterite presents a completed event or bounded action. Imperfect presents background, habitual action, ongoing past conditions, or what was happening.",examples:["Ayer comí pizza. — Yesterday I ate pizza.","Cuando era niño, comía pizza los viernes. — When I was a child, I used to eat pizza on Fridays."]}
+      "pret-imp":{title:"preterite vs imperfect",rule:"Preterite presents a completed event or bounded action. Imperfect presents background, habitual action, ongoing past conditions, or what was happening.",examples:["Ayer comí pizza. — Yesterday I ate pizza.","Cuando era niño, comía pizza los viernes. — When I was a child, I used to eat pizza on Fridays."]},
+      "hay-estar":{title:"hay vs estar",rule:"Use hay to say that something exists or is present, especially when introducing it. Use estar to locate a specific or already identified person or thing.",examples:["Hay un libro en la mesa. — There is a book on the table.","El libro está en la mesa. — The book is on the table."]},
+      "saber-conocer":{title:"saber vs conocer",rule:"Use saber for facts, information, and knowing how to do something. Use conocer for being acquainted with people, places, or things.",examples:["Sé la respuesta. — I know the answer.","Sé nadar. — I know how to swim.","Conozco Madrid. — I know / am familiar with Madrid."]}
     };
     window.renderSpanishContrast=function(){
         const key=document.getElementById("es-contrast")?.value||"ser-estar";
         const d=ES_CONTRASTS[key], out=document.getElementById("es-contrast-result"); if(!out)return;
         out.innerHTML=`<div class="text-lg font-bold text-red-700">${d.title}</div><p class="text-[12px] text-slate-700 mt-2">${d.rule}</p><div class="mt-3 space-y-2">${d.examples.map(x=>`<div class="rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px]">${escapeML(x)}</div>`).join("")}</div>`;
+    };
+
+
+    const ES_REFLEXIVE={
+        yo:["me","Me levanto. — I get up."],
+        "tú":["te","Te levantas. — You get up."],
+        el:["se","Se levanta. — He / she / you formal gets up."],
+        nosotros:["nos","Nos levantamos. — We get up."],
+        vosotros:["os","Os levantáis. — You all get up."],
+        ellos:["se","Se levantan. — They / you all get up."]
+    };
+    window.renderSpanishReflexive=function(){
+        const key=document.getElementById("es-reflexive-subject")?.value||"yo";
+        const d=ES_REFLEXIVE[key], out=document.getElementById("es-reflexive-result");
+        if(!out||!d)return;
+        out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Reflexive pronoun</div><div class="text-2xl font-bold text-red-700 mt-1">${d[0]}</div><div class="rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] mt-3">${escapeML(d[1])}</div>`;
+    };
+
+    window.renderSpanishArticleAgreement=function(){
+        const type=document.getElementById("es-article-type")?.value||"def";
+        const g=document.getElementById("es-article-gender")?.value||"m";
+        const n=document.getElementById("es-article-number")?.value||"s";
+        const out=document.getElementById("es-article-result"); if(!out)return;
+        const table={
+            def:{m:{s:"el",p:"los"},f:{s:"la",p:"las"}},
+            indef:{m:{s:"un",p:"unos"},f:{s:"una",p:"unas"}}
+        };
+        const article=table[type][g][n];
+        out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Article</div><div class="text-2xl font-bold text-red-700 mt-1">${article}</div><p class="text-[11px] text-slate-600 mt-2">The article agrees with the noun in grammatical gender and number.</p>`;
     };
 
     // ---------- Japanese verb helper ----------
@@ -7171,6 +7694,78 @@ Rules:
     window.renderJapaneseRole=function(){
         const key=document.getElementById("ja-role")?.value||"topic", d=JA_ROLE_DATA[key], out=document.getElementById("ja-role-result");if(!out)return;
         out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Suggested particle</div><div class="text-3xl font-bold text-rose-700 mt-1">${d[0]}</div><p class="text-[12px] text-slate-700 mt-2">${d[1]}</p><div class="rounded-lg border border-slate-200 bg-slate-50 p-2 text-[11px] mt-3">${escapeML(d[2])}</div>`;
+    };
+
+
+    const JA_PARTICLE_CONTRASTS={
+      "wa-ga":{
+        title:"は vs が",
+        rule:"は sets a topic or contrast; が marks or identifies the subject/focus. The choice often depends on what information is already established versus newly identified.",
+        examples:["私は学生です。— As for me, I am a student.","誰が来ますか。田中さんが来ます。— Who is coming? Tanaka is."]
+      },
+      "ni-de":{
+        title:"に vs で",
+        rule:"に commonly marks a destination, target, time, or location of existence. で marks the place where an action happens or the means used.",
+        examples:["学校に行きます。— I go to school.","学校で勉強します。— I study at school."]
+      },
+      "ni-e":{
+        title:"に vs へ",
+        rule:"Both can mark movement toward a destination. に focuses more on the destination/arrival point; へ emphasizes direction toward it.",
+        examples:["日本に行きます。— I go to Japan.","日本へ行きます。— I head toward Japan."]
+      },
+      "to-ya":{
+        title:"と vs や",
+        rule:"と links a complete/exhaustive list ('A and B'). や gives examples from a non-exhaustive list ('A, B, and things like that').",
+        examples:["パンと果物を買います。— I buy bread and fruit.","パンや果物を買います。— I buy bread, fruit, and similar things."]
+      }
+    };
+    window.renderJapaneseParticleContrast=function(){
+        const key=document.getElementById("ja-particle-contrast")?.value||"wa-ga";
+        const d=JA_PARTICLE_CONTRASTS[key], out=document.getElementById("ja-particle-contrast-result");
+        if(!out||!d)return;
+        out.innerHTML=`<div class="text-lg font-bold text-rose-700">${d.title}</div><p class="text-[12px] text-slate-700 mt-2">${d.rule}</p><div class="mt-3 space-y-2">${d.examples.map(x=>`<div class="rounded-lg border border-rose-100 bg-rose-50 p-2 text-[11px]">${escapeML(x)}</div>`).join("")}</div>`;
+    };
+
+    window.renderJapaneseAdjective=function(){
+        const raw=(document.getElementById("ja-adj-input")?.value||"").trim();
+        const type=document.getElementById("ja-adj-type")?.value||"i";
+        const out=document.getElementById("ja-adj-result"); if(!out||!raw)return;
+        let rows=[];
+        if(type==="i"){
+            if(!raw.endsWith("い")){
+                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">For the local い-adjective helper, enter a dictionary form ending in い.</p>`;
+                return;
+            }
+            const stem=raw.slice(0,-1);
+            rows=[["Present",raw],["Negative",stem+"くない"],["Past",stem+"かった"],["Past negative",stem+"くなかった"]];
+        }else{
+            const stem=raw.replace(/だ$/,"").replace(/な$/,"");
+            rows=[["Present",stem+"だ"],["Negative",stem+"ではない"],["Past",stem+"だった"],["Past negative",stem+"ではなかった"]];
+        }
+        out.innerHTML=`<div class="ml-conj-grid">${rows.map(([lab,val])=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${lab}</span><strong>${escapeML(val)}</strong><button type="button" onclick="speakRawText('${val.replace(/'/g,"\\'")}','ja-JP')">🔊</button></div>`).join("")}</div>`;
+    };
+
+    window.renderJapaneseRegister=function(){
+        const v=(document.getElementById("ja-register-verb")?.value||"").trim();
+        const out=document.getElementById("ja-register-result"); if(!out||!v)return;
+        const f=japaneseVerbForms(v);
+        if(!f){
+            out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">I could not classify this verb locally. Use Ask AI for irregular or ambiguous forms.</p>`;
+            return;
+        }
+        let politePast="", politeNegPast="";
+        if(f.polite.endsWith("ます")){
+            const stem=f.polite.slice(0,-2);
+            politePast=stem+"ました";
+            politeNegPast=stem+"ませんでした";
+        }
+        const rows=[
+            ["Plain present",v],["Polite present",f.polite],
+            ["Plain negative",f.negative],["Polite negative",f.polite.replace(/ます$/,"ません")],
+            ["Plain past",f.past],["Polite past",politePast],
+            ["Polite past negative",politeNegPast]
+        ];
+        out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">${escapeML(f.type)}</div><div class="ml-conj-grid">${rows.map(([lab,val])=>`<div class="ml-conj-row"><span class="text-[11px] font-bold text-slate-500">${lab}</span><strong>${escapeML(val)}</strong><button type="button" onclick="speakRawText('${val.replace(/'/g,"\\'")}','ja-JP')">🔊</button></div>`).join("")}</div>`;
     };
 
     const JA_COUNTERS={
@@ -7305,8 +7900,8 @@ Current work: ${context||"No sentence has been entered yet."}`;
         updateVisibleLanguageUI();
 
         // Initialize non-German helper output lazily but safely.
-        if(currentStudyLanguage==="es"){ updateSpanishPronounBuilder(); updateSpanishAdjective(); renderSpanishContrast(); }
-        if(currentStudyLanguage==="ja"){ renderJapaneseParticle(); renderJapaneseRole(); renderJapaneseCounter(); }
+        if(currentStudyLanguage==="es"){ updateSpanishPronounBuilder(); updateSpanishAdjective(); renderSpanishReflexive(); renderSpanishArticleAgreement(); renderSpanishContrast(); }
+        if(currentStudyLanguage==="ja"){ renderJapaneseParticle(); renderJapaneseRole(); renderJapaneseParticleContrast(); renderJapaneseAdjective(); renderJapaneseCounter(); renderJapaneseRegister(); }
     }
 
     if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",bootMultilang);
