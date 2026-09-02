@@ -1993,6 +1993,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         <h4 class="text-base font-bold text-slate-800 flex flex-wrap items-center gap-2">
                             <span id="ml-detail-title-label">Analysis:</span>
                             <span id="ml-detail-word" class="font-mono text-base text-blue-700 bg-white px-3 py-1 rounded shadow-sm border border-slate-200"></span>
+                            <span id="ml-detail-source-badge" class="text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-full border"></span>
                         </h4>
                         <button type="button" onclick="closeMultilangDetailCard()" class="text-slate-400 hover:text-slate-600 shrink-0" aria-label="Close analysis">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -2000,19 +2001,19 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                        <div>
+                        <div id="ml-detail-field1-wrap">
                             <span id="ml-detail-field1-label" class="block font-bold uppercase tracking-wider text-slate-400 text-[10px]">Function</span>
                             <span id="ml-detail-field1" class="block mt-1 text-sm font-semibold text-slate-800"></span>
                         </div>
-                        <div>
+                        <div id="ml-detail-field2-wrap">
                             <span id="ml-detail-field2-label" class="block font-bold uppercase tracking-wider text-slate-400 text-[10px]">Reading</span>
                             <span id="ml-detail-field2" class="block mt-1 text-sm font-semibold text-slate-800"></span>
                         </div>
-                        <div>
+                        <div id="ml-detail-field3-wrap">
                             <span id="ml-detail-field3-label" class="block font-bold uppercase tracking-wider text-slate-400 text-[10px]">Romaji</span>
                             <span id="ml-detail-field3" class="block mt-1 text-sm font-semibold text-slate-800"></span>
                         </div>
-                        <div>
+                        <div id="ml-detail-meaning-wrap">
                             <span class="block font-bold uppercase tracking-wider text-slate-400 text-[10px]">English meaning</span>
                             <div class="mt-1 space-y-2">
                                 <span id="ml-detail-translation" class="block text-sm font-semibold text-slate-500 italic">Not translated yet.</span>
@@ -2090,7 +2091,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                                 <svg class="w-4 h-4 mr-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path></svg> Translation Flashcards
                             </button>
                             <button id="quiz-type-case-btn" onclick="setQuizType('language')" class="pb-2 px-4 border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition">
-                                <svg class="w-4 h-4 mr-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84a50.58 50.57 0 00-2.657.814m-15.482 0A50.697 50.57 0 0112 13.489a50.702 50.57 0 017.74-2.528M12 15.75v5.25"></path></svg> <span id="quiz-type-second-label">Case Guesser</span>
+                                <svg class="w-4 h-4 mr-1 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84a50.58 50.57 0 00-2.657.814m-15.482 0A50.697 50.57 0 0112 13.489a50.702 50.57 0 017.74-2.528M12 15.75v5.25"></path></svg> <span id="quiz-type-second-label">Grammar Challenge</span>
                             </button>
                         </div>
 
@@ -2099,7 +2100,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 
                             <!-- FLASHCARD VIEW -->
                             <div id="quiz-flashcard-mode" class="w-full space-y-4">
-                                <div id="quiz-target-language-label" class="text-xs text-indigo-600 font-bold tracking-wider uppercase">German Sentence</div>
+                                <div id="quiz-target-language-label" class="text-xs text-indigo-600 font-bold tracking-wider uppercase">Target-language sentence</div>
                                 <div class="flex items-center justify-center gap-2">
                                     <h4 id="flash-de-text" class="text-lg font-bold text-slate-900 tracking-wide"></h4>
                                     <button id="quiz-speak-btn" onclick="speakQuizGerman()" class="p-2 text-slate-400 hover:text-blue-600 rounded-lg transition" title="Listen">
@@ -2130,14 +2131,14 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 
                             <!-- LANGUAGE-SPECIFIC QUIZ VIEW -->
                             <div id="quiz-case-mode" class="hidden w-full space-y-4">
-                                <div id="quiz-second-header" class="text-xs text-indigo-600 font-bold tracking-wider uppercase">German Case Guesser</div>
+                                <div id="quiz-second-header" class="text-xs text-indigo-600 font-bold tracking-wider uppercase">Grammar Challenge</div>
 
                                 <div id="quiz-case-sentence-container" class="text-base font-bold text-slate-800 flex flex-wrap gap-1.5 justify-center items-center">
                                     <!-- Populated dynamically -->
                                 </div>
 
                                 <div class="text-xs text-slate-500 font-medium">
-                                    <span id="quiz-second-question-text">What grammatical case is the highlighted phrase?</span>
+                                    <span id="quiz-second-question-text">Choose the best grammatical description.</span>
                                     <span id="quiz-case-target-word" class="hidden font-mono font-bold text-blue-700 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-200"></span>
                                 </div>
 
@@ -3558,11 +3559,6 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
             installFreshEntryBehavior("source-text");
             installFreshEntryBehavior("german-source-text");
 
-            const aiParseBtn = document.getElementById("ai-parse-btn");
-            if (aiParseBtn) {
-                aiParseBtn.addEventListener("click", parseCurrentSentenceWithAI);
-            }
-
             // Grammar tools are visible independently of the collapsible reference tables.
             initGrammarTools();
 
@@ -4389,6 +4385,11 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
         }
 
         async function parseCurrentSentenceWithAI() {
+            // This is the legacy German-specific AI parser. Never allow it to
+            // render German Case/Gender cards while Spanish or Japanese is selected.
+            const selectedLanguage=document.getElementById("study-language-select")?.value || "de";
+            if(selectedLanguage!=="de") return;
+
             const btn=document.getElementById("ai-parse-btn");
             const key=getActiveAIKey();
 
@@ -5225,22 +5226,41 @@ Plain text only.`;
             const meta=STUDY_LANGUAGE_META[studyBoardLanguage];
             const targetLabel=document.getElementById("quiz-target-language-label");
             const secondLabel=document.getElementById("quiz-type-second-label");
+            const secondHeader=document.getElementById("quiz-second-header");
+            const secondQuestion=document.getElementById("quiz-second-question-text");
             const emptyMessage=document.getElementById("quiz-empty-message");
             const speakBtn=document.getElementById("quiz-speak-btn");
 
             if(targetLabel) targetLabel.textContent=meta.targetLabel;
             if(speakBtn) speakBtn.title=`Listen (${meta.name})`;
 
-            const modeNames={de:"Case Guesser",es:"Word Role",ja:"Particle Function"};
-            if(secondLabel) secondLabel.textContent=modeNames[studyBoardLanguage];
+            const ui={
+                de:{
+                    tab:"Case Guesser",
+                    header:"German Case Guesser",
+                    question:"What grammatical case is the highlighted phrase?",
+                    note:"The Case Guesser uses only phrases for which the German local parser returns one exact case."
+                },
+                es:{
+                    tab:"Grammar Function",
+                    header:"Spanish Grammar Function",
+                    question:"What is the highlighted form doing in this sentence?",
+                    note:"The Spanish challenge uses clear functions such as subject pronoun, direct/indirect-object pronoun, article/determiner, preposition, conjunction, and verb."
+                },
+                ja:{
+                    tab:"Particle Function",
+                    header:"Japanese Particle Function",
+                    question:"Which common function best matches the highlighted particle?",
+                    note:"The Japanese challenge focuses on particle function rather than German-style case or gender labels."
+                }
+            }[studyBoardLanguage];
+
+            if(secondLabel) secondLabel.textContent=ui.tab;
+            if(secondHeader) secondHeader.textContent=ui.header;
+            if(secondQuestion) secondQuestion.textContent=ui.question;
 
             if(emptyMessage){
-                const notes={
-                    de:"The Case Guesser uses only phrases for which the local parser returns one exact case.",
-                    es:"The Word Role quiz uses unambiguous articles, pronouns, prepositions, and common verb forms.",
-                    ja:"The Particle Function quiz uses particles found in your saved Japanese sentences."
-                };
-                emptyMessage.textContent=`Save at least one ${meta.name} item to use Translation Flashcards. ${notes[studyBoardLanguage]}`;
+                emptyMessage.textContent=`Save at least one ${meta.name} item to use Translation Flashcards. ${ui.note}`;
             }
         }
 
@@ -5347,11 +5367,29 @@ Plain text only.`;
             const candidates=[];
             const labels={
                 article:"Article / determiner",
-                pronoun:"Pronoun",
+                subject_pronoun:"Subject pronoun",
+                direct_object:"Direct-object pronoun",
+                indirect_object:"Indirect-object pronoun",
+                clitic:"Object / reflexive clitic",
                 preposition:"Preposition",
-                verb:"Verb"
+                conjunction:"Conjunction",
+                verb:"Verb / verb form"
             };
-            const choices=Object.entries(labels).map(([value,label])=>({value,label}));
+            const allChoices=Object.entries(labels).map(([value,label])=>({value,label}));
+
+            function addCandidate(item,sentence,word,role){
+                if(!role || !labels[role])return;
+                const correct={value:role,label:labels[role]};
+                const wrong=shuffleQuizArray(allChoices.filter(x=>x.value!==role)).slice(0,3);
+                candidates.push({
+                    item,sentence,focus:word,
+                    answer:role,
+                    choices:[correct,...wrong],
+                    header:"Spanish Grammar Function",
+                    question:"What is the highlighted form doing in this sentence?",
+                    explanation:`“${word}” is best treated here as: ${labels[role]}.`
+                });
+            }
 
             items.forEach(item=>{
                 const sentence=studyItemTarget(item);
@@ -5359,20 +5397,20 @@ Plain text only.`;
                 words.forEach(word=>{
                     const low=word.toLowerCase();
                     let role="";
-                    if(ES_ARTICLES.has(low)) role="article";
-                    else if(ES_PRONOUNS.has(low)) role="pronoun";
-                    else if(ES_PREPS.has(low)) role="preposition";
-                    else if(ES_COMMON_VERBS.has(low)) role="verb";
-                    if(!role)return;
 
-                    candidates.push({
-                        item,sentence,focus:word,
-                        answer:role,
-                        choices,
-                        header:"Spanish Word Role",
-                        question:"What type of word is highlighted?",
-                        explanation:`“${word}” is functioning as a ${labels[role].toLowerCase()} in the app's curated Spanish grammar set.`
-                    });
+                    // Use only locally reliable distinctions. Forms such as la/los/las
+                    // can be article OR object pronoun, so the no-AI quiz does not
+                    // force a guess for those ambiguous spellings.
+                    if(ES_UNAMBIGUOUS_ARTICLES.has(low)) role="article";
+                    else if(ES_SUBJECT_PRONOUNS.has(low)) role="subject_pronoun";
+                    else if(low==="lo") role="direct_object";
+                    else if(ES_INDIRECT_OBJECT_CLITICS.has(low)) role="indirect_object";
+                    else if(ES_AMBIGUOUS_CLITICS.has(low)) role="clitic";
+                    else if(ES_PREPS.has(low)) role="preposition";
+                    else if(ES_CONJUNCTIONS.has(low)) role="conjunction";
+                    else if(ES_COMMON_VERBS.has(low)) role="verb";
+
+                    addCandidate(item,sentence,word,role);
                 });
             });
             return candidates;
@@ -5385,11 +5423,17 @@ Plain text only.`;
             "に":"Destination / time / target",
             "で":"Place of action / means",
             "へ":"Direction toward",
-            "と":"With / and / quotation",
-            "も":"Also / too",
+            "と":"Companion / quotation / coordination",
+            "も":"Also / addition",
             "の":"Possession / noun modification",
-            "から":"Source / from",
-            "まで":"Endpoint / until"
+            "から":"Source / starting point",
+            "まで":"Endpoint / until",
+            "より":"Comparison / source",
+            "って":"Colloquial quotation / topic",
+            "では":"Context + topic",
+            "には":"Target + topic",
+            "ね":"Agreement / confirmation",
+            "よ":"Emphasis / new information"
         };
 
         function japaneseQuizCandidates(items){
@@ -5398,7 +5442,7 @@ Plain text only.`;
 
             items.forEach(item=>{
                 const sentence=studyItemTarget(item);
-                const particles=sentence.match(/から|まで|は|が|を|に|で|へ|と|も|の/g)||[];
+                const particles=sentence.match(/では|には|から|まで|より|って|は|が|を|に|で|へ|と|も|の|ね|よ/g)||[];
 
                 particles.forEach(particle=>{
                     if(!JA_QUIZ_PARTICLE_LABELS[particle])return;
@@ -5414,8 +5458,8 @@ Plain text only.`;
                         answer:particle,
                         choices:[correct,...wrong],
                         header:"Japanese Particle Function",
-                        question:"Which description best matches the highlighted particle's common function?",
-                        explanation:`${particle} commonly marks: ${JA_QUIZ_PARTICLE_LABELS[particle]}. Context can refine the exact English translation.`
+                        question:"Which common function best matches the highlighted particle?",
+                        explanation:`${particle} commonly functions as: ${JA_QUIZ_PARTICLE_LABELS[particle]}. The exact interpretation can depend on sentence context.`
                     });
                 });
             });
@@ -5467,9 +5511,9 @@ Plain text only.`;
 
             if(!candidates.length){
                 const messages={
-                    de:"No unambiguous case phrase was found in this Deutsch list yet. Translation Flashcards are still available.",
-                    es:"No unambiguous article, pronoun, preposition, or common verb form was found in this Español list yet. Translation Flashcards are still available.",
-                    ja:"No supported particle was found in this 日本語 list yet. Save a sentence containing a particle such as は, が, を, に, or で."
+                    de:"No unambiguous German case phrase was found in this Deutsch list yet. Translation Flashcards are still available.",
+                    es:"No locally unambiguous Spanish grammar-function item was found in this Español list yet. Translation Flashcards are still available.",
+                    ja:"No supported Japanese particle was found in this 日本語 list yet. Save a sentence containing a particle such as は, が, を, に, で, or へ."
                 };
                 if(sentenceBox) sentenceBox.innerHTML=`<span class="text-rose-600 italic text-xs">${escapeHtml(messages[studyBoardLanguage])}</span>`;
                 document.getElementById("quiz-second-question-text").textContent="";
@@ -8800,7 +8844,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                         <span>Article / determiner</span><span>Noun / adjective</span>
                         <span>Preposition / adverb</span><span>Phrase / conjunction</span>
                     </div>
-                    <p class="text-[11px] text-slate-500 font-medium">Spanish uses grammatical gender and number for agreement, but these cards do not use German Nominative / Accusative / Dative / Genitive case labels.</p>
+                    <p class="text-[11px] text-slate-500 font-medium">Spanish emphasizes subject/direct-object/indirect-object function, clitics, tense/mood, and gender/number agreement. Local Parse leaves ambiguous forms such as la/los/las broad rather than guessing. German-style Nominative / Accusative / Dative / Genitive labels are not used.</p>
                 </div>`;
         } else {
             legend.innerHTML=`
@@ -8811,7 +8855,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                         <span>Noun / adjective / adverb</span><span>Verb / auxiliary / predicate</span>
                         <span>Hiragana reading</span><span>Hepburn romaji</span>
                     </div>
-                    <p class="text-[11px] text-slate-500 font-medium">Japanese does not use German grammatical gender or the German four-case labeling system. Particle function and sentence role are shown instead.</p>
+                    <p class="text-[11px] text-slate-500 font-medium">Japanese emphasizes particle function, predicate/conjugation form, politeness, hiragana reading, and Hepburn romaji. German noun gender and four-case labels are not used.</p>
                 </div>`;
         }
     }
@@ -9241,55 +9285,103 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
     // ---------- Local multilingual parsers ----------
     const ES_ARTICLES=new Set(["el","la","los","las","un","una","unos","unas"]);
+    const ES_UNAMBIGUOUS_ARTICLES=new Set(["el","un","una","unos","unas"]);
     const ES_PREPS=new Set(["a","ante","bajo","con","contra","de","desde","durante","en","entre","hacia","hasta","para","por","según","sin","sobre","tras"]);
-    const ES_PRONOUNS=new Set(["yo","tú","tu","él","ella","usted","nosotros","nosotras","vosotros","vosotras","ellos","ellas","ustedes","me","te","se","lo","la","los","las","le","les","nos","os"]);
-    const ES_COMMON_VERBS=new Set(["soy","eres","es","somos","sois","son","estoy","estás","está","estamos","estáis","están","voy","vas","va","vamos","vais","van","tengo","tienes","tiene","tenemos","tenéis","tienen","hago","haces","hace","hacemos","hacéis","hacen","quiero","quieres","quiere","queremos","queréis","quieren","puedo","puedes","puede","podemos","podéis","pueden"]);
+    const ES_SUBJECT_PRONOUNS=new Set(["yo","tú","él","ella","usted","nosotros","nosotras","vosotros","vosotras","ellos","ellas","ustedes"]);
+    const ES_DIRECT_OBJECT_CLITICS=new Set(["lo","la","los","las"]);
+    const ES_INDIRECT_OBJECT_CLITICS=new Set(["le","les"]);
+    const ES_AMBIGUOUS_CLITICS=new Set(["me","te","se","nos","os"]);
+    const ES_PRONOUNS=new Set([...ES_SUBJECT_PRONOUNS,...ES_DIRECT_OBJECT_CLITICS,...ES_INDIRECT_OBJECT_CLITICS,...ES_AMBIGUOUS_CLITICS]);
+    const ES_CONJUNCTIONS=new Set(["y","e","o","u","pero","sino","aunque","porque","que","si","mientras"]);
+    const ES_COMMON_VERBS=new Set(["soy","eres","es","somos","sois","son","estoy","estás","está","estamos","estáis","están","voy","vas","va","vamos","vais","van","tengo","tienes","tiene","tenemos","tenéis","tienen","hago","haces","hace","hacemos","hacéis","hacen","quiero","quieres","quiere","queremos","queréis","quieren","puedo","puedes","puede","podemos","podéis","pueden","doy","das","da","damos","dais","dan","veo","ves","ve","vemos","veis","ven"]);
+
+    function spanishLocalPronounLabel(low){
+        if(ES_SUBJECT_PRONOUNS.has(low)) return "Subject pronoun";
+        if(ES_DIRECT_OBJECT_CLITICS.has(low)) return "Direct-object pronoun";
+        if(ES_INDIRECT_OBJECT_CLITICS.has(low)) return "Indirect-object pronoun";
+        if(ES_AMBIGUOUS_CLITICS.has(low)) return "Object / reflexive clitic";
+        return "Pronoun";
+    }
 
     function parseSpanishLocal(sentence){
         const tokens=String(sentence||"").match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+|[0-9]+|[¿¡!?.,;:]/g)||[];
         return tokens.map(tok=>{
             const low=tok.toLowerCase();
-            let role="word", label="Word";
+            let role="word", label="Lexical word";
             if(/^[¿¡!?.,;:]$/.test(tok)){role="punctuation";label="Punctuation";}
-            else if(ES_ARTICLES.has(low)){role="article";label="Article / determiner";}
+            else if(/^\d+$/.test(tok)){role="word";label="Number";}
+            else if(ES_UNAMBIGUOUS_ARTICLES.has(low)){role="article";label="Article / determiner";}
+            else if(["la","los","las"].includes(low)){role="word";label="Article or direct-object pronoun";}
             else if(ES_PREPS.has(low)){role="preposition";label="Preposition";}
-            else if(ES_PRONOUNS.has(low)){role="pronoun";label="Pronoun";}
+            else if(ES_PRONOUNS.has(low)){role="pronoun";label=spanishLocalPronounLabel(low);}
+            else if(ES_CONJUNCTIONS.has(low)){role="conjunction";label="Conjunction";}
             else if(ES_COMMON_VERBS.has(low)||/(ar|er|ir|ando|iendo|ado|ido|aba|ía|aste|iste|aron|ieron|amos|emos|imos|an|en)$/.test(low)){role="verb";label="Verb / verb form";}
-            else if(/^[A-ZÁÉÍÓÚÜÑ]/.test(tok)){role="noun";label="Possible noun/name";}
+            else if(/^[A-ZÁÉÍÓÚÜÑ]/.test(tok)){role="noun";label="Possible proper noun";}
             return {text:tok,role,label};
         });
     }
 
     const JA_PARTICLES=["から","まで","より","って","では","には","は","が","を","に","で","へ","と","も","の","ね","よ"];
-    const JA_PARTICLE_READING = {
-        "は":["は","wa"], "が":["が","ga"], "を":["を","o"], "に":["に","ni"], "で":["で","de"],
-        "へ":["へ","e"], "と":["と","to"], "も":["も","mo"], "の":["の","no"], "ね":["ね","ne"], "よ":["よ","yo"],
-        "から":["から","kara"], "まで":["まで","made"], "より":["より","yori"], "って":["って","tte"],
-        "では":["では","dewa"], "には":["には","niwa"]
+    const JA_PARTICLE_INFO_LOCAL={
+        "は":{label:"Topic / contrast marker",reading:"わ",romaji:"wa"},
+        "が":{label:"Subject / focus marker",reading:"が",romaji:"ga"},
+        "を":{label:"Direct-object marker",reading:"お",romaji:"o"},
+        "に":{label:"Destination / time / target marker",reading:"に",romaji:"ni"},
+        "で":{label:"Place-of-action / means marker",reading:"で",romaji:"de"},
+        "へ":{label:"Direction marker",reading:"え",romaji:"e"},
+        "と":{label:"Companion / quotation / coordination marker",reading:"と",romaji:"to"},
+        "も":{label:"Addition / also marker",reading:"も",romaji:"mo"},
+        "の":{label:"Possession / noun-modification marker",reading:"の",romaji:"no"},
+        "から":{label:"Source / starting-point marker",reading:"から",romaji:"kara"},
+        "まで":{label:"Endpoint / until marker",reading:"まで",romaji:"made"},
+        "より":{label:"Comparison / source marker",reading:"より",romaji:"yori"},
+        "って":{label:"Colloquial quotation / topic marker",reading:"って",romaji:"tte"},
+        "では":{label:"Context/topic combination",reading:"では",romaji:"dewa"},
+        "には":{label:"Target/topic combination",reading:"には",romaji:"niwa"},
+        "ね":{label:"Sentence-final agreement / confirmation",reading:"ね",romaji:"ne"},
+        "よ":{label:"Sentence-final emphasis / information",reading:"よ",romaji:"yo"}
     };
+    const JA_PARTICLE_READING=Object.fromEntries(
+        Object.entries(JA_PARTICLE_INFO_LOCAL).map(([p,x])=>[p,[x.reading,x.romaji]])
+    );
+
+    function japaneseLocalChunkRole(chunk){
+        const text=String(chunk||"");
+        if(/ます$|ました$|ません$|ませんでした$|ない$|なかった$|たい$|たかった$|たくない$|です$|でした$|だ$|だった$|る$|う$|く$|ぐ$|す$|つ$|ぬ$|ぶ$|む$/.test(text)){
+            return {role:"verb",label:"Predicate / verb phrase"};
+        }
+        return {role:"phrase",label:"Lexical phrase"};
+    }
+
     function parseJapaneseLocal(sentence){
-        let rest=String(sentence||"").trim();
+        const rest=String(sentence||"").trim();
         const items=[];
         if(!rest) return items;
         const re=new RegExp(`(${JA_PARTICLES.join("|")}|[。！？!?、])`,"g");
         let last=0,m;
         while((m=re.exec(rest))){
             const chunk=rest.slice(last,m.index).trim();
-            if(chunk) items.push({text:chunk,role:/ます$|ました$|ません$|ない$|た$|る$|う$|く$|ぐ$|す$|つ$|ぬ$|ぶ$|む$/.test(chunk)?"verb":"word",label:/ます$|ました$|ません$|ない$|た$|る$|う$|く$|ぐ$|す$|つ$|ぬ$|ぶ$|む$/.test(chunk)?"Predicate / verb":"Phrase"});
+            if(chunk){
+                const info=japaneseLocalChunkRole(chunk);
+                items.push({text:chunk,...info});
+            }
             const p=m[0];
             const isPunctuation=/[。！？!?、]/.test(p);
-            const particleReading=JA_PARTICLE_READING[p] || ["",""];
+            const pInfo=JA_PARTICLE_INFO_LOCAL[p];
             items.push({
                 text:p,
                 role:isPunctuation?"punctuation":"particle",
-                label:isPunctuation?"Punctuation":"Particle",
-                reading:isPunctuation?"":particleReading[0],
-                romaji:isPunctuation?"":particleReading[1]
+                label:isPunctuation?"Punctuation":(pInfo?.label||"Particle"),
+                reading:isPunctuation?"":(pInfo?.reading||""),
+                romaji:isPunctuation?"":(pInfo?.romaji||"")
             });
             last=re.lastIndex;
         }
         const tail=rest.slice(last).trim();
-        if(tail) items.push({text:tail,role:/ます$|ました$|ません$|ない$|た$|る$|う$|く$|ぐ$|す$|つ$|ぬ$|ぶ$|む$/.test(tail)?"verb":"word",label:/ます$|ました$|ません$|ない$|た$|る$|う$|く$|ぐ$|す$|つ$|ぬ$|ぶ$|む$/.test(tail)?"Predicate / verb":"Phrase"});
+        if(tail){
+            const info=japaneseLocalChunkRole(tail);
+            items.push({text:tail,...info});
+        }
         return items;
     }
 
@@ -9315,16 +9407,18 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     }
     window.closeMultilangDetailCard=closeMultilangDetailCard;
 
-    function showMultilangTileDetail(item){
+    function showMultilangTileDetail(item,meta={}){
         const lang=currentStudyLanguage;
         if(lang==="de")return;
 
-        // Make absolutely sure the German Case/Gender detail card is never visible
-        // for Japanese or Spanish.
         document.getElementById("tile-detail-card")?.classList.add("hidden");
 
         const card=document.getElementById("ml-tile-detail-card");
         const word=document.getElementById("ml-detail-word");
+        const sourceBadge=document.getElementById("ml-detail-source-badge");
+        const f1Wrap=document.getElementById("ml-detail-field1-wrap");
+        const f2Wrap=document.getElementById("ml-detail-field2-wrap");
+        const f3Wrap=document.getElementById("ml-detail-field3-wrap");
         const f1Label=document.getElementById("ml-detail-field1-label");
         const f1=document.getElementById("ml-detail-field1");
         const f2Label=document.getElementById("ml-detail-field2-label");
@@ -9334,43 +9428,72 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const translation=document.getElementById("ml-detail-translation");
         const grammar=document.getElementById("ml-detail-grammar");
         const note=document.getElementById("ml-detail-note");
-        if(!card || !word || !f1Label || !f1 || !f2Label || !f2 || !f3Label || !f3 || !translation || !grammar || !note)return;
+        if(!card || !word || !sourceBadge || !f1Wrap || !f2Wrap || !f3Wrap ||
+           !f1Label || !f1 || !f2Label || !f2 || !f3Label || !f3 ||
+           !translation || !grammar || !note)return;
 
+        const isAI=Boolean(meta.isAI);
         currentSelectedPhrase=String(item?.text||"");
         word.textContent=currentSelectedPhrase;
         note.innerHTML="";
         grammar.classList.add("hidden");
         grammar.textContent="";
 
+        sourceBadge.textContent=isAI ? "AI parse" : "Local parse";
+        sourceBadge.className=isAI
+            ? "text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-full border bg-amber-50 text-amber-700 border-amber-200"
+            : "text-[9px] uppercase tracking-wider font-bold px-2 py-1 rounded-full border bg-slate-50 text-slate-600 border-slate-200";
+
+        f1Wrap.classList.remove("hidden");
+        f2Wrap.classList.remove("hidden");
+        f3Wrap.classList.remove("hidden");
+
         if(lang==="ja"){
-            document.getElementById("ml-detail-title-label").textContent="Japanese Analysis:";
-            f1Label.textContent="Function";
+            document.getElementById("ml-detail-title-label").textContent=isAI
+                ? "Japanese AI Analysis:"
+                : "Japanese Local Analysis:";
+
+            f1Label.textContent=isAI ? "Function" : "Local structure";
             f1.textContent=item?.label || japaneseLocalFunction(item) || "—";
 
             f2Label.textContent="Hiragana";
-            const detailIsAI=(nonGermanParserView.ja||"ai")==="ai";
-            f2.textContent=japaneseTileReading(item,detailIsAI) || "—";
+            const detailReading=japaneseTileReading(item,isAI);
+            f2.textContent=detailReading || "—";
 
             f3Label.textContent="Romaji";
-            f3.textContent=japaneseTileRomaji(item,detailIsAI) || "—";
+            const detailRomaji=japaneseTileRomaji(item,isAI);
+            f3.textContent=detailRomaji || "—";
 
-            if(item?.grammar){
+            if(!isAI){
+                if(!detailReading) f2Wrap.classList.add("hidden");
+                if(!detailRomaji) f3Wrap.classList.add("hidden");
+            }
+
+            if(isAI && item?.grammar){
                 grammar.classList.remove("hidden");
                 grammar.innerHTML=`<span class="font-bold text-rose-700">Grammar form:</span> ${escapeML(item.grammar)}`;
             }
         }else{
-            document.getElementById("ml-detail-title-label").textContent="Spanish Analysis:";
-            f1Label.textContent="Role";
+            document.getElementById("ml-detail-title-label").textContent=isAI
+                ? "Spanish AI Analysis:"
+                : "Spanish Local Analysis:";
+
+            f1Label.textContent=isAI ? "Role" : "Local role";
             f1.textContent=item?.label || fallbackRoleLabel(item?.role,"es") || "—";
 
-            f2Label.textContent="Form / agreement";
-            f2.textContent=String(item?.grammar||"").trim() || "—";
+            if(isAI){
+                f2Label.textContent="Form / agreement";
+                f2.textContent=String(item?.grammar||"").trim() || "—";
 
-            f3Label.textContent="Base form";
-            f3.textContent=String(item?.lemma||"").trim() || "—";
+                f3Label.textContent="Base form";
+                f3.textContent=String(item?.lemma||"").trim() || "—";
+            }else{
+                f2Wrap.classList.add("hidden");
+                f3Wrap.classList.add("hidden");
+            }
         }
 
-        if(item?.meaning){
+        if(isAI && item?.meaning){
             translation.textContent=item.meaning;
             translation.className="block text-sm font-bold text-emerald-700";
         }else{
@@ -9378,15 +9501,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             translation.className="block text-sm font-semibold text-slate-500 italic";
         }
 
-        const hasRichDetail=Boolean(
-            item?.meaning || item?.grammar || item?.lemma || item?.reading || item?.romaji
-        );
-        if(!hasRichDetail){
+        if(!isAI){
             const p=document.createElement("div");
             p.className="text-[11px] text-slate-500";
             p.textContent=lang==="ja"
-                ? "Local parse shows the phrase/particle structure. AI Parse adds contextual readings, romaji, grammar form, and meaning."
-                : "Local parse shows word roles. AI Parse adds base forms, morphology/agreement, and contextual meaning.";
+                ? "Local Parse emphasizes phrase and particle structure. AI Parse adds richer readings, grammar form, and contextual meaning."
+                : "Local Parse identifies broad Spanish functions without guessing ambiguous forms. AI Parse adds context-sensitive function, morphology/agreement, dictionary form, and meaning.";
             note.appendChild(p);
         }
 
@@ -9524,7 +9644,7 @@ Plain text only.`;
             tile.className=`ml-token role-${item.role||"word"}`;
 
             const isJapanese=currentStudyLanguage==="ja";
-            const isAIView=isJapanese && /^AI\s/i.test(String(sourceLabel||""));
+            const isAIView=/^AI\s/i.test(String(sourceLabel||""));
             const reading=isJapanese ? japaneseTileReading(item,isAIView) : "";
             const romaji=isJapanese ? japaneseTileRomaji(item,isAIView) : "";
             const pronounceable=String(item.role||"").toLowerCase()!=="punctuation";
@@ -9550,7 +9670,10 @@ Plain text only.`;
             });
             tile.addEventListener("click",()=>{
                 currentSelectedPhrase=item.text;
-                showMultilangTileDetail(item);
+                showMultilangTileDetail(item,{
+                    isAI:isAIView,
+                    sourceLabel:String(sourceLabel||"")
+                });
             });
             box.appendChild(tile);
         });
@@ -9559,6 +9682,8 @@ Plain text only.`;
     window.renderGrammarTiles=function(sentence){
         if(currentStudyLanguage==="de") return originalGermanRenderGrammarTiles(sentence);
 
+        // Spanish/Japanese stay entirely on the multilingual renderer.
+        // Do not delegate these languages to the German Case/Gender renderer.
         const lang=currentStudyLanguage;
         const selected=nonGermanParserView[lang]||"ai";
 
@@ -9611,24 +9736,70 @@ Plain text only.`;
         return cap(r);
     }
 
+    function normalizeNonGermanRole(role,lang){
+        let r=String(role||"word").toLowerCase().replace(/[\s-]+/g,"_");
+        if(lang==="es"){
+            const map={
+                determiner:"article",object_pronoun:"pronoun",direct_object_pronoun:"pronoun",
+                indirect_object_pronoun:"pronoun",subject_pronoun:"pronoun",clitic:"pronoun",
+                proper_noun:"noun",predicate:"verb"
+            };
+            r=map[r]||r;
+            return ["article","pronoun","preposition","noun","adjective","verb","auxiliary","adverb","conjunction","phrase","punctuation","word"].includes(r)?r:"word";
+        }
+        const map={
+            topic:"particle",subject_marker:"particle",object_marker:"particle",
+            destination_marker:"particle",case_particle:"particle",predicate:"verb"
+        };
+        r=map[r]||r;
+        return ["particle","pronoun","noun","adjective","verb","auxiliary","adverb","conjunction","phrase","punctuation","word"].includes(r)?r:"word";
+    }
+
+    function spanishFunctionTerminology(value){
+        let v=String(value||"");
+        v=v.replace(/\bnominative\b/ig,"subject");
+        v=v.replace(/\baccusative\b/ig,"direct object");
+        v=v.replace(/\bdative\b/ig,"indirect object");
+        v=v.replace(/\bgenitive\b/ig,"possessive");
+        v=v.replace(/\s*\((?:NEUT|MASC|FEM|PL)\)\s*$/i,"").trim();
+        return v;
+    }
+
     function sanitizeNonGermanParseLabel(label,role,lang){
         let value=String(label||"").trim();
         if(!value) return fallbackRoleLabel(role,lang);
 
-        // Strip German-case carryover if a model returns it despite the language prompt.
-        const germanCase=/\b(nominative|accusative|dative|genitive)\b/i;
-        if(germanCase.test(value)) return fallbackRoleLabel(role,lang);
-
-        if(lang==="ja"){
-            // Japanese has no grammatical gender categories corresponding to German noun gender.
-            if(/\b(masculine|feminine|neuter|neut\.?|masc\.?|fem\.?)\b/i.test(value)){
-                return fallbackRoleLabel(role,lang);
-            }
+        if(lang==="es"){
+            // Prefer Spanish syntactic functions over German/Latin case terminology.
+            value=spanishFunctionTerminology(value);
+            return value || fallbackRoleLabel(role,"es");
         }
 
-        // Remove compact German-parser suffixes such as "(NEUT)" or "(MASC)".
+        // Japanese uses particle function and predicate form, not noun gender or
+        // German Nominative/Accusative/Dative/Genitive labels.
+        if(/\b(nominative|accusative|dative|genitive|masculine|feminine|neuter|gender|neut\.?|masc\.?|fem\.?)\b/i.test(value)){
+            return fallbackRoleLabel(role,"ja");
+        }
         value=value.replace(/\s*\((?:NEUT|MASC|FEM|PL)\)\s*$/i,"").trim();
-        return value || fallbackRoleLabel(role,lang);
+        return value || fallbackRoleLabel(role,"ja");
+    }
+
+    function sanitizeNonGermanGrammar(grammar,lang){
+        let value=String(grammar||"").trim();
+        if(!value)return "";
+
+        if(lang==="es"){
+            // Gender/number agreement is meaningful in Spanish. Case terminology is
+            // converted to direct/indirect-object or subject language instead.
+            return spanishFunctionTerminology(value);
+        }
+
+        // Japanese: keep conjugation/politeness/adjective information, discard
+        // accidental German gender/four-case output from the model.
+        if(/\b(nominative|accusative|dative|genitive|masculine|feminine|neuter|grammatical gender)\b/i.test(value)){
+            return "";
+        }
+        return value;
     }
 
     function buildNonGermanParsePrompt(lang,cfg,sentence){
@@ -9643,12 +9814,13 @@ Requirements:
 - Keep exact sentence order; cover every visible element once.
 - Isolate particles when useful.
 - Roles: particle|pronoun|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation.
-- label: concise ENGLISH description of the item's function in this sentence, such as "topic marker", "destination marker", "desire auxiliary", "polite copula", or "movement verb".
-- Never use German case or grammatical-gender labels.
+- label: concise ENGLISH Japanese-relevant function in this sentence, such as "topic / contrast marker", "subject / focus marker", "direct-object marker", "destination marker", "place-of-action marker", "desire auxiliary", "polite copula", or "movement verb".
+- Never use German Nominative/Accusative/Dative/Genitive labels or masculine/feminine/neuter grammatical-gender labels.
+- It is fine to recognize a Japanese particle category, but prioritize the particle's function in THIS sentence over abstract terminology.
 - reading: ALWAYS provide the contextual pronunciation entirely in HIRAGANA for every pronounceable item, including words already written in hiragana or katakana. Use "" only for punctuation.
 - romaji: ALWAYS provide standard Hepburn romaji for every pronounceable item. Use "" only for punctuation. Use macrons for long vowels where standard Hepburn calls for them.
 - For grammatical particles, reading/romaji must reflect actual particle pronunciation in context: は→わ / wa, へ→え / e, を→お / o.
-- grammar: concise form information only when useful, such as "たい-form: desire", "polite form", "past negative", or "i-adjective"; otherwise "".
+- grammar: Japanese form information only when useful: verb/adjective conjugation, auxiliary meaning, politeness/register, negative/past, て-form, たい-form, i-adjective/na-adjective, or copula form. Otherwise "".
 - meaning: concise contextual English meaning of this item; "" for punctuation.
 - No explanation outside JSON.`;
         }
@@ -9662,18 +9834,18 @@ Return JSON only:
 Requirements:
 - Keep exact order; cover every word/punctuation mark once.
 - Roles: article|pronoun|preposition|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation.
-- label: concise ENGLISH syntactic/semantic role in this sentence, such as "predicate verb", "subject adjective", "direct-object pronoun", "article / determiner", or "preposition".
-- lemma: dictionary/base form when useful (for example estar, hambriento); otherwise "".
-- grammar: concise morphology/agreement when useful, such as "present indicative · 1st person singular" or "masculine singular"; otherwise "".
+- label: concise ENGLISH Spanish-relevant function in this sentence, such as "subject pronoun", "direct-object pronoun", "indirect-object pronoun", "reflexive clitic", "predicate verb", "quantity modifier", "article / determiner", or "preposition".
+- NEVER label a Spanish item Nominative, Accusative, Dative, or Genitive. Use subject, direct object, indirect object, possessive, or prepositional function instead.
+- lemma: dictionary/base form when useful (for example estar, hambriento, tanto); otherwise "".
+- grammar: Spanish morphology only when useful: tense, mood, person, number, gender/agreement, infinitive/gerund/participle, or clitic information. Examples: "present indicative · 1st person singular", "feminine singular", "direct-object clitic". Otherwise "".
+- Spanish grammatical gender and number ARE relevant for agreement; retain them when they help explain the form.
 - meaning: concise contextual English meaning of this item; "" for punctuation.
-- Do not use German Nominative/Accusative/Dative/Genitive labels.
-- Spanish gender/number may be reported inside grammar when it is relevant to agreement.
 - reading and romaji must be "".
 - No explanation outside JSON.`;
     }
 
     // ---------- AI parse cache ----------
-    const AI_PARSE_CACHE_KEY = "languagetutor_ai_parse_cache_v4";
+    const AI_PARSE_CACHE_KEY = "languagetutor_ai_parse_cache_v5";
     const AI_PARSE_CACHE_LIMIT = 120;
 
     function aiParseCacheIdentity(lang,sentence){
@@ -9757,7 +9929,7 @@ Requirements:
             const result=await callAIJson(prompt);
 
             const items=(result?.items||[]).map(x=>{
-                const role=String(x.role||"word").toLowerCase();
+                const role=normalizeNonGermanRole(x.role,lang);
                 return {
                     text:String(x.text||""),
                     role,
@@ -9765,7 +9937,7 @@ Requirements:
                     reading:lang==="ja" ? String(x.reading||"") : "",
                     romaji:lang==="ja" ? String(x.romaji||"") : "",
                     lemma:lang==="es" ? String(x.lemma||"") : "",
-                    grammar:String(x.grammar||""),
+                    grammar:sanitizeNonGermanGrammar(x.grammar,lang),
                     meaning:String(x.meaning||"")
                 };
             }).filter(x=>x.text);
@@ -11289,8 +11461,13 @@ Current work: ${context||"No sentence has been entered yet."}`;
     };
 
     function rebindAIParser(){
-        // ai-parse-btn now has a stable inline route through setNonGermanParserView().
-        // Keep this function for boot compatibility without adding a second click handler.
+        const old=document.getElementById("ai-parse-btn");
+        if(!old)return;
+
+        // Clone once to strip any legacy/addEventListener handler. The inline
+        // onclick="setNonGermanParserView('ai')" attribute is preserved.
+        const clone=old.cloneNode(true);
+        old.parentNode.replaceChild(clone,old);
         updateNonGermanParserControls();
     }
 
