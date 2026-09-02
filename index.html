@@ -2004,13 +2004,6 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                     </div>
                 </div>
 
-                <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                    <p id="study-board-language-note" class="text-xs text-slate-500">
-                        This board belongs to the Deutsch tutor. Items saved here stay in Deutsch.
-                    </p>
-                    <span id="study-board-language-badge" class="shrink-0 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white">DE</span>
-                </div>
-
                 <!-- TAB 1: My Study List View -->
                 <div id="vocab-tab-list-view" class="space-y-4">
                     <div class="flex justify-between items-center text-xs">
@@ -2236,8 +2229,11 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         <button type="button" id="voice-stop-btn" onclick="stopVoiceConversation()" class="hidden min-h-[44px] px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
                             ■ Stop
                         </button>
-                        <button type="button" id="voice-listen-now-btn" onclick="resumeVoiceRecognition(true)" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold transition">
-                            🎤 Listen now
+                        <button type="button" id="voice-listen-now-btn" onclick="resumeVoiceRecognition(true,'target')" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold transition">
+                            🎤 <span id="voice-target-mic-label">Speak German</span>
+                        </button>
+                        <button type="button" id="voice-english-turn-btn" onclick="askVoiceTutorInEnglish()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 text-xs font-bold transition">
+                            🇺🇸 Ask in English
                         </button>
                         <button type="button" onclick="newVoiceConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold transition">
                             New conversation
@@ -2248,15 +2244,24 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                         <div class="flex items-center justify-between gap-2">
                             <div id="voice-tutor-status" class="text-[11px] font-bold text-slate-600">Ready.</div>
                             <div id="voice-mic-indicator" class="hidden items-center gap-1.5 text-[10px] font-bold text-rose-600">
-                                <span class="inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span> Listening
+                                <span class="inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                                <span id="voice-mic-indicator-label">Listening</span>
                             </div>
                         </div>
-                        <div id="voice-live-transcript" class="text-[11px] text-slate-400 italic mt-1 min-h-[16px]"></div>
+                        <div class="mt-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2">
+                            <div class="text-[9px] uppercase tracking-wider font-bold text-slate-400">Live transcription</div>
+                            <div id="voice-live-transcript" class="text-[12px] text-slate-600 italic mt-1 min-h-[18px]">What the microphone hears will appear here.</div>
+                        </div>
+                    </div>
+
+                    <div class="shrink-0">
+                        <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Conversation transcript</div>
+                        <div class="text-[9px] text-slate-400">Recognized speech and the tutor's spoken replies are kept here for this conversation.</div>
                     </div>
 
                     <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1" aria-live="polite">
                         <div id="voice-tutor-empty" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-[11px] text-slate-400">
-                            Start a conversation and speak naturally. The tutor will answer aloud, then listen for your next turn.
+                            Start a conversation in the selected language. Tap “Ask in English” for one English question; after the tutor answers, listening automatically returns to the selected language.
                         </div>
                     </div>
 
@@ -4954,20 +4959,7 @@ Plain text only.`;
         function renderStudyLanguageIndicator(){
             const meta=STUDY_LANGUAGE_META[studyBoardLanguage];
             const title=document.getElementById("study-board-title");
-            const note=document.getElementById("study-board-language-note");
-            const badge=document.getElementById("study-board-language-badge");
-
             if(title) title.textContent=`${meta.name} Study Board & Practice Arena`;
-            if(note) note.textContent=`This board belongs to the ${meta.name} tutor. Items saved here stay in ${meta.name}.`;
-            if(badge){
-                badge.textContent=meta.badge;
-                const classes={
-                    de:"shrink-0 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white",
-                    es:"shrink-0 rounded-lg bg-red-100 px-2 py-1 text-[10px] font-bold text-red-700",
-                    ja:"shrink-0 rounded-lg bg-rose-100 px-2 py-1 text-[10px] font-bold text-rose-700"
-                };
-                badge.className=classes[studyBoardLanguage];
-            }
         }
 
         function setStudyBoardLanguage(code){
@@ -7218,7 +7210,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         phase:"idle",
         language:"de",
         speaking:false,
-        manualRestart:false
+        manualRestart:false,
+        inputMode:"target"
     };
 
     function voiceRecognitionConstructor(){
@@ -7336,6 +7329,9 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             badge.className=voiceTutorLanguageBadgeClass(currentStudyLanguage);
         }
 
+        const targetMicLabel=document.getElementById("voice-target-mic-label");
+        if(targetMicLabel) targetMicLabel.textContent=`Speak ${cfg.name}`;
+
         const ctor=voiceRecognitionConstructor();
         const start=document.getElementById("voice-start-btn");
         const note=document.getElementById("voice-browser-note");
@@ -7346,7 +7342,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         }
         if(note){
             note.textContent=ctor
-                ? `Recognition locale: ${cfg.locale}. The AI receives text, not continuous microphone audio; only recent turns are sent for context.`
+                ? `Target-language microphone: ${cfg.locale}. “Ask in English” uses en-US for one turn and then returns to ${cfg.name}. The AI receives the transcription, not continuous microphone audio.`
                 : "Speech recognition is not exposed by this browser/device. Try a browser with SpeechRecognition support; text chat and spoken playback still work.";
         }
     }
@@ -7364,7 +7360,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             const empty=document.createElement("div");
             empty.id="voice-tutor-empty";
             empty.className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-[11px] text-slate-400";
-            empty.textContent=`Start a ${langConfig().name} conversation and speak naturally. The tutor will answer aloud, then listen for your next turn.`;
+            empty.textContent=`Start a ${langConfig().name} conversation and speak naturally. Use “Ask in English” whenever you want one English question; after the answer, listening returns to ${langConfig().name}.`;
             log.appendChild(empty);
             return;
         }
@@ -7396,7 +7392,15 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
         const label=document.createElement("div");
         label.className="text-[9px] font-bold uppercase tracking-wider mb-1 " + (user?"text-slate-500":"text-indigo-600");
-        label.textContent=user ? "You" : `${langConfig().name} Voice Tutor`;
+        if(user){
+            label.textContent=entry.inputMode==="english"
+                ? "You • English question"
+                : `You • ${langConfig().name} speech`;
+        }else{
+            label.textContent=entry.replyLanguage==="en"
+                ? `${langConfig().name} Voice Tutor • English reply`
+                : `${langConfig().name} Voice Tutor`;
+        }
         wrap.appendChild(label);
 
         const text=document.createElement("div");
@@ -7419,8 +7423,14 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
         const actions=document.createElement("div");
         actions.className="flex flex-wrap gap-1.5 mt-2";
-        actions.appendChild(voiceTutorControlButton("🔊 Replay","Replay this phrase",()=>speakRawText(entry.text,langConfig().locale)));
-        actions.appendChild(voiceTutorControlButton("☆ Save phrase","Save this phrase to the active language Study Board",ev=>saveVoiceTutorPhrase(entry.text,currentStudyLanguage,ev.currentTarget)));
+        const isEnglishEntry=entry.inputMode==="english" || entry.replyLanguage==="en";
+        const replayLocale=isEnglishEntry ? "en-US" : langConfig().locale;
+        actions.appendChild(voiceTutorControlButton("🔊 Replay","Replay this transcript",()=>speakRawText(entry.text,replayLocale)));
+
+        // Only target-language phrases belong in this tutor's Study Board.
+        if(!isEnglishEntry){
+            actions.appendChild(voiceTutorControlButton("☆ Save phrase","Save this target-language phrase to the active Study Board",ev=>saveVoiceTutorPhrase(entry.text,currentStudyLanguage,ev.currentTarget)));
+        }
         wrap.appendChild(actions);
 
         log.appendChild(wrap);
@@ -7440,11 +7450,11 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         voiceTutorHistories[currentStudyLanguage]=[];
         renderVoiceTutorTranscript();
         const live=document.getElementById("voice-live-transcript");
-        if(live)live.textContent="";
+        if(live)live.textContent="What the microphone hears will appear here.";
         voiceTutorStatus("Ready.");
     };
 
-    function voiceTutorPrompt(userText){
+    function voiceTutorPrompt(userText,inputMode="target"){
         const cfg=langConfig();
         const settings=voiceTutorSettings();
         const history=voiceTutorHistory().slice(-10);
@@ -7461,17 +7471,34 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             none:"Do not correct the learner unless they explicitly ask for correction."
         };
         const englishInstructions={
-            ask:`Use ${cfg.name} for the spoken reply. Use English only if the learner explicitly asks for an English explanation or meaning.`,
-            support:`Use mostly ${cfg.name}. If the learner appears stuck, a very short English support note may appear only in teacher_note; keep reply in ${cfg.name}.`,
-            target:`Use only ${cfg.name}; teacher_note should also be empty unless absolutely necessary to explain a correction.`
+            ask: inputMode==="english"
+                ? `The learner deliberately chose the English-question microphone. Answer the question clearly in English when that is most useful, then you may add a short ${cfg.name} continuation.`
+                : `Use ${cfg.name} for the spoken reply. Use English only if the learner explicitly asks for it.`,
+            support: inputMode==="english"
+                ? `Understand and answer the English question directly. A concise English explanation followed by a short ${cfg.name} continuation is appropriate.`
+                : `Use mostly ${cfg.name}. If the learner appears stuck, a short English support note may appear in teacher_note; keep the spoken reply in ${cfg.name}.`,
+            target:`Use only ${cfg.name}, even when the learner deliberately asks a question in English.`
         };
 
-        const transcript=history.map(h=>`${h.role==="user"?"Learner":"Tutor"}: ${h.text}`).join("\n");
+        const transcript=history.map(h=>{
+            if(h.role==="user"){
+                const tag=h.inputMode==="english" ? "Learner (English question)" : `Learner (${cfg.name})`;
+                return `${tag}: ${h.text}`;
+            }
+            const tag=h.replyLanguage==="en" ? "Tutor (English)" : `Tutor (${cfg.name})`;
+            return `${tag}: ${h.text}`;
+        }).join("\n");
+
+        const latestInputNote=inputMode==="english"
+            ? `The latest utterance was intentionally recognized with an English (en-US) microphone. Treat it as an English question inside the ongoing ${cfg.name} lesson.`
+            : `The latest utterance was recognized with the ${cfg.name} microphone (${cfg.locale}).`;
 
         return `You are the voice-conversation tutor inside LanguageTutor.
 Target language: ${cfg.name}.
 Learner level: ${settings.level}.
 Conversation mode: ${settings.conversation}.
+Latest input mode: ${inputMode==="english" ? "English question" : cfg.name + " speaking turn"}.
+${latestInputNote}
 
 ${modeInstructions[settings.conversation]}
 ${correctionInstructions[settings.corrections]}
@@ -7495,27 +7522,30 @@ Latest learner utterance:
 "${userText}"
 
 Return JSON only:
-{"reply":"natural spoken response in ${cfg.name}","teacher_note":"optional concise correction/explanation or empty string"}`;
+{"reply":"natural spoken response","teacher_note":"optional concise correction/explanation or empty string","reply_language":"target or en"}
+
+Set reply_language to "en" only when the spoken reply is primarily English; otherwise use "target".`;
     }
 
-    async function getVoiceTutorReply(userText){
-        const prompt=voiceTutorPrompt(userText);
+    async function getVoiceTutorReply(userText,inputMode="target"){
+        const prompt=voiceTutorPrompt(userText,inputMode);
         try{
             const result=await callAIJson(prompt);
             const reply=String(result?.reply||"").trim();
             const note=String(result?.teacher_note||"").trim();
-            if(reply)return {reply,note};
+            const replyLanguage=result?.reply_language==="en" ? "en" : "target";
+            if(reply)return {reply,note,replyLanguage};
             throw new Error("AI returned no spoken reply.");
         }catch(jsonError){
             console.warn("Voice Tutor JSON response failed; using text fallback.",jsonError);
             const fallback=String(await callAI(
                 prompt + `\nIf structured JSON cannot be produced, reply with only a short natural ${langConfig().name} conversational response.`
             )).trim();
-            return {reply:fallback,note:""};
+            return {reply:fallback,note:"",replyLanguage:inputMode==="english" && voiceTutorSettings().englishHelp!=="target" ? "en" : "target"};
         }
     }
 
-    async function speakVoiceTutorText(text){
+    async function speakVoiceTutorText(text,replyLanguage="target"){
         const clean=String(text||"").trim();
         if(!clean)return;
         if(!("speechSynthesis" in window))throw new Error("Speech synthesis is not supported in this browser.");
@@ -7527,7 +7557,7 @@ Return JSON only:
         window.speechSynthesis.cancel();
 
         const utterance=new SpeechSynthesisUtterance(clean);
-        utterance.lang=langConfig().locale;
+        utterance.lang=replyLanguage==="en" ? "en-US" : langConfig().locale;
 
         const speedId=utterance.lang.startsWith("de") ? "speech-speed-de" : "speech-speed-en";
         const speed=document.getElementById(speedId);
@@ -7562,13 +7592,14 @@ Return JSON only:
         }
     }
 
-    function createVoiceRecognition(){
+    function createVoiceRecognition(inputMode="target"){
         const Ctor=voiceRecognitionConstructor();
         if(!Ctor)return null;
         destroyVoiceRecognition();
 
         const rec=new Ctor();
-        rec.lang=langConfig().locale;
+        voiceTutorState.inputMode=inputMode==="english" ? "english" : "target";
+        rec.lang=voiceTutorState.inputMode==="english" ? "en-US" : langConfig().locale;
         rec.continuous=false;
         rec.interimResults=true;
         rec.maxAlternatives=1;
@@ -7576,9 +7607,12 @@ Return JSON only:
         rec.onstart=()=>{
             voiceTutorState.phase="listening";
             setVoiceMicIndicator(true);
-            voiceTutorStatus(`Listening in ${langConfig().name}…`,"listening");
+            const englishTurn=voiceTutorState.inputMode==="english";
+            voiceTutorStatus(englishTurn ? "Listening for your English question…" : `Listening in ${langConfig().name}…`,"listening");
+            const micLabel=document.getElementById("voice-mic-indicator-label");
+            if(micLabel)micLabel.textContent=englishTurn ? "English" : langConfig().name;
             const live=document.getElementById("voice-live-transcript");
-            if(live)live.textContent="";
+            if(live)live.textContent=englishTurn ? "Listening for English…" : `Listening for ${langConfig().name}…`;
         };
 
         rec.onresult=event=>{
@@ -7596,7 +7630,7 @@ Return JSON only:
                 voiceTutorState.phase="processing";
                 setVoiceMicIndicator(false);
                 try{rec.stop();}catch(e){}
-                handleVoiceTutorUtterance(finalText.trim());
+                handleVoiceTutorUtterance(finalText.trim(),voiceTutorState.inputMode);
             }
         };
 
@@ -7619,7 +7653,7 @@ Return JSON only:
             setVoiceMicIndicator(false);
             if(!voiceTutorState.active)return;
             if(voiceTutorState.phase==="listening"){
-                setTimeout(()=>resumeVoiceRecognition(false),450);
+                setTimeout(()=>resumeVoiceRecognition(false,"target"),450);
             }
         };
 
@@ -7627,18 +7661,28 @@ Return JSON only:
         return rec;
     }
 
-    window.resumeVoiceRecognition=function(manual=false){
+    window.resumeVoiceRecognition=function(manual=false,inputMode="target"){
         if(!voiceTutorState.active)return;
         if(voiceTutorState.speaking)return;
-        const rec=voiceTutorState.recognition || createVoiceRecognition();
+
+        const requestedMode=inputMode==="english" ? "english" : "target";
+        const requestedLocale=requestedMode==="english" ? "en-US" : langConfig().locale;
+
+        let rec=voiceTutorState.recognition;
+        if(!rec || voiceTutorState.inputMode!==requestedMode || rec.lang!==requestedLocale){
+            rec=createVoiceRecognition(requestedMode);
+        }
         if(!rec)return;
 
         voiceTutorState.manualRestart=manual;
+        voiceTutorState.inputMode=requestedMode;
         voiceTutorState.phase="listening";
-        const listenBtn=document.getElementById("voice-listen-now-btn");
-        listenBtn?.classList.add("hidden");
+
+        document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
+        document.getElementById("voice-english-turn-btn")?.classList.add("hidden");
+
         try{
-            rec.lang=langConfig().locale;
+            rec.lang=requestedLocale;
             rec.start();
         }catch(e){
             if(String(e?.name||"")!=="InvalidStateError"){
@@ -7647,32 +7691,59 @@ Return JSON only:
         }
     };
 
-    async function handleVoiceTutorUtterance(text){
+    window.askVoiceTutorInEnglish=function(){
+        if(!getActiveAIKey()){
+            alert("Add an AI API key in Settings first.");
+            return;
+        }
+        if(!voiceRecognitionConstructor()){
+            voiceTutorStatus("Speech recognition is not available in this browser/device.","error");
+            return;
+        }
+
+        if(!voiceTutorState.active){
+            voiceTutorState.active=true;
+            voiceTutorState.language=currentStudyLanguage;
+            document.getElementById("voice-start-btn")?.classList.add("hidden");
+            document.getElementById("voice-stop-btn")?.classList.remove("hidden");
+        }
+
+        try{window.speechSynthesis?.cancel();}catch(e){}
+        voiceTutorState.speaking=false;
+        destroyVoiceRecognition();
+        voiceTutorState.phase="idle";
+        setVoiceMicIndicator(false);
+
+        setTimeout(()=>resumeVoiceRecognition(true,"english"),120);
+    };
+
+    async function handleVoiceTutorUtterance(text,inputMode="target"){
         if(!voiceTutorState.active)return;
         const live=document.getElementById("voice-live-transcript");
         if(live)live.textContent=text;
 
-        recordVoiceTutorEntry({role:"user",text});
-        voiceTutorStatus("Tutor is thinking…","thinking");
+        recordVoiceTutorEntry({role:"user",text,inputMode});
+        voiceTutorStatus(inputMode==="english" ? "Tutor is answering your English question…" : "Tutor is thinking…","thinking");
 
         try{
-            const result=await getVoiceTutorReply(text);
+            const result=await getVoiceTutorReply(text,inputMode);
             if(!voiceTutorState.active)return;
 
-            recordVoiceTutorEntry({role:"assistant",text:result.reply,note:result.note});
-            if(live)live.textContent="";
-            await speakVoiceTutorText(result.reply);
+            recordVoiceTutorEntry({role:"assistant",text:result.reply,note:result.note,replyLanguage:result.replyLanguage});
+            if(live)live.textContent="Tutor reply appears in the conversation transcript below.";
+            await speakVoiceTutorText(result.reply,result.replyLanguage);
 
             if(voiceTutorState.active){
                 voiceTutorState.phase="listening";
-                setTimeout(()=>resumeVoiceRecognition(false),250);
+                // English is deliberately one turn only.
+                setTimeout(()=>resumeVoiceRecognition(false,"target"),250);
             }
         }catch(e){
             console.error("Voice Tutor turn failed:",e);
             if(!voiceTutorState.active)return;
             voiceTutorStatus("Voice Tutor had trouble responding: "+((e&&e.message)?e.message:String(e)),"error");
-            const listenBtn=document.getElementById("voice-listen-now-btn");
-            listenBtn?.classList.remove("hidden");
+            document.getElementById("voice-listen-now-btn")?.classList.remove("hidden");
+            document.getElementById("voice-english-turn-btn")?.classList.remove("hidden");
             voiceTutorState.phase="idle";
         }
     }
@@ -7700,13 +7771,15 @@ Return JSON only:
         const start=document.getElementById("voice-start-btn");
         const stop=document.getElementById("voice-stop-btn");
         const listen=document.getElementById("voice-listen-now-btn");
+        const english=document.getElementById("voice-english-turn-btn");
         start?.classList.add("hidden");
         stop?.classList.remove("hidden");
         listen?.classList.remove("hidden");
+        english?.classList.remove("hidden");
 
-        createVoiceRecognition();
-        voiceTutorStatus(`Conversation started. Speak in ${langConfig().name}.`);
-        resumeVoiceRecognition(true);
+        createVoiceRecognition("target");
+        voiceTutorStatus(`Conversation started. Speak in ${langConfig().name}, or tap “Ask in English” for one English question.`);
+        resumeVoiceRecognition(true,"target");
     };
 
     window.stopVoiceConversation=function(silent=false){
@@ -7721,8 +7794,9 @@ Return JSON only:
         document.getElementById("voice-start-btn")?.classList.remove("hidden");
         document.getElementById("voice-stop-btn")?.classList.add("hidden");
         document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
+        document.getElementById("voice-english-turn-btn")?.classList.add("hidden");
         const live=document.getElementById("voice-live-transcript");
-        if(live)live.textContent="";
+        if(live)live.textContent="What the microphone hears will appear here.";
         if(!silent)voiceTutorStatus("Conversation stopped.");
     };
 
