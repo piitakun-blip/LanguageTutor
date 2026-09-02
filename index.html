@@ -5662,31 +5662,187 @@ Plain text only.`;
 
         function japaneseQuizCandidates(items){
             const candidates=[];
-            const allEntries=Object.entries(JA_QUIZ_PARTICLE_LABELS);
+
+            const functionLabels={
+                topic:"Topic / contrast",
+                subject:"Subject / focus",
+                object:"Direct object",
+                destination:"Destination / target",
+                time:"Specific time",
+                adverbial:"Adverbial manner / state",
+                action_place:"Place of action / means",
+                direction:"Direction toward",
+                companion:"Companion / quotation",
+                addition:"Addition / also",
+                possession:"Possession / noun modification",
+                source:"Source / starting point",
+                endpoint:"Endpoint / until",
+                comparison:"Comparison / source",
+                quote_topic:"Colloquial quotation / topic",
+                context_topic:"Context + topic",
+                target_topic:"Target + topic",
+                final_confirm:"Sentence-final agreement / confirmation",
+                final_emphasis:"Sentence-final emphasis / information"
+            };
+
             const specialReadings={
                 "は":{answer:"wa",label:"わ (wa)",wrong:["は (ha)","が (ga)","を (o)"]},
                 "へ":{answer:"e",label:"え (e)",wrong:["へ (he)","に (ni)","で (de)"]},
                 "を":{answer:"o",label:"お (o)",wrong:["を (wo)","わ (wa)","に (ni)"]}
             };
 
-            function addParticleQuestions(item,sentence,particle){
-                const functionLabel=JA_QUIZ_PARTICLE_LABELS[particle];
-                if(!functionLabel)return;
+            const genericParticleRole={
+                "は":"topic",
+                "が":"subject",
+                "を":"object",
+                "で":"action_place",
+                "へ":"direction",
+                "と":"companion",
+                "も":"addition",
+                "の":"possession",
+                "から":"source",
+                "まで":"endpoint",
+                "より":"comparison",
+                "って":"quote_topic",
+                "では":"context_topic",
+                "には":"target_topic",
+                "ね":"final_confirm",
+                "よ":"final_emphasis"
+            };
 
-                const correct={value:`fn:${particle}`,label:functionLabel};
-                const wrong=shuffleQuizArray(
-                    allEntries
-                        .filter(([p])=>p!==particle)
-                        .map(([p,label])=>({value:`fn:${p}`,label}))
-                ).slice(0,3);
+            const adverbialNiWords=[
+                "本当に","特に","別に","急に","確かに","非常に","普通に","自然に","完全に",
+                "一緒に","上手に","元気に","静かに","きれいに","綺麗に","簡単に","丁寧に",
+                "真剣に","自由に","幸せに","大切に","必要に"
+            ];
+
+            function isAdverbialNi(sentence,index){
+                const before=sentence.slice(Math.max(0,index-8),index+1);
+                if(adverbialNiWords.some(word=>before.endsWith(word))) return true;
+
+                // Productive adverbial pattern: X的に ("in an X-like way").
+                if(/的に$/.test(before)) return true;
+
+                // Common な-adjective/adverbial stems immediately before に.
+                if(/(?:静か|きれい|綺麗|元気|上手|簡単|丁寧|真剣|自由|幸せ|大切|必要)に$/.test(before)) return true;
+
+                return false;
+            }
+
+            function isTimeNi(sentence,index){
+                const before=sentence.slice(Math.max(0,index-12),index);
+                return /(?:\d{1,2}|[一二三四五六七八九十]+)(?:時|分|日|月|年)|(?:月曜|火曜|水曜|木曜|金曜|土曜|日曜)日?|(?:朝|昼|夜|午前|午後|正午|深夜)$/.test(before);
+            }
+
+            function isDestinationNi(sentence,index){
+                const after=sentence.slice(index+1,index+18);
+                return /(?:行|来|帰|着|入|乗|向か|戻|通|送|届け|会|電話|聞|見せ|渡|あげ|くれ|もら)/.test(after);
+            }
+
+            function classifyNi(sentence,index){
+                if(isAdverbialNi(sentence,index)){
+                    return {
+                        role:"adverbial",
+                        focus:"に",
+                        question:"What is the highlighted に doing in this expression?",
+                        explanation:"Here に helps turn the preceding expression into an adverbial manner/state expression; it is not marking a destination or time."
+                    };
+                }
+                if(isTimeNi(sentence,index)){
+                    return {
+                        role:"time",
+                        focus:"に",
+                        question:"What is the highlighted に marking here?",
+                        explanation:"Here に marks a specific time at which the event occurs."
+                    };
+                }
+                if(isDestinationNi(sentence,index)){
+                    return {
+                        role:"destination",
+                        focus:"に",
+                        question:"What is the highlighted に marking here?",
+                        explanation:"Here に marks a destination or target associated with the following predicate."
+                    };
+                }
+
+                // に is highly polyfunctional. If local context is not strong enough,
+                // skip the function question rather than teach a possibly wrong label.
+                return null;
+            }
+
+            function particleOccurrences(sentence){
+                const results=[];
+                const re=/では|には|から|まで|より|って|は|が|を|に|で|へ|と|も|の|ね|よ/g;
+                let m;
+                while((m=re.exec(sentence))){
+                    const particle=m[0];
+                    const index=m.index;
+
+                    // Avoid double-counting に inside には and で/は inside では,
+                    // already captured by longest-first regex.
+                    results.push({particle,index});
+                }
+                return results;
+            }
+
+            function choicesForRole(role){
+                const preferred={
+                    adverbial:["adverbial","destination","time","action_place"],
+                    destination:["destination","time","adverbial","direction"],
+                    time:["time","destination","adverbial","action_place"],
+                    topic:["topic","subject","object","addition"],
+                    subject:["subject","topic","object","addition"],
+                    object:["object","subject","destination","topic"],
+                    action_place:["action_place","destination","direction","time"],
+                    direction:["direction","destination","action_place","companion"],
+                    companion:["companion","addition","source","possession"],
+                    possession:["possession","companion","source","topic"],
+                    source:["source","endpoint","comparison","destination"],
+                    endpoint:["endpoint","source","comparison","time"],
+                    comparison:["comparison","source","endpoint","addition"],
+                    addition:["addition","topic","subject","companion"],
+                    quote_topic:["quote_topic","topic","companion","final_confirm"],
+                    context_topic:["context_topic","topic","action_place","target_topic"],
+                    target_topic:["target_topic","destination","topic","context_topic"],
+                    final_confirm:["final_confirm","final_emphasis","topic","addition"],
+                    final_emphasis:["final_emphasis","final_confirm","topic","addition"]
+                }[role] || [role,"topic","subject","object"];
+
+                return preferred
+                    .filter((value,index,array)=>functionLabels[value] && array.indexOf(value)===index)
+                    .slice(0,4)
+                    .map(value=>({value,label:functionLabels[value]}));
+            }
+
+            function addFunctionQuestion(item,sentence,particle,index){
+                let info=null;
+
+                if(particle==="に"){
+                    info=classifyNi(sentence,index);
+                    if(!info)return; // confidence gate
+                }else{
+                    const role=genericParticleRole[particle];
+                    if(!role || !functionLabels[role])return;
+                    info={
+                        role,
+                        focus:particle,
+                        question:"What is the highlighted particle doing in this sentence?",
+                        explanation:`Here ${particle} is best understood as ${functionLabels[role].toLowerCase()}.`
+                    };
+                }
+
+                const choices=choicesForRole(info.role);
+                if(choices.length!==4)return;
 
                 candidates.push({
-                    item,sentence,focus:particle,
-                    answer:`fn:${particle}`,
-                    choices:[correct,...wrong],
+                    item,
+                    sentence,
+                    focus:info.focus,
+                    answer:info.role,
+                    choices,
                     header:"Japanese Particle Function",
-                    question:"What is the highlighted particle doing in this sentence?",
-                    explanation:`${particle} commonly functions as: ${functionLabel}. Context can refine the exact interpretation.`
+                    question:info.question,
+                    explanation:info.explanation
                 });
 
                 const reading=specialReadings[particle];
@@ -5735,8 +5891,9 @@ Plain text only.`;
 
             items.forEach(item=>{
                 const sentence=studyItemTarget(item);
-                const particles=sentence.match(/では|には|から|まで|より|って|は|が|を|に|で|へ|と|も|の|ね|よ/g)||[];
-                particles.forEach(particle=>addParticleQuestions(item,sentence,particle));
+                particleOccurrences(sentence).forEach(({particle,index})=>{
+                    addFunctionQuestion(item,sentence,particle,index);
+                });
                 addPredicateQuestion(item,sentence);
             });
 
@@ -10043,15 +10200,31 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const rest=String(sentence||"").trim();
         const items=[];
         if(!rest) return items;
+
+        const adverbialNi=/((?:本当|特|別|急|確か|非常|普通|自然|完全|一緒|上手|元気|静か|きれい|綺麗|簡単|丁寧|真剣|自由|幸せ|大切|必要|[\u3400-\u9fff]+的)に)/g;
+        const protectedRanges=[];
+        let am;
+        while((am=adverbialNi.exec(rest))){
+            protectedRanges.push([am.index,am.index+am[0].length]);
+        }
+        const isProtectedIndex=index=>protectedRanges.some(([a,b])=>index>=a && index<b);
+
         const re=new RegExp(`(${JA_PARTICLES.join("|")}|[。！？!?、])`,"g");
         let last=0,m;
         while((m=re.exec(rest))){
+            const p=m[0];
+
+            // Keep adverbial expressions such as 本当に and 静かに together.
+            if(p==="に" && isProtectedIndex(m.index)){
+                continue;
+            }
+
             const chunk=rest.slice(last,m.index).trim();
             if(chunk){
                 const info=japaneseLocalChunkRole(chunk);
                 items.push({text:chunk,...info});
             }
-            const p=m[0];
+
             const isPunctuation=/[。！？!?、]/.test(p);
             const pInfo=JA_PARTICLE_INFO_LOCAL[p];
             items.push({
@@ -10063,6 +10236,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             });
             last=re.lastIndex;
         }
+
         const tail=rest.slice(last).trim();
         if(tail){
             const info=japaneseLocalChunkRole(tail);
@@ -12185,3 +12359,4 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
 </body>
 </html>
+                            
