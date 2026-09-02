@@ -2141,32 +2141,127 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
                 </div>
             </button>
 
-            <!-- Collapsible AI Socratic Chat Content Card -->
-            <div id="socratic-chat-container" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 space-y-4 flex flex-col h-[400px] animate-fadeIn">
-                <!-- Chat Body -->
-                <div class="flex-grow flex flex-col justify-between overflow-hidden relative">
-                    <!-- Locked Overlay State -->
-                    <div id="chat-locked-overlay" class="absolute inset-0 bg-slate-50/95 rounded-xl flex flex-col items-center justify-center p-6 text-center z-10 space-y-2">
-                        <svg class="w-8 h-8 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"></path></svg>
-                        <span class="text-xs font-bold text-slate-700">Chat with Tutor Locked</span>
-                        <p class="text-[10px] text-slate-400 leading-relaxed max-w-[200px]">Choose an AI provider in Settings and save its API key to unlock Chat with Tutor.</p>
-                    </div>
+            <!-- Collapsible AI Tutor Content Card -->
+            <div id="socratic-chat-container" class="relative bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5 space-y-3 flex flex-col h-[560px] animate-fadeIn">
 
-                    <!-- Messages Log -->
+                <!-- Shared Locked Overlay State -->
+                <div id="chat-locked-overlay" class="absolute inset-3 bg-slate-50/95 rounded-xl flex flex-col items-center justify-center p-6 text-center z-20 space-y-2">
+                    <svg class="w-8 h-8 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"></path></svg>
+                    <span class="text-xs font-bold text-slate-700">AI Tutor Locked</span>
+                    <p class="text-[10px] text-slate-400 leading-relaxed max-w-[240px]">Choose an AI provider in Settings and save its API key to unlock Text Chat and Voice Conversation.</p>
+                </div>
+
+                <!-- Tutor Mode Tabs -->
+                <div class="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 shrink-0">
+                    <button type="button" id="tutor-mode-text-btn" onclick="setTutorInteractionMode('text')" class="rounded-lg bg-white text-indigo-700 shadow-sm px-3 py-2 text-xs font-bold transition">
+                        💬 Text Chat
+                    </button>
+                    <button type="button" id="tutor-mode-voice-btn" onclick="setTutorInteractionMode('voice')" class="rounded-lg text-slate-600 px-3 py-2 text-xs font-bold transition">
+                        🎙 Voice Conversation
+                    </button>
+                </div>
+
+                <!-- TEXT CHAT -->
+                <div id="chat-text-mode" class="flex-1 min-h-0 flex flex-col justify-between overflow-hidden">
                     <div id="chat-messages-log" class="flex-grow overflow-y-auto pr-2 space-y-3 pb-3 text-xs flex flex-col">
-                        <!-- Initial Message -->
                         <div id="ai-tutor-welcome" class="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[90%] self-start">
                             <p id="ai-tutor-welcome-label" class="font-bold mb-1 text-[10px] text-indigo-700">AI GRAMMAR TUTOR</p>
-                            <span id="ai-tutor-welcome-text">Guten Tag! I can explain any German grammatical structure or answer questions about the sentence you are typing or click on. Try asking me: <em>"Why is this Accusative?"</em> or <em>"Can you break down this sentence?"</em></span>
+                            <span id="ai-tutor-welcome-text">Guten Tag! I can explain German grammar or help with the sentence you are working on.</span>
                         </div>
                     </div>
 
-                    <!-- Input bar -->
                     <div class="border-t border-slate-100 pt-3 flex gap-2 shrink-0">
-                        <input type="text" id="chat-user-input" class="flex-grow px-3 py-2 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg text-xs placeholder-slate-400 text-slate-700 font-medium" placeholder="Ask your AI tutor a question..." onkeydown="handleChatKeyPress(event)">
-                        <button onclick="sendChatMessage()" class="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shrink-0 flex items-center justify-center">
+                        <input type="text" id="chat-user-input" class="flex-grow min-w-0 px-3 py-2 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg text-sm sm:text-xs placeholder-slate-400 text-slate-700 font-medium" placeholder="Ask your AI tutor a question..." onkeydown="handleChatKeyPress(event)">
+                        <button type="button" onclick="sendChatMessage()" class="min-w-[44px] min-h-[44px] p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shrink-0 flex items-center justify-center" title="Send">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>
                         </button>
+                    </div>
+                </div>
+
+                <!-- VOICE CONVERSATION -->
+                <div id="chat-voice-mode" class="hidden flex-1 min-h-0 flex flex-col gap-3 overflow-hidden">
+                    <div class="shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                                <div id="voice-tutor-heading" class="text-sm font-bold text-slate-800">German Voice Conversation</div>
+                                <div class="text-[10px] text-slate-500 mt-0.5">Your microphone is transcribed in the selected language, sent to the configured AI as text, and the tutor's reply is spoken aloud.</div>
+                            </div>
+                            <span id="voice-tutor-language-badge" class="rounded-lg bg-slate-900 text-white px-2 py-1 text-[9px] font-bold">DE</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                            <label class="text-[10px] font-bold text-slate-500">Conversation
+                                <select id="voice-conversation-mode" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700" onchange="saveVoiceTutorSettings(); updateVoiceTutorRoleplayVisibility()">
+                                    <option value="natural">Natural conversation</option>
+                                    <option value="beginner">Beginner practice</option>
+                                    <option value="roleplay">Role play</option>
+                                    <option value="free">Free conversation</option>
+                                </select>
+                            </label>
+                            <label class="text-[10px] font-bold text-slate-500">Level
+                                <select id="voice-level" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700" onchange="saveVoiceTutorSettings()">
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate" selected>Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                </select>
+                            </label>
+                            <label class="text-[10px] font-bold text-slate-500">Corrections
+                                <select id="voice-corrections" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700" onchange="saveVoiceTutorSettings()">
+                                    <option value="important" selected>Important mistakes</option>
+                                    <option value="gentle">Gentle corrections</option>
+                                    <option value="all">Correct everything</option>
+                                    <option value="none">Conversation only</option>
+                                </select>
+                            </label>
+                            <label class="text-[10px] font-bold text-slate-500">English help
+                                <select id="voice-english-help" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700" onchange="saveVoiceTutorSettings()">
+                                    <option value="ask" selected>Only when I ask</option>
+                                    <option value="support">Brief help if useful</option>
+                                    <option value="target">Target language only</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div id="voice-roleplay-wrap" class="hidden mt-2">
+                            <label class="text-[10px] font-bold text-slate-500">Role-play situation
+                                <input id="voice-roleplay-scenario" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm sm:text-xs text-slate-700" value="ordering at a café" placeholder="e.g. train station, restaurant, meeting someone" oninput="saveVoiceTutorSettings()">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="shrink-0 flex flex-wrap items-center gap-2">
+                        <button type="button" id="voice-start-btn" onclick="startVoiceConversation()" class="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
+                            🎙 Start Conversation
+                        </button>
+                        <button type="button" id="voice-stop-btn" onclick="stopVoiceConversation()" class="hidden min-h-[44px] px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
+                            ■ Stop
+                        </button>
+                        <button type="button" id="voice-listen-now-btn" onclick="resumeVoiceRecognition(true)" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold transition">
+                            🎤 Listen now
+                        </button>
+                        <button type="button" onclick="newVoiceConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold transition">
+                            New conversation
+                        </button>
+                    </div>
+
+                    <div class="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <div id="voice-tutor-status" class="text-[11px] font-bold text-slate-600">Ready.</div>
+                            <div id="voice-mic-indicator" class="hidden items-center gap-1.5 text-[10px] font-bold text-rose-600">
+                                <span class="inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span> Listening
+                            </div>
+                        </div>
+                        <div id="voice-live-transcript" class="text-[11px] text-slate-400 italic mt-1 min-h-[16px]"></div>
+                    </div>
+
+                    <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1" aria-live="polite">
+                        <div id="voice-tutor-empty" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-[11px] text-slate-400">
+                            Start a conversation and speak naturally. The tutor will answer aloud, then listen for your next turn.
+                        </div>
+                    </div>
+
+                    <div id="voice-browser-note" class="shrink-0 text-[9px] text-slate-400">
+                        Voice recognition depends on browser/device support and microphone permission. Conversation history sent to the AI is intentionally limited to recent turns.
                     </div>
                 </div>
             </div>
@@ -7042,6 +7137,10 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             const allowed = ['translate', 'tutor', 'study'];
             if (!allowed.includes(tabName)) return;
 
+            if (tabName !== 'tutor' && typeof window.stopVoiceConversation === 'function') {
+                window.stopVoiceConversation(true);
+            }
+
             document.body.dataset.mobileTab = tabName;
             try {
                 localStorage.setItem('deutschlerner-mobile-tab', tabName);
@@ -7108,6 +7207,573 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     const originalSendChatMessage = window.sendChatMessage;
 
     let currentStudyLanguage = "de";
+
+    // ---------- Voice Conversation Tutor ----------
+    const VOICE_TUTOR_SETTINGS_KEY = "languagetutor_voice_tutor_settings_v1";
+    let tutorInteractionMode = "text";
+    const voiceTutorHistories = {de:[],es:[],ja:[]};
+    const voiceTutorState = {
+        active:false,
+        recognition:null,
+        phase:"idle",
+        language:"de",
+        speaking:false,
+        manualRestart:false
+    };
+
+    function voiceRecognitionConstructor(){
+        return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    }
+
+    function voiceTutorSettings(){
+        const defaults={
+            conversation:"natural",
+            level:"intermediate",
+            corrections:"important",
+            englishHelp:"ask",
+            scenario:"ordering at a café"
+        };
+        try{
+            const saved=JSON.parse(safeStorageGet(VOICE_TUTOR_SETTINGS_KEY)||"{}");
+            return {...defaults,...saved};
+        }catch(e){
+            return defaults;
+        }
+    }
+
+    window.saveVoiceTutorSettings=function(){
+        const settings={
+            conversation:document.getElementById("voice-conversation-mode")?.value||"natural",
+            level:document.getElementById("voice-level")?.value||"intermediate",
+            corrections:document.getElementById("voice-corrections")?.value||"important",
+            englishHelp:document.getElementById("voice-english-help")?.value||"ask",
+            scenario:document.getElementById("voice-roleplay-scenario")?.value.trim()||"ordering at a café"
+        };
+        safeStorageSet(VOICE_TUTOR_SETTINGS_KEY,JSON.stringify(settings));
+    };
+
+    function restoreVoiceTutorSettings(){
+        const settings=voiceTutorSettings();
+        const pairs=[
+            ["voice-conversation-mode",settings.conversation],
+            ["voice-level",settings.level],
+            ["voice-corrections",settings.corrections],
+            ["voice-english-help",settings.englishHelp]
+        ];
+        pairs.forEach(([id,value])=>{
+            const el=document.getElementById(id);
+            if(el)el.value=value;
+        });
+        const scenario=document.getElementById("voice-roleplay-scenario");
+        if(scenario)scenario.value=settings.scenario;
+        updateVoiceTutorRoleplayVisibility();
+    }
+
+    window.updateVoiceTutorRoleplayVisibility=function(){
+        const wrap=document.getElementById("voice-roleplay-wrap");
+        const mode=document.getElementById("voice-conversation-mode")?.value||"natural";
+        wrap?.classList.toggle("hidden",mode!=="roleplay");
+    };
+
+    window.setTutorInteractionMode=function(mode){
+        tutorInteractionMode=mode==="voice" ? "voice" : "text";
+        const text=document.getElementById("chat-text-mode");
+        const voice=document.getElementById("chat-voice-mode");
+        const textBtn=document.getElementById("tutor-mode-text-btn");
+        const voiceBtn=document.getElementById("tutor-mode-voice-btn");
+
+        const voiceMode=tutorInteractionMode==="voice";
+        if(!voiceMode && voiceTutorState.active) window.stopVoiceConversation(true);
+        text?.classList.toggle("hidden",voiceMode);
+        voice?.classList.toggle("hidden",!voiceMode);
+
+        if(textBtn) textBtn.className="rounded-lg px-3 py-2 text-xs font-bold transition " +
+            (!voiceMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600");
+        if(voiceBtn) voiceBtn.className="rounded-lg px-3 py-2 text-xs font-bold transition " +
+            (voiceMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600");
+
+        if(voiceMode){
+            renderVoiceTutorLanguageUI();
+            restoreVoiceTutorSettings();
+            renderVoiceTutorTranscript();
+        }
+    };
+
+    function voiceTutorStatus(text,tone="normal"){
+        const el=document.getElementById("voice-tutor-status");
+        if(!el)return;
+        el.textContent=text;
+        const classes={
+            normal:"text-[11px] font-bold text-slate-600",
+            listening:"text-[11px] font-bold text-rose-600",
+            thinking:"text-[11px] font-bold text-indigo-600",
+            speaking:"text-[11px] font-bold text-emerald-700",
+            error:"text-[11px] font-bold text-rose-700"
+        };
+        el.className=classes[tone]||classes.normal;
+    }
+
+    function setVoiceMicIndicator(on){
+        const el=document.getElementById("voice-mic-indicator");
+        if(!el)return;
+        el.classList.toggle("hidden",!on);
+        el.classList.toggle("flex",on);
+    }
+
+    function voiceTutorLanguageBadgeClass(code){
+        if(code==="es") return "rounded-lg bg-red-100 text-red-700 px-2 py-1 text-[9px] font-bold";
+        if(code==="ja") return "rounded-lg bg-rose-100 text-rose-700 px-2 py-1 text-[9px] font-bold";
+        return "rounded-lg bg-slate-900 text-white px-2 py-1 text-[9px] font-bold";
+    }
+
+    function renderVoiceTutorLanguageUI(){
+        const cfg=langConfig();
+        const heading=document.getElementById("voice-tutor-heading");
+        const badge=document.getElementById("voice-tutor-language-badge");
+        if(heading) heading.textContent=`${cfg.name} Voice Conversation`;
+        if(badge){
+            badge.textContent=cfg.badge;
+            badge.className=voiceTutorLanguageBadgeClass(currentStudyLanguage);
+        }
+
+        const ctor=voiceRecognitionConstructor();
+        const start=document.getElementById("voice-start-btn");
+        const note=document.getElementById("voice-browser-note");
+        if(start){
+            start.disabled=!ctor;
+            start.classList.toggle("opacity-50",!ctor);
+            start.classList.toggle("cursor-not-allowed",!ctor);
+        }
+        if(note){
+            note.textContent=ctor
+                ? `Recognition locale: ${cfg.locale}. The AI receives text, not continuous microphone audio; only recent turns are sent for context.`
+                : "Speech recognition is not exposed by this browser/device. Try a browser with SpeechRecognition support; text chat and spoken playback still work.";
+        }
+    }
+
+    function voiceTutorHistory(){
+        return voiceTutorHistories[currentStudyLanguage] || [];
+    }
+
+    function renderVoiceTutorTranscript(){
+        const log=document.getElementById("voice-chat-messages-log");
+        if(!log)return;
+        log.innerHTML="";
+        const history=voiceTutorHistory();
+        if(!history.length){
+            const empty=document.createElement("div");
+            empty.id="voice-tutor-empty";
+            empty.className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-[11px] text-slate-400";
+            empty.textContent=`Start a ${langConfig().name} conversation and speak naturally. The tutor will answer aloud, then listen for your next turn.`;
+            log.appendChild(empty);
+            return;
+        }
+        history.forEach(entry=>appendVoiceTutorBubble(entry,false));
+        log.scrollTop=log.scrollHeight;
+    }
+
+    function voiceTutorControlButton(label,title,handler){
+        const btn=document.createElement("button");
+        btn.type="button";
+        btn.className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[10px] font-bold text-slate-600 hover:text-indigo-700 transition";
+        btn.textContent=label;
+        btn.title=title;
+        btn.addEventListener("click",handler);
+        return btn;
+    }
+
+    function appendVoiceTutorBubble(entry,scroll=true){
+        const log=document.getElementById("voice-chat-messages-log");
+        if(!log)return;
+        document.getElementById("voice-tutor-empty")?.remove();
+
+        const user=entry.role==="user";
+        const wrap=document.createElement("div");
+        wrap.className=(user
+            ? "ml-auto bg-slate-100 text-slate-800 border border-slate-200"
+            : "mr-auto bg-indigo-50/70 text-indigo-950 border border-indigo-100") +
+            " rounded-xl p-3 max-w-[95%] text-xs";
+
+        const label=document.createElement("div");
+        label.className="text-[9px] font-bold uppercase tracking-wider mb-1 " + (user?"text-slate-500":"text-indigo-600");
+        label.textContent=user ? "You" : `${langConfig().name} Voice Tutor`;
+        wrap.appendChild(label);
+
+        const text=document.createElement("div");
+        text.className="leading-relaxed whitespace-pre-wrap break-words";
+        text.textContent=entry.text;
+        wrap.appendChild(text);
+
+        if(entry.note){
+            const details=document.createElement("details");
+            details.className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] text-amber-950";
+            const summary=document.createElement("summary");
+            summary.className="cursor-pointer font-bold text-amber-700";
+            summary.textContent="Teacher note";
+            const note=document.createElement("div");
+            note.className="mt-1 leading-relaxed";
+            note.textContent=entry.note;
+            details.append(summary,note);
+            wrap.appendChild(details);
+        }
+
+        const actions=document.createElement("div");
+        actions.className="flex flex-wrap gap-1.5 mt-2";
+        actions.appendChild(voiceTutorControlButton("🔊 Replay","Replay this phrase",()=>speakRawText(entry.text,langConfig().locale)));
+        actions.appendChild(voiceTutorControlButton("☆ Save phrase","Save this phrase to the active language Study Board",ev=>saveVoiceTutorPhrase(entry.text,currentStudyLanguage,ev.currentTarget)));
+        wrap.appendChild(actions);
+
+        log.appendChild(wrap);
+        if(scroll) log.scrollTop=log.scrollHeight;
+    }
+
+    function recordVoiceTutorEntry(entry){
+        const history=voiceTutorHistory();
+        history.push(entry);
+        // Keep local session memory bounded too. The prompt uses an even smaller slice.
+        if(history.length>30) history.splice(0,history.length-30);
+        appendVoiceTutorBubble(entry,true);
+    }
+
+    window.newVoiceConversation=function(){
+        if(voiceTutorState.active) stopVoiceConversation(true);
+        voiceTutorHistories[currentStudyLanguage]=[];
+        renderVoiceTutorTranscript();
+        const live=document.getElementById("voice-live-transcript");
+        if(live)live.textContent="";
+        voiceTutorStatus("Ready.");
+    };
+
+    function voiceTutorPrompt(userText){
+        const cfg=langConfig();
+        const settings=voiceTutorSettings();
+        const history=voiceTutorHistory().slice(-10);
+        const modeInstructions={
+            natural:"Have a natural everyday conversation. Respond like a patient native-speaking conversation partner, not a worksheet.",
+            beginner:"Use short, high-frequency sentences and ask one simple follow-up question at a time. Keep the conversation easy to continue.",
+            roleplay:`Stay in this role-play situation: ${settings.scenario}. Act as the other person in the scene and keep it realistic.`,
+            free:"Follow the learner's topic freely while remaining a helpful language conversation partner."
+        };
+        const correctionInstructions={
+            important:"Only mention a correction when an error meaningfully affects grammar, meaning, or natural communication. Keep the conversation flowing first.",
+            gentle:"After the natural reply, give at most one brief, encouraging correction when useful.",
+            all:"Briefly correct meaningful grammar or word-choice errors from the learner's latest utterance, without turning the reply into a lecture.",
+            none:"Do not correct the learner unless they explicitly ask for correction."
+        };
+        const englishInstructions={
+            ask:`Use ${cfg.name} for the spoken reply. Use English only if the learner explicitly asks for an English explanation or meaning.`,
+            support:`Use mostly ${cfg.name}. If the learner appears stuck, a very short English support note may appear only in teacher_note; keep reply in ${cfg.name}.`,
+            target:`Use only ${cfg.name}; teacher_note should also be empty unless absolutely necessary to explain a correction.`
+        };
+
+        const transcript=history.map(h=>`${h.role==="user"?"Learner":"Tutor"}: ${h.text}`).join("\n");
+
+        return `You are the voice-conversation tutor inside LanguageTutor.
+Target language: ${cfg.name}.
+Learner level: ${settings.level}.
+Conversation mode: ${settings.conversation}.
+
+${modeInstructions[settings.conversation]}
+${correctionInstructions[settings.corrections]}
+${englishInstructions[settings.englishHelp]}
+
+Important behavior:
+- The field "reply" is what will be spoken aloud. Make it natural, conversational ${cfg.name}.
+- Keep reply concise enough for spoken conversation: normally 1-3 sentences.
+- Usually end with a natural question or conversational opening so the learner can respond.
+- Do not repeat the learner's entire sentence unless needed.
+- Do not put pronunciation notation, markdown, bullet lists, or meta commentary in reply.
+- Put any correction/explanation in teacher_note, not in reply.
+- teacher_note should be concise English unless English help is set to target language only.
+- If no correction is needed, teacher_note must be an empty string.
+- Do not invent that you heard pronunciation details; you receive a speech-to-text transcript, not raw audio.
+
+Recent conversation:
+${transcript || "(This is the first turn.)"}
+
+Latest learner utterance:
+"${userText}"
+
+Return JSON only:
+{"reply":"natural spoken response in ${cfg.name}","teacher_note":"optional concise correction/explanation or empty string"}`;
+    }
+
+    async function getVoiceTutorReply(userText){
+        const prompt=voiceTutorPrompt(userText);
+        try{
+            const result=await callAIJson(prompt);
+            const reply=String(result?.reply||"").trim();
+            const note=String(result?.teacher_note||"").trim();
+            if(reply)return {reply,note};
+            throw new Error("AI returned no spoken reply.");
+        }catch(jsonError){
+            console.warn("Voice Tutor JSON response failed; using text fallback.",jsonError);
+            const fallback=String(await callAI(
+                prompt + `\nIf structured JSON cannot be produced, reply with only a short natural ${langConfig().name} conversational response.`
+            )).trim();
+            return {reply:fallback,note:""};
+        }
+    }
+
+    async function speakVoiceTutorText(text){
+        const clean=String(text||"").trim();
+        if(!clean)return;
+        if(!("speechSynthesis" in window))throw new Error("Speech synthesis is not supported in this browser.");
+
+        voiceTutorState.speaking=true;
+        voiceTutorState.phase="speaking";
+        voiceTutorStatus("Tutor is speaking…","speaking");
+        setVoiceMicIndicator(false);
+        window.speechSynthesis.cancel();
+
+        const utterance=new SpeechSynthesisUtterance(clean);
+        utterance.lang=langConfig().locale;
+
+        const speedId=utterance.lang.startsWith("de") ? "speech-speed-de" : "speech-speed-en";
+        const speed=document.getElementById(speedId);
+        if(speed) utterance.rate=parseFloat(speed.value)||1;
+
+        const voices=await getSpeechVoicesReady();
+        const matched=chooseVoiceForLocale(voices,utterance.lang);
+        if(utterance.lang.toLowerCase().startsWith("ja") && !matched){
+            voiceTutorState.speaking=false;
+            throw new Error("No Japanese speech voice is available in this browser/system.");
+        }
+        if(matched)utterance.voice=matched;
+
+        return new Promise((resolve,reject)=>{
+            utterance.onend=()=>{
+                voiceTutorState.speaking=false;
+                resolve();
+            };
+            utterance.onerror=event=>{
+                voiceTutorState.speaking=false;
+                reject(new Error(event?.error||"Speech playback failed."));
+            };
+            window.speechSynthesis.speak(utterance);
+        });
+    }
+
+    function destroyVoiceRecognition(){
+        const rec=voiceTutorState.recognition;
+        voiceTutorState.recognition=null;
+        if(rec){
+            try{rec.onend=null;rec.onerror=null;rec.onresult=null;rec.abort();}catch(e){}
+        }
+    }
+
+    function createVoiceRecognition(){
+        const Ctor=voiceRecognitionConstructor();
+        if(!Ctor)return null;
+        destroyVoiceRecognition();
+
+        const rec=new Ctor();
+        rec.lang=langConfig().locale;
+        rec.continuous=false;
+        rec.interimResults=true;
+        rec.maxAlternatives=1;
+
+        rec.onstart=()=>{
+            voiceTutorState.phase="listening";
+            setVoiceMicIndicator(true);
+            voiceTutorStatus(`Listening in ${langConfig().name}…`,"listening");
+            const live=document.getElementById("voice-live-transcript");
+            if(live)live.textContent="";
+        };
+
+        rec.onresult=event=>{
+            let interim="";
+            let finalText="";
+            for(let i=event.resultIndex;i<event.results.length;i++){
+                const piece=event.results[i]?.[0]?.transcript||"";
+                if(event.results[i].isFinal) finalText+=piece;
+                else interim+=piece;
+            }
+            const live=document.getElementById("voice-live-transcript");
+            if(live)live.textContent=finalText||interim;
+
+            if(finalText.trim() && voiceTutorState.phase==="listening"){
+                voiceTutorState.phase="processing";
+                setVoiceMicIndicator(false);
+                try{rec.stop();}catch(e){}
+                handleVoiceTutorUtterance(finalText.trim());
+            }
+        };
+
+        rec.onerror=event=>{
+            setVoiceMicIndicator(false);
+            const error=String(event?.error||"");
+            if(error==="not-allowed" || error==="service-not-allowed"){
+                voiceTutorStatus("Microphone permission was denied. Allow microphone access, then start again.","error");
+                stopVoiceConversation(true);
+                return;
+            }
+            if(error==="no-speech"){
+                voiceTutorStatus("I didn't catch anything. Listening again…");
+                return;
+            }
+            voiceTutorStatus(`Speech recognition error: ${error||"unknown error"}`,"error");
+        };
+
+        rec.onend=()=>{
+            setVoiceMicIndicator(false);
+            if(!voiceTutorState.active)return;
+            if(voiceTutorState.phase==="listening"){
+                setTimeout(()=>resumeVoiceRecognition(false),450);
+            }
+        };
+
+        voiceTutorState.recognition=rec;
+        return rec;
+    }
+
+    window.resumeVoiceRecognition=function(manual=false){
+        if(!voiceTutorState.active)return;
+        if(voiceTutorState.speaking)return;
+        const rec=voiceTutorState.recognition || createVoiceRecognition();
+        if(!rec)return;
+
+        voiceTutorState.manualRestart=manual;
+        voiceTutorState.phase="listening";
+        const listenBtn=document.getElementById("voice-listen-now-btn");
+        listenBtn?.classList.add("hidden");
+        try{
+            rec.lang=langConfig().locale;
+            rec.start();
+        }catch(e){
+            if(String(e?.name||"")!=="InvalidStateError"){
+                voiceTutorStatus("Could not start microphone recognition.","error");
+            }
+        }
+    };
+
+    async function handleVoiceTutorUtterance(text){
+        if(!voiceTutorState.active)return;
+        const live=document.getElementById("voice-live-transcript");
+        if(live)live.textContent=text;
+
+        recordVoiceTutorEntry({role:"user",text});
+        voiceTutorStatus("Tutor is thinking…","thinking");
+
+        try{
+            const result=await getVoiceTutorReply(text);
+            if(!voiceTutorState.active)return;
+
+            recordVoiceTutorEntry({role:"assistant",text:result.reply,note:result.note});
+            if(live)live.textContent="";
+            await speakVoiceTutorText(result.reply);
+
+            if(voiceTutorState.active){
+                voiceTutorState.phase="listening";
+                setTimeout(()=>resumeVoiceRecognition(false),250);
+            }
+        }catch(e){
+            console.error("Voice Tutor turn failed:",e);
+            if(!voiceTutorState.active)return;
+            voiceTutorStatus("Voice Tutor had trouble responding: "+((e&&e.message)?e.message:String(e)),"error");
+            const listenBtn=document.getElementById("voice-listen-now-btn");
+            listenBtn?.classList.remove("hidden");
+            voiceTutorState.phase="idle";
+        }
+    }
+
+    window.startVoiceConversation=function(){
+        if(!getActiveAIKey()){
+            alert("Add an AI API key in Settings first.");
+            return;
+        }
+        if(!voiceRecognitionConstructor()){
+            voiceTutorStatus("Speech recognition is not available in this browser/device.","error");
+            return;
+        }
+
+        if(voiceTutorState.active){
+            resumeVoiceRecognition(true);
+            return;
+        }
+
+        saveVoiceTutorSettings();
+        voiceTutorState.active=true;
+        voiceTutorState.language=currentStudyLanguage;
+        voiceTutorState.phase="idle";
+
+        const start=document.getElementById("voice-start-btn");
+        const stop=document.getElementById("voice-stop-btn");
+        const listen=document.getElementById("voice-listen-now-btn");
+        start?.classList.add("hidden");
+        stop?.classList.remove("hidden");
+        listen?.classList.remove("hidden");
+
+        createVoiceRecognition();
+        voiceTutorStatus(`Conversation started. Speak in ${langConfig().name}.`);
+        resumeVoiceRecognition(true);
+    };
+
+    window.stopVoiceConversation=function(silent=false){
+        voiceTutorState.active=false;
+        voiceTutorState.phase="idle";
+        voiceTutorState.speaking=false;
+        setVoiceMicIndicator(false);
+
+        try{window.speechSynthesis?.cancel();}catch(e){}
+        destroyVoiceRecognition();
+
+        document.getElementById("voice-start-btn")?.classList.remove("hidden");
+        document.getElementById("voice-stop-btn")?.classList.add("hidden");
+        document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
+        const live=document.getElementById("voice-live-transcript");
+        if(live)live.textContent="";
+        if(!silent)voiceTutorStatus("Conversation stopped.");
+    };
+
+    window.saveVoiceTutorPhrase=async function(text,language,button){
+        const phrase=String(text||"").trim();
+        if(!phrase)return;
+        language=LANGUAGE_MODES[language] ? language : currentStudyLanguage;
+
+        const duplicate=vocabularyList.some(item=>
+            studyItemLanguage(item)===language &&
+            studyItemTarget(item).toLowerCase()===phrase.toLowerCase()
+        );
+        if(duplicate){
+            if(button){
+                const old=button.textContent;
+                button.textContent="Already saved";
+                setTimeout(()=>button.textContent=old,1000);
+            }
+            return;
+        }
+
+        const old=button?.textContent||"☆ Save phrase";
+        if(button){button.disabled=true;button.textContent="Saving…";}
+
+        try{
+            const english=language==="en" ? phrase :
+                String(await googleTranslateApiCall(phrase,language,"en")).trim();
+
+            vocabularyList.unshift({
+                id:Date.now(),
+                language,
+                target:phrase,
+                german:language==="de" ? phrase : "",
+                english,
+                timestamp:new Date().toLocaleString()
+            });
+            persistVocabulary();
+
+            if(currentStudyLanguage===language){
+                studyBoardLanguage=language;
+                renderStudyLanguageIndicator();
+                renderVocabulary();
+            }
+
+            if(button)button.textContent="✓ Saved";
+            setTimeout(()=>{if(button){button.disabled=false;button.textContent=old;}},1100);
+        }catch(e){
+            if(button){button.disabled=false;button.textContent=old;}
+            alert("Could not save this phrase because its English meaning could not be generated.");
+        }
+    };
 
     // Keep an accepted Spanish/Japanese AI parse authoritative for the exact
     // sentence it analyzed. A late local-render callback must never overwrite it.
@@ -8010,10 +8676,13 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         }
 
         renderLanguageGrammarShell();
+        renderVoiceTutorLanguageUI();
+        if(tutorInteractionMode==="voice") renderVoiceTutorTranscript();
     }
 
     window.setStudyLanguage=function(code){
         if(!LANGUAGE_MODES[code]) code="de";
+        if(voiceTutorState.active) stopVoiceConversation(true);
         currentStudyLanguage=code;
         clearActiveNonGermanAIParse();
         try{ safeStorageSet("deutschlerner_study_language",code); }catch(e){}
@@ -10077,6 +10746,8 @@ Current work: ${context||"No sentence has been entered yet."}`;
         }
         rebindAIParser();
         updateVisibleLanguageUI();
+        restoreVoiceTutorSettings();
+        renderVoiceTutorTranscript();
         if(typeof setStudyBoardLanguage==="function") setStudyBoardLanguage(currentStudyLanguage);
 
         // Initialize non-German helper output lazily but safely.
