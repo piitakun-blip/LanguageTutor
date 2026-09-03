@@ -2994,18 +2994,19 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
    Its own scrollbar carries the full conversation, so the latest card is
    never clipped by the fixed-height Voice Tutor panel. */
 #chat-voice-mode{
+    flex:0 0 auto !important;
     min-height:0;
 }
 #voice-chat-messages-log{
-    flex:0 1 180px !important;
-    min-height:90px !important;
+    flex:0 0 auto !important;
+    min-height:0 !important;
     max-height:180px !important;
     overflow-y:auto !important;
     overflow-x:hidden;
     scrollbar-gutter:stable;
     overscroll-behavior:contain;
     scroll-behavior:smooth;
-    padding-bottom:6px;
+    padding-bottom:0;
 }
 </style>
 
@@ -3179,10 +3180,10 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 
 
 <style id="voice-conversation-space-improvements">
-/* Keep the inline Voice Tutor transcript compact. Longer conversations scroll
-   here or can be opened in the movable transcript window. */
+/* Voice mode now sizes to its actual content. The inline transcript grows only
+   as conversation cards are added, up to its scrollable maximum. */
 #voice-chat-messages-log{
-    flex:0 1 180px;
+    flex:0 0 auto;
 }
 </style>
 
@@ -3785,7 +3786,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                 </div>
 
                 <!-- VOICE CONVERSATION -->
-                <div id="chat-voice-mode" class="hidden flex-1 min-h-0 flex flex-col gap-3 overflow-hidden">
+                <div id="chat-voice-mode" class="hidden min-h-0 flex flex-col gap-2 overflow-hidden">
                     <div class="shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <div class="flex flex-wrap items-start justify-between gap-2">
                             <div>
@@ -9818,7 +9819,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         // transcript intentionally shows several card-style turns at once.
         const tutorContainer=document.getElementById("socratic-chat-container");
         if(tutorContainer){
-            tutorContainer.style.height=voiceMode ? "610px" : "430px";
+            tutorContainer.style.height=voiceMode ? "auto" : "430px";
         }
 
         if(textBtn) textBtn.className="rounded-lg px-3 py-2 text-xs font-bold transition " +
