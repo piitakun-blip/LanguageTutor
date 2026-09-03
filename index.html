@@ -9785,7 +9785,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
             const content=document.createElement("div");
             content.className="voice-transcript-text";
-            content.textContent=String(entry.text||"").trim();
+            if(entry.role==="user") content.textContent=String(entry.text||"").trim();
+            else renderTutorMarkdown(content,String(entry.text||"").trim());
 
             block.append(speaker,content);
 
@@ -9880,6 +9881,63 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const scrollToLatest=()=>{ log.scrollTop=log.scrollHeight; };
         scrollToLatest();
         requestAnimationFrame(scrollToLatest);
+    }
+
+    function stripTutorMarkdown(value){
+        return String(value||"")
+            .replace(/\*\*([^*]+)\*\*/g,"$1")
+            .replace(/__([^_]+)__/g,"$1")
+            .replace(/(^|[\s(])\*([^*\n]+)\*(?=$|[\s).,!?;:])/g,"$1$2")
+            .replace(/(^|[\s(])_([^_\n]+)_(?=$|[\s).,!?;:])/g,"$1$2")
+            .replace(/^#{1,6}\s+/gm,"")
+            .trim();
+    }
+
+    function renderTutorMarkdown(container,value){
+        if(!container)return;
+        container.replaceChildren();
+
+        const source=String(value||"");
+        const lines=source.split(/\r?\n/);
+
+        lines.forEach((line,lineIndex)=>{
+            if(lineIndex>0) container.appendChild(document.createElement("br"));
+
+            let working=line;
+            let isBullet=false;
+            const bulletMatch=working.match(/^\s*[-•]\s+(.+)$/);
+            if(bulletMatch){
+                isBullet=true;
+                working=bulletMatch[1];
+                container.appendChild(document.createTextNode("• "));
+            }
+
+            const tokenRe=/(\*\*[^*\n]+\*\*|__[^_\n]+__|\*[^*\n]+\*|_[^_\n]+_)/g;
+            let last=0;
+            let match;
+
+            while((match=tokenRe.exec(working))){
+                if(match.index>last){
+                    container.appendChild(document.createTextNode(working.slice(last,match.index)));
+                }
+
+                const token=match[0];
+                const inner=token.startsWith("**") || token.startsWith("__")
+                    ? token.slice(2,-2)
+                    : token.slice(1,-1);
+
+                const mark=document.createElement(
+                    token.startsWith("**") || token.startsWith("__") ? "strong" : "em"
+                );
+                mark.textContent=inner;
+                container.appendChild(mark);
+                last=match.index+token.length;
+            }
+
+            if(last<working.length){
+                container.appendChild(document.createTextNode(working.slice(last)));
+            }
+        });
     }
 
     function voiceTutorControlButton(label,title,handler){
@@ -10001,7 +10059,8 @@ Do not add quotation marks or labels.`;
 
         const text=document.createElement("div");
         text.className="leading-relaxed whitespace-pre-wrap break-words";
-        text.textContent=entry.text;
+        if(user) text.textContent=entry.text;
+        else renderTutorMarkdown(text,entry.text);
         wrap.appendChild(text);
 
         if(entry.note){
@@ -10023,7 +10082,7 @@ Do not add quotation marks or labels.`;
         const replayLocale=isEnglishEntry ? "en-US" : langConfig().locale;
 
         actions.appendChild(
-            voiceTutorControlButton("🔊 Replay","Replay this transcript",()=>speakRawText(entry.text,replayLocale))
+            voiceTutorControlButton("🔊 Replay","Replay this transcript",()=>speakRawText(user ? entry.text : stripTutorMarkdown(entry.text),replayLocale))
         );
 
         // Keep extra transcript actions on tutor replies only so learner bubbles stay clean.
@@ -10038,7 +10097,7 @@ Do not add quotation marks or labels.`;
 
             actions.appendChild(
                 voiceTutorControlButton("⧉ Copy","Copy this tutor reply",ev=>
-                    copyVoiceTutorText(entry.text,ev.currentTarget)
+                    copyVoiceTutorText(stripTutorMarkdown(entry.text),ev.currentTarget)
                 )
             );
 
@@ -10046,7 +10105,7 @@ Do not add quotation marks or labels.`;
             if(!isEnglishEntry){
                 actions.appendChild(
                     voiceTutorControlButton("☆ Save phrase","Save this target-language phrase to the active Study Board",ev=>
-                        saveVoiceTutorPhrase(entry.text,currentStudyLanguage,ev.currentTarget)
+                        saveVoiceTutorPhrase(stripTutorMarkdown(entry.text),currentStudyLanguage,ev.currentTarget)
                     )
                 );
             }
@@ -10077,7 +10136,7 @@ Do not add quotation marks or labels.`;
         const live=document.getElementById("voice-live-transcript");
         if(!live)return;
         const user=String(voiceTutorState.liveUserText||"").trim();
-        const tutor=String(voiceTutorState.liveTutorText||"").trim();
+        const tutor=stripTutorMarkdown(voiceTutorState.liveTutorText);
         const listening=String(listeningText||"").trim();
         const lines=[];
         if(user) lines.push(`You: ${user}`);
@@ -11577,7 +11636,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 label.className="font-bold mb-1 text-[10px] text-indigo-700";
                 label.textContent=`${cfg.name.toUpperCase()} TUTOR`;
                 const body=document.createElement("div");
-                body.textContent=entry.text;
+                renderTutorMarkdown(body,entry.text);
                 bubble.append(label,body);
             }
             log.appendChild(bubble);
