@@ -2915,13 +2915,21 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 </style>
 
 <style id="voice-inline-transcript-height">
-#voice-chat-messages-log{
-    min-height:210px;
+/* The inline conversation transcript fills whatever vertical room remains.
+   Its own scrollbar carries the full conversation, so the latest card is
+   never clipped by the fixed-height Voice Tutor panel. */
+#chat-voice-mode{
+    min-height:0;
 }
-@media (max-width:640px){
-    #voice-chat-messages-log{
-        min-height:230px;
-    }
+#voice-chat-messages-log{
+    min-height:0 !important;
+    max-height:none !important;
+    overflow-y:auto !important;
+    overflow-x:hidden;
+    scrollbar-gutter:stable;
+    overscroll-behavior:contain;
+    scroll-behavior:smooth;
+    padding-bottom:10px;
 }
 </style>
 
@@ -2972,22 +2980,10 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 
 
 <style id="voice-conversation-space-improvements">
-/* More working room for Spanish, Japanese, and German Voice Conversation. */
+/* Voice transcript height is controlled by flexbox so it can scroll without
+   being chopped off at the bottom of the tutor card. */
 #voice-chat-messages-log{
-    min-height:260px;
-    max-height:460px;
-}
-@media (min-width:900px){
-    #voice-chat-messages-log{
-        min-height:320px;
-        max-height:540px;
-    }
-}
-@media (max-width:640px){
-    #voice-chat-messages-log{
-        min-height:220px;
-        max-height:52vh;
-    }
+    flex:1 1 auto;
 }
 </style>
 
@@ -3699,7 +3695,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                         </button>
                     </div>
 
-                    <div id="voice-chat-messages-log" class="flex-1 min-h-[210px] overflow-y-auto space-y-3 pr-1" aria-live="polite">
+                    <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-2 overscroll-contain" aria-live="polite">
                         <div id="voice-tutor-empty" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-[11px] text-slate-400">
                             Start a conversation in the selected language. Tap “Ask in English” for one English question; after the tutor answers, listening automatically returns to the selected language.
                         </div>
@@ -9613,7 +9609,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         // transcript intentionally shows several card-style turns at once.
         const tutorContainer=document.getElementById("socratic-chat-container");
         if(tutorContainer){
-            tutorContainer.style.height=voiceMode ? "720px" : "560px";
+            tutorContainer.style.height=voiceMode ? "780px" : "560px";
         }
 
         if(textBtn) textBtn.className="rounded-lg px-3 py-2 text-xs font-bold transition " +
@@ -9881,7 +9877,9 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             return;
         }
         history.forEach(entry=>appendVoiceTutorBubble(entry,false));
-        log.scrollTop=log.scrollHeight;
+        const scrollToLatest=()=>{ log.scrollTop=log.scrollHeight; };
+        scrollToLatest();
+        requestAnimationFrame(scrollToLatest);
     }
 
     function voiceTutorControlButton(label,title,handler){
@@ -10057,7 +10055,12 @@ Do not add quotation marks or labels.`;
         wrap.appendChild(actions);
 
         log.appendChild(wrap);
-        if(scroll) log.scrollTop=log.scrollHeight;
+        if(scroll){
+            const scrollToLatest=()=>{ log.scrollTop=log.scrollHeight; };
+            scrollToLatest();
+            requestAnimationFrame(scrollToLatest);
+            setTimeout(scrollToLatest,60);
+        }
         const floatingTranscript=document.getElementById("voice-transcript-window");
         if(floatingTranscript && !floatingTranscript.hidden) renderVoiceTranscriptWindow();
     }
@@ -10066,7 +10069,7 @@ Do not add quotation marks or labels.`;
         const history=voiceTutorHistory();
         history.push(entry);
         // Keep local session memory bounded too. The prompt uses an even smaller slice.
-        if(history.length>30) history.splice(0,history.length-30);
+        if(history.length>200) history.splice(0,history.length-200);
         appendVoiceTutorBubble(entry,true);
     }
 
