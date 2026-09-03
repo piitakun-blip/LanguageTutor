@@ -1994,6 +1994,180 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
     }
 </style>
 
+
+<style id="compact-mobile-language-header">
+@media (max-width:640px) {
+    #language-header > div {
+        padding:6px 8px !important;
+        gap:6px !important;
+        flex-direction:row !important;
+        flex-wrap:nowrap !important;
+        justify-content:space-between !important;
+        min-height:52px;
+    }
+
+    #language-header > div > .flex:first-child {
+        gap:6px !important;
+        min-width:0;
+        flex:1 1 auto;
+    }
+
+    #language-header > div > .flex:first-child > div:first-child {
+        padding:4px !important;
+        border-radius:7px !important;
+        flex:0 0 auto;
+    }
+
+    #language-badge {
+        font-size:14px !important;
+        line-height:1 !important;
+    }
+
+    #language-title {
+        font-size:15px !important;
+        line-height:1.05 !important;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    #language-title > span { display:none !important; }
+    #language-subtitle { display:none !important; }
+
+    #language-header > div > .flex:last-child {
+        gap:5px !important;
+        flex:0 0 auto;
+    }
+
+    #language-selector-wrap {
+        min-height:32px !important;
+        padding:3px 5px !important;
+        gap:3px !important;
+        border-radius:7px !important;
+    }
+
+    #study-language-select {
+        min-width:68px !important;
+        padding:3px 4px !important;
+        font-size:11px !important;
+    }
+
+    #api-status-wrap {
+        min-height:30px !important;
+        padding:3px 5px !important;
+        gap:0 !important;
+        border-radius:8px !important;
+    }
+
+    #api-status-dot {
+        width:8px !important;
+        height:8px !important;
+    }
+
+    #settings-button {
+        width:32px !important;
+        height:32px !important;
+        min-height:32px !important;
+        padding:5px !important;
+        border-radius:7px !important;
+    }
+
+    #settings-button svg {
+        width:17px !important;
+        height:17px !important;
+    }
+}
+</style>
+
+
+<style id="floating-kana-traditional-desktop-layout">
+@media (min-width:701px) {
+    #floating-kana-basic-grid.floating-kana-grid {
+        display:grid !important;
+        grid-template-columns:repeat(10,minmax(48px,1fr)) !important;
+        grid-template-rows:repeat(5,minmax(58px,auto)) !important;
+        gap:6px !important;
+        direction:rtl;
+    }
+
+    #floating-kana-basic-grid .floating-kana-key,
+    #floating-kana-basic-grid .floating-kana-placeholder {
+        direction:ltr;
+    }
+
+    #floating-kana-basic-grid .kana-a  { grid-column:1; }
+    #floating-kana-basic-grid .kana-k  { grid-column:2; }
+    #floating-kana-basic-grid .kana-s  { grid-column:3; }
+    #floating-kana-basic-grid .kana-t  { grid-column:4; }
+    #floating-kana-basic-grid .kana-n  { grid-column:5; }
+    #floating-kana-basic-grid .kana-h  { grid-column:6; }
+    #floating-kana-basic-grid .kana-m  { grid-column:7; }
+    #floating-kana-basic-grid .kana-y  { grid-column:8; }
+    #floating-kana-basic-grid .kana-r  { grid-column:9; }
+    #floating-kana-basic-grid .kana-w  { grid-column:10; }
+
+    #floating-kana-basic-grid .vowel-a { grid-row:1; }
+    #floating-kana-basic-grid .vowel-i { grid-row:2; }
+    #floating-kana-basic-grid .vowel-u { grid-row:3; }
+    #floating-kana-basic-grid .vowel-e { grid-row:4; }
+    #floating-kana-basic-grid .vowel-o { grid-row:5; }
+
+    #floating-kana-basic-grid .kana-n-final {
+        grid-column:10;
+        grid-row:5;
+        align-self:end;
+        margin-top:6px;
+    }
+}
+</style>
+
+
+<style id="compact-mobile-language-banner-v2">
+@media (max-width:640px) {
+    header h1 {
+        font-size:1rem !important;
+        line-height:1.05rem !important;
+        letter-spacing:-0.01em;
+    }
+
+    header .text-3xl,
+    header .text-2xl,
+    header .text-xl {
+        font-size:1rem !important;
+        line-height:1.05rem !important;
+    }
+
+    header .text-sm {
+        font-size:.72rem !important;
+        line-height:.9rem !important;
+    }
+
+    header .text-xs,
+    header .text-\[11px\],
+    header .text-\[10px\] {
+        font-size:.64rem !important;
+        line-height:.78rem !important;
+    }
+
+    header > div {
+        padding-top:7px !important;
+        padding-bottom:7px !important;
+    }
+
+    #study-language-select {
+        min-height:36px !important;
+        height:36px !important;
+        padding-top:4px !important;
+        padding-bottom:4px !important;
+        font-size:13px !important;
+    }
+
+    header button {
+        min-height:36px !important;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -2511,6 +2685,22 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 
         <!-- Right Section: Static Grammatical Cheat-Sheet & Guide -->
         <div id="mobile-right-column" class="mobile-section mobile-tutor space-y-4">
+
+            <!-- Japanese-only Kana reference resource -->
+            <section id="japanese-kana-resource" class="hidden bg-white rounded-2xl shadow-sm border border-rose-100 p-4">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="w-9 h-9 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 grid place-items-center text-xl font-bold shrink-0">あ</span>
+                            <div class="min-w-0">
+                                <div class="text-sm font-bold text-slate-800">Kana Chart & Keyboard</div>
+                                <p class="text-[10px] text-slate-500 mt-0.5">Hiragana and katakana reference + click-to-type keyboard.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="openFloatingKanaChart()" class="shrink-0 px-3 py-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs">Open</button>
+                </div>
+            </section>
 
             <!-- Toggle Button for AI Socratic Chat -->
             <button onclick="toggleSocraticChat()" class="w-full py-3.5 px-5 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between font-bold text-slate-700 text-sm transition duration-150 group">
@@ -9464,6 +9654,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 ["particles","Particles & Roles"],
                 ["builder","Sentence Builder"],
                 ["reading","Kana & Romaji"],
+                ["kanji","Kanji"],
                 ["counters","Counters"],
                 ["politeness","Politeness & Register"]
             ],
@@ -9705,16 +9896,6 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 </div>`,
                 reading:`
                 <div class="ml-panel space-y-4">
-                  <div class="ml-helper-card space-y-3">
-                    <div>
-                      <div class="text-sm font-bold text-slate-800">Kana Chart & Keyboard</div>
-                      <p class="text-[11px] text-slate-500 mt-1">Open a movable kana reference on desktop. Click kana to enter them into the last text field you selected.</p>
-                    </div>
-                    <button type="button" class="ml-action" onclick="openFloatingKanaChart()">あ Open Kana Chart</button>
-                  </div>
-
-                  <div class="grammar-topic-divider"></div>
-
                   <div>
                     <div class="text-sm font-bold text-slate-800">Kana → Hepburn Romaji</div>
                     <p class="text-[11px] text-slate-500 mt-1">Convert hiragana or katakana locally. Kanji are preserved rather than guessed.</p>
@@ -9738,25 +9919,6 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                   </div>
                   <div id="ja-kana-result" class="ml-helper-result"></div>
 
-                  <div class="grammar-topic-divider"></div>
-                  <div>
-                    <div class="text-sm font-bold text-slate-800">Contextual Kanji Reading</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Kanji can have multiple readings. This explicit AI helper uses the word and sentence context instead of guessing from the character alone.</p>
-                  </div>
-                  <div class="ml-helper-card space-y-3">
-                    <label class="ml-field">Word / phrase
-                      <input id="ja-reading-phrase" class="ml-input" value="学校" placeholder="学校 / gakkou / school">
-                    </label>
-                    <label class="ml-field">Sentence context
-                      <input id="ja-reading-context" class="ml-input" placeholder="明日学校に行きます / ashita gakkou ni ikimasu / I go to school tomorrow">
-                    </label>
-                    <div class="text-[10px] text-slate-500">Typed phrase/context uses the <strong>Japanese grammar input</strong> mode above.</div>
-                    <div class="flex flex-wrap gap-2">
-                      <button type="button" class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-bold" onclick="fillJapaneseReadingContext()">Use current sentence</button>
-                      <button type="button" class="ml-action" onclick="getJapaneseContextReading(this)">✨ Get contextual reading</button>
-                    </div>
-                  </div>
-                  <div id="ja-context-reading-result" class="hidden ml-helper-result"></div>
 
                   <div class="ml-helper-card">
                     <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Useful Hepburn reminders</div>
@@ -9764,6 +9926,38 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                       <span>し → shi</span><span>ち → chi</span><span>つ → tsu</span>
                       <span>ふ → fu</span><span>しゃ → sha</span><span>ちゃ → cha</span>
                       <span>じ → ji</span><span>りょ → ryo</span><span>っ → doubles next consonant</span>
+                    </div>
+                  </div>
+                </div>`,
+                kanji:`
+                <div class="ml-panel space-y-4">
+                  <div>
+                    <div class="text-sm font-bold text-slate-800">Kanji Explorer</div>
+                    <p class="text-[11px] text-slate-500 mt-1">Explore a kanji or compound in context. Japanese readings can change by word, so sentence context is used instead of guessing from an isolated character.</p>
+                  </div>
+
+                  <div class="ml-helper-card space-y-3">
+                    <label class="ml-field">Kanji / word / phrase
+                      <input id="ja-reading-phrase" class="ml-input" value="学校" placeholder="学校 / 学 / 先生">
+                    </label>
+                    <label class="ml-field">Sentence context
+                      <input id="ja-reading-context" class="ml-input" placeholder="明日学校に行きます">
+                    </label>
+                    <div class="text-[10px] text-slate-500">Context helps distinguish readings such as 生 in 学生, 生きる, and 先生.</div>
+                    <div class="flex flex-wrap gap-2">
+                      <button type="button" class="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-xs font-bold" onclick="fillJapaneseReadingContext()">Use current sentence</button>
+                      <button type="button" class="ml-action" onclick="getJapaneseContextReading(this)">✨ Explore reading</button>
+                    </div>
+                  </div>
+                  <div id="ja-context-reading-result" class="hidden ml-helper-result"></div>
+
+                  <div class="ml-helper-card">
+                    <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">How to use it</div>
+                    <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
+                      <span><strong>Single kanji:</strong> 学</span>
+                      <span><strong>Compound:</strong> 学校</span>
+                      <span><strong>Person/title:</strong> 先生</span>
+                      <span><strong>Context:</strong> 学校に行きます</span>
                     </div>
                   </div>
                 </div>`,
@@ -9939,6 +10133,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         germanShell.style.display="none";
         mlShell.style.display="block";
         const def=currentStudyLanguage==="es" ? spanishShell() : japaneseShell();
+        const mlTitle=document.getElementById("ml-grammar-title");
+        if(mlTitle) mlTitle.textContent=currentStudyLanguage==="ja" ? "Language Tools" : "Grammar Tools";
         document.getElementById("ml-grammar-subtitle").textContent=def.subtitle;
         renderGrammarTranslationUtility();
         const tabs=document.getElementById("ml-tool-tabs");
@@ -10069,6 +10265,17 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
     function updateVisibleLanguageUI(){
         const cfg=langConfig();
+
+        const mlGrammarTitle=document.getElementById("ml-grammar-title");
+        if(mlGrammarTitle){
+            mlGrammarTitle.textContent=currentStudyLanguage==="ja" ? "Language Tools" : "Grammar Tools";
+        }
+
+        const kanaResource=document.getElementById("japanese-kana-resource");
+        if(kanaResource){
+            kanaResource.classList.toggle("hidden",currentStudyLanguage!=="ja");
+        }
+
         const header=document.getElementById("language-header");
         if(header){
             header.style.background=cfg.header;
@@ -12766,16 +12973,16 @@ Current work: ${context||"No sentence has been entered yet."}`;
     let lastTarget=null;
 
     const basic=[
-        ["あ","ア","a"],["い","イ","i"],["う","ウ","u"],["え","エ","e"],["お","オ","o"],
-        ["か","カ","ka"],["き","キ","ki"],["く","ク","ku"],["け","ケ","ke"],["こ","コ","ko"],
-        ["さ","サ","sa"],["し","シ","shi"],["す","ス","su"],["せ","セ","se"],["そ","ソ","so"],
-        ["た","タ","ta"],["ち","チ","chi"],["つ","ツ","tsu"],["て","テ","te"],["と","ト","to"],
-        ["な","ナ","na"],["に","ニ","ni"],["ぬ","ヌ","nu"],["ね","ネ","ne"],["の","ノ","no"],
-        ["は","ハ","ha"],["ひ","ヒ","hi"],["ふ","フ","fu"],["へ","ヘ","he"],["ほ","ホ","ho"],
-        ["ま","マ","ma"],["み","ミ","mi"],["む","ム","mu"],["め","メ","me"],["も","モ","mo"],
-        ["や","ヤ","ya"],null,["ゆ","ユ","yu"],null,["よ","ヨ","yo"],
-        ["ら","ラ","ra"],["り","リ","ri"],["る","ル","ru"],["れ","レ","re"],["ろ","ロ","ro"],
-        ["わ","ワ","wa"],null,["を","ヲ","wo"],null,["ん","ン","n"]
+        ["あ","ア","a","a","a"],["い","イ","i","a","i"],["う","ウ","u","a","u"],["え","エ","e","a","e"],["お","オ","o","a","o"],
+        ["か","カ","ka","k","a"],["き","キ","ki","k","i"],["く","ク","ku","k","u"],["け","ケ","ke","k","e"],["こ","コ","ko","k","o"],
+        ["さ","サ","sa","s","a"],["し","シ","shi","s","i"],["す","ス","su","s","u"],["せ","セ","se","s","e"],["そ","ソ","so","s","o"],
+        ["た","タ","ta","t","a"],["ち","チ","chi","t","i"],["つ","ツ","tsu","t","u"],["て","テ","te","t","e"],["と","ト","to","t","o"],
+        ["な","ナ","na","n","a"],["に","ニ","ni","n","i"],["ぬ","ヌ","nu","n","u"],["ね","ネ","ne","n","e"],["の","ノ","no","n","o"],
+        ["は","ハ","ha","h","a"],["ひ","ヒ","hi","h","i"],["ふ","フ","fu","h","u"],["へ","ヘ","he","h","e"],["ほ","ホ","ho","h","o"],
+        ["ま","マ","ma","m","a"],["み","ミ","mi","m","i"],["む","ム","mu","m","u"],["め","メ","me","m","e"],["も","モ","mo","m","o"],
+        ["や","ヤ","ya","y","a"],null,["ゆ","ユ","yu","y","u"],null,["よ","ヨ","yo","y","o"],
+        ["ら","ラ","ra","r","a"],["り","リ","ri","r","i"],["る","ル","ru","r","u"],["れ","レ","re","r","e"],["ろ","ロ","ro","r","o"],
+        ["わ","ワ","wa","w","a"],null,["を","ヲ","wo","w","o"],null,["ん","ン","n","w","final"]
     ];
 
     const voiced=[
@@ -12902,6 +13109,9 @@ Current work: ${context||"No sentence has been entered yet."}`;
         button.className="floating-kana-key";
         button.dataset.hiragana=item[0];
         button.dataset.katakana=item[1];
+        if(item[3]) button.classList.add(`kana-${item[3]}`);
+        if(item[4]==="final") button.classList.add("kana-n-final");
+        else if(item[4]) button.classList.add(`vowel-${item[4]}`);
 
         const char=document.createElement("span");
         char.className="floating-kana-char";
@@ -12919,6 +13129,25 @@ Current work: ${context||"No sentence has been entered yet."}`;
         grid.replaceChildren(...data.map(makeKey));
     }
 
+    function fillBasicGrid(){
+        basicGrid.replaceChildren(...basic.map(makeKey));
+
+        // On desktop, add invisible structural placeholders so the traditional
+        // gojūon columns stay aligned even where や/わ rows have no kana.
+        if(window.innerWidth>700){
+            const blanks=[
+                ["y","i"],["y","e"],
+                ["w","i"],["w","e"]
+            ];
+            blanks.forEach(([family,vowel])=>{
+                const blank=document.createElement("div");
+                blank.className=`floating-kana-placeholder kana-${family} vowel-${vowel}`;
+                blank.setAttribute("aria-hidden","true");
+                basicGrid.appendChild(blank);
+            });
+        }
+    }
+
     function refreshScript(){
         tool.querySelectorAll(".floating-kana-key").forEach(button=>{
             const char=button.querySelector(".floating-kana-char");
@@ -12932,10 +13161,20 @@ Current work: ${context||"No sentence has been entered yet."}`;
         if(icon) icon.textContent=script==="hiragana" ? "あ" : "ア";
     }
 
-    fillGrid(basicGrid,basic);
+    fillBasicGrid();
     fillGrid(voicedGrid,voiced);
     fillGrid(comboGrid,combos);
     refreshScript();
+
+    let kanaDesktopState=window.innerWidth>700;
+    window.addEventListener("resize",()=>{
+        const nextDesktop=window.innerWidth>700;
+        if(nextDesktop!==kanaDesktopState){
+            kanaDesktopState=nextDesktop;
+            fillBasicGrid();
+            refreshScript();
+        }
+    });
 
     tool.querySelectorAll(".floating-kana-tab").forEach(tab=>{
         tab.addEventListener("click",()=>{
