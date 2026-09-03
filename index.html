@@ -13434,6 +13434,44 @@ Current work: ${context||"No sentence has been entered yet."}`;
 </script>
 
 
+
+<script id="multilang-punctuation-preservation">
+/*
+  Preserve visible punctuation in Latin-script language parsing.
+  Japanese keeps its existing tokenizer behavior.
+*/
+window.tokenizeLanguageTextPreservingPunctuation = function(text, lang) {
+  const raw = String(text || "");
+  if (lang === "ja") {
+    return raw.match(/[\p{L}\p{N}々〆ヵヶー]+|[。、！？「」『』（）［］【】…]/gu) || [];
+  }
+  return raw.match(/[\p{L}\p{M}\p{N}]+(?:['’\-][\p{L}\p{M}\p{N}]+)*|[¿¡?!.,;:()"“”'‘’…—–]/gu) || [];
+};
+
+window.isLanguagePunctuationToken = function(token) {
+  return /^[¿¡?!.,;:()"“”'‘’…—–。、！？「」『』（）［］【】]+$/u.test(String(token || ""));
+};
+</script>
+
+
+<script id="restore-latin-parser-punctuation">
+document.addEventListener("DOMContentLoaded", () => {
+  const latinLangs = new Set(["es","de","fr","it","pt","nl"]);
+  const observer = new MutationObserver(() => {
+    const lang = (window.currentStudyLanguage || "").toLowerCase();
+    if (!latinLangs.has(lang)) return;
+
+    document.querySelectorAll("[data-parser-source][data-parser-output]").forEach(host => {
+      if (host.dataset.punctuationChecked === "1") return;
+      host.dataset.punctuationChecked = "1";
+      // Reserved hook for parser components that expose source/output IDs.
+      // Existing parsers remain untouched unless they opt into these attributes.
+    });
+  });
+  observer.observe(document.body,{childList:true,subtree:true});
+});
+</script>
+
 </body>
 </html>
                             
