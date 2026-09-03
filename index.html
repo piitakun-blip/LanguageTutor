@@ -2297,6 +2297,103 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 }
 </style>
 
+
+<style id="spanish-parser-color-system">
+/*
+  Spanish parser visual grammar
+  --------------------------------
+  Background = grammatical role / sentence job
+  Text accent = grammatical gender where reliably known
+  Number stays textual (sg/pl), rather than becoming another competing color.
+*/
+body[data-study-language="es"] #tiles-container .grammar-tile,
+body[data-study-language="es"] #tiles-container .ml-token {
+    border-width:1px !important;
+}
+
+/* Role / sentence-job backgrounds */
+body[data-study-language="es"] #tiles-container .es-role-subject {
+    background:#eff6ff !important;
+    border-color:#bfdbfe !important;
+}
+body[data-study-language="es"] #tiles-container .es-role-verb,
+body[data-study-language="es"] #tiles-container .role-verb {
+    background:#eef2ff !important;
+    border-color:#c7d2fe !important;
+}
+body[data-study-language="es"] #tiles-container .es-role-direct-object {
+    background:#f0fdf4 !important;
+    border-color:#bbf7d0 !important;
+}
+body[data-study-language="es"] #tiles-container .es-role-indirect-object {
+    background:#fffbeb !important;
+    border-color:#fde68a !important;
+}
+body[data-study-language="es"] #tiles-container .role-pronoun {
+    background:#ecfeff !important;
+    border-color:#a5f3fc !important;
+}
+body[data-study-language="es"] #tiles-container .role-article {
+    background:#fff7ed !important;
+    border-color:#fed7aa !important;
+}
+body[data-study-language="es"] #tiles-container .role-preposition {
+    background:#f5f3ff !important;
+    border-color:#ddd6fe !important;
+}
+body[data-study-language="es"] #tiles-container .role-adjective {
+    background:#fdf4ff !important;
+    border-color:#f5d0fe !important;
+}
+body[data-study-language="es"] #tiles-container .role-adverb {
+    background:#f8fafc !important;
+    border-color:#cbd5e1 !important;
+}
+body[data-study-language="es"] #tiles-container .role-conjunction,
+body[data-study-language="es"] #tiles-container .role-phrase {
+    background:#f8fafc !important;
+    border-color:#d1d5db !important;
+}
+body[data-study-language="es"] #tiles-container .role-noun {
+    background:#ffffff !important;
+    border-color:#cbd5e1 !important;
+}
+
+/* Gender is a secondary cue, applied to the word itself when known. */
+body[data-study-language="es"] #tiles-container .es-gender-masc {
+    color:#2563eb !important;
+}
+body[data-study-language="es"] #tiles-container .es-gender-fem {
+    color:#db2777 !important;
+}
+
+/* Legend swatches use the exact same semantic colors. */
+.es-legend-swatch {
+    display:inline-block;
+    width:13px;
+    height:13px;
+    border-radius:4px;
+    border:1px solid rgba(100,116,139,.3);
+    flex:0 0 auto;
+}
+.es-legend-subject { background:#eff6ff; border-color:#bfdbfe; }
+.es-legend-verb { background:#eef2ff; border-color:#c7d2fe; }
+.es-legend-do { background:#f0fdf4; border-color:#bbf7d0; }
+.es-legend-io { background:#fffbeb; border-color:#fde68a; }
+.es-legend-pronoun { background:#ecfeff; border-color:#a5f3fc; }
+.es-legend-article { background:#fff7ed; border-color:#fed7aa; }
+.es-legend-preposition { background:#f5f3ff; border-color:#ddd6fe; }
+.es-legend-adjective { background:#fdf4ff; border-color:#f5d0fe; }
+</style>
+
+
+<style id="multilang-extra-role-colors">
+.ml-token.role-adjective { background:#fdf4ff; border-color:#f5d0fe; }
+.ml-token.role-adverb { background:#f8fafc; border-color:#cbd5e1; }
+.ml-token.role-conjunction { background:#f8fafc; border-color:#d1d5db; }
+.ml-token.role-phrase { background:#f8fafc; border-color:#d1d5db; }
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -10314,6 +10411,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         germanShell.style.display="none";
         mlShell.style.display="block";
+        document.body.dataset.studyLanguage=currentStudyLanguage;
         const def=currentStudyLanguage==="es" ? spanishShell() : japaneseShell();
         const mlTitle=document.getElementById("ml-grammar-title");
         if(mlTitle) mlTitle.textContent=currentStudyLanguage==="ja" ? "Language Tools" : "Grammar Tools";
@@ -10351,7 +10449,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     };
 
 
+    function syncParserLanguageVisualState(){
+        document.body.dataset.studyLanguage=currentStudyLanguage||"de";
+    }
+
     function updateParserLegendForLanguage(){
+        syncParserLanguageVisualState();
         const legend=document.getElementById("unified-legend-container");
         const button=document.getElementById("toggle-legend-btn");
         if(!legend || !button) return;
@@ -10376,14 +10479,29 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 </div>`;
         } else if(currentStudyLanguage==="es"){
             legend.innerHTML=`
-                <div class="space-y-3 text-xs font-semibold">
-                    <div class="text-[11px] font-bold text-slate-700 border-b border-slate-200 pb-1">Spanish parser labels</div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600">
-                        <span>Verb / tense / mood</span><span>Subject or object pronoun</span>
-                        <span>Article / determiner</span><span>Noun / adjective</span>
-                        <span>Preposition / adverb</span><span>Phrase / conjunction</span>
+                <div class="space-y-4 text-xs font-semibold">
+                    <div>
+                        <div class="text-[11px] font-bold text-slate-700 border-b border-slate-200 pb-1 mb-2">Tile color = grammatical role</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700">
+                            <span class="flex items-center gap-2"><i class="es-legend-swatch es-legend-subject"></i> Subject</span>
+                            <span class="flex items-center gap-2"><i class="es-legend-swatch es-legend-verb"></i> Verb / predicate</span>
+                            <span class="flex items-center gap-2"><i class="es-legend-swatch es-legend-do"></i> Direct object</span>
+                            <span class="flex items-center gap-2"><i class="es-legend-swatch es-legend-io"></i> Indirect object</span>
+                            <span class="flex items-center gap-2"><i class="es-legend-swatch es-legend-pronoun"></i> Pronoun / clitic</span>
+                            <span class="flex items-center gap-2"><i class="es-legend-swatch es-legend-article"></i> Article / determiner</span>
+                            <span class="flex items-center gap-2"><i class="es-legend-swatch es-legend-preposition"></i> Preposition</span>
+                            <span class="flex items-center gap-2"><i class="es-legend-swatch es-legend-adjective"></i> Adjective</span>
+                        </div>
                     </div>
-                    <p class="text-[11px] text-slate-500 font-medium">Spanish emphasizes subject/direct-object/indirect-object function, clitics, tense/mood, and gender/number agreement. Local Parse leaves ambiguous forms such as la/los/las broad rather than guessing. German-style Nominative / Accusative / Dative / Genitive labels are not used.</p>
+                    <div>
+                        <div class="text-[11px] font-bold text-slate-700 border-b border-slate-200 pb-1 mb-2">Word color = gender when known</div>
+                        <div class="flex flex-wrap gap-x-5 gap-y-2">
+                            <span class="text-blue-600 font-bold">Masculine (m)</span>
+                            <span class="text-pink-600 font-bold">Feminine (f)</span>
+                            <span class="text-slate-500">Number is shown as singular/plural text rather than another color.</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-500 font-medium">Spanish uses its own scheme: sentence function and word role are primary; masculine/feminine agreement is a secondary cue. German case colors are intentionally not reused.</p>
                 </div>`;
         } else {
             legend.innerHTML=`
@@ -11245,6 +11363,29 @@ Plain text only.`;
         return items;
     }
 
+    function spanishRoleVisualClass(item){
+        if(currentStudyLanguage!=="es") return "";
+        const role=String(item?.role||"").toLowerCase();
+        const label=String(item?.label||item?.function||item?.syntacticFunction||"").toLowerCase();
+
+        // Prefer explicit syntactic function when the parser provides it.
+        if(/\bsubject\b/.test(label)) return "es-role-subject";
+        if(/direct[- ]object|\bdirect object\b|\bdo\b/.test(label)) return "es-role-direct-object";
+        if(/indirect[- ]object|\bindirect object\b|\bio\b/.test(label)) return "es-role-indirect-object";
+
+        // Fall back to part-of-speech roles.
+        if(role==="verb" || role==="auxiliary") return "es-role-verb";
+        return "";
+    }
+
+    function spanishGenderVisualClass(item){
+        if(currentStudyLanguage!=="es") return "";
+        const g=String(item?.gender||item?.grammaticalGender||"").toLowerCase();
+        if(g.startsWith("masc") || g==="m") return "es-gender-masc";
+        if(g.startsWith("fem") || g==="f") return "es-gender-fem";
+        return "";
+    }
+
     function renderMultilangTiles(items,sourceLabel,options={}){
         const box=document.getElementById("tiles-container");
 
@@ -11296,7 +11437,7 @@ Plain text only.`;
             const pronounceable=String(item.role||"").toLowerCase()!=="punctuation";
 
             tile.innerHTML=`
-                <div class="font-bold text-slate-800 break-words"><span class="ml-token-punctuation">${escapeML(item._punctBefore||"")}</span>${escapeML(item.text)}<span class="ml-token-punctuation">${escapeML(item._punctAfter||"")}</span></div>
+                <div class="font-bold text-slate-800 break-words"><span class="${spanishGenderVisualClass(item)}"><span class="ml-token-punctuation">${escapeML(item._punctBefore||"")}</span>${escapeML(item.text)}<span class="ml-token-punctuation">${escapeML(item._punctAfter||"")}</span></span></div>
                 ${isJapanese && isAIView && pronounceable ? `<span class="ml-ja-reading">${escapeML(reading||"—")}</span>` : (isJapanese && reading && reading!==item.text ? `<span class="ml-ja-reading">${escapeML(reading)}</span>` : "")}
                 ${isJapanese && isAIView && pronounceable ? `<span class="ml-ja-romaji">${escapeML(romaji||"—")}</span>` : (isJapanese && romaji ? `<span class="ml-ja-romaji">${escapeML(romaji)}</span>` : "")}
                 <span class="ml-token-role">${escapeML(item.label||item.role||"Word")}</span>
