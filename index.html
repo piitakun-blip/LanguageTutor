@@ -2289,6 +2289,14 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 .ml-reference-fold-body { padding:10px 11px 12px; }
 </style>
 
+
+<style id="parser-punctuation-metadata-style">
+.ml-token-punctuation{
+    color:#94a3b8;
+    font-weight:700;
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -6129,10 +6137,9 @@ Plain text only.`;
                 "gusta","gustan","hay","sé","sabe","sabes","sabemos"
             ]);
 
-            const tokens=String(sentence||"").match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+|[0-9]+|[¿¡!?.,;:]/g)||[];
+            const tokens=String(sentence||"").match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+|[0-9]+/g)||[];
             return tokens.map(tok=>{
                 const low=tok.toLowerCase();
-                if(/^[¿¡!?.,;:]$/.test(tok)) return {text:tok,role:"punctuation",label:"Punctuation"};
                 if(articles.has(low)){
                     if(["la","los","las"].includes(low)) return {text:tok,role:"word",label:"Article or direct-object pronoun"};
                     return {text:tok,role:"article",label:"Article / determiner"};
@@ -10846,12 +10853,13 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     }
 
     function parseSpanishLocal(sentence){
-        const tokens=String(sentence||"").match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+|[0-9]+|[¿¡!?.,;:]/g)||[];
+        // Grammar analysis deliberately excludes punctuation. The renderer
+        // preserves punctuation from the original sentence as display metadata.
+        const tokens=String(sentence||"").match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+|[0-9]+/g)||[];
         return tokens.map(tok=>{
             const low=tok.toLowerCase();
             let role="word", label="Lexical word";
-            if(/^[¿¡!?.,;:]$/.test(tok)){role="punctuation";label="Punctuation";}
-            else if(/^\d+$/.test(tok)){role="word";label="Number";}
+            if(/^\d+$/.test(tok)){role="word";label="Number";}
             else if(ES_UNAMBIGUOUS_ARTICLES.has(low)){role="article";label="Article / determiner";}
             else if(["la","los","las"].includes(low)){role="word";label="Article or direct-object pronoun";}
             else if(ES_PREPS.has(low)){role="preposition";label="Preposition";}
@@ -10930,14 +10938,16 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             }
 
             const isPunctuation=/[。！？!?、]/.test(p);
-            const pInfo=JA_PARTICLE_INFO_LOCAL[p];
-            items.push({
-                text:p,
-                role:isPunctuation?"punctuation":"particle",
-                label:isPunctuation?"Punctuation":(pInfo?.label||"Particle"),
-                reading:isPunctuation?"":(pInfo?.reading||""),
-                romaji:isPunctuation?"":(pInfo?.romaji||"")
-            });
+            if(!isPunctuation){
+                const pInfo=JA_PARTICLE_INFO_LOCAL[p];
+                items.push({
+                    text:p,
+                    role:"particle",
+                    label:pInfo?.label||"Particle",
+                    reading:pInfo?.reading||"",
+                    romaji:pInfo?.romaji||""
+                });
+            }
             last=re.lastIndex;
         }
 
@@ -11170,8 +11180,78 @@ Plain text only.`;
         return "";
     }
 
+    function parserPunctuationOnly(value){
+        return String(value||"").replace(/[\p{L}\p{M}\p{N}\s]/gu,"");
+    }
+
+    function isOpeningParserPunctuation(ch){
+        return /[¿¡(\[{"“‘「『（［【]/u.test(ch);
+    }
+
+    function splitParserGapPunctuation(gap){
+        const chars=[...parserPunctuationOnly(gap)];
+        let before="", after="";
+        chars.forEach(ch=>{
+            if(isOpeningParserPunctuation(ch)) before+=ch;
+            else after+=ch;
+        });
+        return {before,after};
+    }
+
+    function attachParserPunctuationMetadata(sentence,rawItems){
+        const items=(rawItems||[])
+            .filter(item=>item && String(item.role||"").toLowerCase()!=="punctuation")
+            .map(item=>({...item,_punctBefore:"",_punctAfter:""}));
+
+        if(!items.length) return items;
+
+        const raw=String(sentence||"");
+        let cursor=0;
+        let previous=null;
+
+        items.forEach((item,index)=>{
+            const needle=String(item.text||"");
+            if(!needle) return;
+
+            let found=raw.indexOf(needle,cursor);
+
+            // AI parsers occasionally normalize spacing. For that case, use the
+            // next occurrence after removing only leading/trailing whitespace.
+            if(found<0){
+                const trimmed=needle.trim();
+                if(trimmed) found=raw.indexOf(trimmed,cursor);
+            }
+
+            if(found<0) return;
+
+            const gap=raw.slice(cursor,found);
+            const punct=splitParserGapPunctuation(gap);
+
+            // Closing/inter-token punctuation belongs visually to the previous
+            // grammatical item; opening punctuation belongs to the next one.
+            if(previous && punct.after) previous._punctAfter+=punct.after;
+            else if(!previous && punct.after) item._punctBefore+=punct.after;
+
+            if(punct.before) item._punctBefore+=punct.before;
+
+            cursor=found+needle.length;
+            previous=item;
+        });
+
+        if(previous){
+            previous._punctAfter+=parserPunctuationOnly(raw.slice(cursor));
+        }
+
+        return items;
+    }
+
     function renderMultilangTiles(items,sourceLabel,options={}){
         const box=document.getElementById("tiles-container");
+
+        // Punctuation is presentation metadata, not a grammatical token.
+        // This also makes older cached AI parses compatible: any punctuation
+        // items they contain are discarded and reconstructed from the source.
+        items=attachParserPunctuationMetadata(currentParserSentence(),items);
 
         // Protect the preferred detailed AI view from late/local callbacks.
         // This is the main safeguard against the detailed Japanese cards
@@ -11189,6 +11269,8 @@ Plain text only.`;
                 sourceLabel=`Local Structure • ${langConfig().name}`;
             }
         }
+
+        items=attachParserPunctuationMetadata(currentParserSentence(),items);
 
         updateNonGermanParserControls();
         document.getElementById("tile-detail-card")?.classList.add("hidden");
@@ -11214,7 +11296,7 @@ Plain text only.`;
             const pronounceable=String(item.role||"").toLowerCase()!=="punctuation";
 
             tile.innerHTML=`
-                <div class="font-bold text-slate-800 break-words">${escapeML(item.text)}</div>
+                <div class="font-bold text-slate-800 break-words"><span class="ml-token-punctuation">${escapeML(item._punctBefore||"")}</span>${escapeML(item.text)}<span class="ml-token-punctuation">${escapeML(item._punctAfter||"")}</span></div>
                 ${isJapanese && isAIView && pronounceable ? `<span class="ml-ja-reading">${escapeML(reading||"—")}</span>` : (isJapanese && reading && reading!==item.text ? `<span class="ml-ja-reading">${escapeML(reading)}</span>` : "")}
                 ${isJapanese && isAIView && pronounceable ? `<span class="ml-ja-romaji">${escapeML(romaji||"—")}</span>` : (isJapanese && romaji ? `<span class="ml-ja-romaji">${escapeML(romaji)}</span>` : "")}
                 <span class="ml-token-role">${escapeML(item.label||item.role||"Word")}</span>
@@ -11375,17 +11457,18 @@ Return JSON only:
 {"items":[{"text":"","role":"","label":"","reading":"","romaji":"","grammar":"","meaning":""}]}
 
 Requirements:
-- Keep exact sentence order; cover every visible element once.
+- Keep exact sentence order; cover every grammatical word/phrase once.
+- Do NOT return punctuation as items; the interface preserves punctuation from the original sentence separately.
 - Isolate particles when useful.
-- Roles: particle|pronoun|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation.
+- Roles: particle|pronoun|noun|adjective|verb|auxiliary|adverb|conjunction|phrase.
 - label: concise ENGLISH Japanese-relevant function in this sentence, such as "topic / contrast marker", "subject / focus marker", "direct-object marker", "destination marker", "place-of-action marker", "desire auxiliary", "polite copula", or "movement verb".
 - Never use German Nominative/Accusative/Dative/Genitive labels or masculine/feminine/neuter grammatical-gender labels.
 - It is fine to recognize a Japanese particle category, but prioritize the particle's function in THIS sentence over abstract terminology.
-- reading: ALWAYS provide the contextual pronunciation entirely in HIRAGANA for every pronounceable item, including words already written in hiragana or katakana. Use "" only for punctuation.
-- romaji: ALWAYS provide standard Hepburn romaji for every pronounceable item. Use "" only for punctuation. Use macrons for long vowels where standard Hepburn calls for them.
+- reading: ALWAYS provide the contextual pronunciation entirely in HIRAGANA for every item, including words already written in hiragana or katakana.
+- romaji: ALWAYS provide standard Hepburn romaji for every item. Use macrons for long vowels where standard Hepburn calls for them.
 - For grammatical particles, reading/romaji must reflect actual particle pronunciation in context: は→わ / wa, へ→え / e, を→お / o.
 - grammar: Japanese form information only when useful: verb/adjective conjugation, auxiliary meaning, politeness/register, negative/past, て-form, たい-form, i-adjective/na-adjective, or copula form. Otherwise "".
-- meaning: concise contextual English meaning of this item; "" for punctuation.
+- meaning: concise contextual English meaning of this item.
 - No explanation outside JSON.`;
         }
 
@@ -11396,14 +11479,15 @@ Return JSON only:
 {"items":[{"text":"","role":"","label":"","lemma":"","grammar":"","meaning":"","reading":"","romaji":""}]}
 
 Requirements:
-- Keep exact order; cover every word/punctuation mark once.
-- Roles: article|pronoun|preposition|noun|adjective|verb|auxiliary|adverb|conjunction|phrase|punctuation.
+- Keep exact order; cover every grammatical word/phrase once.
+- Do NOT return punctuation as items; the interface preserves punctuation from the original sentence separately.
+- Roles: article|pronoun|preposition|noun|adjective|verb|auxiliary|adverb|conjunction|phrase.
 - label: concise ENGLISH Spanish-relevant function in this sentence, such as "subject pronoun", "direct-object pronoun", "indirect-object pronoun", "reflexive clitic", "predicate verb", "quantity modifier", "article / determiner", or "preposition".
 - NEVER label a Spanish item Nominative, Accusative, Dative, or Genitive. Use subject, direct object, indirect object, possessive, or prepositional function instead.
 - lemma: dictionary/base form when useful (for example estar, hambriento, tanto); otherwise "".
 - grammar: Spanish morphology only when useful: tense, mood, person, number, gender/agreement, infinitive/gerund/participle, or clitic information. Examples: "present indicative · 1st person singular", "feminine singular", "direct-object clitic". Otherwise "".
 - Spanish grammatical gender and number ARE relevant for agreement; retain them when they help explain the form.
-- meaning: concise contextual English meaning of this item; "" for punctuation.
+- meaning: concise contextual English meaning of this item.
 - reading and romaji must be "".
 - No explanation outside JSON.`;
     }
@@ -13434,43 +13518,6 @@ Current work: ${context||"No sentence has been entered yet."}`;
 </script>
 
 
-
-<script id="multilang-punctuation-preservation">
-/*
-  Preserve visible punctuation in Latin-script language parsing.
-  Japanese keeps its existing tokenizer behavior.
-*/
-window.tokenizeLanguageTextPreservingPunctuation = function(text, lang) {
-  const raw = String(text || "");
-  if (lang === "ja") {
-    return raw.match(/[\p{L}\p{N}々〆ヵヶー]+|[。、！？「」『』（）［］【】…]/gu) || [];
-  }
-  return raw.match(/[\p{L}\p{M}\p{N}]+(?:['’\-][\p{L}\p{M}\p{N}]+)*|[¿¡?!.,;:()"“”'‘’…—–]/gu) || [];
-};
-
-window.isLanguagePunctuationToken = function(token) {
-  return /^[¿¡?!.,;:()"“”'‘’…—–。、！？「」『』（）［］【】]+$/u.test(String(token || ""));
-};
-</script>
-
-
-<script id="restore-latin-parser-punctuation">
-document.addEventListener("DOMContentLoaded", () => {
-  const latinLangs = new Set(["es","de","fr","it","pt","nl"]);
-  const observer = new MutationObserver(() => {
-    const lang = (window.currentStudyLanguage || "").toLowerCase();
-    if (!latinLangs.has(lang)) return;
-
-    document.querySelectorAll("[data-parser-source][data-parser-output]").forEach(host => {
-      if (host.dataset.punctuationChecked === "1") return;
-      host.dataset.punctuationChecked = "1";
-      // Reserved hook for parser components that expose source/output IDs.
-      // Existing parsers remain untouched unless they opt into these attributes.
-    });
-  });
-  observer.observe(document.body,{childList:true,subtree:true});
-});
-</script>
 
 </body>
 </html>
