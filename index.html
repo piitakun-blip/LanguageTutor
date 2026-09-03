@@ -2914,6 +2914,17 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 }
 </style>
 
+<style id="voice-inline-transcript-height">
+#voice-chat-messages-log{
+    min-height:210px;
+}
+@media (max-width:640px){
+    #voice-chat-messages-log{
+        min-height:230px;
+    }
+}
+</style>
+
 
 <style id="grammar-tool-semantic-colors">
 .grammar-tool-semantic{
@@ -3672,7 +3683,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                         </div>
                         <div class="mt-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2">
                             <div class="text-[9px] uppercase tracking-wider font-bold text-slate-400">Live transcription</div>
-                            <div id="voice-live-transcript" class="text-[13px] text-slate-700 mt-1 min-h-[118px] max-h-[160px] overflow-y-auto leading-relaxed pr-1 whitespace-pre-wrap">What the microphone hears will appear here.</div>
+                            <div id="voice-live-transcript" class="text-[12px] text-slate-700 mt-1 min-h-[58px] max-h-[96px] overflow-y-auto leading-relaxed pr-1 whitespace-pre-wrap">What the microphone hears will appear here.</div>
                         </div>
                     </div>
 
@@ -3688,7 +3699,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                         </button>
                     </div>
 
-                    <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1" aria-live="polite">
+                    <div id="voice-chat-messages-log" class="flex-1 min-h-[210px] overflow-y-auto space-y-3 pr-1" aria-live="polite">
                         <div id="voice-tutor-empty" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-[11px] text-slate-400">
                             Start a conversation in the selected language. Tap “Ask in English” for one English question; after the tutor answers, listening automatically returns to the selected language.
                         </div>
@@ -9597,6 +9608,13 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(!voiceMode && voiceTutorState.active) window.stopVoiceConversation(true);
         text?.classList.toggle("hidden",voiceMode);
         voice?.classList.toggle("hidden",!voiceMode);
+
+        // Voice mode needs more vertical room because the inline conversation
+        // transcript intentionally shows several card-style turns at once.
+        const tutorContainer=document.getElementById("socratic-chat-container");
+        if(tutorContainer){
+            tutorContainer.style.height=voiceMode ? "720px" : "560px";
+        }
 
         if(textBtn) textBtn.className="rounded-lg px-3 py-2 text-xs font-bold transition " +
             (!voiceMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600");
