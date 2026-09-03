@@ -3672,7 +3672,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                         </div>
                         <div class="mt-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2">
                             <div class="text-[9px] uppercase tracking-wider font-bold text-slate-400">Live transcription</div>
-                            <div id="voice-live-transcript" class="text-[12px] text-slate-600 italic mt-1 min-h-[58px] max-h-[110px] overflow-y-auto leading-relaxed pr-1">What the microphone hears will appear here.</div>
+                            <div id="voice-live-transcript" class="text-[13px] text-slate-700 mt-1 min-h-[118px] max-h-[160px] overflow-y-auto leading-relaxed pr-1 whitespace-pre-wrap">What the microphone hears will appear here.</div>
                         </div>
                     </div>
 
@@ -9503,7 +9503,9 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         speaking:false,
         manualRestart:false,
         inputMode:"target",
-        silenceTimer:null
+        silenceTimer:null,
+        liveUserText:"",
+        liveTutorText:""
     };
 
     function voiceRecognitionConstructor(){
@@ -10050,12 +10052,27 @@ Do not add quotation marks or labels.`;
         appendVoiceTutorBubble(entry,true);
     }
 
+    function renderVoiceLiveTurn(listeningText=""){
+        const live=document.getElementById("voice-live-transcript");
+        if(!live)return;
+        const user=String(voiceTutorState.liveUserText||"").trim();
+        const tutor=String(voiceTutorState.liveTutorText||"").trim();
+        const listening=String(listeningText||"").trim();
+        const lines=[];
+        if(user) lines.push(`You: ${user}`);
+        if(tutor) lines.push(`Tutor: ${tutor}`);
+        if(listening) lines.push(listening);
+        live.textContent=lines.length ? lines.join("\n\n") : "What the microphone hears will appear here.";
+        live.scrollTop=live.scrollHeight;
+    }
+
     window.newVoiceConversation=function(){
         if(voiceTutorState.active) stopVoiceConversation(true);
         voiceTutorHistories[currentStudyLanguage]=[];
         renderVoiceTutorTranscript();
-        const live=document.getElementById("voice-live-transcript");
-        if(live)live.textContent="What the microphone hears will appear here.";
+        voiceTutorState.liveUserText="";
+        voiceTutorState.liveTutorText="";
+        renderVoiceLiveTurn();
         voiceTutorStatus("Ready.");
     };
 
@@ -10221,8 +10238,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             // so pressing Start Conversation again continues with the same transcript/context.
             window.stopVoiceConversation(true);
             voiceTutorStatus("Paused after 10 seconds of silence. Tap Start Conversation to continue.");
-            const live=document.getElementById("voice-live-transcript");
-            if(live)live.textContent="Listening paused after silence.";
+            renderVoiceLiveTurn("Listening paused after silence.");
         },VOICE_SILENCE_TIMEOUT_MS);
     }
 
@@ -10253,8 +10269,9 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             voiceTutorStatus(englishTurn ? "Listening for your English question…" : `Listening in ${langConfig().name}…`,"listening");
             const micLabel=document.getElementById("voice-mic-indicator-label");
             if(micLabel)micLabel.textContent=englishTurn ? "English" : langConfig().name;
-            const live=document.getElementById("voice-live-transcript");
-            if(live)live.textContent=englishTurn ? "Listening for English…" : `Listening for ${langConfig().name}…`;
+            if(!voiceTutorState.liveUserText && !voiceTutorState.liveTutorText){
+                renderVoiceLiveTurn(englishTurn ? "Listening for English…" : `Listening for ${langConfig().name}…`);
+            }
         };
 
         rec.onresult=event=>{
@@ -10265,8 +10282,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 if(event.results[i].isFinal) finalText+=piece;
                 else interim+=piece;
             }
-            const live=document.getElementById("voice-live-transcript");
-            if(live)live.textContent=finalText||interim;
+            const heard=String(finalText||interim||"").trim();
+            if(heard){
+                voiceTutorState.liveUserText=heard;
+                voiceTutorState.liveTutorText="";
+                renderVoiceLiveTurn();
+            }
 
             // Any detected speech buys the learner another full silence interval.
             if((finalText||interim).trim() && voiceTutorState.phase==="listening"){
@@ -10391,8 +10412,9 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         if(!voiceTutorState.active)return;
         document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
         document.getElementById("voice-english-turn-btn")?.classList.add("hidden");
-        const live=document.getElementById("voice-live-transcript");
-        if(live)live.textContent=text;
+        voiceTutorState.liveUserText=String(text||"").trim();
+        voiceTutorState.liveTutorText="";
+        renderVoiceLiveTurn("Tutor is thinking…");
 
         recordVoiceTutorEntry({role:"user",text,inputMode});
         voiceTutorStatus(inputMode==="english" ? "Tutor is answering your English question…" : "Tutor is thinking…","thinking");
@@ -10402,7 +10424,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             if(!voiceTutorState.active)return;
 
             recordVoiceTutorEntry({role:"assistant",text:result.reply,note:result.note,replyLanguage:result.replyLanguage});
-            if(live)live.textContent="Tutor reply appears in the conversation transcript below.";
+            voiceTutorState.liveTutorText=String(result.reply||"").trim();
+            renderVoiceLiveTurn();
             await speakVoiceTutorText(result.reply,result.replyLanguage);
 
             if(voiceTutorState.active){
@@ -10469,8 +10492,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         document.getElementById("voice-stop-btn")?.classList.add("hidden");
         document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
         document.getElementById("voice-english-turn-btn")?.classList.add("hidden");
-        const live=document.getElementById("voice-live-transcript");
-        if(live)live.textContent="What the microphone hears will appear here.";
+        renderVoiceLiveTurn();
         if(!silent)voiceTutorStatus("Conversation stopped.");
     };
 
