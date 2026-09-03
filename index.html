@@ -2460,6 +2460,449 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 }
 </style>
 
+
+<style id="voice-settings-layout-fix">
+.voice-settings-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+}
+.voice-setting-card{
+    display:block;
+    min-width:0;
+    padding:12px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#ffffff;
+    color:#475569;
+    font-size:12px !important;
+    line-height:1.3;
+    font-weight:800;
+}
+.voice-setting-card select{
+    width:100%;
+    min-height:42px;
+    margin-top:7px;
+    padding:8px 10px;
+    border-radius:9px;
+    border:1px solid #cbd5e1;
+    background:#fff;
+    color:#1e293b;
+    font-size:13px !important;
+    font-weight:700;
+}
+.voice-speed-card{
+    grid-column:1 / -1;
+}
+.voice-speed-control{
+    display:grid;
+    grid-template-columns:40px minmax(120px,1fr) 40px 58px;
+    align-items:center;
+    gap:10px;
+}
+.voice-speed-step{
+    min-width:40px !important;
+    width:40px;
+    min-height:40px !important;
+    height:40px;
+    padding:0 !important;
+    border-radius:10px;
+    border:1px solid #cbd5e1;
+    background:#f8fafc;
+    color:#334155;
+    font-size:22px;
+    font-weight:800;
+    line-height:1;
+}
+.voice-speed-step:hover{
+    background:#f1f5f9;
+}
+.voice-speed-slider{
+    width:100%;
+    height:30px;
+    appearance:none;
+    -webkit-appearance:none;
+    background:transparent;
+    cursor:pointer;
+}
+.voice-speed-slider::-webkit-slider-runnable-track{
+    height:8px;
+    border-radius:9999px;
+    background:#cbd5e1;
+}
+.voice-speed-slider::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:26px;
+    height:26px;
+    margin-top:-9px;
+    border-radius:50%;
+    border:3px solid #ffffff;
+    background:#4f46e5;
+    box-shadow:0 1px 4px rgba(15,23,42,.3);
+}
+.voice-speed-slider::-moz-range-track{
+    height:8px;
+    border-radius:9999px;
+    background:#cbd5e1;
+}
+.voice-speed-slider::-moz-range-thumb{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    border:3px solid #ffffff;
+    background:#4f46e5;
+    box-shadow:0 1px 4px rgba(15,23,42,.3);
+}
+.voice-speed-value{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:38px;
+    padding:6px 8px;
+    border-radius:9px;
+    border:1px solid #cbd5e1;
+    background:#f8fafc;
+    color:#334155;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:13px;
+    font-weight:800;
+    white-space:nowrap;
+}
+.voice-speed-presets{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:9px;
+}
+.voice-speed-presets button{
+    min-height:34px !important;
+    padding:6px 10px;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    background:#f8fafc;
+    color:#475569;
+    font-size:11px;
+    font-weight:800;
+}
+.voice-speed-presets button.active{
+    border-color:#818cf8;
+    background:#eef2ff;
+    color:#4338ca;
+}
+@media (max-width:760px){
+    .voice-settings-grid{
+        grid-template-columns:1fr;
+        gap:10px;
+    }
+    .voice-setting-card{
+        padding:11px;
+        font-size:12px !important;
+    }
+    .voice-setting-card select{
+        min-height:46px;
+        font-size:14px !important;
+    }
+    .voice-speed-card{
+        grid-column:auto;
+    }
+    .voice-speed-control{
+        grid-template-columns:44px minmax(0,1fr) 44px;
+        gap:8px;
+    }
+    .voice-speed-value{
+        grid-column:1 / -1;
+        justify-self:start;
+        min-width:66px;
+    }
+    .voice-speed-step{
+        width:44px;
+        min-width:44px !important;
+        height:44px;
+        min-height:44px !important;
+    }
+    .voice-speed-slider::-webkit-slider-thumb{
+        width:30px;
+        height:30px;
+        margin-top:-11px;
+    }
+    .voice-speed-slider::-moz-range-thumb{
+        width:30px;
+        height:30px;
+    }
+}
+</style>
+
+
+<style id="voice-tutor-message-actions">
+.voice-tutor-translation{
+    margin-top:8px;
+    padding:8px 10px;
+    border-radius:9px;
+    border:1px solid #bfdbfe;
+    background:#eff6ff;
+    color:#334155;
+    font-size:11px;
+    line-height:1.45;
+}
+.voice-tutor-translation-label{
+    display:block;
+    margin-bottom:3px;
+    color:#2563eb;
+    font-size:9px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+.voice-tutor-copy-confirm{
+    color:#15803d !important;
+    border-color:#86efac !important;
+    background:#f0fdf4 !important;
+}
+</style>
+
+
+<style id="voice-settings-collapsible">
+.voice-settings-panel{
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    background:#f8fafc;
+    overflow:hidden;
+}
+.voice-settings-summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 14px;
+    cursor:pointer;
+    list-style:none;
+    user-select:none;
+    background:#f8fafc;
+}
+.voice-settings-summary::-webkit-details-marker{ display:none; }
+.voice-settings-summary:hover{ background:#f1f5f9; }
+
+.voice-settings-summary-title{
+    color:#334155;
+    font-size:12px;
+    font-weight:800;
+}
+.voice-settings-summary-text{
+    margin-top:2px;
+    color:#64748b;
+    font-size:10px;
+    line-height:1.35;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.voice-settings-chevron{
+    flex:0 0 auto;
+    width:30px;
+    height:30px;
+    display:grid;
+    place-items:center;
+    border-radius:9999px;
+    background:#fff;
+    border:1px solid #cbd5e1;
+    color:#64748b;
+    font-size:16px;
+    font-weight:800;
+    transition:transform .18s ease;
+}
+.voice-settings-panel[open] .voice-settings-chevron{
+    transform:rotate(180deg);
+}
+.voice-settings-panel-body{
+    padding:0 12px 12px;
+    border-top:1px solid #e2e8f0;
+    background:#fff;
+}
+.voice-settings-panel-body .voice-settings-grid{
+    margin-top:12px !important;
+}
+@media (max-width:640px){
+    .voice-settings-summary{
+        padding:11px 12px;
+    }
+    .voice-settings-summary-title{
+        font-size:12px;
+    }
+    .voice-settings-summary-text{
+        font-size:9px;
+        max-width:calc(100vw - 120px);
+    }
+    .voice-settings-panel-body{
+        padding:0 10px 10px;
+    }
+}
+</style>
+
+
+<style id="voice-transcript-window-styles">
+#voice-transcript-window[hidden]{ display:none !important; }
+
+#voice-transcript-window{
+    position:fixed;
+    left:72px;
+    top:84px;
+    width:min(620px,calc(100vw - 40px));
+    height:min(640px,calc(100vh - 40px));
+    min-width:360px;
+    min-height:220px;
+    max-width:calc(100vw - 16px);
+    max-height:calc(100vh - 16px);
+    resize:both;
+    overflow:hidden;
+    z-index:10020;
+    border:1px solid #cbd5e1;
+    border-radius:15px;
+    background:#fff;
+    box-shadow:0 20px 55px rgba(15,23,42,.22);
+}
+.voice-transcript-titlebar{
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 8px 0 13px;
+    border-bottom:1px solid #e2e8f0;
+    background:#f8fafc;
+    cursor:move;
+    user-select:none;
+    touch-action:none;
+}
+.voice-transcript-titlecopy{
+    min-width:0;
+}
+.voice-transcript-window-title{
+    color:#334155;
+    font-size:12px;
+    font-weight:800;
+}
+.voice-transcript-window-subtitle{
+    margin-top:1px;
+    color:#94a3b8;
+    font-size:9px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.voice-transcript-window-actions{
+    display:flex;
+    flex:0 0 auto;
+    gap:4px;
+}
+.voice-transcript-window-actions button{
+    width:34px;
+    min-width:34px !important;
+    height:34px;
+    min-height:34px !important;
+    padding:0 !important;
+    border:1px solid transparent;
+    border-radius:8px;
+    background:transparent;
+    color:#64748b;
+    font-size:17px;
+    font-weight:800;
+}
+.voice-transcript-window-actions button:hover{
+    background:#fff;
+    border-color:#e2e8f0;
+}
+.voice-transcript-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+    padding:8px 11px;
+    border-bottom:1px solid #e2e8f0;
+    background:#fff;
+}
+.voice-transcript-toolbar-note{
+    color:#64748b;
+    font-size:10px;
+}
+.voice-transcript-toolbar button{
+    min-height:34px !important;
+    padding:6px 9px;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    background:#f8fafc;
+    color:#475569;
+    font-size:10px;
+    font-weight:800;
+}
+.voice-transcript-body{
+    height:calc(100% - 91px);
+    overflow:auto;
+    padding:14px;
+    background:#fff;
+}
+.voice-transcript-entry{
+    margin-bottom:13px;
+}
+.voice-transcript-speaker{
+    margin-bottom:3px;
+    color:#64748b;
+    font-size:9px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+.voice-transcript-text{
+    color:#1e293b;
+    font-size:13px;
+    line-height:1.55;
+    white-space:pre-wrap;
+    user-select:text;
+}
+.voice-transcript-note{
+    margin-top:5px;
+    padding:6px 8px;
+    border-left:3px solid #f59e0b;
+    background:#fffbeb;
+    color:#78350f;
+    font-size:11px;
+    line-height:1.45;
+    user-select:text;
+}
+#voice-transcript-window.collapsed{
+    height:48px !important;
+    min-height:48px !important;
+    resize:none;
+}
+#voice-transcript-window.collapsed .voice-transcript-toolbar,
+#voice-transcript-window.collapsed .voice-transcript-body{
+    display:none;
+}
+
+@media (max-width:640px){
+    #voice-transcript-window{
+        left:8px !important;
+        top:auto !important;
+        bottom:8px;
+        width:calc(100vw - 16px) !important;
+        height:min(70vh,620px);
+        min-width:0;
+        min-height:220px;
+        max-width:none;
+        max-height:calc(100vh - 16px);
+        resize:none;
+        border-radius:15px;
+    }
+    .voice-transcript-titlebar{
+        cursor:default;
+        touch-action:auto;
+    }
+    .voice-transcript-body{
+        padding:12px;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -3057,8 +3500,17 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                             <span id="voice-tutor-language-badge" class="rounded-lg bg-slate-900 text-white px-2 py-1 text-[9px] font-bold">DE</span>
                         </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-3">
-                            <label class="text-[10px] font-bold text-slate-500">Conversation
+                        <details id="voice-settings-panel" class="voice-settings-panel mt-3">
+                            <summary class="voice-settings-summary">
+                                <div class="min-w-0">
+                                    <div class="voice-settings-summary-title">Conversation settings</div>
+                                    <div id="voice-settings-summary-text" class="voice-settings-summary-text">Natural conversation • Intermediate • Important mistakes • English help on request • 1.0×</div>
+                                </div>
+                                <span class="voice-settings-chevron" aria-hidden="true">⌄</span>
+                            </summary>
+                            <div class="voice-settings-panel-body">
+<div class="voice-settings-grid mt-3">
+                            <label class="voice-setting-card">Conversation
                                 <select id="voice-conversation-mode" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700" onchange="saveVoiceTutorSettings(); updateVoiceTutorRoleplayVisibility()">
                                     <option value="natural">Natural conversation</option>
                                     <option value="beginner">Beginner practice</option>
@@ -3066,14 +3518,14 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                                     <option value="free">Free conversation</option>
                                 </select>
                             </label>
-                            <label class="text-[10px] font-bold text-slate-500">Level
+                            <label class="voice-setting-card">Level
                                 <select id="voice-level" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700" onchange="saveVoiceTutorSettings()">
                                     <option value="beginner">Beginner</option>
                                     <option value="intermediate" selected>Intermediate</option>
                                     <option value="advanced">Advanced</option>
                                 </select>
                             </label>
-                            <label class="text-[10px] font-bold text-slate-500">Corrections
+                            <label class="voice-setting-card">Corrections
                                 <select id="voice-corrections" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700" onchange="saveVoiceTutorSettings()">
                                     <option value="important" selected>Important mistakes</option>
                                     <option value="gentle">Gentle corrections</option>
@@ -3081,21 +3533,27 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                                     <option value="none">Conversation only</option>
                                 </select>
                             </label>
-                            <label class="text-[10px] font-bold text-slate-500">English help
+                            <label class="voice-setting-card">English help
                                 <select id="voice-english-help" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700" onchange="saveVoiceTutorSettings()">
                                     <option value="ask" selected>Only when I ask</option>
                                     <option value="support">Brief help if useful</option>
                                     <option value="target">Target language only</option>
                                 </select>
                             </label>
-                            <label class="text-[10px] font-bold text-slate-500">Tutor speed
-                                <div class="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-2">
-                                    <div class="flex items-center gap-2">
-                                        <input type="range" id="voice-speech-speed" min="0.4" max="1.6" step="0.1" value="1.0"
-                                            class="min-w-0 flex-1 h-1 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                            title="Target-language speech speed">
-                                        <span id="voice-speech-speed-val" class="font-mono text-[9px] text-slate-500 whitespace-nowrap">1.0x</span>
-                                    </div>
+                            <label class="voice-setting-card voice-speed-card">Tutor speed
+                                <div class="voice-speed-control mt-2">
+                                    <button type="button" id="voice-speed-down" class="voice-speed-step" aria-label="Decrease tutor speed">−</button>
+                                    <input type="range" id="voice-speech-speed" min="0.5" max="1.5" step="0.1" value="1.0"
+                                        class="voice-speed-slider"
+                                        title="Target-language speech speed">
+                                    <button type="button" id="voice-speed-up" class="voice-speed-step" aria-label="Increase tutor speed">+</button>
+                                    <span id="voice-speech-speed-val" class="voice-speed-value">1.0×</span>
+                                </div>
+                                <div class="voice-speed-presets">
+                                    <button type="button" data-voice-rate="0.7">0.7×</button>
+                                    <button type="button" data-voice-rate="0.9">0.9×</button>
+                                    <button type="button" data-voice-rate="1.0">1.0×</button>
+                                    <button type="button" data-voice-rate="1.2">1.2×</button>
                                 </div>
                             </label>
                         </div>
@@ -3105,6 +3563,8 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                                 <input id="voice-roleplay-scenario" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm sm:text-xs text-slate-700" value="ordering at a café" placeholder="e.g. train station, restaurant, meeting someone" oninput="saveVoiceTutorSettings()">
                             </label>
                         </div>
+                            </div>
+                        </details>
                     </div>
 
                     <div class="shrink-0 flex flex-wrap items-center gap-2">
@@ -3139,9 +3599,16 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                         </div>
                     </div>
 
-                    <div class="shrink-0">
-                        <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Conversation transcript</div>
-                        <div class="text-[9px] text-slate-400">Recognized speech and the tutor's spoken replies are kept here for this conversation.</div>
+                    <div class="shrink-0 flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Conversation transcript</div>
+                            <div class="text-[9px] text-slate-400">Recognized speech and the tutor's spoken replies are kept here for this conversation.</div>
+                        </div>
+                        <button type="button" id="voice-open-transcript-btn" onclick="openVoiceTranscriptWindow()"
+                            class="shrink-0 min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition"
+                            title="Open the conversation in a movable transcript window">
+                            ↗ Open transcript
+                        </button>
                     </div>
 
                     <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1" aria-live="polite">
@@ -8981,7 +9448,30 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         }
     }
 
+    function updateVoiceSettingsSummary(){
+        const summary=document.getElementById("voice-settings-summary-text");
+        if(!summary)return;
+
+        const conversation=document.getElementById("voice-conversation-mode");
+        const level=document.getElementById("voice-level");
+        const corrections=document.getElementById("voice-corrections");
+        const help=document.getElementById("voice-english-help");
+        const speed=document.getElementById("voice-speech-speed");
+
+        const labelOf=el=>el?.selectedOptions?.[0]?.textContent?.trim() || "";
+        const speedText=speed ? `${Number(speed.value||1).toFixed(1)}×` : "1.0×";
+
+        summary.textContent=[
+            labelOf(conversation),
+            labelOf(level),
+            labelOf(corrections),
+            labelOf(help),
+            speedText
+        ].filter(Boolean).join(" • ");
+    }
+
     window.saveVoiceTutorSettings=function(){
+        updateVoiceSettingsSummary();
         const settings={
             conversation:document.getElementById("voice-conversation-mode")?.value||"natural",
             level:document.getElementById("voice-level")?.value||"intermediate",
@@ -9007,6 +9497,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const scenario=document.getElementById("voice-roleplay-scenario");
         if(scenario)scenario.value=settings.scenario;
         updateVoiceTutorRoleplayVisibility();
+        updateVoiceSettingsSummary();
     }
 
     window.updateVoiceTutorRoleplayVisibility=function(){
@@ -9096,6 +9587,188 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         return voiceTutorHistories[currentStudyLanguage] || [];
     }
 
+    async function copyVoiceConversationTranscript(button){
+        const history=voiceTutorHistory();
+        if(!history.length){
+            if(button){
+                const original=button.textContent;
+                button.textContent="Nothing to copy";
+                setTimeout(()=>button.textContent=original,1200);
+            }
+            return;
+        }
+
+        const languageName=langConfig().name;
+        const lines=history.map(entry=>{
+            const user=entry.role==="user";
+            let speaker="";
+            if(user){
+                speaker=entry.inputMode==="english" ? "You (English)" : `You (${languageName})`;
+            }else{
+                speaker=entry.replyLanguage==="en" ? `${languageName} Voice Tutor (English)` : `${languageName} Voice Tutor`;
+            }
+
+            let block=`${speaker}: ${String(entry.text||"").trim()}`;
+            if(entry.note){
+                block+=`\nTeacher note: ${String(entry.note).trim()}`;
+            }
+            return block;
+        });
+
+        const transcript=[
+            `${languageName} Voice Conversation`,
+            "",
+            ...lines
+        ].join("\n\n").trim();
+
+        let ok=false;
+        try{
+            if(navigator.clipboard && window.isSecureContext){
+                await navigator.clipboard.writeText(transcript);
+                ok=true;
+            }
+        }catch(e){}
+
+        if(!ok){
+            try{
+                const ta=document.createElement("textarea");
+                ta.value=transcript;
+                ta.setAttribute("readonly","");
+                ta.style.position="fixed";
+                ta.style.opacity="0";
+                ta.style.pointerEvents="none";
+                document.body.appendChild(ta);
+                ta.select();
+                ok=document.execCommand("copy");
+                ta.remove();
+            }catch(e){}
+        }
+
+        if(button){
+            const original="⧉ Copy transcript";
+            button.textContent=ok ? "✓ Transcript copied" : "Copy failed";
+            button.classList.toggle("voice-tutor-copy-confirm",ok);
+            setTimeout(()=>{
+                button.textContent=original;
+                button.classList.remove("voice-tutor-copy-confirm");
+            },1400);
+        }
+    }
+
+    function renderVoiceTranscriptWindow(){
+        const body=document.getElementById("voice-transcript-window-body");
+        const title=document.getElementById("voice-transcript-window-title");
+        if(!body)return;
+
+        const history=voiceTutorHistory();
+        const languageName=langConfig().name;
+        if(title)title.textContent=`${languageName} conversation transcript`;
+        body.innerHTML="";
+
+        if(!history.length){
+            const empty=document.createElement("div");
+            empty.className="text-sm text-slate-400 italic";
+            empty.textContent="No conversation has been recorded yet.";
+            body.appendChild(empty);
+            return;
+        }
+
+        history.forEach(entry=>{
+            const block=document.createElement("div");
+            block.className="voice-transcript-entry";
+
+            const speaker=document.createElement("div");
+            speaker.className="voice-transcript-speaker";
+            if(entry.role==="user"){
+                speaker.textContent=entry.inputMode==="english"
+                    ? "You • English"
+                    : `You • ${languageName}`;
+            }else{
+                speaker.textContent=entry.replyLanguage==="en"
+                    ? `${languageName} Voice Tutor • English`
+                    : `${languageName} Voice Tutor`;
+            }
+
+            const content=document.createElement("div");
+            content.className="voice-transcript-text";
+            content.textContent=String(entry.text||"").trim();
+
+            block.append(speaker,content);
+
+            if(entry.note){
+                const note=document.createElement("div");
+                note.className="voice-transcript-note";
+                note.textContent=`Teacher note: ${String(entry.note).trim()}`;
+                block.appendChild(note);
+            }
+
+            body.appendChild(block);
+        });
+    }
+
+    window.openVoiceTranscriptWindow=function(){
+        const win=document.getElementById("voice-transcript-window");
+        if(!win)return;
+        renderVoiceTranscriptWindow();
+        win.hidden=false;
+        win.classList.remove("collapsed");
+        const btn=document.getElementById("voice-transcript-collapse-btn");
+        if(btn)btn.textContent="—";
+    };
+
+    window.closeVoiceTranscriptWindow=function(){
+        const win=document.getElementById("voice-transcript-window");
+        if(win)win.hidden=true;
+    };
+
+    window.toggleVoiceTranscriptCollapse=function(){
+        const win=document.getElementById("voice-transcript-window");
+        if(!win)return;
+        const collapsed=win.classList.toggle("collapsed");
+        const btn=document.getElementById("voice-transcript-collapse-btn");
+        if(btn)btn.textContent=collapsed ? "□" : "—";
+    };
+
+    window.refreshVoiceTranscriptWindow=function(){
+        renderVoiceTranscriptWindow();
+    };
+
+    function initVoiceTranscriptDragging(){
+        const win=document.getElementById("voice-transcript-window");
+        const handle=document.getElementById("voice-transcript-drag-handle");
+        if(!win || !handle || handle.dataset.dragReady==="1")return;
+        handle.dataset.dragReady="1";
+
+        let dragging=false;
+        let offsetX=0;
+        let offsetY=0;
+
+        handle.addEventListener("pointerdown",ev=>{
+            if(window.matchMedia("(max-width:640px)").matches)return;
+            if(ev.target.closest("button"))return;
+            dragging=true;
+            const rect=win.getBoundingClientRect();
+            offsetX=ev.clientX-rect.left;
+            offsetY=ev.clientY-rect.top;
+            try{ handle.setPointerCapture(ev.pointerId); }catch(e){}
+        });
+
+        handle.addEventListener("pointermove",ev=>{
+            if(!dragging)return;
+            const maxLeft=Math.max(8,window.innerWidth-win.offsetWidth-8);
+            const maxTop=Math.max(8,window.innerHeight-win.offsetHeight-8);
+            const left=Math.min(maxLeft,Math.max(8,ev.clientX-offsetX));
+            const top=Math.min(maxTop,Math.max(8,ev.clientY-offsetY));
+            win.style.left=`${left}px`;
+            win.style.top=`${top}px`;
+            win.style.bottom="auto";
+        });
+
+        const endDrag=()=>{ dragging=false; };
+        handle.addEventListener("pointerup",endDrag);
+        handle.addEventListener("pointercancel",endDrag);
+    }
+
     function renderVoiceTutorTranscript(){
         const log=document.getElementById("voice-chat-messages-log");
         if(!log)return;
@@ -9121,6 +9794,88 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         btn.title=title;
         btn.addEventListener("click",handler);
         return btn;
+    }
+
+    async function copyVoiceTutorText(value,button){
+        const text=String(value||"").trim();
+        if(!text)return;
+        let ok=false;
+        try{
+            if(navigator.clipboard && window.isSecureContext){
+                await navigator.clipboard.writeText(text);
+                ok=true;
+            }
+        }catch(e){}
+        if(!ok){
+            try{
+                const ta=document.createElement("textarea");
+                ta.value=text;
+                ta.setAttribute("readonly","");
+                ta.style.position="fixed";
+                ta.style.opacity="0";
+                document.body.appendChild(ta);
+                ta.select();
+                ok=document.execCommand("copy");
+                ta.remove();
+            }catch(e){}
+        }
+        if(button){
+            const original=button.textContent;
+            button.textContent=ok ? "✓ Copied" : "Copy failed";
+            button.classList.toggle("voice-tutor-copy-confirm",ok);
+            setTimeout(()=>{
+                button.textContent=original;
+                button.classList.remove("voice-tutor-copy-confirm");
+            },1200);
+        }
+    }
+
+    async function translateVoiceTutorReply(entry,wrap,button){
+        if(!entry || !wrap)return;
+        let box=wrap.querySelector(".voice-tutor-translation");
+
+        if(box && box.dataset.ready==="1"){
+            box.classList.toggle("hidden");
+            if(button)button.textContent=box.classList.contains("hidden") ? "🌐 Translate" : "🌐 Hide translation";
+            return;
+        }
+
+        if(!box){
+            box=document.createElement("div");
+            box.className="voice-tutor-translation";
+            box.innerHTML='<span class="voice-tutor-translation-label">English translation</span><span class="voice-tutor-translation-text">Translating…</span>';
+            const actions=wrap.querySelector(".voice-tutor-actions");
+            if(actions)wrap.insertBefore(box,actions);
+            else wrap.appendChild(box);
+        }
+
+        box.classList.remove("hidden");
+        if(button){
+            button.disabled=true;
+            button.textContent="Translating…";
+        }
+
+        const output=box.querySelector(".voice-tutor-translation-text");
+        try{
+            const languageName=langConfig().name;
+            const prompt=`Translate this ${languageName} Voice Tutor reply into natural English for a language learner.
+
+${languageName}: "${String(entry.text||"").trim()}"
+
+Return ONLY the English translation.
+Do not explain grammar.
+Do not add quotation marks or labels.`;
+            const translated=cleanAiExplanation(await callAI(prompt)).trim();
+            output.textContent=translated || "Translation unavailable.";
+            box.dataset.ready="1";
+            if(button)button.textContent="🌐 Hide translation";
+        }catch(err){
+            output.textContent="Translation unavailable. Check the AI settings and try again.";
+            box.dataset.ready="0";
+            if(button)button.textContent="🌐 Translate";
+        }finally{
+            if(button)button.disabled=false;
+        }
     }
 
     function appendVoiceTutorBubble(entry,scroll=true){
@@ -9167,19 +9922,46 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         }
 
         const actions=document.createElement("div");
-        actions.className="flex flex-wrap gap-1.5 mt-2";
+        actions.className="voice-tutor-actions flex flex-wrap gap-1.5 mt-2";
         const isEnglishEntry=entry.inputMode==="english" || entry.replyLanguage==="en";
         const replayLocale=isEnglishEntry ? "en-US" : langConfig().locale;
-        actions.appendChild(voiceTutorControlButton("🔊 Replay","Replay this transcript",()=>speakRawText(entry.text,replayLocale)));
 
-        // Only target-language phrases belong in this tutor's Study Board.
-        if(!isEnglishEntry){
-            actions.appendChild(voiceTutorControlButton("☆ Save phrase","Save this target-language phrase to the active Study Board",ev=>saveVoiceTutorPhrase(entry.text,currentStudyLanguage,ev.currentTarget)));
+        actions.appendChild(
+            voiceTutorControlButton("🔊 Replay","Replay this transcript",()=>speakRawText(entry.text,replayLocale))
+        );
+
+        // Keep extra transcript actions on tutor replies only so learner bubbles stay clean.
+        if(!user){
+            if(!isEnglishEntry){
+                actions.appendChild(
+                    voiceTutorControlButton("🌐 Translate","Translate this tutor reply to English",ev=>
+                        translateVoiceTutorReply(entry,wrap,ev.currentTarget)
+                    )
+                );
+            }
+
+            actions.appendChild(
+                voiceTutorControlButton("⧉ Copy","Copy this tutor reply",ev=>
+                    copyVoiceTutorText(entry.text,ev.currentTarget)
+                )
+            );
+
+            // Only target-language tutor phrases belong in the active Study Board.
+            if(!isEnglishEntry){
+                actions.appendChild(
+                    voiceTutorControlButton("☆ Save phrase","Save this target-language phrase to the active Study Board",ev=>
+                        saveVoiceTutorPhrase(entry.text,currentStudyLanguage,ev.currentTarget)
+                    )
+                );
+            }
         }
+
         wrap.appendChild(actions);
 
         log.appendChild(wrap);
         if(scroll) log.scrollTop=log.scrollHeight;
+        const floatingTranscript=document.getElementById("voice-transcript-window");
+        if(floatingTranscript && !floatingTranscript.hidden) renderVoiceTranscriptWindow();
     }
 
     function recordVoiceTutorEntry(entry){
@@ -13946,6 +14728,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
 </script>
 
 
+
 <script id="shared-speech-speed-sync">
 (function(){
     const RATE_STORAGE_KEY="languagetutor_speech_rates_v1";
@@ -13953,7 +14736,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     function clampRate(value){
         const n=parseFloat(value);
         if(!Number.isFinite(n)) return 1;
-        return Math.min(1.6,Math.max(0.4,Math.round(n*10)/10));
+        return Math.min(1.5,Math.max(0.5,Math.round(n*10)/10));
     }
 
     function readSavedRates(){
@@ -13978,12 +14761,18 @@ Current work: ${context||"No sentence has been entered yet."}`;
         }catch(e){}
     }
 
-    function setLabel(id,value){
-        const el=document.getElementById(id);
-        if(el) el.textContent=`${Number(value).toFixed(1)}x`;
+    function formatRate(rate){
+        return `${Number(rate).toFixed(1)}×`;
     }
 
-    function syncTargetRate(value,source){
+    function updatePresetState(rate){
+        document.querySelectorAll("[data-voice-rate]").forEach(btn=>{
+            const value=clampRate(btn.dataset.voiceRate);
+            btn.classList.toggle("active",Math.abs(value-rate)<0.01);
+        });
+    }
+
+    function setTargetRate(value,source=null){
         const rate=clampRate(value);
         const main=document.getElementById("speech-speed-de");
         const voice=document.getElementById("voice-speech-speed");
@@ -13991,42 +14780,61 @@ Current work: ${context||"No sentence has been entered yet."}`;
         if(main && source!==main) main.value=rate;
         if(voice && source!==voice) voice.value=rate;
 
-        setLabel("speech-speed-de-val",rate);
-        setLabel("voice-speech-speed-val",rate);
+        const mainLabel=document.getElementById("speech-speed-de-val");
+        const voiceLabel=document.getElementById("voice-speech-speed-val");
+        if(mainLabel) mainLabel.textContent=formatRate(rate);
+        if(voiceLabel) voiceLabel.textContent=formatRate(rate);
+
+        updatePresetState(rate);
+        if(typeof updateVoiceSettingsSummary==="function") updateVoiceSettingsSummary();
 
         const en=clampRate(document.getElementById("speech-speed-en")?.value ?? 1);
         saveRates(rate,en);
+
+        // Keep one shared runtime value for all target-language speech.
+        window.languageTutorTargetSpeechRate=rate;
     }
 
-    function syncEnglishRate(value,source){
+    function setEnglishRate(value,source=null){
         const rate=clampRate(value);
         const main=document.getElementById("speech-speed-en");
         if(main && source!==main) main.value=rate;
-        setLabel("speech-speed-en-val",rate);
 
-        const target=clampRate(document.getElementById("speech-speed-de")?.value ?? 1);
+        const label=document.getElementById("speech-speed-en-val");
+        if(label) label.textContent=formatRate(rate);
+
+        const target=clampRate(document.getElementById("speech-speed-de")?.value ?? window.languageTutorTargetSpeechRate ?? 1);
         saveRates(target,rate);
+        window.languageTutorEnglishSpeechRate=rate;
+    }
+
+    function stepTarget(delta){
+        const current=clampRate(document.getElementById("voice-speech-speed")?.value ?? window.languageTutorTargetSpeechRate ?? 1);
+        setTargetRate(current+delta);
     }
 
     function boot(){
         const saved=readSavedRates();
+        setTargetRate(saved.target);
+        setEnglishRate(saved.english);
 
         const target=document.getElementById("speech-speed-de");
         const english=document.getElementById("speech-speed-en");
         const voice=document.getElementById("voice-speech-speed");
 
-        if(target) target.value=saved.target;
-        if(voice) voice.value=saved.target;
-        if(english) english.value=saved.english;
+        // 'input' = live while dragging; 'change' = catches browsers that only commit on release.
+        ["input","change"].forEach(evt=>{
+            target?.addEventListener(evt,()=>setTargetRate(target.value,target));
+            voice?.addEventListener(evt,()=>setTargetRate(voice.value,voice));
+            english?.addEventListener(evt,()=>setEnglishRate(english.value,english));
+        });
 
-        syncTargetRate(saved.target,null);
-        syncEnglishRate(saved.english,null);
+        document.getElementById("voice-speed-down")?.addEventListener("click",()=>stepTarget(-0.1));
+        document.getElementById("voice-speed-up")?.addEventListener("click",()=>stepTarget(0.1));
 
-        // Existing page control and Voice Conversation control are two views
-        // of the SAME target-language speech-rate setting.
-        target?.addEventListener("input",()=>syncTargetRate(target.value,target));
-        voice?.addEventListener("input",()=>syncTargetRate(voice.value,voice));
-        english?.addEventListener("input",()=>syncEnglishRate(english.value,english));
+        document.querySelectorAll("[data-voice-rate]").forEach(btn=>{
+            btn.addEventListener("click",()=>setTargetRate(btn.dataset.voiceRate));
+        });
     }
 
     if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot);
@@ -14034,9 +14842,73 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
     window.getLanguageTutorSpeechRate=function(lang){
         const isEnglish=String(lang||"").toLowerCase().startsWith("en");
-        const el=document.getElementById(isEnglish ? "speech-speed-en" : "speech-speed-de");
-        return clampRate(el?.value ?? 1);
+        if(isEnglish){
+            return clampRate(window.languageTutorEnglishSpeechRate ?? document.getElementById("speech-speed-en")?.value ?? 1);
+        }
+        return clampRate(window.languageTutorTargetSpeechRate ?? document.getElementById("speech-speed-de")?.value ?? document.getElementById("voice-speech-speed")?.value ?? 1);
     };
+
+    window.setLanguageTutorTargetSpeechRate=setTargetRate;
+})();
+</script>
+
+
+<script id="voice-settings-summary-sync">
+(function(){
+    function bind(){
+        ["voice-conversation-mode","voice-level","voice-corrections","voice-english-help","voice-speech-speed"]
+            .forEach(id=>{
+                const el=document.getElementById(id);
+                if(!el || el.dataset.voiceSummaryBound==="1") return;
+                el.dataset.voiceSummaryBound="1";
+                ["input","change"].forEach(evt=>{
+                    el.addEventListener(evt,()=>{
+                        if(typeof updateVoiceSettingsSummary==="function") updateVoiceSettingsSummary();
+                    });
+                });
+            });
+
+        if(typeof updateVoiceSettingsSummary==="function") updateVoiceSettingsSummary();
+
+        // On phones, keep the settings collapsed by default.
+        const panel=document.getElementById("voice-settings-panel");
+        if(panel && window.matchMedia("(max-width:640px)").matches){
+            panel.open=false;
+        }
+    }
+
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",bind);
+    else bind();
+})();
+</script>
+
+
+<div id="voice-transcript-window" hidden aria-label="Voice conversation transcript window">
+    <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
+        <div class="voice-transcript-titlecopy">
+            <div id="voice-transcript-window-title" class="voice-transcript-window-title">Conversation transcript</div>
+            <div class="voice-transcript-window-subtitle">Select any text and copy it into your document for analysis.</div>
+        </div>
+        <div class="voice-transcript-window-actions">
+            <button type="button" id="voice-transcript-collapse-btn" onclick="toggleVoiceTranscriptCollapse()" title="Collapse transcript">—</button>
+            <button type="button" onclick="closeVoiceTranscriptWindow()" title="Close transcript">×</button>
+        </div>
+    </div>
+    <div class="voice-transcript-toolbar">
+        <span class="voice-transcript-toolbar-note">Text is selectable. Drag or resize this window on desktop.</span>
+        <button type="button" onclick="refreshVoiceTranscriptWindow()">↻ Refresh</button>
+    </div>
+    <div id="voice-transcript-window-body" class="voice-transcript-body"></div>
+</div>
+
+
+<script id="voice-transcript-window-init">
+(function(){
+    function init(){
+        if(typeof initVoiceTranscriptDragging==="function") initVoiceTranscriptDragging();
+    }
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init);
+    else init();
 })();
 </script>
 
