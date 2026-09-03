@@ -3568,7 +3568,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                     </div>
 
                     <div class="shrink-0 flex flex-wrap items-center gap-2">
-                        <button type="button" id="voice-start-btn" onclick="startVoiceConversation()" class="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
+                        <button type="button" id="voice-start-btn" onclick="startVoiceConversation()" title="Listening pauses automatically after 10 seconds of silence" class="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
                             🎙 Start Conversation
                         </button>
                         <button type="button" id="voice-stop-btn" onclick="stopVoiceConversation()" class="hidden min-h-[44px] px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition">
@@ -9425,7 +9425,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         language:"de",
         speaking:false,
         manualRestart:false,
-        inputMode:"target"
+        inputMode:"target",
+        silenceTimer:null
     };
 
     function voiceRecognitionConstructor(){
@@ -10121,6 +10122,33 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         });
     }
 
+    const VOICE_SILENCE_TIMEOUT_MS=10000;
+
+    function clearVoiceSilenceTimer(){
+        if(voiceTutorState.silenceTimer){
+            clearTimeout(voiceTutorState.silenceTimer);
+            voiceTutorState.silenceTimer=null;
+        }
+    }
+
+    function armVoiceSilenceTimer(reset=true){
+        if(!voiceTutorState.active || voiceTutorState.phase!=="listening")return;
+        if(reset)clearVoiceSilenceTimer();
+        if(voiceTutorState.silenceTimer)return;
+
+        voiceTutorState.silenceTimer=setTimeout(()=>{
+            voiceTutorState.silenceTimer=null;
+            if(!voiceTutorState.active || voiceTutorState.phase!=="listening")return;
+
+            // End only the active listening session. Conversation history remains,
+            // so pressing Start Conversation again continues with the same transcript/context.
+            window.stopVoiceConversation(true);
+            voiceTutorStatus("Paused after 10 seconds of silence. Tap Start Conversation to continue.");
+            const live=document.getElementById("voice-live-transcript");
+            if(live)live.textContent="Listening paused after silence.";
+        },VOICE_SILENCE_TIMEOUT_MS);
+    }
+
     function destroyVoiceRecognition(){
         const rec=voiceTutorState.recognition;
         voiceTutorState.recognition=null;
@@ -10163,7 +10191,13 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             const live=document.getElementById("voice-live-transcript");
             if(live)live.textContent=finalText||interim;
 
+            // Any detected speech buys the learner another full silence interval.
+            if((finalText||interim).trim() && voiceTutorState.phase==="listening"){
+                armVoiceSilenceTimer(true);
+            }
+
             if(finalText.trim() && voiceTutorState.phase==="listening"){
+                clearVoiceSilenceTimer();
                 voiceTutorState.phase="processing";
                 setVoiceMicIndicator(false);
                 try{rec.stop();}catch(e){}
@@ -10231,6 +10265,11 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             englishBtn?.classList.remove("hidden");
         }
 
+        // Manual starts and post-tutor turns get a fresh silence window.
+        // Automatic recognition restarts keep the existing timer so silence
+        // cannot loop forever.
+        armVoiceSilenceTimer(Boolean(manual) || !voiceTutorState.silenceTimer);
+
         try{
             rec.lang=requestedLocale;
             rec.start();
@@ -10263,6 +10302,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         try{window.speechSynthesis?.cancel();}catch(e){}
         voiceTutorState.speaking=false;
+        clearVoiceSilenceTimer();
         destroyVoiceRecognition();
         voiceTutorState.phase="idle";
         setVoiceMicIndicator(false);
@@ -10289,6 +10329,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             await speakVoiceTutorText(result.reply,result.replyLanguage);
 
             if(voiceTutorState.active){
+                clearVoiceSilenceTimer();
                 voiceTutorState.phase="listening";
                 // English is deliberately one turn only.
                 setTimeout(()=>resumeVoiceRecognition(false,"target"),250);
@@ -10333,7 +10374,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         english?.classList.remove("hidden");
 
         createVoiceRecognition("target");
-        voiceTutorStatus(`Conversation started. Speak in ${langConfig().name}, or tap “Ask in English” for one English question.`);
+        voiceTutorStatus(`Conversation started. Speak in ${langConfig().name}. Listening pauses after 10 seconds of silence.`);
         resumeVoiceRecognition(true,"target");
     };
 
@@ -10341,6 +10382,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         voiceTutorState.active=false;
         voiceTutorState.phase="idle";
         voiceTutorState.speaking=false;
+        clearVoiceSilenceTimer();
         setVoiceMicIndicator(false);
 
         try{window.speechSynthesis?.cancel();}catch(e){}
