@@ -3892,20 +3892,14 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                         </div>
                     </div>
 
-                    <div class="shrink-0 flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Conversation transcript</div>
-                            <div class="text-[9px] text-slate-400">Recognized speech and the tutor's spoken replies are kept here for this conversation.</div>
-                        </div>
-                        <div class="shrink-0 flex flex-wrap gap-2 justify-end">
-                            <button type="button" id="voice-open-transcript-btn" onclick="openVoiceTranscriptWindow()"
-                                class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition"
-                                title="Open the conversation in a movable transcript window">↗ Open transcript</button>
-                            <button type="button" onclick="saveCurrentTutorTranscript('voice',this)"
-                                class="min-h-[36px] px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
-                            <button type="button" onclick="openSavedTutorTranscripts()"
-                                class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">🗂 Saved</button>
-                        </div>
+                    <div class="shrink-0 flex flex-wrap gap-2 justify-end">
+                        <button type="button" id="voice-open-transcript-btn" onclick="openVoiceTranscriptWindow()"
+                            class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition"
+                            title="Open the conversation in a movable transcript window">↗ Open transcript</button>
+                        <button type="button" onclick="saveCurrentTutorTranscript('voice',this)"
+                            class="min-h-[36px] px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
+                        <button type="button" onclick="openSavedTutorTranscripts()"
+                            class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">🗂 Saved</button>
                     </div>
 
                     <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-2 overscroll-contain" aria-live="polite">
