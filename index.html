@@ -2997,14 +2997,15 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
     min-height:0;
 }
 #voice-chat-messages-log{
-    min-height:0 !important;
-    max-height:none !important;
+    flex:0 1 180px !important;
+    min-height:90px !important;
+    max-height:180px !important;
     overflow-y:auto !important;
     overflow-x:hidden;
     scrollbar-gutter:stable;
     overscroll-behavior:contain;
     scroll-behavior:smooth;
-    padding-bottom:10px;
+    padding-bottom:6px;
 }
 </style>
 
@@ -3178,10 +3179,10 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 
 
 <style id="voice-conversation-space-improvements">
-/* Voice transcript height is controlled by flexbox so it can scroll without
-   being chopped off at the bottom of the tutor card. */
+/* Keep the inline Voice Tutor transcript compact. Longer conversations scroll
+   here or can be opened in the movable transcript window. */
 #voice-chat-messages-log{
-    flex:1 1 auto;
+    flex:0 1 180px;
 }
 </style>
 
@@ -3903,7 +3904,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                     </div>
 
                     <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-2 overscroll-contain" aria-live="polite">
-                        <div id="voice-tutor-empty" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-[11px] text-slate-400">
+                        <div id="voice-tutor-empty" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400">
                             Start a conversation in the selected language. Tap “Ask in English” for one English question; after the tutor answers, listening automatically returns to the selected language.
                         </div>
                     </div>
@@ -9817,7 +9818,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         // transcript intentionally shows several card-style turns at once.
         const tutorContainer=document.getElementById("socratic-chat-container");
         if(tutorContainer){
-            tutorContainer.style.height=voiceMode ? "780px" : "430px";
+            tutorContainer.style.height=voiceMode ? "610px" : "430px";
         }
 
         if(textBtn) textBtn.className="rounded-lg px-3 py-2 text-xs font-bold transition " +
@@ -10080,7 +10081,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(!history.length){
             const empty=document.createElement("div");
             empty.id="voice-tutor-empty";
-            empty.className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center text-[11px] text-slate-400";
+            empty.className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400";
             empty.textContent=`Start a ${langConfig().name} conversation and speak naturally. Use “Ask in English” whenever you want one English question; after the answer, listening returns to ${langConfig().name}.`;
             log.appendChild(empty);
             return;
