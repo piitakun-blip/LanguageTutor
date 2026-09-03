@@ -2394,6 +2394,58 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 .ml-token.role-phrase { background:#f8fafc; border-color:#d1d5db; }
 </style>
 
+
+<style id="generated-output-copy-buttons">
+.copy-output-host{
+    position:relative;
+}
+.copy-output-btn{
+    position:absolute;
+    top:7px;
+    right:7px;
+    z-index:8;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    min-height:30px !important;
+    height:30px;
+    padding:4px 8px;
+    border-radius:8px;
+    border:1px solid #cbd5e1;
+    background:rgba(255,255,255,.94);
+    color:#475569;
+    font-size:10px;
+    line-height:1;
+    font-weight:800;
+    box-shadow:0 1px 2px rgba(15,23,42,.08);
+    cursor:pointer;
+}
+.copy-output-btn:hover{
+    background:#f8fafc;
+    color:#1e293b;
+}
+.copy-output-btn.copied{
+    border-color:#86efac;
+    background:#f0fdf4;
+    color:#15803d;
+}
+.copy-output-host.has-copy-output-btn{
+    padding-top:40px !important;
+}
+@media (max-width:640px){
+    .copy-output-btn{
+        min-height:34px !important;
+        height:34px;
+        font-size:11px;
+        padding:5px 9px;
+    }
+    .copy-output-host.has-copy-output-btn{
+        padding-top:44px !important;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -13659,6 +13711,140 @@ Current work: ${context||"No sentence has been entered yet."}`;
 </script>
 
 
+
+
+<script id="generated-output-copy-system">
+(function(){
+    const OUTPUT_SELECTORS = [
+        ".ml-helper-result",
+        ".grammar-section-ai-result",
+        "#target-text",
+        "#german-english-translation",
+        "#ml-grammar-translate-result",
+        "#ja-romaji-result",
+        "#ja-kana-result",
+        "#ja-builder-result",
+        "#ja-counter-result",
+        "#ja-register-result",
+        "#ja-role-result",
+        "#ja-particle-result",
+        "#ja-particle-swap-result",
+        "#ja-particle-contrast-result",
+        "#es-pronoun-result",
+        "#es-adjective-result",
+        "#es-reflexive-result",
+        "#es-article-result"
+    ].join(",");
+
+    function cleanOutputText(el){
+        const clone=el.cloneNode(true);
+        clone.querySelectorAll(".copy-output-btn,button,[aria-hidden='true']").forEach(n=>{
+            if(n.classList?.contains("copy-output-btn")) n.remove();
+        });
+        return (clone.innerText || clone.textContent || "")
+            .replace(/\n{3,}/g,"\n\n")
+            .trim();
+    }
+
+    async function copyText(text){
+        if(!text) return false;
+        try{
+            if(navigator.clipboard && window.isSecureContext){
+                await navigator.clipboard.writeText(text);
+                return true;
+            }
+        }catch(e){}
+        try{
+            const ta=document.createElement("textarea");
+            ta.value=text;
+            ta.setAttribute("readonly","");
+            ta.style.position="fixed";
+            ta.style.opacity="0";
+            ta.style.pointerEvents="none";
+            document.body.appendChild(ta);
+            ta.select();
+            const ok=document.execCommand("copy");
+            ta.remove();
+            return ok;
+        }catch(e){
+            return false;
+        }
+    }
+
+    function addCopyButton(el){
+        if(!el || el.dataset.copyOutputReady==="1") return;
+        if(el.matches("input,textarea,select")) return;
+
+        const txt=(el.innerText||el.textContent||"").trim();
+        if(!txt || el.classList.contains("hidden")) return;
+
+        el.dataset.copyOutputReady="1";
+        el.classList.add("copy-output-host","has-copy-output-btn");
+
+        const btn=document.createElement("button");
+        btn.type="button";
+        btn.className="copy-output-btn";
+        btn.setAttribute("aria-label","Copy output");
+        btn.setAttribute("title","Copy output");
+        btn.innerHTML="⧉ Copy";
+
+        btn.addEventListener("click",async (ev)=>{
+            ev.stopPropagation();
+            const content=cleanOutputText(el);
+            const ok=await copyText(content);
+            const original=btn.innerHTML;
+            btn.innerHTML=ok ? "✓ Copied" : "Copy failed";
+            btn.classList.toggle("copied",ok);
+            setTimeout(()=>{
+                btn.innerHTML=original;
+                btn.classList.remove("copied");
+            },1300);
+        });
+
+        el.prepend(btn);
+    }
+
+    function scanGeneratedOutputs(root=document){
+        const nodes=[];
+        if(root.nodeType===1 && root.matches?.(OUTPUT_SELECTORS)) nodes.push(root);
+        root.querySelectorAll?.(OUTPUT_SELECTORS).forEach(n=>nodes.push(n));
+        nodes.forEach(addCopyButton);
+    }
+
+    // Copy buttons appear only after an output actually contains generated content.
+    const observer=new MutationObserver(mutations=>{
+        for(const m of mutations){
+            if(m.type==="childList" || m.type==="characterData"){
+                const root=m.target.nodeType===1 ? m.target : m.target.parentElement;
+                if(root) scanGeneratedOutputs(root.closest?.(".ml-helper-result,.grammar-section-ai-result") || root);
+            }
+            if(m.type==="attributes" && m.attributeName==="class"){
+                scanGeneratedOutputs(m.target);
+            }
+        }
+    });
+
+    function boot(){
+        scanGeneratedOutputs(document);
+        observer.observe(document.body,{
+            childList:true,
+            subtree:true,
+            characterData:true,
+            attributes:true,
+            attributeFilter:["class"]
+        });
+    }
+
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot);
+    else boot();
+
+    window.copyGeneratedOutput=function(el){
+        const host=el?.closest?.(".copy-output-host") || el;
+        if(!host) return;
+        copyText(cleanOutputText(host));
+    };
+})();
+</script>
 
 </body>
 </html>
