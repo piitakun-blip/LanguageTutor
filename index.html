@@ -2869,6 +2869,14 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
     line-height:1.45;
     user-select:text;
 }
+.teacher-note-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.teacher-note-play{
+    flex:0 0 auto;min-width:31px;min-height:29px;padding:4px 7px;
+    border:1px solid #fcd34d;border-radius:8px;background:#fff;color:#92400e;
+    font-size:12px;font-weight:800;cursor:pointer
+}
+.teacher-note-play:hover{background:#fffbeb}
+
 #voice-transcript-window.collapsed{
     height:48px !important;
     min-height:48px !important;
@@ -2999,14 +3007,14 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 }
 #voice-chat-messages-log{
     flex:0 0 auto !important;
-    min-height:0 !important;
-    max-height:180px !important;
+    min-height:120px !important;
+    max-height:300px !important;
     overflow-y:auto !important;
     overflow-x:hidden;
     scrollbar-gutter:stable;
     overscroll-behavior:contain;
     scroll-behavior:smooth;
-    padding-bottom:0;
+    padding-bottom:4px;
 }
 </style>
 
@@ -3180,8 +3188,8 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 
 
 <style id="voice-conversation-space-improvements">
-/* Voice mode now sizes to its actual content. The inline transcript grows only
-   as conversation cards are added, up to its scrollable maximum. */
+/* Voice mode sizes to its content. The interactive conversation-card area is
+   intentionally taller now, while still scrolling for longer sessions. */
 #voice-chat-messages-log{
     flex:0 0 auto;
 }
@@ -10002,8 +10010,11 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
             if(entry.note){
                 const note=document.createElement("div");
-                note.className="voice-transcript-note";
-                note.textContent=`Teacher note: ${String(entry.note).trim()}`;
+                note.className="voice-transcript-note teacher-note-row";
+                const noteText=document.createElement("div");
+                noteText.className="flex-1";
+                noteText.textContent=`Teacher note: ${String(entry.note).trim()}`;
+                note.append(noteText,teacherNotePlayButton(entry,currentStudyLanguage));
                 block.appendChild(note);
             }
 
@@ -10150,6 +10161,35 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         });
     }
 
+    function playTeacherCorrection(entry,languageCode=currentStudyLanguage){
+        if(!entry)return;
+        const correction=String(entry.correctionAudio||"").trim();
+        const note=String(entry.note||"").trim();
+        if(correction){
+            const cfg=LANGUAGE_MODES[languageCode] || langConfig();
+            speakRawText(correction,cfg.locale);
+            return;
+        }
+        if(note) speakRawText(note,"en-US");
+    }
+
+    function teacherNotePlayButton(entry,languageCode=currentStudyLanguage){
+        const button=document.createElement("button");
+        button.type="button";
+        button.className="teacher-note-play";
+        button.textContent="🔊";
+        button.title=entry?.correctionAudio
+            ? "Play the corrected target-language phrase"
+            : "Play this teacher note";
+        button.setAttribute("aria-label",button.title);
+        button.addEventListener("click",event=>{
+            event.preventDefault();
+            event.stopPropagation();
+            playTeacherCorrection(entry,languageCode);
+        });
+        return button;
+    }
+
     function voiceTutorControlButton(label,title,handler){
         const btn=document.createElement("button");
         btn.type="button";
@@ -10279,10 +10319,13 @@ Do not add quotation marks or labels.`;
             const summary=document.createElement("summary");
             summary.className="cursor-pointer font-bold text-amber-700";
             summary.textContent="Teacher note";
+            const noteRow=document.createElement("div");
+            noteRow.className="teacher-note-row mt-1";
             const note=document.createElement("div");
-            note.className="mt-1 leading-relaxed";
+            note.className="leading-relaxed flex-1";
             note.textContent=entry.note;
-            details.append(summary,note);
+            noteRow.append(note,teacherNotePlayButton(entry,currentStudyLanguage));
+            details.append(summary,noteRow);
             wrap.appendChild(details);
         }
 
@@ -10430,7 +10473,9 @@ Important behavior:
 - Do not put pronunciation notation, markdown, bullet lists, or meta commentary in reply.
 - Put any correction/explanation in teacher_note, not in reply.
 - teacher_note should be concise English unless English help is set to target language only.
-- If no correction is needed, teacher_note must be an empty string.
+- If you correct the learner, put the exact corrected ${cfg.name} phrase or sentence in correction_audio, with no English explanation, labels, quotation marks, or pronunciation notation.
+- correction_audio is specifically for text-to-speech playback, so it must contain only natural ${cfg.name} that should be spoken aloud.
+- If no correction is needed, both teacher_note and correction_audio must be empty strings.
 - Do not invent that you heard pronunciation details; you receive a speech-to-text transcript, not raw audio.
 
 Recent conversation:
@@ -10440,7 +10485,7 @@ Latest learner utterance:
 "${userText}"
 
 Return JSON only:
-{"reply":"natural spoken response","teacher_note":"optional concise correction/explanation or empty string","reply_language":"target or en"}
+{"reply":"natural spoken response","teacher_note":"optional concise correction/explanation or empty string","correction_audio":"exact corrected target-language phrase for playback or empty string","reply_language":"target or en"}
 
 Set reply_language to "en" only when the spoken reply is primarily English; otherwise use "target".`;
     }
@@ -10451,8 +10496,9 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             const result=await callAIJson(prompt);
             const reply=String(result?.reply||"").trim();
             const note=String(result?.teacher_note||"").trim();
+            const correctionAudio=String(result?.correction_audio||"").trim();
             const replyLanguage=result?.reply_language==="en" ? "en" : "target";
-            if(reply)return {reply,note,replyLanguage};
+            if(reply)return {reply,note,correctionAudio,replyLanguage};
             throw new Error("AI returned no spoken reply.");
         }catch(jsonError){
             console.warn("Voice Tutor JSON response failed; using text fallback.",jsonError);
@@ -10713,7 +10759,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             const result=await getVoiceTutorReply(text,inputMode);
             if(!voiceTutorState.active)return;
 
-            recordVoiceTutorEntry({role:"assistant",text:result.reply,note:result.note,replyLanguage:result.replyLanguage});
+            recordVoiceTutorEntry({role:"assistant",text:result.reply,note:result.note,correctionAudio:result.correctionAudio||"",replyLanguage:result.replyLanguage});
             voiceTutorState.liveTutorText=String(result.reply||"").trim();
             renderVoiceLiveTurn();
             await speakVoiceTutorText(result.reply,result.replyLanguage);
@@ -11954,6 +12000,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             role:entry.role,
             text:String(entry.text||"").trim(),
             note:String(entry.note||"").trim(),
+            correctionAudio:String(entry.correctionAudio||"").trim(),
             inputMode:entry.inputMode||"",
             replyLanguage:entry.replyLanguage||""
         })).filter(entry=>entry.text);
@@ -12063,8 +12110,11 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             block.append(speaker,content);
             if(entry.note){
                 const note=document.createElement("div");
-                note.className="voice-transcript-note";
-                note.textContent=`Teacher note: ${entry.note}`;
+                note.className="voice-transcript-note teacher-note-row";
+                const noteText=document.createElement("div");
+                noteText.className="flex-1";
+                noteText.textContent=`Teacher note: ${entry.note}`;
+                note.append(noteText,teacherNotePlayButton(entry,selected.language||currentStudyLanguage));
                 block.appendChild(note);
             }
             body.appendChild(block);
