@@ -2168,6 +2168,127 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 }
 </style>
 
+
+<style id="language-tool-collapsible-subtools">
+.ml-subtool {
+    border:1px solid #e2e8f0;
+    border-radius:14px;
+    background:rgba(255,255,255,.86);
+    overflow:hidden;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+.ml-subtool + .ml-subtool {
+    margin-top:12px;
+}
+.ml-subtool > summary {
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:12px 14px;
+    user-select:none;
+    background:linear-gradient(135deg,#fff 0%,#fff7fb 100%);
+}
+.ml-subtool > summary::-webkit-details-marker {
+    display:none;
+}
+.ml-subtool-summary-copy {
+    min-width:0;
+}
+.ml-subtool-title {
+    font-size:.875rem;
+    line-height:1.2rem;
+    font-weight:800;
+    color:#1e293b;
+}
+.ml-subtool-description {
+    margin-top:3px;
+    font-size:.69rem;
+    line-height:.95rem;
+    color:#64748b;
+    font-weight:500;
+}
+.ml-subtool-chevron {
+    flex:0 0 auto;
+    width:26px;
+    height:26px;
+    border-radius:999px;
+    display:grid;
+    place-items:center;
+    border:1px solid #fecdd3;
+    background:#fff1f2;
+    color:#be123c;
+    font-size:14px;
+    font-weight:900;
+    transition:transform .18s ease, background .18s ease;
+}
+.ml-subtool[open] > summary .ml-subtool-chevron {
+    transform:rotate(180deg);
+    background:#ffe4e6;
+}
+.ml-subtool-body {
+    padding:12px 14px 14px;
+    border-top:1px solid #f1f5f9;
+}
+@media (max-width:640px) {
+    .ml-subtool > summary {
+        padding:10px 11px;
+    }
+    .ml-subtool-title {
+        font-size:.82rem;
+    }
+    .ml-subtool-description {
+        font-size:.65rem;
+        line-height:.88rem;
+    }
+    .ml-subtool-body {
+        padding:10px 11px 12px;
+    }
+}
+</style>
+
+
+<style id="collapsible-explanation-charts">
+.ml-reference-fold {
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    overflow:hidden;
+    background:#fff;
+}
+.ml-reference-fold > summary {
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:9px 11px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:.72rem;
+    line-height:1rem;
+    font-weight:800;
+    user-select:none;
+}
+.ml-reference-fold > summary::-webkit-details-marker { display:none; }
+.ml-reference-fold > summary::after {
+    content:"⌄";
+    width:22px;
+    height:22px;
+    display:grid;
+    place-items:center;
+    flex:0 0 auto;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    transition:transform .18s ease;
+}
+.ml-reference-fold[open] > summary::after { transform:rotate(180deg); }
+.ml-reference-fold-body { padding:10px 11px 12px; }
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -9660,41 +9781,61 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             ],
             panels:{
                 forms:`
-                <div class="ml-panel space-y-4">
-                  <div>
-                    <div class="text-sm font-bold text-slate-800">Japanese Verb Form Helper</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Enter a dictionary-form verb. Common ichidan, godan, and irregular patterns are handled locally.</p>
-                  </div>
-                  <div class="ml-helper-card space-y-3">
-                    <label class="ml-field">Dictionary form<input id="ja-verb-input" class="ml-input" value="食べる" placeholder="食べる / taberu / eat"></label>
-                    <div class="text-[10px] text-slate-500">Uses the <strong>Japanese grammar input</strong> mode above.</div>
-                    <button class="ml-action" onclick="runJapaneseVerbTool(this)">Show forms</button>
-                    <div id="ja-verb-status" class="text-[11px] text-slate-500"></div>
-                  </div>
-                  <div id="ja-verb-result" class="hidden ml-helper-result"></div>
+                <div class="ml-panel space-y-3">
 
-                  <div class="grammar-topic-divider"></div>
-                  <div>
-                    <div class="text-sm font-bold text-slate-800">Adjective Form Helper</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Practice present, negative, past, and past-negative forms of い- and な-adjectives.</p>
-                  </div>
-                  <div class="ml-helper-card space-y-3">
-                    <label class="ml-field">Adjective<input id="ja-adj-input" class="ml-input" value="高い" placeholder="高い / takai / high"></label>
-                    <label class="ml-field">Type<select id="ja-adj-type" class="ml-input"><option value="i">い-adjective</option><option value="na">な-adjective</option></select></label>
-                    <div class="text-[10px] text-slate-500">Uses the <strong>Japanese grammar input</strong> mode above.</div>
-                    <button type="button" class="ml-action" onclick="renderJapaneseAdjective(this)">Show adjective forms</button>
-                  </div>
-                  <div id="ja-adj-result" class="ml-helper-result"></div>
+                  <details class="ml-subtool" open>
+                    <summary>
+                      <div class="ml-subtool-summary-copy">
+                        <div class="ml-subtool-title">Japanese Verb Form Helper</div>
+                        <div class="ml-subtool-description">Dictionary-form verbs → common ichidan, godan, and irregular forms</div>
+                      </div>
+                      <span class="ml-subtool-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div class="ml-subtool-body space-y-3">
+                      <div class="ml-helper-card space-y-3">
+                        <label class="ml-field">Dictionary form<input id="ja-verb-input" class="ml-input" value="食べる" placeholder="食べる / taberu / eat"></label>
+                        <div class="text-[10px] text-slate-500">Uses the <strong>Japanese grammar input</strong> mode above.</div>
+                        <button class="ml-action" onclick="runJapaneseVerbTool(this)">Show forms</button>
+                        <div id="ja-verb-status" class="text-[11px] text-slate-500"></div>
+                      </div>
+                      <div id="ja-verb-result" class="hidden ml-helper-result"></div>
+                    </div>
+                  </details>
+
+                  <details class="ml-subtool">
+                    <summary>
+                      <div class="ml-subtool-summary-copy">
+                        <div class="ml-subtool-title">Adjective Form Helper</div>
+                        <div class="ml-subtool-description">Practice present, negative, past, and past-negative い / な forms</div>
+                      </div>
+                      <span class="ml-subtool-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div class="ml-subtool-body space-y-3">
+                      <div class="ml-helper-card space-y-3">
+                        <label class="ml-field">Adjective<input id="ja-adj-input" class="ml-input" value="高い" placeholder="高い / takai / high"></label>
+                        <label class="ml-field">Type<select id="ja-adj-type" class="ml-input"><option value="i">い-adjective</option><option value="na">な-adjective</option></select></label>
+                        <div class="text-[10px] text-slate-500">Uses the <strong>Japanese grammar input</strong> mode above.</div>
+                        <button type="button" class="ml-action" onclick="renderJapaneseAdjective(this)">Show adjective forms</button>
+                      </div>
+                      <div id="ja-adj-result" class="ml-helper-result"></div>
+                    </div>
+                  </details>
+
                   <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese verb and adjective forms','ja-verb-result',this)">✨ Ask AI about these forms</button>
                   <div id="ai-ja-verb-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
                 particles:`
                 <div class="ml-panel space-y-4">
-                  <div>
-                    <div class="text-sm font-bold text-slate-800">Particle Explorer</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Particles mark the role or discourse function of the phrase before them.</p>
-                  </div>
-                  <div class="ml-helper-card">
+                  <details class="ml-subtool" open>
+                    <summary>
+                      <div class="ml-subtool-summary-copy">
+                        <div class="ml-subtool-title">Particle Explorer</div>
+                        <div class="ml-subtool-description">Explore common Japanese particles and how they function</div>
+                      </div>
+                      <span class="ml-subtool-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div class="ml-subtool-body space-y-3">
+<div class="ml-helper-card">
                     <label class="ml-field">Particle
                       <select id="ja-particle" class="ml-input" onchange="renderJapaneseParticle()">
                         <option value="は">は — topic</option><option value="が">が — subject/focus</option>
@@ -9726,13 +9867,19 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     <button type="button" class="px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="translateGrammarOutput('ja-particle-practice-result','ja',this)">Translate practice sentence</button>
                   </div>
                   <div id="ja-particle-practice-result-translation" class="hidden grammar-section-ai-result"></div>
+                    </div>
+                  </details>
 
-                  <div class="grammar-topic-divider"></div>
-                  <div>
-                    <div class="text-sm font-bold text-slate-800">Sentence Role → Particle</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Choose what a phrase is doing in the sentence.</p>
-                  </div>
-                  <div class="ml-helper-card">
+                  <details class="ml-subtool">
+                    <summary>
+                      <div class="ml-subtool-summary-copy">
+                        <div class="ml-subtool-title">Sentence Role → Particle</div>
+                        <div class="ml-subtool-description">Choose a sentence role and see which particle usually marks it</div>
+                      </div>
+                      <span class="ml-subtool-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div class="ml-subtool-body space-y-3">
+<div class="ml-helper-card">
                     <label class="ml-field">Role
                       <select id="ja-role" class="ml-input" onchange="renderJapaneseRole()">
                         <option value="topic">topic → は</option><option value="subject">subject / new focus → が</option>
@@ -9744,14 +9891,19 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     </label>
                   </div>
                   <div id="ja-role-result" class="ml-helper-result"></div>
+                    </div>
+                  </details>
 
-                  <div class="grammar-topic-divider"></div>
-                  <div>
-                    <div class="text-sm font-bold text-slate-800">Particle Swap Lab</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Keep the same word or phrase and swap the particle. The lab shows what relationship each particle would signal and how the phrase changes.</p>
-                  </div>
-
-                  <div class="ml-helper-card space-y-3">
+                  <details class="ml-subtool">
+                    <summary>
+                      <div class="ml-subtool-summary-copy">
+                        <div class="ml-subtool-title">Particle Swap Lab</div>
+                        <div class="ml-subtool-description">Compare how meaning changes when particles are swapped</div>
+                      </div>
+                      <span class="ml-subtool-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div class="ml-subtool-body space-y-3">
+<div class="ml-helper-card space-y-3">
                     <div class="text-[10px] text-slate-500">Free-text inputs use the <strong>Japanese grammar input</strong> mode above.</div>
 
                     <label class="ml-field">Word / phrase
@@ -9793,6 +9945,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                   </div>
                   <div id="ja-particle-swap-result-translation" class="hidden grammar-section-ai-result"></div>
                   <div id="ai-ja-particle-swap-result" class="grammar-section-ai-result hidden"></div>
+                    </div>
+                  </details>
 
                   <div class="grammar-topic-divider"></div>
                   <div>
@@ -9920,7 +10074,10 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                   <div id="ja-kana-result" class="ml-helper-result"></div>
 
 
-                  <div class="ml-helper-card">
+                  <details class="ml-reference-fold">
+  <summary>Hepburn Romaji reminders</summary>
+  <div class="ml-reference-fold-body">
+<div class="ml-helper-card">
                     <div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Useful Hepburn reminders</div>
                     <div class="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-700">
                       <span>し → shi</span><span>ち → chi</span><span>つ → tsu</span>
@@ -9928,6 +10085,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                       <span>じ → ji</span><span>りょ → ryo</span><span>っ → doubles next consonant</span>
                     </div>
                   </div>
+  </div>
+</details>
                 </div>`,
                 kanji:`
                 <div class="ml-panel space-y-4">
@@ -9980,12 +10139,17 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                   <div id="ja-counter-result" class="ml-helper-result"></div>
 
                   <div class="grammar-topic-divider"></div>
-                  <div class="ml-helper-card">
+                  <details class="ml-reference-fold">
+  <summary>Counter pronunciation guide</summary>
+  <div class="ml-reference-fold-body">
+<div class="ml-helper-card">
                     <div class="text-sm font-bold text-slate-800">Counter pronunciation</div>
                     <p class="text-[11px] text-slate-600 mt-2">Counter readings often change sound through contraction or consonant doubling, so the helper shows kanji, hiragana, and romaji together.</p>
                   </div>
                   <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese counters and readings','ja-counter-result',this)">✨ Ask AI about this counter</button>
                   <div id="ai-ja-counter-result" class="grammar-section-ai-result hidden"></div>
+  </div>
+</details>
                 </div>`,
                 politeness:`
                 <div class="ml-panel space-y-4">
@@ -10001,7 +10165,10 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                   <div id="ja-register-result" class="ml-helper-result"></div>
 
                   <div class="grammar-topic-divider"></div>
-                  <div class="ml-helper-card">
+                  <details class="ml-reference-fold">
+  <summary>Common register patterns</summary>
+  <div class="ml-reference-fold-body">
+<div class="ml-helper-card">
                     <div class="text-sm font-bold text-slate-800">Common register patterns</div>
                     <div class="mt-3 space-y-2 text-[12px] text-slate-700">
                       <div><strong>Noun / な-adjective plain:</strong> 学生だ。 / 静かだ。</div>
@@ -10013,6 +10180,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                   </div>
                   <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese politeness and register','ja-register-result',this)">✨ Ask AI about register</button>
                   <div id="ai-ja-register-result" class="grammar-section-ai-result hidden"></div>
+  </div>
+</details>
                 </div>`
             }
         };
@@ -10024,23 +10193,29 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         if(!host || currentStudyLanguage==="de") return;
         const cfg=langConfig();
         host.innerHTML=`
-          <div class="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Quick Translation</div>
-                <div class="text-[10px] text-slate-400">Explicit translation helper — no AI is called automatically.</div>
+          <details class="ml-subtool">
+            <summary>
+              <div class="ml-subtool-summary-copy">
+                <div class="ml-subtool-title">Quick Translation</div>
+                <div class="ml-subtool-description">English ↔ ${escapeML(cfg.name)} word or short-phrase translation</div>
               </div>
-              <select id="ml-grammar-translate-direction" class="ml-input !w-auto">
-                <option value="en-target">English → ${escapeML(cfg.name)}</option>
-                <option value="target-en">${escapeML(cfg.name)} → English</option>
-              </select>
+              <span class="ml-subtool-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="ml-subtool-body space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="text-[10px] text-slate-400">Explicit translation helper — no AI is called automatically.</div>
+                <select id="ml-grammar-translate-direction" class="ml-input !w-auto">
+                  <option value="en-target">English → ${escapeML(cfg.name)}</option>
+                  <option value="target-en">${escapeML(cfg.name)} → English</option>
+                </select>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input id="ml-grammar-translate-input" class="ml-input flex-1" placeholder="Type a word or short phrase">
+                <button type="button" class="ml-action shrink-0" onclick="runGrammarQuickTranslation(this)">Translate</button>
+              </div>
+              <div id="ml-grammar-translate-result" class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800"></div>
             </div>
-            <div class="flex flex-col sm:flex-row gap-2">
-              <input id="ml-grammar-translate-input" class="ml-input flex-1" placeholder="Type a word or short phrase">
-              <button type="button" class="ml-action shrink-0" onclick="runGrammarQuickTranslation(this)">Translate</button>
-            </div>
-            <div id="ml-grammar-translate-result" class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800"></div>
-          </div>
+          </details>
           ${currentStudyLanguage==="ja" ? `
           <div class="rounded-xl border border-rose-100 bg-rose-50/60 p-3 space-y-2">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
