@@ -2912,6 +2912,72 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
         padding:12px;
     }
 }
+
+#text-transcript-window[hidden],#saved-transcripts-window[hidden]{display:none!important}
+#text-transcript-window,#saved-transcripts-window{
+    position:fixed;
+    left:56px;
+    top:66px;
+    width:min(860px,calc(100vw - 80px));
+    height:min(760px,calc(100vh - 108px));
+    min-width:480px;
+    min-height:320px;
+    max-width:calc(100vw - 16px);
+    max-height:calc(100vh - 16px);
+    resize:both;
+    overflow:hidden;
+    z-index:10025;
+    border:1px solid #cbd5e1;
+    border-radius:15px;
+    background:#fff;
+    box-shadow:0 20px 55px rgba(15,23,42,.22);
+}
+#saved-transcripts-window{left:78px;top:78px;z-index:10030}
+#text-transcript-window.collapsed,#saved-transcripts-window.collapsed{
+    height:48px!important;min-height:48px!important;resize:none;
+}
+#text-transcript-window.collapsed .voice-transcript-toolbar,
+#text-transcript-window.collapsed .voice-transcript-body,
+#saved-transcripts-window.collapsed .saved-transcripts-layout{display:none}
+.saved-transcripts-layout{
+    height:calc(100% - 48px);
+    display:grid;
+    grid-template-columns:280px minmax(0,1fr);
+    min-height:0;
+}
+.saved-transcript-list{
+    overflow:auto;
+    padding:10px;
+    border-right:1px solid #e2e8f0;
+    background:#f8fafc;
+}
+.saved-transcript-list-item{
+    width:100%;display:block;text-align:left;padding:9px 10px;margin-bottom:7px;
+    border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#475569;
+    font-size:10px;line-height:1.35;font-weight:700;
+}
+.saved-transcript-list-item.active{border-color:#a5b4fc;background:#eef2ff;color:#3730a3}
+.saved-transcript-empty{padding:16px 8px;color:#94a3b8;font-size:11px;text-align:center}
+.saved-transcript-body{overflow:auto;padding:14px;background:#fff}
+.saved-transcript-detail-head{
+    display:flex;justify-content:space-between;gap:12px;align-items:flex-start;
+    margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid #e2e8f0;
+    color:#334155;font-size:11px;
+}
+.saved-transcript-detail-head span{color:#94a3b8;font-size:9px}
+.saved-transcript-detail-head button{
+    padding:6px 9px;border:1px solid #fecaca;border-radius:8px;background:#fff1f2;
+    color:#be123c;font-size:10px;font-weight:800;
+}
+@media(max-width:640px){
+    #text-transcript-window,#saved-transcripts-window{
+        left:8px!important;top:auto!important;bottom:8px;
+        width:calc(100vw - 16px)!important;height:min(70vh,620px);
+        min-width:0;min-height:220px;max-width:none;max-height:calc(100vh - 16px);resize:none;
+    }
+    .saved-transcripts-layout{grid-template-columns:1fr;grid-template-rows:150px minmax(0,1fr)}
+    .saved-transcript-list{border-right:0;border-bottom:1px solid #e2e8f0}
+}
 </style>
 
 <style id="voice-inline-transcript-height">
@@ -3692,7 +3758,19 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                         </div>
                     </div>
 
-                    <div class="border-t border-slate-100 pt-3 flex gap-2 shrink-0">
+                    <div class="shrink-0 flex items-start justify-between gap-3 border-t border-slate-100 pt-3 mb-2">
+                        <div class="min-w-0">
+                            <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Text conversation transcript</div>
+                            <div class="text-[9px] text-slate-400">Open the full text chat in a movable window or save a snapshot for later.</div>
+                        </div>
+                        <div class="shrink-0 flex flex-wrap gap-2 justify-end">
+                            <button type="button" onclick="openTextTranscriptWindow()" class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">↗ Open transcript</button>
+                            <button type="button" onclick="saveCurrentTutorTranscript('text',this)" class="min-h-[36px] px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
+                            <button type="button" onclick="openSavedTutorTranscripts()" class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">🗂 Saved</button>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 shrink-0">
                         <input type="text" id="chat-user-input" class="flex-grow min-w-0 px-3 py-2 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg text-sm sm:text-xs placeholder-slate-400 text-slate-700 font-medium" placeholder="Ask your AI tutor a question..." onkeydown="handleChatKeyPress(event)">
                         <button type="button" onclick="sendChatMessage()" class="min-w-[44px] min-h-[44px] p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shrink-0 flex items-center justify-center" title="Send">
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>
@@ -3814,11 +3892,15 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                             <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Conversation transcript</div>
                             <div class="text-[9px] text-slate-400">Recognized speech and the tutor's spoken replies are kept here for this conversation.</div>
                         </div>
-                        <button type="button" id="voice-open-transcript-btn" onclick="openVoiceTranscriptWindow()"
-                            class="shrink-0 min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition"
-                            title="Open the conversation in a movable transcript window">
-                            ↗ Open transcript
-                        </button>
+                        <div class="shrink-0 flex flex-wrap gap-2 justify-end">
+                            <button type="button" id="voice-open-transcript-btn" onclick="openVoiceTranscriptWindow()"
+                                class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition"
+                                title="Open the conversation in a movable transcript window">↗ Open transcript</button>
+                            <button type="button" onclick="saveCurrentTutorTranscript('voice',this)"
+                                class="min-h-[36px] px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
+                            <button type="button" onclick="openSavedTutorTranscripts()"
+                                class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">🗂 Saved</button>
+                        </div>
                     </div>
 
                     <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-2 overscroll-contain" aria-live="polite">
@@ -9627,6 +9709,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     const voiceTutorHistories = {de:[],es:[],ja:[]};
     const textTutorHistories = {de:[],es:[],ja:[]};
     const textTutorBusy = {de:false,es:false,ja:false};
+    const SAVED_TUTOR_TRANSCRIPTS_KEY = "languagetutor_saved_tutor_transcripts_v1";
 
     const voiceTutorState = {
         active:false,
@@ -11777,7 +11860,246 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
 
         log.scrollTop=log.scrollHeight;
+        const transcriptWindow=document.getElementById("text-transcript-window");
+        if(transcriptWindow && !transcriptWindow.hidden) renderTextTranscriptWindow();
     }
+
+    function textTutorHistory(){
+        return textTutorHistories[currentStudyLanguage] || [];
+    }
+
+    function renderTextTranscriptWindow(){
+        const body=document.getElementById("text-transcript-window-body");
+        const title=document.getElementById("text-transcript-window-title");
+        if(!body)return;
+
+        const languageName=langConfig().name;
+        const history=textTutorHistory();
+        if(title)title.textContent=`${languageName} text conversation transcript`;
+        body.innerHTML="";
+
+        if(!history.length){
+            const empty=document.createElement("div");
+            empty.className="text-sm text-slate-400 italic";
+            empty.textContent="No text conversation has been recorded yet.";
+            body.appendChild(empty);
+            return;
+        }
+
+        history.forEach(entry=>{
+            const block=document.createElement("div");
+            block.className="voice-transcript-entry";
+
+            const speaker=document.createElement("div");
+            speaker.className="voice-transcript-speaker";
+            speaker.textContent=entry.role==="user" ? "You" : `${languageName} Text Tutor`;
+
+            const content=document.createElement("div");
+            content.className="voice-transcript-text";
+            if(entry.role==="user") content.textContent=String(entry.text||"").trim();
+            else renderTutorMarkdown(content,String(entry.text||"").trim());
+
+            block.append(speaker,content);
+            body.appendChild(block);
+        });
+        body.scrollTop=body.scrollHeight;
+    }
+
+    window.openTextTranscriptWindow=function(){
+        const win=document.getElementById("text-transcript-window");
+        if(!win)return;
+        renderTextTranscriptWindow();
+        win.hidden=false;
+        win.classList.remove("collapsed");
+        const btn=document.getElementById("text-transcript-collapse-btn");
+        if(btn)btn.textContent="—";
+    };
+
+    window.closeTextTranscriptWindow=function(){
+        const win=document.getElementById("text-transcript-window");
+        if(win)win.hidden=true;
+    };
+
+    window.toggleTextTranscriptCollapse=function(){
+        const win=document.getElementById("text-transcript-window");
+        if(!win)return;
+        const collapsed=win.classList.toggle("collapsed");
+        const btn=document.getElementById("text-transcript-collapse-btn");
+        if(btn)btn.textContent=collapsed ? "□" : "—";
+    };
+
+    window.refreshTextTranscriptWindow=function(){
+        renderTextTranscriptWindow();
+    };
+
+    function readSavedTutorTranscripts(){
+        try{
+            const parsed=JSON.parse(safeStorageGet(SAVED_TUTOR_TRANSCRIPTS_KEY)||"[]");
+            return Array.isArray(parsed) ? parsed : [];
+        }catch(e){
+            return [];
+        }
+    }
+
+    function writeSavedTutorTranscripts(items){
+        safeStorageSet(SAVED_TUTOR_TRANSCRIPTS_KEY,JSON.stringify(items.slice(0,100)));
+    }
+
+    function transcriptSnapshot(mode){
+        const language=currentStudyLanguage;
+        const cfg=langConfig();
+        const raw=mode==="voice" ? voiceTutorHistory() : textTutorHistory();
+        const entries=(raw||[]).map(entry=>({
+            role:entry.role,
+            text:String(entry.text||"").trim(),
+            note:String(entry.note||"").trim(),
+            inputMode:entry.inputMode||"",
+            replyLanguage:entry.replyLanguage||""
+        })).filter(entry=>entry.text);
+
+        if(!entries.length)return null;
+
+        return {
+            id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+            savedAt:new Date().toISOString(),
+            language,
+            languageName:cfg.name,
+            mode:mode==="voice" ? "voice" : "text",
+            entries
+        };
+    }
+
+    window.saveCurrentTutorTranscript=function(mode,button){
+        const snapshot=transcriptSnapshot(mode);
+        if(!snapshot){
+            if(button){
+                const original=button.textContent;
+                button.textContent="Nothing to save";
+                setTimeout(()=>button.textContent=original,1200);
+            }
+            return;
+        }
+
+        const items=readSavedTutorTranscripts();
+        items.unshift(snapshot);
+        writeSavedTutorTranscripts(items);
+        renderSavedTutorTranscripts();
+
+        if(button){
+            const original=button.textContent;
+            button.textContent="✓ Saved";
+            setTimeout(()=>button.textContent=original,1200);
+        }
+    };
+
+    function savedTranscriptLabel(item){
+        const dt=new Date(item.savedAt);
+        const when=Number.isNaN(dt.getTime()) ? "Saved transcript" : dt.toLocaleString();
+        return `${item.languageName||item.language||"Language"} • ${item.mode==="voice"?"Voice":"Text"} • ${when}`;
+    }
+
+    function renderSavedTutorTranscripts(selectedId=""){
+        const list=document.getElementById("saved-transcript-list");
+        const body=document.getElementById("saved-transcript-body");
+        if(!list || !body)return;
+
+        const items=readSavedTutorTranscripts();
+        list.replaceChildren();
+
+        if(!items.length){
+            const empty=document.createElement("div");
+            empty.className="saved-transcript-empty";
+            empty.textContent="No saved transcripts yet.";
+            list.appendChild(empty);
+            body.innerHTML='<div class="text-sm text-slate-400 italic">Save a Text or Voice Tutor conversation and it will appear here on this browser.</div>';
+            return;
+        }
+
+        const activeId=selectedId || list.dataset.selectedId || items[0].id;
+        list.dataset.selectedId=activeId;
+
+        items.forEach(item=>{
+            const row=document.createElement("button");
+            row.type="button";
+            row.className="saved-transcript-list-item"+(item.id===activeId?" active":"");
+            row.textContent=savedTranscriptLabel(item);
+            row.addEventListener("click",()=>{
+                list.dataset.selectedId=item.id;
+                renderSavedTutorTranscripts(item.id);
+            });
+            list.appendChild(row);
+        });
+
+        const selected=items.find(item=>item.id===activeId) || items[0];
+        list.dataset.selectedId=selected.id;
+        body.replaceChildren();
+
+        const head=document.createElement("div");
+        head.className="saved-transcript-detail-head";
+        const title=document.createElement("div");
+        title.innerHTML=`<strong>${escapeML(selected.languageName||selected.language||"Language")} ${selected.mode==="voice"?"Voice":"Text"} Tutor</strong><br><span>${escapeML(savedTranscriptLabel(selected))}</span>`;
+        const del=document.createElement("button");
+        del.type="button";
+        del.textContent="Delete";
+        del.addEventListener("click",()=>window.deleteSavedTutorTranscript(selected.id));
+        head.append(title,del);
+        body.appendChild(head);
+
+        selected.entries.forEach(entry=>{
+            const block=document.createElement("div");
+            block.className="voice-transcript-entry";
+            const speaker=document.createElement("div");
+            speaker.className="voice-transcript-speaker";
+            if(entry.role==="user"){
+                speaker.textContent=entry.inputMode==="english" ? "You • English" : "You";
+            }else{
+                speaker.textContent=`${selected.languageName||"Language"} ${selected.mode==="voice"?"Voice":"Text"} Tutor`;
+            }
+            const content=document.createElement("div");
+            content.className="voice-transcript-text";
+            if(entry.role==="user")content.textContent=entry.text;
+            else renderTutorMarkdown(content,entry.text);
+            block.append(speaker,content);
+            if(entry.note){
+                const note=document.createElement("div");
+                note.className="voice-transcript-note";
+                note.textContent=`Teacher note: ${entry.note}`;
+                block.appendChild(note);
+            }
+            body.appendChild(block);
+        });
+    }
+
+    window.openSavedTutorTranscripts=function(){
+        const win=document.getElementById("saved-transcripts-window");
+        if(!win)return;
+        renderSavedTutorTranscripts();
+        win.hidden=false;
+        win.classList.remove("collapsed");
+        const btn=document.getElementById("saved-transcripts-collapse-btn");
+        if(btn)btn.textContent="—";
+    };
+
+    window.closeSavedTutorTranscripts=function(){
+        const win=document.getElementById("saved-transcripts-window");
+        if(win)win.hidden=true;
+    };
+
+    window.toggleSavedTutorTranscriptsCollapse=function(){
+        const win=document.getElementById("saved-transcripts-window");
+        if(!win)return;
+        const collapsed=win.classList.toggle("collapsed");
+        const btn=document.getElementById("saved-transcripts-collapse-btn");
+        if(btn)btn.textContent=collapsed ? "□" : "—";
+    };
+
+    window.deleteSavedTutorTranscript=function(id){
+        const items=readSavedTutorTranscripts().filter(item=>item.id!==id);
+        writeSavedTutorTranscripts(items);
+        const list=document.getElementById("saved-transcript-list");
+        if(list)list.dataset.selectedId="";
+        renderSavedTutorTranscripts();
+    };
 
     const SPECIAL_CHARACTER_SETS={
         de:["ä","ö","ü","Ä","Ö","Ü","ß"],
@@ -14611,7 +14933,7 @@ Use English, no more than 4 short sentences, plain text only.`;
         const cfg=LANGUAGE_MODES[requestLang];
         const history=textTutorHistories[requestLang];
         history.push({role:"user",text:userText});
-        if(history.length>30)history.splice(0,history.length-30);
+        if(history.length>200)history.splice(0,history.length-200);
 
         inputEl.value="";
         textTutorBusy[requestLang]=true;
@@ -14639,7 +14961,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
             const response=String(await callAI(parts.join("\n\n"))).trim();
             history.push({role:"model",text:response});
-            if(history.length>30)history.splice(0,history.length-30);
+            if(history.length>200)history.splice(0,history.length-200);
         }catch(e){
             console.error("Text Tutor request failed:",e);
             if(currentStudyLanguage===requestLang){
@@ -15468,6 +15790,45 @@ Current work: ${context||"No sentence has been entered yet."}`;
 })();
 </script>
 
+<div id="text-transcript-window" hidden aria-label="Text conversation transcript window">
+    <div id="text-transcript-drag-handle" class="voice-transcript-titlebar">
+        <div class="voice-transcript-titlecopy">
+            <div id="text-transcript-window-title" class="voice-transcript-window-title">Text conversation transcript</div>
+            <div class="voice-transcript-window-subtitle">A movable, selectable view of your AI text conversation.</div>
+        </div>
+        <div class="voice-transcript-window-actions">
+            <button type="button" id="text-transcript-collapse-btn" onclick="toggleTextTranscriptCollapse()" title="Collapse transcript">—</button>
+            <button type="button" onclick="closeTextTranscriptWindow()" title="Close transcript">×</button>
+        </div>
+    </div>
+    <div class="voice-transcript-toolbar">
+        <span class="voice-transcript-toolbar-note">Text is selectable. Drag or resize this window on desktop.</span>
+        <div class="flex gap-2">
+            <button type="button" onclick="saveCurrentTutorTranscript('text',this)">💾 Save</button>
+            <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
+            <button type="button" onclick="refreshTextTranscriptWindow()">↻ Refresh</button>
+        </div>
+    </div>
+    <div id="text-transcript-window-body" class="voice-transcript-body"></div>
+</div>
+
+<div id="saved-transcripts-window" hidden aria-label="Saved tutor transcripts">
+    <div id="saved-transcripts-drag-handle" class="voice-transcript-titlebar">
+        <div class="voice-transcript-titlecopy">
+            <div class="voice-transcript-window-title">Saved Tutor Transcripts</div>
+            <div class="voice-transcript-window-subtitle">Saved locally in this browser for later review.</div>
+        </div>
+        <div class="voice-transcript-window-actions">
+            <button type="button" id="saved-transcripts-collapse-btn" onclick="toggleSavedTutorTranscriptsCollapse()" title="Collapse saved transcripts">—</button>
+            <button type="button" onclick="closeSavedTutorTranscripts()" title="Close saved transcripts">×</button>
+        </div>
+    </div>
+    <div class="saved-transcripts-layout">
+        <div id="saved-transcript-list" class="saved-transcript-list"></div>
+        <div id="saved-transcript-body" class="saved-transcript-body"></div>
+    </div>
+</div>
+
 <div id="voice-transcript-window" hidden aria-label="Voice conversation transcript window">
     <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
         <div class="voice-transcript-titlecopy">
@@ -15481,7 +15842,11 @@ Current work: ${context||"No sentence has been entered yet."}`;
     </div>
     <div class="voice-transcript-toolbar">
         <span class="voice-transcript-toolbar-note">Text is selectable. Drag or resize this window on desktop.</span>
-        <button type="button" onclick="refreshVoiceTranscriptWindow()">↻ Refresh</button>
+        <div class="flex gap-2">
+            <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
+            <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
+            <button type="button" onclick="refreshVoiceTranscriptWindow()">↻ Refresh</button>
+        </div>
     </div>
     <div id="voice-transcript-window-body" class="voice-transcript-body"></div>
 </div>
@@ -15489,8 +15854,44 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
 <script id="voice-transcript-window-init">
 (function(){
+    function bindDrag(winId,handleId){
+        const win=document.getElementById(winId);
+        const handle=document.getElementById(handleId);
+        if(!win || !handle || handle.dataset.genericDragReady==="1")return;
+        handle.dataset.genericDragReady="1";
+        let dragging=false, pointerId=null, offsetX=0, offsetY=0;
+
+        handle.addEventListener("pointerdown",ev=>{
+            if(window.matchMedia("(max-width:640px)").matches)return;
+            if(ev.target.closest("button"))return;
+            dragging=true;
+            pointerId=ev.pointerId;
+            const rect=win.getBoundingClientRect();
+            offsetX=ev.clientX-rect.left;
+            offsetY=ev.clientY-rect.top;
+            try{handle.setPointerCapture(pointerId)}catch(e){}
+        });
+        handle.addEventListener("pointermove",ev=>{
+            if(!dragging || ev.pointerId!==pointerId)return;
+            const maxLeft=Math.max(8,window.innerWidth-win.offsetWidth-8);
+            const maxTop=Math.max(8,window.innerHeight-win.offsetHeight-8);
+            win.style.left=Math.min(maxLeft,Math.max(8,ev.clientX-offsetX))+"px";
+            win.style.top=Math.min(maxTop,Math.max(8,ev.clientY-offsetY))+"px";
+            win.style.bottom="auto";
+        });
+        const stop=ev=>{
+            if(!dragging || (ev && pointerId!==null && ev.pointerId!==pointerId))return;
+            dragging=false;
+            pointerId=null;
+        };
+        handle.addEventListener("pointerup",stop);
+        handle.addEventListener("pointercancel",stop);
+    }
+
     function init(){
         if(typeof initVoiceTranscriptDragging==="function") initVoiceTranscriptDragging();
+        bindDrag("text-transcript-window","text-transcript-drag-handle");
+        bindDrag("saved-transcripts-window","saved-transcripts-drag-handle");
     }
     if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init);
     else init();
