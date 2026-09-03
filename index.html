@@ -2945,7 +2945,22 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 .special-character-key:hover{background:#eef2ff;border-color:#a5b4fc}
 #special-character-palette.is-collapsed .special-character-body{display:none}
 #special-character-palette.is-collapsed{width:min(320px,calc(100vw - 24px))}
-@media(max-width:640px){#special-character-palette{width:calc(100vw - 20px);left:10px;right:10px;top:auto;bottom:12px;transform:none!important}.special-character-titlebar{cursor:default;touch-action:auto}.special-character-grid{grid-template-columns:repeat(5,minmax(0,1fr))}.special-character-key{min-height:46px;font-size:21px}}
+@media(max-width:640px){
+    #special-character-palette{
+        width:min(360px,calc(100vw - 20px));
+        left:10px;
+        top:120px;
+        right:auto;
+        bottom:auto;
+        transform:none!important;
+    }
+    .special-character-titlebar{
+        cursor:move;
+        touch-action:none;
+    }
+    .special-character-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+    .special-character-key{min-height:46px;font-size:21px}
+}
 </style>
 
 <style id="grammar-tool-semantic-colors">
@@ -11738,9 +11753,34 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         if(!specialCharacterLastInput || !document.contains(specialCharacterLastInput)) specialCharacterLastInput=specialCharacterDefaultInput();
         renderSpecialCharacterPalette();
         const palette=document.getElementById("special-character-palette");
-        if(palette){palette.hidden=false;palette.classList.remove("is-collapsed");const b=document.getElementById("special-character-collapse-btn");if(b)b.textContent="—"}
+        if(palette){
+            palette.hidden=false;
+            palette.classList.remove("is-collapsed");
+            const b=document.getElementById("special-character-collapse-btn");
+            if(b)b.textContent="—";
+
+            const rect=palette.getBoundingClientRect();
+            const outside=rect.right<8 || rect.left>window.innerWidth-8 || rect.bottom<8 || rect.top>window.innerHeight-8;
+            if(outside) resetSpecialCharacterPalettePosition();
+        }
     };
     window.closeSpecialCharacterPalette=function(){const p=document.getElementById("special-character-palette");if(p)p.hidden=true};
+
+    window.resetSpecialCharacterPalettePosition=function(){
+        const p=document.getElementById("special-character-palette");
+        if(!p)return;
+        p.style.right="auto";
+        p.style.bottom="auto";
+        p.style.transform="none";
+        if(window.innerWidth<=640){
+            p.style.left="10px";
+            p.style.top="120px";
+        }else{
+            const width=Math.min(390,Math.max(260,window.innerWidth-24));
+            p.style.left=`${Math.max(12,(window.innerWidth-width)/2)}px`;
+            p.style.top="150px";
+        }
+    };
     window.toggleSpecialCharacterCollapse=function(){
         const p=document.getElementById("special-character-palette");if(!p)return;
         const collapsed=p.classList.toggle("is-collapsed");
@@ -11762,24 +11802,64 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     };
     function initSpecialCharacterPalette(){
         document.addEventListener("focusin",rememberSpecialCharacterInput);
+
         const palette=document.getElementById("special-character-palette");
         const handle=document.getElementById("special-character-drag-handle");
-        if(!palette || !handle)return;
-        const start=(x,y)=>{
-            if(window.matchMedia("(max-width:640px)").matches)return;
+        if(!palette || !handle || handle.dataset.dragReady==="1")return;
+        handle.dataset.dragReady="1";
+
+        let pointerId=null;
+
+        function preparePositionForDrag(){
             const rect=palette.getBoundingClientRect();
-            palette.style.transform="none";palette.style.left=`${rect.left}px`;palette.style.top=`${rect.top}px`;
-            specialCharacterDragOffset={x:x-rect.left,y:y-rect.top};specialCharacterDragging=true;
-        };
-        const move=(x,y)=>{
+            palette.style.transform="none";
+            palette.style.right="auto";
+            palette.style.bottom="auto";
+            palette.style.left=`${rect.left}px`;
+            palette.style.top=`${rect.top}px`;
+            return rect;
+        }
+
+        handle.addEventListener("pointerdown",event=>{
+            if(event.target.closest("button"))return;
+            const rect=preparePositionForDrag();
+            specialCharacterDragging=true;
+            pointerId=event.pointerId;
+            specialCharacterDragOffset={
+                x:event.clientX-rect.left,
+                y:event.clientY-rect.top
+            };
+            try{handle.setPointerCapture(pointerId)}catch(e){}
+            event.preventDefault();
+        });
+
+        handle.addEventListener("pointermove",event=>{
+            if(!specialCharacterDragging || event.pointerId!==pointerId)return;
+
+            const maxX=Math.max(8,window.innerWidth-palette.offsetWidth-8);
+            const maxY=Math.max(8,window.innerHeight-palette.offsetHeight-8);
+            const nextLeft=Math.min(maxX,Math.max(8,event.clientX-specialCharacterDragOffset.x));
+            const nextTop=Math.min(maxY,Math.max(8,event.clientY-specialCharacterDragOffset.y));
+
+            palette.style.left=`${nextLeft}px`;
+            palette.style.top=`${nextTop}px`;
+        });
+
+        const stopDrag=event=>{
             if(!specialCharacterDragging)return;
-            const maxX=Math.max(8,innerWidth-palette.offsetWidth-8),maxY=Math.max(8,innerHeight-palette.offsetHeight-8);
-            palette.style.left=`${Math.min(maxX,Math.max(8,x-specialCharacterDragOffset.x))}px`;
-            palette.style.top=`${Math.min(maxY,Math.max(8,y-specialCharacterDragOffset.y))}px`;
+            if(event && pointerId!==null && event.pointerId!==pointerId)return;
+            specialCharacterDragging=false;
+            try{
+                if(pointerId!==null && handle.hasPointerCapture(pointerId)){
+                    handle.releasePointerCapture(pointerId);
+                }
+            }catch(e){}
+            pointerId=null;
         };
-        handle.addEventListener("mousedown",e=>{if(e.target.closest("button"))return;start(e.clientX,e.clientY);e.preventDefault()});
-        document.addEventListener("mousemove",e=>move(e.clientX,e.clientY));
-        document.addEventListener("mouseup",()=>specialCharacterDragging=false);
+
+        handle.addEventListener("pointerup",stopDrag);
+        handle.addEventListener("pointercancel",stopDrag);
+
         renderSpecialCharacterPalette();
     }
 
@@ -15270,6 +15350,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <div class="special-character-subtitle">Tap a character to insert it at the cursor.</div>
         </div>
         <div class="special-character-window-actions">
+            <button type="button" onclick="resetSpecialCharacterPalettePosition()" title="Reset position">↺</button>
             <button type="button" id="special-character-collapse-btn" onclick="toggleSpecialCharacterCollapse()" title="Collapse">—</button>
             <button type="button" onclick="closeSpecialCharacterPalette()" title="Close">×</button>
         </div>
