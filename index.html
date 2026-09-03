@@ -2935,31 +2935,125 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 
 
 <style id="special-character-palette-style">
-#special-character-palette{position:fixed;z-index:12000;width:min(390px,calc(100vw - 24px));left:50%;top:150px;transform:translateX(-50%);background:#fff;border:1px solid #cbd5e1;border-radius:16px;box-shadow:0 18px 50px rgba(15,23,42,.22);overflow:hidden}
 #special-character-palette[hidden]{display:none!important}
-.special-character-titlebar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0;cursor:move;user-select:none;touch-action:none}
-.special-character-title{font-size:12px;font-weight:800;color:#334155}.special-character-subtitle{font-size:10px;color:#64748b;margin-top:2px}
-.special-character-window-actions{display:flex;gap:6px}.special-character-window-actions button{width:30px;height:30px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-weight:800}
-.special-character-body{padding:12px}.special-character-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
-.special-character-key{min-height:42px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font-size:20px;font-weight:700;color:#1e293b;cursor:pointer}
+#special-character-palette{
+    position:fixed;
+    left:56px;
+    top:92px;
+    width:min(460px,calc(100vw - 32px));
+    height:220px;
+    min-width:340px;
+    min-height:160px;
+    max-width:calc(100vw - 16px);
+    max-height:calc(100vh - 16px);
+    resize:both;
+    overflow:hidden;
+    z-index:12000;
+    background:#fff;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    box-shadow:0 22px 60px rgba(15,23,42,.22);
+    color:#1e293b;
+}
+.special-character-titlebar{
+    height:52px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 10px 0 14px;
+    background:#eef2ff;
+    border-bottom:1px solid #c7d2fe;
+    cursor:move;
+    user-select:none;
+    touch-action:none;
+}
+.special-character-titlecopy{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+}
+.special-character-title-icon{
+    display:grid;
+    place-items:center;
+    width:32px;
+    height:32px;
+    flex:0 0 auto;
+    border-radius:9px;
+    background:#fff;
+    border:1px solid #c7d2fe;
+    color:#4338ca;
+    font-size:18px;
+    font-weight:800;
+}
+.special-character-title{font-size:14px;font-weight:800;color:#312e81}
+.special-character-subtitle{font-size:10px;color:#64748b;margin-top:2px}
+.special-character-window-actions{display:flex;gap:5px;flex:0 0 auto}
+.special-character-window-btn{
+    width:34px;min-width:34px;height:34px;min-height:34px;padding:0;border:0;
+    border-radius:8px;background:transparent;color:#312e81;font-size:19px;font-weight:800;
+}
+.special-character-window-btn:hover{background:rgba(79,70,229,.08)}
+.special-character-body{
+    height:calc(100% - 52px);
+    overflow:auto;
+    padding:12px;
+    background:#fff;
+}
+.special-character-target{
+    display:flex;
+    gap:6px;
+    align-items:center;
+    min-width:0;
+    margin-bottom:10px;
+    padding:7px 9px;
+    border:1px solid #e0e7ff;
+    border-radius:9px;
+    background:#eef2ff;
+    color:#475569;
+    font-size:10px;
+}
+.special-character-target strong{
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:#3730a3;
+}
+.special-character-grid{display:grid;grid-template-columns:repeat(8,minmax(42px,1fr));gap:7px}
+.special-character-key{
+    min-height:46px;border:1px solid #e2e8f0;border-radius:10px;background:#fff;
+    font-size:21px;font-weight:700;color:#1e293b;cursor:pointer;
+}
 .special-character-key:hover{background:#eef2ff;border-color:#a5b4fc}
-#special-character-palette.is-collapsed .special-character-body{display:none}
-#special-character-palette.is-collapsed{width:min(320px,calc(100vw - 24px))}
-@media(max-width:640px){
+.special-character-key:active{transform:scale(.97)}
+#special-character-palette.special-character-minimized{
+    width:330px!important;
+    min-width:330px!important;
+    height:52px!important;
+    min-height:52px!important;
+    resize:none!important;
+}
+#special-character-palette.special-character-minimized .special-character-body{display:none}
+@media(max-width:700px){
     #special-character-palette{
-        width:min(360px,calc(100vw - 20px));
-        left:10px;
-        top:120px;
-        right:auto;
-        bottom:auto;
-        transform:none!important;
+        left:8px!important;
+        top:auto!important;
+        bottom:8px;
+        width:calc(100vw - 16px)!important;
+        height:230px;
+        min-width:0;
+        min-height:160px;
+        max-width:none;
+        max-height:calc(100vh - 16px);
+        resize:none;
     }
     .special-character-titlebar{
-        cursor:move;
-        touch-action:none;
+        cursor:default;
+        touch-action:auto;
     }
     .special-character-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
-    .special-character-key{min-height:46px;font-size:21px}
 }
 </style>
 
@@ -11693,9 +11787,22 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     let specialCharacterDragging=false;
     let specialCharacterDragOffset={x:0,y:0};
 
+    function describeSpecialCharacterTarget(el){
+        if(!el)return "Select a text box";
+        return el.getAttribute("aria-label") || el.placeholder || el.name || el.id || "Text field";
+    }
+
+    function updateSpecialCharacterTargetName(){
+        const label=document.getElementById("special-character-target-name");
+        if(label) label.textContent=describeSpecialCharacterTarget(specialCharacterLastInput);
+    }
+
     function rememberSpecialCharacterInput(event){
         const el=event?.target;
-        if(el && (el.tagName==="TEXTAREA" || (el.tagName==="INPUT" && /^(text|search)$/i.test(el.type||"text")))) specialCharacterLastInput=el;
+        if(el && (el.tagName==="TEXTAREA" || (el.tagName==="INPUT" && /^(text|search)$/i.test(el.type||"text")))){
+            specialCharacterLastInput=el;
+            updateSpecialCharacterTargetName();
+        }
     }
     function specialCharacterDefaultInput(){
         return document.getElementById("german-source-text") || document.getElementById("source-text");
@@ -11728,6 +11835,9 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             return;
         }
         if(title) title.textContent=currentStudyLanguage==="de" ? "German special characters" : "Spanish special characters";
+        const icon=palette.querySelector(".special-character-title-icon");
+        if(icon) icon.textContent=currentStudyLanguage==="de" ? "ä" : "ñ";
+        updateSpecialCharacterTargetName();
         grid.replaceChildren();
         chars.forEach(char=>{
             const button=document.createElement("button");
@@ -11751,40 +11861,34 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const active=document.activeElement;
         if(active && (active.tagName==="TEXTAREA" || active.tagName==="INPUT")) specialCharacterLastInput=active;
         if(!specialCharacterLastInput || !document.contains(specialCharacterLastInput)) specialCharacterLastInput=specialCharacterDefaultInput();
+
         renderSpecialCharacterPalette();
         const palette=document.getElementById("special-character-palette");
+        const minimizeButton=document.getElementById("special-character-collapse-btn");
         if(palette){
             palette.hidden=false;
-            palette.classList.remove("is-collapsed");
-            const b=document.getElementById("special-character-collapse-btn");
-            if(b)b.textContent="—";
-
-            const rect=palette.getBoundingClientRect();
-            const outside=rect.right<8 || rect.left>window.innerWidth-8 || rect.bottom<8 || rect.top>window.innerHeight-8;
-            if(outside) resetSpecialCharacterPalettePosition();
+            palette.classList.remove("special-character-minimized");
+            if(minimizeButton) minimizeButton.textContent="−";
+            updateSpecialCharacterTargetName();
         }
     };
     window.closeSpecialCharacterPalette=function(){const p=document.getElementById("special-character-palette");if(p)p.hidden=true};
 
     window.resetSpecialCharacterPalettePosition=function(){
-        const p=document.getElementById("special-character-palette");
-        if(!p)return;
-        p.style.right="auto";
-        p.style.bottom="auto";
-        p.style.transform="none";
-        if(window.innerWidth<=640){
-            p.style.left="10px";
-            p.style.top="120px";
-        }else{
-            const width=Math.min(390,Math.max(260,window.innerWidth-24));
-            p.style.left=`${Math.max(12,(window.innerWidth-width)/2)}px`;
-            p.style.top="150px";
-        }
+        const palette=document.getElementById("special-character-palette");
+        if(!palette)return;
+        palette.style.right="auto";
+        palette.style.bottom="";
+        palette.style.transform="none";
+        palette.style.left=window.innerWidth<=700 ? "8px" : "56px";
+        palette.style.top=window.innerWidth<=700 ? "" : "92px";
     };
     window.toggleSpecialCharacterCollapse=function(){
-        const p=document.getElementById("special-character-palette");if(!p)return;
-        const collapsed=p.classList.toggle("is-collapsed");
-        const b=document.getElementById("special-character-collapse-btn");if(b)b.textContent=collapsed?"+":"—";
+        const palette=document.getElementById("special-character-palette");
+        const button=document.getElementById("special-character-collapse-btn");
+        if(!palette)return;
+        const minimized=palette.classList.toggle("special-character-minimized");
+        if(button) button.textContent=minimized ? "+" : "−";
     };
     window.insertSpecialCharacter=function(char){
         let input=specialCharacterLastInput;
@@ -11799,66 +11903,53 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         try{input.setSelectionRange(caret,caret)}catch(e){}
         input.dispatchEvent(new Event("input",{bubbles:true}));
         specialCharacterLastInput=input;
+        updateSpecialCharacterTargetName();
     };
     function initSpecialCharacterPalette(){
         document.addEventListener("focusin",rememberSpecialCharacterInput);
 
-        const palette=document.getElementById("special-character-palette");
-        const handle=document.getElementById("special-character-drag-handle");
-        if(!palette || !handle || handle.dataset.dragReady==="1")return;
-        handle.dataset.dragReady="1";
+        const tool=document.getElementById("special-character-palette");
+        const titleBar=document.getElementById("special-character-drag-handle");
+        if(!tool || !titleBar || titleBar.dataset.dragReady==="1")return;
+        titleBar.dataset.dragReady="1";
 
+        let dragging=false;
         let pointerId=null;
+        let startX=0,startY=0,startLeft=0,startTop=0;
 
-        function preparePositionForDrag(){
-            const rect=palette.getBoundingClientRect();
-            palette.style.transform="none";
-            palette.style.right="auto";
-            palette.style.bottom="auto";
-            palette.style.left=`${rect.left}px`;
-            palette.style.top=`${rect.top}px`;
-            return rect;
+        titleBar.addEventListener("pointerdown",event=>{
+            if(window.innerWidth<=700 || event.target.closest(".special-character-window-btn")) return;
+            const rect=tool.getBoundingClientRect();
+            dragging=true;
+            pointerId=event.pointerId;
+            startX=event.clientX;
+            startY=event.clientY;
+            startLeft=rect.left;
+            startTop=rect.top;
+            titleBar.setPointerCapture(pointerId);
+        });
+
+        titleBar.addEventListener("pointermove",event=>{
+            if(!dragging || event.pointerId!==pointerId) return;
+
+            const maxLeft=Math.max(8,window.innerWidth-tool.offsetWidth-8);
+            const maxTop=Math.max(8,window.innerHeight-52);
+
+            const nextLeft=Math.max(8,Math.min(startLeft+(event.clientX-startX),maxLeft));
+            const nextTop=Math.max(8,Math.min(startTop+(event.clientY-startY),maxTop));
+
+            tool.style.left=nextLeft+"px";
+            tool.style.top=nextTop+"px";
+        });
+
+        function stopDrag(event){
+            if(!dragging || (event && pointerId!==null && event.pointerId!==pointerId)) return;
+            dragging=false;
+            pointerId=null;
         }
 
-        handle.addEventListener("pointerdown",event=>{
-            if(event.target.closest("button"))return;
-            const rect=preparePositionForDrag();
-            specialCharacterDragging=true;
-            pointerId=event.pointerId;
-            specialCharacterDragOffset={
-                x:event.clientX-rect.left,
-                y:event.clientY-rect.top
-            };
-            try{handle.setPointerCapture(pointerId)}catch(e){}
-            event.preventDefault();
-        });
-
-        handle.addEventListener("pointermove",event=>{
-            if(!specialCharacterDragging || event.pointerId!==pointerId)return;
-
-            const maxX=Math.max(8,window.innerWidth-palette.offsetWidth-8);
-            const maxY=Math.max(8,window.innerHeight-palette.offsetHeight-8);
-            const nextLeft=Math.min(maxX,Math.max(8,event.clientX-specialCharacterDragOffset.x));
-            const nextTop=Math.min(maxY,Math.max(8,event.clientY-specialCharacterDragOffset.y));
-
-            palette.style.left=`${nextLeft}px`;
-            palette.style.top=`${nextTop}px`;
-        });
-
-        const stopDrag=event=>{
-            if(!specialCharacterDragging)return;
-            if(event && pointerId!==null && event.pointerId!==pointerId)return;
-            specialCharacterDragging=false;
-            try{
-                if(pointerId!==null && handle.hasPointerCapture(pointerId)){
-                    handle.releasePointerCapture(pointerId);
-                }
-            }catch(e){}
-            pointerId=null;
-        };
-
-        handle.addEventListener("pointerup",stopDrag);
-        handle.addEventListener("pointercancel",stopDrag);
+        titleBar.addEventListener("pointerup",stopDrag);
+        titleBar.addEventListener("pointercancel",stopDrag);
 
         renderSpecialCharacterPalette();
     }
@@ -15345,17 +15436,21 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
 <div id="special-character-palette" hidden aria-label="Special character palette">
     <div id="special-character-drag-handle" class="special-character-titlebar">
-        <div>
-            <div id="special-character-title" class="special-character-title">Special characters</div>
-            <div class="special-character-subtitle">Tap a character to insert it at the cursor.</div>
+        <div class="special-character-titlecopy">
+            <span class="special-character-title-icon">ä</span>
+            <div>
+                <div id="special-character-title" class="special-character-title">Special characters</div>
+                <div class="special-character-subtitle">Drag this window, then click into any input and type characters.</div>
+            </div>
         </div>
         <div class="special-character-window-actions">
-            <button type="button" onclick="resetSpecialCharacterPalettePosition()" title="Reset position">↺</button>
-            <button type="button" id="special-character-collapse-btn" onclick="toggleSpecialCharacterCollapse()" title="Collapse">—</button>
-            <button type="button" onclick="closeSpecialCharacterPalette()" title="Close">×</button>
+            <button type="button" class="special-character-window-btn" onclick="resetSpecialCharacterPalettePosition()" title="Reset position">↺</button>
+            <button type="button" id="special-character-collapse-btn" class="special-character-window-btn" onclick="toggleSpecialCharacterCollapse()" title="Minimize">−</button>
+            <button type="button" class="special-character-window-btn" onclick="closeSpecialCharacterPalette()" title="Close">×</button>
         </div>
     </div>
     <div class="special-character-body">
+        <div class="special-character-target">Typing into: <strong id="special-character-target-name">Select a text box</strong></div>
         <div id="special-character-grid" class="special-character-grid"></div>
     </div>
 </div>
