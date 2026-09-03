@@ -2395,7 +2395,8 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 </style>
 
 
-<style id="generated-output-copy-buttons">
+
+<style id="selective-output-copy-buttons">
 .copy-output-host{
     position:relative;
 }
@@ -2413,7 +2414,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
     padding:4px 8px;
     border-radius:8px;
     border:1px solid #cbd5e1;
-    background:rgba(255,255,255,.94);
+    background:rgba(255,255,255,.95);
     color:#475569;
     font-size:10px;
     line-height:1;
@@ -2421,10 +2422,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
     box-shadow:0 1px 2px rgba(15,23,42,.08);
     cursor:pointer;
 }
-.copy-output-btn:hover{
-    background:#f8fafc;
-    color:#1e293b;
-}
+.copy-output-btn:hover{ background:#f8fafc; color:#1e293b; }
 .copy-output-btn.copied{
     border-color:#86efac;
     background:#f0fdf4;
@@ -2433,6 +2431,19 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 .copy-output-host.has-copy-output-btn{
     padding-top:40px !important;
 }
+
+/* Textareas keep their normal padding; the copy button floats above the top-right edge. */
+.copy-output-textarea-wrap{
+    position:relative;
+}
+.copy-output-textarea-wrap .copy-output-btn{
+    top:7px;
+    right:7px;
+}
+.copy-output-textarea-wrap textarea{
+    padding-right:82px !important;
+}
+
 @media (max-width:640px){
     .copy-output-btn{
         min-height:34px !important;
@@ -2442,6 +2453,9 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
     }
     .copy-output-host.has-copy-output-btn{
         padding-top:44px !important;
+    }
+    .copy-output-textarea-wrap textarea{
+        padding-right:88px !important;
     }
 }
 </style>
@@ -3043,7 +3057,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                             <span id="voice-tutor-language-badge" class="rounded-lg bg-slate-900 text-white px-2 py-1 text-[9px] font-bold">DE</span>
                         </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-3">
                             <label class="text-[10px] font-bold text-slate-500">Conversation
                                 <select id="voice-conversation-mode" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700" onchange="saveVoiceTutorSettings(); updateVoiceTutorRoleplayVisibility()">
                                     <option value="natural">Natural conversation</option>
@@ -3073,6 +3087,16 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                                     <option value="support">Brief help if useful</option>
                                     <option value="target">Target language only</option>
                                 </select>
+                            </label>
+                            <label class="text-[10px] font-bold text-slate-500">Tutor speed
+                                <div class="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-2">
+                                    <div class="flex items-center gap-2">
+                                        <input type="range" id="voice-speech-speed" min="0.4" max="1.6" step="0.1" value="1.0"
+                                            class="min-w-0 flex-1 h-1 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                            title="Target-language speech speed">
+                                        <span id="voice-speech-speed-val" class="font-mono text-[9px] text-slate-500 whitespace-nowrap">1.0x</span>
+                                    </div>
+                                </div>
                             </label>
                         </div>
 
@@ -5723,9 +5747,13 @@ Plain text only.`;
             const utterance = new SpeechSynthesisUtterance(cleanText);
             utterance.lang = lang;
 
-            const speedId = String(lang||'').toLowerCase().startsWith('en') ? 'speech-speed-en' : 'speech-speed-de';
-            const speedSlider = document.getElementById(speedId);
-            if (speedSlider) utterance.rate = parseFloat(speedSlider.value);
+            if(typeof window.getLanguageTutorSpeechRate==="function"){
+                utterance.rate=window.getLanguageTutorSpeechRate(lang);
+            }else{
+                const speedId=String(lang||'').toLowerCase().startsWith('en') ? 'speech-speed-en' : 'speech-speed-de';
+                const speedSlider=document.getElementById(speedId);
+                if(speedSlider) utterance.rate=parseFloat(speedSlider.value)||1;
+            }
 
             const voices = await getSpeechVoicesReady();
             const matchedVoice = chooseVoiceForLocale(voices, lang);
@@ -9282,9 +9310,13 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const utterance=new SpeechSynthesisUtterance(clean);
         utterance.lang=replyLanguage==="en" ? "en-US" : langConfig().locale;
 
-        const speedId=utterance.lang.toLowerCase().startsWith("en") ? "speech-speed-en" : "speech-speed-de";
-        const speed=document.getElementById(speedId);
-        if(speed) utterance.rate=parseFloat(speed.value)||1;
+        if(typeof window.getLanguageTutorSpeechRate==="function"){
+            utterance.rate=window.getLanguageTutorSpeechRate(utterance.lang);
+        }else{
+            const speedId=utterance.lang.toLowerCase().startsWith("en") ? "speech-speed-en" : "speech-speed-de";
+            const speed=document.getElementById(speedId);
+            if(speed) utterance.rate=parseFloat(speed.value)||1;
+        }
 
         const voices=await getSpeechVoicesReady();
         const matched=chooseVoiceForLocale(voices,utterance.lang);
@@ -11900,6 +11932,7 @@ Requirements:
         let note="";
         if((io==="le"||io==="les") && /^(lo|la|los|las)$/.test(d)){ shownIO="se"; note="le/les changes to se before lo/la/los/las."; }
         const phrase=[shownIO,d,verb].filter(Boolean).join(" ");
+        out.dataset.copyText=cap(phrase)+".";
         out.innerHTML=`<div class="text-[10px] uppercase tracking-wider font-bold text-slate-400">Pronoun sequence</div><div class="text-xl font-bold text-slate-800 mt-1">${escapeML(cap(phrase))}.</div><p class="text-[11px] text-slate-600 mt-2">${escapeML(note||"Indirect object comes before direct object.")}</p>`;
     };
 
@@ -13713,40 +13746,101 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
 
 
-<script id="generated-output-copy-system">
-(function(){
-    const OUTPUT_SELECTORS = [
-        ".ml-helper-result",
-        ".grammar-section-ai-result",
-        "#target-text",
-        "#german-english-translation",
-        "#ml-grammar-translate-result",
-        "#ja-romaji-result",
-        "#ja-kana-result",
-        "#ja-builder-result",
-        "#ja-counter-result",
-        "#ja-register-result",
-        "#ja-role-result",
-        "#ja-particle-result",
-        "#ja-particle-swap-result",
-        "#ja-particle-contrast-result",
-        "#es-pronoun-result",
-        "#es-adjective-result",
-        "#es-reflexive-result",
-        "#es-article-result"
-    ].join(",");
 
-    function cleanOutputText(el){
-        const clone=el.cloneNode(true);
-        clone.querySelectorAll(".copy-output-btn,button,[aria-hidden='true']").forEach(n=>{
-            if(n.classList?.contains("copy-output-btn")) n.remove();
-        });
-        return (clone.innerText || clone.textContent || "")
+<script id="selective-output-copy-system">
+(function(){
+    /*
+      Copy is intentionally limited to "portable" learner output:
+      text that can sensibly be pasted into another language tool.
+
+      We deliberately DO NOT add it to:
+      - AI explanations
+      - grammar/reference explanations
+      - contrast explorers
+      - parser tiles/analysis
+      - legends
+      - conjugation/reference tables
+      - counter/register explanation panels
+    */
+    const COPY_TARGETS = {
+        // Main translation outputs
+        "target-text": {kind:"value"},
+        "german-english-translation": {kind:"value"},
+
+        // German form/phrase builders
+        "builder-result": {kind:"text"},
+        "article-tool-result": {kind:"text"},
+        "adjective-tool-result": {kind:"text"},
+
+        // Shared quick translation
+        "ml-grammar-translate-result": {kind:"primary"},
+
+        // Spanish reusable forms / built phrases
+        "es-pronoun-result": {kind:"primary"},
+        "es-adj-result": {kind:"primary"},
+        "es-article-result": {kind:"primary"},
+        "es-contrast-builder-result": {kind:"portable"},
+        "es-contrast-builder-result-translation": {kind:"primary"},
+
+        // Japanese sentence/conversion outputs
+        "ja-particle-practice-result": {kind:"portable"},
+        "ja-particle-practice-result-translation": {kind:"primary"},
+        "ja-builder-result": {kind:"portable"},
+        "ja-builder-result-translation": {kind:"primary"},
+        "ja-romaji-result": {kind:"primary"},
+        "ja-kana-result": {kind:"primary"}
+    };
+
+    function normalizeCopiedText(value){
+        return String(value||"")
+            .replace(/\u00a0/g," ")
+            .replace(/[ \t]+\n/g,"\n")
             .replace(/\n{3,}/g,"\n\n")
             .trim();
     }
 
-    async function copyText(text){
+    function primaryText(el){
+        if(!el) return "";
+
+        // Builders already expose the exact sentence they send to translation.
+        if(el.dataset?.copyText) return el.dataset.copyText;
+        if(el.dataset?.translateText) return el.dataset.translateText;
+
+        // Prefer the visually prominent generated form, not its rule/explanation.
+        const selectors=[
+            "[data-copy-primary]",
+            ":scope > .text-2xl",
+            ":scope > .text-xl",
+            ":scope > .text-lg",
+            ":scope > .text-base.font-bold",
+            ":scope > .text-sm.font-bold"
+        ];
+        for(const selector of selectors){
+            try{
+                const node=el.querySelector(selector);
+                const value=normalizeCopiedText(node?.innerText || node?.textContent || "");
+                if(value) return value;
+            }catch(e){}
+        }
+        return normalizeCopiedText(el.innerText || el.textContent || "");
+    }
+
+    function extractPortableText(el,config){
+        if(!el) return "";
+        if(config.kind==="value"){
+            return normalizeCopiedText(el.value);
+        }
+        if(config.kind==="text"){
+            return normalizeCopiedText(el.innerText || el.textContent || "");
+        }
+        if(config.kind==="portable"){
+            return normalizeCopiedText(el.dataset?.copyText || el.dataset?.translateText || primaryText(el));
+        }
+        return primaryText(el);
+    }
+
+    async function writeClipboard(value){
+        const text=normalizeCopiedText(value);
         if(!text) return false;
         try{
             if(navigator.clipboard && window.isSecureContext){
@@ -13771,61 +13865,72 @@ Current work: ${context||"No sentence has been entered yet."}`;
         }
     }
 
-    function addCopyButton(el){
-        if(!el || el.dataset.copyOutputReady==="1") return;
-        if(el.matches("input,textarea,select")) return;
-
-        const txt=(el.innerText||el.textContent||"").trim();
-        if(!txt || el.classList.contains("hidden")) return;
-
-        el.dataset.copyOutputReady="1";
-        el.classList.add("copy-output-host","has-copy-output-btn");
-
+    function makeCopyButton(el,config){
         const btn=document.createElement("button");
         btn.type="button";
         btn.className="copy-output-btn";
-        btn.setAttribute("aria-label","Copy output");
-        btn.setAttribute("title","Copy output");
+        btn.title="Copy reusable output";
+        btn.setAttribute("aria-label","Copy reusable output");
         btn.innerHTML="⧉ Copy";
 
-        btn.addEventListener("click",async (ev)=>{
+        btn.addEventListener("click",async ev=>{
+            ev.preventDefault();
             ev.stopPropagation();
-            const content=cleanOutputText(el);
-            const ok=await copyText(content);
-            const original=btn.innerHTML;
-            btn.innerHTML=ok ? "✓ Copied" : "Copy failed";
+            const ok=await writeClipboard(extractPortableText(el,config));
+            const original="⧉ Copy";
+            btn.innerHTML=ok ? "✓ Copied" : "Nothing to copy";
             btn.classList.toggle("copied",ok);
             setTimeout(()=>{
                 btn.innerHTML=original;
                 btn.classList.remove("copied");
-            },1300);
+            },1200);
         });
-
-        el.prepend(btn);
+        return btn;
     }
 
-    function scanGeneratedOutputs(root=document){
-        const nodes=[];
-        if(root.nodeType===1 && root.matches?.(OUTPUT_SELECTORS)) nodes.push(root);
-        root.querySelectorAll?.(OUTPUT_SELECTORS).forEach(n=>nodes.push(n));
-        nodes.forEach(addCopyButton);
+    function attachToTextarea(el,config){
+        if(el.dataset.copyOutputReady==="1") return;
+        el.dataset.copyOutputReady="1";
+
+        const wrap=document.createElement("div");
+        wrap.className="copy-output-textarea-wrap";
+        el.parentNode.insertBefore(wrap,el);
+        wrap.appendChild(el);
+        wrap.appendChild(makeCopyButton(el,config));
     }
 
-    // Copy buttons appear only after an output actually contains generated content.
-    const observer=new MutationObserver(mutations=>{
-        for(const m of mutations){
-            if(m.type==="childList" || m.type==="characterData"){
-                const root=m.target.nodeType===1 ? m.target : m.target.parentElement;
-                if(root) scanGeneratedOutputs(root.closest?.(".ml-helper-result,.grammar-section-ai-result") || root);
-            }
-            if(m.type==="attributes" && m.attributeName==="class"){
-                scanGeneratedOutputs(m.target);
-            }
+    function attachToOutput(el,config){
+        if(el.dataset.copyOutputReady==="1") return;
+        const content=extractPortableText(el,config);
+        if(!content || el.classList.contains("hidden")) return;
+
+        el.dataset.copyOutputReady="1";
+        el.classList.add("copy-output-host","has-copy-output-btn");
+        el.prepend(makeCopyButton(el,config));
+    }
+
+    function syncTarget(id){
+        const config=COPY_TARGETS[id];
+        const el=document.getElementById(id);
+        if(!config || !el) return;
+
+        if(el.matches("textarea,input")){
+            attachToTextarea(el,config);
+        }else{
+            attachToOutput(el,config);
         }
+    }
+
+    function scan(){
+        Object.keys(COPY_TARGETS).forEach(syncTarget);
+    }
+
+    const observer=new MutationObserver(()=>{
+        requestAnimationFrame(scan);
     });
 
     function boot(){
-        scanGeneratedOutputs(document);
+        scan();
         observer.observe(document.body,{
             childList:true,
             subtree:true,
@@ -13837,11 +13942,100 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
     if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot);
     else boot();
+})();
+</script>
 
-    window.copyGeneratedOutput=function(el){
-        const host=el?.closest?.(".copy-output-host") || el;
-        if(!host) return;
-        copyText(cleanOutputText(host));
+
+<script id="shared-speech-speed-sync">
+(function(){
+    const RATE_STORAGE_KEY="languagetutor_speech_rates_v1";
+
+    function clampRate(value){
+        const n=parseFloat(value);
+        if(!Number.isFinite(n)) return 1;
+        return Math.min(1.6,Math.max(0.4,Math.round(n*10)/10));
+    }
+
+    function readSavedRates(){
+        try{
+            const raw=localStorage.getItem(RATE_STORAGE_KEY);
+            const saved=raw ? JSON.parse(raw) : {};
+            return {
+                target:clampRate(saved.target ?? document.getElementById("speech-speed-de")?.value ?? 1),
+                english:clampRate(saved.english ?? document.getElementById("speech-speed-en")?.value ?? 1)
+            };
+        }catch(e){
+            return {target:1,english:1};
+        }
+    }
+
+    function saveRates(target,english){
+        try{
+            localStorage.setItem(RATE_STORAGE_KEY,JSON.stringify({
+                target:clampRate(target),
+                english:clampRate(english)
+            }));
+        }catch(e){}
+    }
+
+    function setLabel(id,value){
+        const el=document.getElementById(id);
+        if(el) el.textContent=`${Number(value).toFixed(1)}x`;
+    }
+
+    function syncTargetRate(value,source){
+        const rate=clampRate(value);
+        const main=document.getElementById("speech-speed-de");
+        const voice=document.getElementById("voice-speech-speed");
+
+        if(main && source!==main) main.value=rate;
+        if(voice && source!==voice) voice.value=rate;
+
+        setLabel("speech-speed-de-val",rate);
+        setLabel("voice-speech-speed-val",rate);
+
+        const en=clampRate(document.getElementById("speech-speed-en")?.value ?? 1);
+        saveRates(rate,en);
+    }
+
+    function syncEnglishRate(value,source){
+        const rate=clampRate(value);
+        const main=document.getElementById("speech-speed-en");
+        if(main && source!==main) main.value=rate;
+        setLabel("speech-speed-en-val",rate);
+
+        const target=clampRate(document.getElementById("speech-speed-de")?.value ?? 1);
+        saveRates(target,rate);
+    }
+
+    function boot(){
+        const saved=readSavedRates();
+
+        const target=document.getElementById("speech-speed-de");
+        const english=document.getElementById("speech-speed-en");
+        const voice=document.getElementById("voice-speech-speed");
+
+        if(target) target.value=saved.target;
+        if(voice) voice.value=saved.target;
+        if(english) english.value=saved.english;
+
+        syncTargetRate(saved.target,null);
+        syncEnglishRate(saved.english,null);
+
+        // Existing page control and Voice Conversation control are two views
+        // of the SAME target-language speech-rate setting.
+        target?.addEventListener("input",()=>syncTargetRate(target.value,target));
+        voice?.addEventListener("input",()=>syncTargetRate(voice.value,voice));
+        english?.addEventListener("input",()=>syncEnglishRate(english.value,english));
+    }
+
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot);
+    else boot();
+
+    window.getLanguageTutorSpeechRate=function(lang){
+        const isEnglish=String(lang||"").toLowerCase().startsWith("en");
+        const el=document.getElementById(isEnglish ? "speech-speed-en" : "speech-speed-de");
+        return clampRate(el?.value ?? 1);
     };
 })();
 </script>
