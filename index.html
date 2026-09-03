@@ -2980,6 +2980,15 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 }
 </style>
 
+<style id="text-chat-compact-height">
+#chat-text-mode{min-height:0}
+#chat-messages-log{
+    min-height:0;
+    overflow-y:auto;
+    scrollbar-gutter:stable;
+}
+</style>
+
 <style id="voice-inline-transcript-height">
 /* The inline conversation transcript fills whatever vertical room remains.
    Its own scrollbar carries the full conversation, so the latest card is
@@ -3758,23 +3767,19 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                         </div>
                     </div>
 
-                    <div class="shrink-0 flex items-start justify-between gap-3 border-t border-slate-100 pt-3 mb-2">
-                        <div class="min-w-0">
-                            <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500">Text conversation transcript</div>
-                            <div class="text-[9px] text-slate-400">Open the full text chat in a movable window or save a snapshot for later.</div>
+                    <div class="shrink-0 border-t border-slate-100 pt-3">
+                        <div class="flex gap-2">
+                            <input type="text" id="chat-user-input" class="flex-grow min-w-0 px-3 py-2 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg text-sm sm:text-xs placeholder-slate-400 text-slate-700 font-medium" placeholder="Ask your AI tutor a question..." onkeydown="handleChatKeyPress(event)">
+                            <button type="button" onclick="sendChatMessage()" class="min-w-[44px] min-h-[44px] p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shrink-0 flex items-center justify-center" title="Send">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>
+                            </button>
                         </div>
-                        <div class="shrink-0 flex flex-wrap gap-2 justify-end">
-                            <button type="button" onclick="openTextTranscriptWindow()" class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">↗ Open transcript</button>
-                            <button type="button" onclick="saveCurrentTutorTranscript('text',this)" class="min-h-[36px] px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
-                            <button type="button" onclick="openSavedTutorTranscripts()" class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">🗂 Saved</button>
-                        </div>
-                    </div>
 
-                    <div class="flex gap-2 shrink-0">
-                        <input type="text" id="chat-user-input" class="flex-grow min-w-0 px-3 py-2 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg text-sm sm:text-xs placeholder-slate-400 text-slate-700 font-medium" placeholder="Ask your AI tutor a question..." onkeydown="handleChatKeyPress(event)">
-                        <button type="button" onclick="sendChatMessage()" class="min-w-[44px] min-h-[44px] p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shrink-0 flex items-center justify-center" title="Send">
-                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>
-                        </button>
+                        <div class="mt-2 flex flex-wrap gap-2 justify-end">
+                            <button type="button" onclick="openTextTranscriptWindow()" class="min-h-[34px] px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">↗ Open transcript</button>
+                            <button type="button" onclick="saveCurrentTutorTranscript('text',this)" class="min-h-[34px] px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
+                            <button type="button" onclick="openSavedTutorTranscripts()" class="min-h-[34px] px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">🗂 Saved</button>
+                        </div>
                     </div>
                 </div>
 
@@ -9818,7 +9823,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         // transcript intentionally shows several card-style turns at once.
         const tutorContainer=document.getElementById("socratic-chat-container");
         if(tutorContainer){
-            tutorContainer.style.height=voiceMode ? "780px" : "560px";
+            tutorContainer.style.height=voiceMode ? "780px" : "430px";
         }
 
         if(textBtn) textBtn.className="rounded-lg px-3 py-2 text-xs font-bold transition " +
