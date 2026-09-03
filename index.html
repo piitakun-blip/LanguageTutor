@@ -11905,7 +11905,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         specialCharacterLastInput=input;
         updateSpecialCharacterTargetName();
     };
-    function initSpecialCharacterPalette(){
+    window.initSpecialCharacterPalette=function(){
         document.addEventListener("focusin",rememberSpecialCharacterInput);
 
         const tool=document.getElementById("special-character-palette");
@@ -11952,7 +11952,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         titleBar.addEventListener("pointercancel",stopDrag);
 
         renderSpecialCharacterPalette();
-    }
+    };
 
     function updateVisibleLanguageUI(){
         const cfg=langConfig();
@@ -15419,7 +15419,8 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
         if(typeof updateVoiceSettingsSummary==="function") updateVoiceSettingsSummary();
 
-        initSpecialCharacterPalette();
+        // Special-character dragging is initialized after its floating window
+        // is present in the DOM, just like the Japanese Kana window.
 
         // On phones, keep the settings collapsed by default.
         const panel=document.getElementById("voice-settings-panel");
@@ -15454,6 +15455,18 @@ Current work: ${context||"No sentence has been entered yet."}`;
         <div id="special-character-grid" class="special-character-grid"></div>
     </div>
 </div>
+
+<script id="special-character-window-init">
+(function(){
+    function init(){
+        if(typeof window.initSpecialCharacterPalette==="function"){
+            window.initSpecialCharacterPalette();
+        }
+    }
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init);
+    else init();
+})();
+</script>
 
 <div id="voice-transcript-window" hidden aria-label="Voice conversation transcript window">
     <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
