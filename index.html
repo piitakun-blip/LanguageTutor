@@ -3324,6 +3324,15 @@ body.conversation-first-layout #mobile-right-column{
     cursor:pointer;
 }
 .transcript-analyze-btn:hover{background:#dbeafe}
+#parser-study-actions{
+    display:flex;
+    justify-content:flex-end;
+}
+#parser-study-actions.hidden{display:none!important}
+@media(max-width:640px){
+    #parser-study-actions{justify-content:stretch}
+    #save-parser-study-btn{width:100%!important}
+}
 @media(max-width:640px){
     body.conversation-first-layout main.conversation-first-main{
         padding-top:14px!important;
@@ -3639,6 +3648,13 @@ body.conversation-first-layout #mobile-right-column{
                 <!-- Generated Tiles Container -->
                 <div id="tiles-container" class="min-h-[100px] border border-dashed border-slate-200 rounded-xl flex flex-wrap gap-3 p-4 items-center justify-center bg-slate-50/50">
                     <span id="parser-empty-message" class="text-slate-400 text-sm italic">Choose 🔍 Analyze on a conversation sentence, or enter a sentence manually below.</span>
+                </div>
+
+                <div id="parser-study-actions" class="hidden">
+                    <button id="save-parser-study-btn" type="button" onclick="saveParsedGrammarToStudy(this)"
+                        class="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition inline-flex items-center justify-center gap-2">
+                        ＋ Save sentence & grammar to Study
+                    </button>
                 </div>
 
                 <!-- Selected Tile Detail Display (Under Tiles) -->
@@ -6139,6 +6155,9 @@ body.conversation-first-layout #mobile-right-column{
 
                 box.appendChild(b);
             });
+            if(typeof updateParserStudyButtonVisibility==="function"){
+                updateParserStudyButtonVisibility();
+            }
         }
 
         async function parseCurrentSentenceWithAI() {
@@ -6854,6 +6873,118 @@ Plain text only.`;
             },1500);
         }
 
+        function parserStudySentence(){
+            let sentence="";
+            try{
+                if(typeof currentParserSentence==="function"){
+                    sentence=String(currentParserSentence()||"").trim();
+                }
+            }catch(e){}
+            if(!sentence) sentence=String(currentGermanSentence||"").trim();
+            if(!sentence) sentence=String(document.getElementById("german-source-text")?.value||"").trim();
+            if(!sentence) sentence=String(document.getElementById("target-text")?.value||"").trim();
+            return sentence;
+        }
+
+        function parserGrammarStudyNote(){
+            const box=document.getElementById("tiles-container");
+            if(!box)return "";
+            const parts=[];
+
+            box.querySelectorAll(".grammar-tile").forEach(tile=>{
+                const phrase=String(tile.querySelector(".text-sm")?.textContent||"").trim();
+                const label=String(tile.querySelector(".text-\\[9px\\]")?.textContent||"").trim();
+                if(phrase && label) parts.push(`${phrase} — ${label}`);
+            });
+
+            box.querySelectorAll(".ml-token").forEach(tile=>{
+                const phrase=String(tile.querySelector("div")?.textContent||"").trim();
+                const label=String(tile.querySelector(".ml-token-role")?.textContent||"").trim();
+                if(phrase && label) parts.push(`${phrase} — ${label}`);
+            });
+
+            return parts.length ? `Parsed grammar: ${parts.join("; ")}` : "";
+        }
+
+        function updateParserStudyButtonVisibility(){
+            const wrap=document.getElementById("parser-study-actions");
+            const btn=document.getElementById("save-parser-study-btn");
+            if(!wrap || !btn)return;
+            const hasSentence=Boolean(parserStudySentence());
+            const hasTiles=Boolean(document.querySelector("#tiles-container .grammar-tile, #tiles-container .ml-token"));
+            wrap.classList.toggle("hidden",!(hasSentence && hasTiles));
+            btn.disabled=false;
+            btn.textContent="＋ Save sentence & grammar to Study";
+        }
+
+        window.saveParsedGrammarToStudy=async function(button){
+            const sentence=parserStudySentence();
+            const grammarNote=parserGrammarStudyNote();
+            if(!sentence || !grammarNote){
+                alert("Analyze a sentence first.");
+                return;
+            }
+
+            const language=activeAppLanguage();
+            const meta=STUDY_LANGUAGE_META[language];
+            const oldText=button?.textContent||"＋ Save sentence & grammar to Study";
+            if(button){
+                button.disabled=true;
+                button.textContent="Saving…";
+            }
+
+            let english="";
+            try{
+                english=String(await googleTranslateApiCall(sentence,language,"en")).trim();
+            }catch(e){
+                console.warn("Could not translate parser sentence for Study:",e);
+                english="Grammar study sentence";
+            }
+            if(!english)english="Grammar study sentence";
+
+            const existing=vocabularyList.find(item=>
+                studyItemLanguage(item)===language &&
+                studyItemTarget(item).toLowerCase()===sentence.toLowerCase()
+            );
+
+            if(existing){
+                existing.english=english!=="Grammar study sentence" ? english : (existing.english||english);
+                existing.aiExplanation=grammarNote;
+                existing.parserNote=true;
+                existing.contextSentence=sentence;
+                existing.timestamp=new Date().toLocaleString();
+            }else{
+                vocabularyList.unshift({
+                    id:Date.now(),
+                    language,
+                    target:sentence,
+                    german:language==="de" ? sentence : "",
+                    english,
+                    aiExplanation:grammarNote,
+                    parserNote:true,
+                    contextSentence:sentence,
+                    timestamp:new Date().toLocaleString()
+                });
+            }
+
+            persistVocabulary();
+            studyBoardLanguage=language;
+            renderStudyLanguageIndicator();
+            renderVocabulary();
+
+            if(button){
+                button.textContent=`✓ Saved to ${meta.name} Study`;
+                button.classList.remove("bg-amber-500","hover:bg-amber-600");
+                button.classList.add("bg-emerald-600");
+                setTimeout(()=>{
+                    button.disabled=false;
+                    button.textContent=oldText;
+                    button.classList.remove("bg-emerald-600");
+                    button.classList.add("bg-amber-500","hover:bg-amber-600");
+                },1600);
+            }
+        };
+
         function renderVocabulary(){
             const emptyState=document.getElementById("vocab-empty-state");
             const emptyMessage=document.getElementById("vocab-empty-message");
@@ -6918,7 +7049,7 @@ Plain text only.`;
                         <div class="text-[9px] text-slate-400 font-normal">Added: ${escapeHtml(item.timestamp||"")}</div>
                         ${item.aiExplanation ? `
                             <div class="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[11px] leading-relaxed text-amber-950">
-                                <div class="font-bold uppercase tracking-wider text-[9px] text-amber-700 mb-1">AI Grammar Note</div>
+                                <div class="font-bold uppercase tracking-wider text-[9px] text-amber-700 mb-1">${item.parserNote ? "Grammar Note" : "AI Grammar Note"}</div>
                                 <div>${escapeHtml(item.aiExplanation)}</div>
                                 ${(item.grammarCase || item.grammarGender) ? `
                                     <div class="mt-1.5 text-[9px] text-amber-700 font-semibold">
@@ -13612,6 +13743,7 @@ Plain text only.`;
         box.innerHTML="";
         if(!items.length){
             box.innerHTML=`<span class="text-slate-400 text-sm italic">No local parse items were found.</span>`;
+            document.getElementById("parser-study-actions")?.classList.add("hidden");
             return;
         }
         const badge=document.createElement("div");
@@ -13657,6 +13789,9 @@ Plain text only.`;
             });
             box.appendChild(tile);
         });
+        if(typeof updateParserStudyButtonVisibility==="function"){
+            updateParserStudyButtonVisibility();
+        }
     }
 
     window.renderGrammarTiles=function(sentence){
