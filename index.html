@@ -1234,7 +1234,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
             }
         }
 
-        /* Grammar Tools output cards use the exact same case palette as Grammar Parser.
+        /* Grammar Tools output cards use the exact same case palette as Analyze a Sentence.
            !important is intentional here so legacy Tailwind bg-* utilities cannot override it. */
         .grammar-case-card.case-nom {
             background-color:#dbeafe !important;
@@ -3195,6 +3195,118 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 }
 </style>
 
+
+
+<style id="conversation-first-layout-styles">
+body.conversation-first-layout .mobile-app-tabs{display:none!important}
+body.conversation-first-layout main.conversation-first-main{
+    display:flex!important;
+    flex-direction:column;
+    gap:18px;
+    max-width:1100px;
+}
+.conversation-first-section{
+    width:100%;
+    min-width:0;
+}
+.conversation-first-section-label{
+    display:flex;
+    align-items:end;
+    justify-content:space-between;
+    gap:12px;
+    margin:0 2px 7px;
+}
+.conversation-first-section-label h2{
+    margin:0;
+    color:#1e293b;
+    font-size:15px;
+    font-weight:800;
+}
+.conversation-first-section-label p{
+    margin:2px 0 0;
+    color:#64748b;
+    font-size:10px;
+    line-height:1.4;
+}
+#conversation-primary-section #conversation-tutor-toggle{
+    border-color:#c7d2fe;
+    background:#eef2ff;
+}
+#conversation-primary-section #socratic-chat-container{
+    width:100%;
+}
+#conversation-analysis-section #mobile-parser-card{
+    display:block!important;
+}
+#conversation-grammar-section #cheat-sheet-container,
+#conversation-grammar-section #japanese-kana-resource{
+    width:100%;
+}
+#conversation-study-section #mobile-study-card{
+    display:block!important;
+}
+#manual-language-tools{
+    width:100%;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    background:#fff;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+    overflow:hidden;
+}
+#manual-language-tools > summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    min-height:48px;
+    padding:11px 14px;
+    cursor:pointer;
+    color:#475569;
+    font-size:12px;
+    font-weight:800;
+    list-style:none;
+}
+#manual-language-tools > summary::-webkit-details-marker{display:none}
+#manual-language-tools-body{padding:0 14px 14px}
+#manual-language-tools #mobile-input-workspaces{
+    display:grid!important;
+}
+body.conversation-first-layout #mobile-parser-card,
+body.conversation-first-layout #mobile-study-card,
+body.conversation-first-layout #socratic-chat-container{
+    max-width:none!important;
+}
+body.conversation-first-layout #mobile-left-column,
+body.conversation-first-layout #mobile-right-column{
+    display:none!important;
+}
+.transcript-analyze-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:6px;
+}
+.transcript-analyze-btn{
+    min-height:30px;
+    padding:5px 9px;
+    border:1px solid #bfdbfe;
+    border-radius:8px;
+    background:#eff6ff;
+    color:#1d4ed8;
+    font-size:10px;
+    font-weight:800;
+    cursor:pointer;
+}
+.transcript-analyze-btn:hover{background:#dbeafe}
+@media(max-width:640px){
+    body.conversation-first-layout main.conversation-first-main{
+        padding-top:14px!important;
+        gap:14px!important;
+    }
+    .conversation-first-section-label{align-items:flex-start}
+    .conversation-first-section-label p{font-size:9px}
+    #manual-language-tools-body{padding:0 10px 10px}
+}
+</style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -3492,7 +3604,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                 </div>
                 <!-- Generated Tiles Container -->
                 <div id="tiles-container" class="min-h-[100px] border border-dashed border-slate-200 rounded-xl flex flex-wrap gap-3 p-4 items-center justify-center bg-slate-50/50">
-                    <span id="parser-empty-message" class="text-slate-400 text-sm italic">Tiles will be generated here once you translate or enter a phrase above...</span>
+                    <span id="parser-empty-message" class="text-slate-400 text-sm italic">Choose 🔍 Analyze on a conversation sentence, or enter a sentence manually below.</span>
                 </div>
 
                 <!-- Selected Tile Detail Display (Under Tiles) -->
@@ -3733,7 +3845,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
             </section>
 
             <!-- Toggle Button for AI Socratic Chat -->
-            <button onclick="toggleSocraticChat()" class="w-full py-3.5 px-5 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between font-bold text-slate-700 text-sm transition duration-150 group">
+            <button id="conversation-tutor-toggle" onclick="toggleSocraticChat()" class="w-full py-3.5 px-5 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between font-bold text-slate-700 text-sm transition duration-150 group">
                 <span class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-amber-500 transition group-hover:scale-110 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.418-4.03 8-9 8a9.863 9.75 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                     Chat with Tutor
@@ -3926,7 +4038,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
                 
 
             <!-- Toggle Button for Reference -->
-            <button onclick="toggleCheatSheet()" class="w-full py-3.5 px-5 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between font-bold text-slate-700 text-sm transition duration-150 group">
+            <button id="grammar-tools-toggle" onclick="toggleCheatSheet()" class="w-full py-3.5 px-5 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between font-bold text-slate-700 text-sm transition duration-150 group">
                 <span class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-indigo-600 transition group-hover:scale-110 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84a50.58 50.57 0 00-2.657.814m-15.482 0A50.697 50.57 0 0112 13.489a50.702 50.57 0 017.74-2.528M12 15.75v5.25"></path></svg>
                     Grammar Tools
@@ -10018,6 +10130,17 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                 block.appendChild(note);
             }
 
+            const targetLanguageEntry=entry.role==="user"
+                ? entry.inputMode!=="english"
+                : entry.replyLanguage!=="en";
+            if(targetLanguageEntry){
+                const row=document.createElement("div");
+                row.className="transcript-analyze-row";
+                const analyze=createTranscriptAnalyzeButton(stripTutorMarkdown(entry.text),currentStudyLanguage);
+                if(analyze)row.appendChild(analyze);
+                block.appendChild(row);
+            }
+
             body.appendChild(block);
         });
     }
@@ -10337,6 +10460,14 @@ Do not add quotation marks or labels.`;
         actions.appendChild(
             voiceTutorControlButton("🔊 Replay","Replay this transcript",()=>speakRawText(user ? entry.text : stripTutorMarkdown(entry.text),replayLocale))
         );
+
+        if(!isEnglishEntry){
+            actions.appendChild(
+                voiceTutorControlButton("🔍 Analyze","Analyze this sentence with the grammar parser",()=>
+                    window.analyzeTutorSentence(user ? entry.text : stripTutorMarkdown(entry.text),currentStudyLanguage)
+                )
+            );
+        }
 
         // Keep extra transcript actions on tutor replies only so learner bubbles stay clean.
         if(!user){
@@ -11885,7 +12016,9 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             const bubble=document.createElement("div");
             if(entry.role==="user"){
                 bubble.className="bg-slate-100 text-slate-800 rounded-xl p-3 leading-relaxed max-w-[95%] self-end text-xs";
-                bubble.textContent=entry.text;
+                const body=document.createElement("div");
+                body.textContent=entry.text;
+                bubble.appendChild(body);
             }else{
                 bubble.className="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[95%] self-start text-xs";
                 const label=document.createElement("p");
@@ -11895,6 +12028,11 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 renderTutorMarkdown(body,entry.text);
                 bubble.append(label,body);
             }
+            const analyzeRow=document.createElement("div");
+            analyzeRow.className="transcript-analyze-row";
+            const analyze=createTranscriptAnalyzeButton(stripTutorMarkdown(entry.text),currentStudyLanguage);
+            if(analyze) analyzeRow.appendChild(analyze);
+            bubble.appendChild(analyzeRow);
             log.appendChild(bubble);
         });
 
@@ -11947,6 +12085,11 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             else renderTutorMarkdown(content,String(entry.text||"").trim());
 
             block.append(speaker,content);
+            const row=document.createElement("div");
+            row.className="transcript-analyze-row";
+            const analyze=createTranscriptAnalyzeButton(stripTutorMarkdown(entry.text),currentStudyLanguage);
+            if(analyze)row.appendChild(analyze);
+            block.appendChild(row);
             body.appendChild(block);
         });
         body.scrollTop=body.scrollHeight;
@@ -12117,6 +12260,15 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 note.append(noteText,teacherNotePlayButton(entry,selected.language||currentStudyLanguage));
                 block.appendChild(note);
             }
+            const targetLanguageEntry=selected.mode==="text" ||
+                (entry.role==="user" ? entry.inputMode!=="english" : entry.replyLanguage!=="en");
+            if(targetLanguageEntry){
+                const row=document.createElement("div");
+                row.className="transcript-analyze-row";
+                const analyze=createTranscriptAnalyzeButton(stripTutorMarkdown(entry.text),selected.language||currentStudyLanguage);
+                if(analyze)row.appendChild(analyze);
+                block.appendChild(row);
+            }
             body.appendChild(block);
         });
     }
@@ -12150,6 +12302,47 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const list=document.getElementById("saved-transcript-list");
         if(list)list.dataset.selectedId="";
         renderSavedTutorTranscripts();
+    };
+
+    function createTranscriptAnalyzeButton(sentence,languageCode=currentStudyLanguage){
+        const text=String(sentence||"").trim();
+        if(!text)return null;
+        const button=document.createElement("button");
+        button.type="button";
+        button.className="transcript-analyze-btn";
+        button.textContent="🔍 Analyze";
+        button.title=`Analyze this sentence with the ${LANGUAGE_MODES[languageCode]?.name||"current language"} parser`;
+        button.addEventListener("click",()=>window.analyzeTutorSentence(text,languageCode));
+        return button;
+    }
+
+    window.analyzeTutorSentence=function(sentence,languageCode=currentStudyLanguage){
+        const text=String(sentence||"").trim();
+        if(!text)return;
+
+        const lang=LANGUAGE_MODES[languageCode] ? languageCode : currentStudyLanguage;
+        if(lang!==currentStudyLanguage && typeof window.setStudyLanguage==="function"){
+            window.setStudyLanguage(lang);
+        }
+
+        currentGermanSentence=text;
+        const direct=document.getElementById("german-source-text");
+        if(direct) direct.value=text;
+
+        if(lang==="de"){
+            if(typeof renderGrammarTiles==="function") renderGrammarTiles(text);
+        }else{
+            nonGermanParserView[lang]="local";
+            const items=localParseForLanguage(lang,text);
+            renderMultilangTiles(items,`Conversation Analysis • ${LANGUAGE_MODES[lang].name}`,{forceView:true});
+            updateNonGermanParserControls();
+        }
+
+        const parser=document.getElementById("mobile-parser-card");
+        if(parser){
+            parser.classList.remove("hidden");
+            parser.scrollIntoView({behavior:"smooth",block:"start"});
+        }
     };
 
     const SPECIAL_CHARACTER_SETS={
@@ -15949,6 +16142,100 @@ Current work: ${context||"No sentence has been entered yet."}`;
 })();
 </script>
 
+
+<script id="conversation-first-layout-init">
+(function(){
+    function sectionLabel(title,description){
+        const wrap=document.createElement("div");
+        wrap.className="conversation-first-section-label";
+        const copy=document.createElement("div");
+        const h=document.createElement("h2");
+        h.textContent=title;
+        const p=document.createElement("p");
+        p.textContent=description;
+        copy.append(h,p);
+        wrap.appendChild(copy);
+        return wrap;
+    }
+
+    function build(){
+        const main=document.querySelector("main");
+        const left=document.getElementById("mobile-left-column");
+        const right=document.getElementById("mobile-right-column");
+        const chatToggle=document.getElementById("conversation-tutor-toggle");
+        const chat=document.getElementById("socratic-chat-container");
+        const parser=document.getElementById("mobile-parser-card");
+        const grammarToggle=document.getElementById("grammar-tools-toggle");
+        const grammar=document.getElementById("cheat-sheet-container");
+        const kana=document.getElementById("japanese-kana-resource");
+        const study=document.getElementById("mobile-study-card");
+        const manual=document.getElementById("mobile-input-workspaces");
+
+        if(!main || !chat || !parser || !grammar || !study || main.dataset.conversationFirstReady==="1")return;
+        main.dataset.conversationFirstReady="1";
+        document.body.classList.add("conversation-first-layout");
+        main.classList.add("conversation-first-main");
+
+        const primary=document.createElement("section");
+        primary.id="conversation-primary-section";
+        primary.className="conversation-first-section";
+        primary.appendChild(sectionLabel(
+            "1. Conversation",
+            "Speak or type naturally. Review corrections, replay them, and save the transcript."
+        ));
+        if(chatToggle)primary.appendChild(chatToggle);
+        primary.appendChild(chat);
+
+        const analysis=document.createElement("section");
+        analysis.id="conversation-analysis-section";
+        analysis.className="conversation-first-section";
+        analysis.appendChild(sectionLabel(
+            "2. Analyze what was said",
+            "Use 🔍 Analyze on any conversation sentence to inspect its grammar without retyping it."
+        ));
+        analysis.appendChild(parser);
+
+        const grammarSection=document.createElement("section");
+        grammarSection.id="conversation-grammar-section";
+        grammarSection.className="conversation-first-section";
+        grammarSection.appendChild(sectionLabel(
+            "3. Grammar tools",
+            "Explore forms, patterns, particles, cases, conjugations, and the quick translator when needed."
+        ));
+        if(kana)grammarSection.appendChild(kana);
+        if(grammarToggle)grammarSection.appendChild(grammarToggle);
+        grammarSection.appendChild(grammar);
+
+        const studySection=document.createElement("section");
+        studySection.id="conversation-study-section";
+        studySection.className="conversation-first-section";
+        studySection.appendChild(sectionLabel(
+            "4. Study & review",
+            "Practice saved language and return to material from your conversations."
+        ));
+        studySection.appendChild(study);
+
+        const manualDetails=document.createElement("details");
+        manualDetails.id="manual-language-tools";
+        manualDetails.className="conversation-first-section";
+        const summary=document.createElement("summary");
+        summary.innerHTML='<span>Translation & Manual Input <span style="font-weight:600;color:#94a3b8">(optional)</span></span><span>⌄</span>';
+        const manualBody=document.createElement("div");
+        manualBody.id="manual-language-tools-body";
+        if(manual)manualBody.appendChild(manual);
+        manualDetails.append(summary,manualBody);
+
+        main.replaceChildren(primary,analysis,grammarSection,studySection,manualDetails);
+
+        // Conversation is the starting point in the redesigned interface.
+        chat.classList.remove("hidden");
+        if(chatToggle) chatToggle.setAttribute("aria-expanded","true");
+    }
+
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",build);
+    else build();
+})();
+</script>
 </body>
 </html>
                             
