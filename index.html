@@ -62,7 +62,19 @@
             white-space:normal;
             overflow-wrap:anywhere;
         }
-        #quiz-case-mode .choice-btn:disabled {
+        #quiz-practice-mode{
+    max-width:230px;
+}
+@media(max-width:640px){
+    #quiz-practice-mode{
+        width:100%;
+        max-width:none;
+        min-height:44px;
+        font-size:16px;
+    }
+}
+
+#quiz-case-mode .choice-btn:disabled {
             opacity:1 !important;
         }
         #quiz-case-mode .choice-btn.quiz-choice-correct {
@@ -3838,7 +3850,15 @@ body.conversation-first-layout #mobile-right-column{
 
                             <!-- LANGUAGE-SPECIFIC QUIZ VIEW -->
                             <div id="quiz-case-mode" class="hidden w-full space-y-4">
-                                <div id="quiz-second-header" class="text-xs text-indigo-600 font-bold tracking-wider uppercase">Grammar Challenge</div>
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                    <div id="quiz-second-header" class="text-xs text-indigo-600 font-bold tracking-wider uppercase">Grammar Challenge</div>
+                                    <label class="text-[10px] font-bold text-slate-500 text-left">
+                                        Practice
+                                        <select id="quiz-practice-mode" onchange="setLanguageQuizPracticeMode(this.value)"
+                                            class="mt-1 sm:mt-0 sm:ml-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-700">
+                                        </select>
+                                    </label>
+                                </div>
                                 <div id="quiz-generation-status" class="text-[10px] text-slate-400 font-semibold">Preparing question…</div>
 
                                 <div id="quiz-case-sentence-container" class="text-base font-bold text-slate-800 flex flex-wrap gap-1.5 justify-center items-center">
@@ -6758,6 +6778,7 @@ Plain text only.`;
         let quizSecondCorrectLabel = "";
         let quizAdvanceTimer = null;
         let renderedQuizLanguage = "de";
+        const languageQuizPracticeMode={de:"blank",es:"blank",ja:"blank"};
 
         function activeAppLanguage(){
             const selected=document.getElementById("study-language-select")?.value;
@@ -7106,6 +7127,53 @@ Plain text only.`;
             }
         }
 
+        function quizPracticeOptions(language){
+            if(language==="de"){
+                return [
+                    {value:"blank",label:"Article / Pronoun Blank"},
+                    {value:"legacy",label:"Case Guesser"}
+                ];
+            }
+            if(language==="es"){
+                return [
+                    {value:"blank",label:"Verb / Pronoun Blank"},
+                    {value:"legacy",label:"Forms & Functions"}
+                ];
+            }
+            return [
+                {value:"blank",label:"Particle Guesser"},
+                {value:"legacy",label:"Particles & Readings"}
+            ];
+        }
+
+        function currentLanguageQuizPracticeMode(language=studyBoardLanguage){
+            return languageQuizPracticeMode[language] || "blank";
+        }
+
+        function renderQuizPracticeModeSelector(language=studyBoardLanguage){
+            const select=document.getElementById("quiz-practice-mode");
+            if(!select)return;
+            const options=quizPracticeOptions(language);
+            const selected=currentLanguageQuizPracticeMode(language);
+            select.innerHTML="";
+            options.forEach(option=>{
+                const el=document.createElement("option");
+                el.value=option.value;
+                el.textContent=option.label;
+                if(option.value===selected)el.selected=true;
+                select.appendChild(el);
+            });
+        }
+
+        window.setLanguageQuizPracticeMode=function(mode){
+            const language=syncQuizLanguageToTutor();
+            const allowed=quizPracticeOptions(language).map(x=>x.value);
+            languageQuizPracticeMode[language]=allowed.includes(mode) ? mode : "blank";
+            resetLanguageQuizCard(language);
+            updateQuizLanguageUI();
+            initQuiz();
+        };
+
         function resetLanguageQuizCard(language=studyBoardLanguage){
             clearQuizAdvanceTimer();
             renderedQuizLanguage=language;
@@ -7115,11 +7183,19 @@ Plain text only.`;
             currentQuizItem=null;
 
             const meta=STUDY_LANGUAGE_META[language] || STUDY_LANGUAGE_META.de;
-            const ui={
-                de:{header:"German Case Guesser",question:"What grammatical case is the highlighted phrase?"},
-                es:{header:"Spanish Forms & Functions",question:"What is the highlighted Spanish form doing here?"},
-                ja:{header:"Japanese Particles & Readings",question:"What does the highlighted Japanese particle do or how is it pronounced?"}
-            }[language] || {header:"Grammar Challenge",question:"Choose the best grammatical description."};
+            const practice=currentLanguageQuizPracticeMode(language);
+            const ui=practice==="blank"
+                ? ({
+                    de:{header:"German Article / Pronoun Guesser",question:"Which form correctly fills the blank?"},
+                    es:{header:"Spanish Verb / Pronoun Guesser",question:"Which form correctly fills the blank?"},
+                    ja:{header:"Japanese Particle Guesser",question:"Which particle correctly fills the blank?"}
+                }[language])
+                : ({
+                    de:{header:"German Case Guesser",question:"What grammatical case is the highlighted phrase?"},
+                    es:{header:"Spanish Forms & Functions",question:"What is the highlighted Spanish form doing here?"},
+                    ja:{header:"Japanese Particles & Readings",question:"What does the highlighted Japanese particle do or how is it pronounced?"}
+                }[language]);
+            renderQuizPracticeModeSelector(language);
 
             const header=document.getElementById("quiz-second-header");
             const question=document.getElementById("quiz-second-question-text");
@@ -7191,26 +7267,49 @@ Plain text only.`;
             if(targetLabel) targetLabel.textContent=meta.targetLabel;
             if(speakBtn) speakBtn.title=`Listen (${meta.name})`;
 
-            const ui={
-                de:{
-                    tab:"Case Guesser",
-                    header:"German Case Guesser",
-                    question:"What grammatical case is the highlighted phrase?",
-                    note:"German practice focuses on the four-case system because case is central to articles, pronouns, adjective endings, and noun-phrase function."
-                },
-                es:{
-                    tab:"Forms & Functions",
-                    header:"Spanish Forms & Functions",
-                    question:"What is the highlighted Spanish form doing here?",
-                    note:"Spanish practice focuses on pronoun function, clitics, articles/determiners, prepositions, conjunctions, and verb forms—not German-style case labels."
-                },
-                ja:{
-                    tab:"Particles & Readings",
-                    header:"Japanese Particles & Readings",
-                    question:"What does the highlighted Japanese particle do or how is it pronounced?",
-                    note:"Japanese practice focuses on particle function and particle pronunciation, especially は / へ / を—not German-style case or noun gender."
-                }
-            }[quizLanguage];
+            const practice=currentLanguageQuizPracticeMode(quizLanguage);
+            const ui=practice==="blank"
+                ? ({
+                    de:{
+                        tab:"Article / Pronoun",
+                        header:"German Article / Pronoun Guesser",
+                        question:"Which form correctly fills the blank?",
+                        note:"German blank practice makes you produce the article or pronoun form from sentence context."
+                    },
+                    es:{
+                        tab:"Verb / Pronoun",
+                        header:"Spanish Verb / Pronoun Guesser",
+                        question:"Which form correctly fills the blank?",
+                        note:"Spanish blank practice focuses on producing high-frequency verb and pronoun forms in context."
+                    },
+                    ja:{
+                        tab:"Particle Guesser",
+                        header:"Japanese Particle Guesser",
+                        question:"Which particle correctly fills the blank?",
+                        note:"Japanese blank practice focuses on choosing the particle that completes the intended sentence."
+                    }
+                }[quizLanguage])
+                : ({
+                    de:{
+                        tab:"Case Guesser",
+                        header:"German Case Guesser",
+                        question:"What grammatical case is the highlighted phrase?",
+                        note:"German practice focuses on the four-case system because case is central to articles, pronouns, adjective endings, and noun-phrase function."
+                    },
+                    es:{
+                        tab:"Forms & Functions",
+                        header:"Spanish Forms & Functions",
+                        question:"What is the highlighted Spanish form doing here?",
+                        note:"Spanish practice focuses on pronoun function, clitics, articles/determiners, prepositions, conjunctions, and verb forms."
+                    },
+                    ja:{
+                        tab:"Particles & Readings",
+                        header:"Japanese Particles & Readings",
+                        question:"What does the highlighted Japanese particle do or how is it pronounced?",
+                        note:"Japanese practice focuses on particle function and pronunciation, especially は / へ / を."
+                    }
+                }[quizLanguage]);
+            renderQuizPracticeModeSelector(quizLanguage);
 
             if(secondLabel) secondLabel.textContent=ui.tab;
             if(secondHeader) secondHeader.textContent=ui.header;
@@ -7280,6 +7379,31 @@ Plain text only.`;
             box.appendChild(mark);
 
             if(after) box.appendChild(document.createTextNode(after));
+        }
+
+        function renderBlankQuizSentence(sentence,focus){
+            const box=document.getElementById("quiz-case-sentence-container");
+            if(!box)return;
+            box.innerHTML="";
+            const text=String(sentence||"");
+            const needle=String(focus||"");
+            const index=text.indexOf(needle);
+
+            if(index<0 || !needle){
+                box.textContent=text;
+                return;
+            }
+
+            const before=text.slice(0,index);
+            const after=text.slice(index+needle.length);
+            if(before)box.appendChild(document.createTextNode(before));
+
+            const blank=document.createElement("span");
+            blank.className="inline-flex items-center justify-center min-w-[64px] px-2 py-0.5 border-b-2 border-indigo-400 text-indigo-700 font-bold tracking-wider";
+            blank.textContent="_____";
+            box.appendChild(blank);
+
+            if(after)box.appendChild(document.createTextNode(after));
         }
 
         function setQuizChoices(labels,answerValue){
@@ -7763,13 +7887,164 @@ Plain text only.`;
             return candidates;
         }
 
+        function fourFormChoices(correct,pool){
+            const unique=[...new Set((pool||[]).filter(Boolean))];
+            const wrong=shuffleQuizArray(unique.filter(x=>x!==correct)).slice(0,3);
+            if(wrong.length<3)return [];
+            return [{value:correct,label:correct},...wrong.map(x=>({value:x,label:x}))];
+        }
+
+        function germanBlankQuizCandidates(items){
+            const candidates=[];
+            const definite=["der","die","das","den","dem","des"];
+            const indefinite=["ein","eine","einen","einem","einer","eines"];
+            const pronounSets=[
+                ["ich","mich","mir","er"],
+                ["du","dich","dir","ihr"],
+                ["er","ihn","ihm","sie"],
+                ["wir","uns","ihr","euch"]
+            ];
+
+            items.forEach(item=>{
+                const sentence=studyItemTarget(item);
+                const english=String(item.english||"").trim();
+                const re=/\b(der|die|das|den|dem|des|ein|eine|einen|einem|einer|eines|ich|mich|mir|du|dich|dir|er|ihn|ihm|wir|uns|ihr|euch)\b/gi;
+                let match;
+                while((match=re.exec(sentence))){
+                    const original=match[0];
+                    const low=original.toLowerCase();
+                    let pool=[];
+                    let kind="article";
+
+                    if(definite.includes(low))pool=definite;
+                    else if(indefinite.includes(low))pool=indefinite;
+                    else{
+                        kind="pronoun";
+                        const group=pronounSets.find(set=>set.includes(low));
+                        if(group)pool=group;
+                    }
+
+                    if(!pool.length)continue;
+                    const choices=fourFormChoices(low,pool);
+                    if(choices.length!==4)continue;
+
+                    candidates.push({
+                        item,sentence,focus:original,
+                        answer:low,
+                        choices,
+                        blank:true,
+                        header:"German Article / Pronoun Guesser",
+                        question:english
+                            ? `Which ${kind} restores the sentence? Meaning: “${english}”`
+                            : `Which ${kind} correctly fills the blank?`,
+                        explanation:`The original sentence uses “${original}” in this position.`
+                    });
+                }
+            });
+            return candidates;
+        }
+
+        function spanishBlankQuizCandidates(items){
+            const candidates=[];
+            const verbGroups=[
+                ["soy","eres","es","somos"],
+                ["estoy","estás","está","estamos"],
+                ["voy","vas","va","vamos"],
+                ["tengo","tienes","tiene","tenemos"],
+                ["quiero","quieres","quiere","queremos"],
+                ["puedo","puedes","puede","podemos"],
+                ["hablo","hablas","habla","hablamos"],
+                ["como","comes","come","comemos"],
+                ["vivo","vives","vive","vivimos"]
+            ];
+            const pronounGroups=[
+                ["yo","tú","él","nosotros"],
+                ["me","te","le","nos"],
+                ["lo","la","los","las"]
+            ];
+
+            items.forEach(item=>{
+                const sentence=studyItemTarget(item);
+                const english=String(item.english||"").trim();
+                const tokens=String(sentence||"").match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/g)||[];
+                tokens.forEach(token=>{
+                    const low=token.toLowerCase();
+                    let pool=verbGroups.find(group=>group.includes(low));
+                    let kind="verb form";
+                    if(!pool){
+                        pool=pronounGroups.find(group=>group.includes(low));
+                        kind="pronoun";
+                    }
+                    if(!pool)return;
+                    const choices=fourFormChoices(low,pool);
+                    if(choices.length!==4)return;
+
+                    candidates.push({
+                        item,sentence,focus:token,
+                        answer:low,
+                        choices,
+                        blank:true,
+                        header:"Spanish Verb / Pronoun Guesser",
+                        question:english
+                            ? `Which ${kind} completes the sentence? Meaning: “${english}”`
+                            : `Which ${kind} correctly fills the blank?`,
+                        explanation:`The original sentence uses “${token}” here.`
+                    });
+                });
+            });
+            return candidates;
+        }
+
+        function japaneseBlankQuizCandidates(items){
+            const candidates=[];
+            const common=["は","が","を","に","で","へ","と","の"];
+
+            items.forEach(item=>{
+                const sentence=studyItemTarget(item);
+                const english=String(item.english||"").trim();
+                if(!english)return;
+
+                const re=/は|が|を|に|で|へ|と|の/g;
+                let match;
+                while((match=re.exec(sentence))){
+                    const particle=match[0];
+
+                    // に is especially polyfunctional. Reuse the existing confidence
+                    // gate where available and skip uncertain saved examples.
+                    if(particle==="に" && typeof classifyNi==="function" && !classifyNi(sentence,match.index)){
+                        continue;
+                    }
+
+                    const choices=fourFormChoices(particle,common);
+                    if(choices.length!==4)continue;
+
+                    candidates.push({
+                        item,sentence,focus:particle,
+                        answer:particle,
+                        choices,
+                        blank:true,
+                        header:"Japanese Particle Guesser",
+                        question:`Which particle completes the sentence to match: “${english}”?`,
+                        explanation:`The original Japanese sentence uses ${particle} in this position.`
+                    });
+                }
+            });
+            return candidates;
+        }
+
         function languageQuizCandidates(items,language=syncQuizLanguageToTutor()){
+            const practice=currentLanguageQuizPracticeMode(language);
+            if(practice==="blank"){
+                if(language==="de") return germanBlankQuizCandidates(items);
+                if(language==="es") return spanishBlankQuizCandidates(items);
+                return japaneseBlankQuizCandidates(items);
+            }
             if(language==="de") return germanQuizCandidates(items);
             if(language==="es") return spanishQuizCandidates(items);
             return japaneseQuizCandidates(items);
         }
 
-        function builtInLanguageQuizCandidates(language){
+        function builtInLegacyLanguageQuizCandidates(language){
             const synthetic=(lang,sentence)=>({
                 id:`builtin-${lang}-${sentence}`,
                 language:lang,
@@ -8075,6 +8350,81 @@ Plain text only.`;
             ];
         }
 
+        function builtInBlankLanguageQuizCandidates(language){
+            const synthetic=(lang,sentence,english="")=>({
+                id:`builtin-blank-${lang}-${sentence}`,
+                language:lang,
+                target:sentence,
+                german:lang==="de" ? sentence : "",
+                english,
+                timestamp:"Built-in practice"
+            });
+
+            if(language==="de"){
+                const qs=[
+                    ["Ich sehe den Hund.","den",["den","dem","der","des"],"I see the dog.","“den” is the masculine accusative definite article here."],
+                    ["Ich helfe dem Mann.","dem",["dem","den","der","des"],"I help the man.","helfen takes dative, so the masculine article is “dem”."],
+                    ["Der Hund schläft.","Der",["der","den","dem","des"],"The dog is sleeping.","The subject is nominative masculine, so the article is “der”."],
+                    ["Sie spricht mit der Frau.","der",["der","die","den","dem"],"She is speaking with the woman.","mit takes dative; feminine dative uses “der”."],
+                    ["Ich gebe ihm das Buch.","ihm",["ihm","ihn","er","mir"],"I give him the book.","“ihm” is the dative masculine pronoun used for the recipient."],
+                    ["Er sieht mich.","mich",["mich","mir","ich","ihn"],"He sees me.","“mich” is the accusative first-person singular pronoun."]
+                ];
+                return qs.map(([sentence,focus,forms,meaning,explanation])=>({
+                    item:synthetic("de",sentence,meaning),sentence,focus,
+                    answer:focus.toLowerCase(),
+                    choices:forms.map(x=>({value:x.toLowerCase(),label:x})),
+                    blank:true,
+                    header:"German Article / Pronoun Guesser",
+                    question:`Which form completes the sentence? Meaning: “${meaning}”`,
+                    explanation
+                }));
+            }
+
+            if(language==="es"){
+                const qs=[
+                    ["Yo hablo español.","hablo",["hablo","hablas","habla","hablamos"],"I speak Spanish.","With yo, hablar uses “hablo” in the present tense."],
+                    ["Ella está cansada.","está",["estoy","estás","está","estamos"],"She is tired.","With ella, estar uses “está”."],
+                    ["Nosotros vamos al centro.","vamos",["voy","vas","va","vamos"],"We are going downtown.","With nosotros, ir uses “vamos”."],
+                    ["Le doy el libro a Ana.","Le",["me","te","le","nos"],"I give the book to Ana.","“Le” marks Ana as the indirect-object recipient."],
+                    ["Lo veo todos los días.","Lo",["lo","la","los","las"],"I see him/it every day.","“Lo” is the masculine singular direct-object pronoun in this sentence."],
+                    ["Quiero aprender español.","Quiero",["quiero","quieres","quiere","queremos"],"I want to learn Spanish.","The first-person singular of querer is “quiero”."]
+                ];
+                return qs.map(([sentence,focus,forms,meaning,explanation])=>({
+                    item:synthetic("es",sentence,meaning),sentence,focus,
+                    answer:focus.toLowerCase(),
+                    choices:forms.map(x=>({value:x.toLowerCase(),label:x})),
+                    blank:true,
+                    header:"Spanish Verb / Pronoun Guesser",
+                    question:`Which form completes the sentence? Meaning: “${meaning}”`,
+                    explanation
+                }));
+            }
+
+            const qs=[
+                ["私は学生です。","は",["は","が","を","に"],"I am a student.","は marks 私 as the topic."],
+                ["猫がいます。","が",["は","が","を","で"],"There is a cat.","が marks the entity that exists with います."],
+                ["本を読みます。","を",["を","が","に","で"],"I read a book.","を marks 本 as the direct object."],
+                ["学校に行きます。","に",["に","で","を","と"],"I go to school.","に marks 学校 as the destination."],
+                ["学校で勉強します。","で",["で","に","へ","を"],"I study at school.","で marks the place where the action occurs."],
+                ["友達と話します。","と",["と","に","で","の"],"I talk with a friend.","と marks the companion in this sentence."]
+            ];
+            return qs.map(([sentence,focus,forms,meaning,explanation])=>({
+                item:synthetic("ja",sentence,meaning),sentence,focus,
+                answer:focus,
+                choices:forms.map(x=>({value:x,label:x})),
+                blank:true,
+                header:"Japanese Particle Guesser",
+                question:`Which particle completes the sentence to mean: “${meaning}”?`,
+                explanation
+            }));
+        }
+
+        function builtInLanguageQuizCandidates(language){
+            return currentLanguageQuizPracticeMode(language)==="blank"
+                ? builtInBlankLanguageQuizCandidates(language)
+                : builtInLegacyLanguageQuizCandidates(language);
+        }
+
         function initQuiz(){
             const quizLanguage=syncQuizLanguageToTutor();
             if(renderedQuizLanguage!==quizLanguage) resetLanguageQuizCard(quizLanguage);
@@ -8148,9 +8498,9 @@ Plain text only.`;
             const builtInCandidates=builtInLanguageQuizCandidates(quizLanguage) || [];
             let candidates=[];
 
-            if(quizLanguage==="es" || quizLanguage==="ja"){
-                // Keep saved-item practice first, but always include a reliable
-                // language-specific bank so the arena can never be blank.
+            if(currentLanguageQuizPracticeMode(quizLanguage)==="blank" || quizLanguage==="es" || quizLanguage==="ja"){
+                // Production-style blank practice always mixes personal saved
+                // material with a reliable built-in bank.
                 candidates=[...savedCandidates,...builtInCandidates];
             }else{
                 candidates=savedCandidates.length ? savedCandidates : builtInCandidates;
@@ -8158,20 +8508,24 @@ Plain text only.`;
 
             if(generationStatus){
                 const savedCount=savedCandidates.length;
+                const practiceLabel=quizPracticeOptions(quizLanguage)
+                    .find(x=>x.value===currentLanguageQuizPracticeMode(quizLanguage))?.label || "Grammar";
                 generationStatus.textContent=
-                    quizLanguage==="es"
-                        ? `Spanish question pool: ${savedCount} from your saved items + ${builtInCandidates.length} built-in`
-                        : quizLanguage==="ja"
-                            ? `Japanese question pool: ${savedCount} from your saved items + ${builtInCandidates.length} built-in`
-                            : `${savedCount || builtInCandidates.length} German case questions available`;
+                    `${practiceLabel}: ${savedCount} from your saved items + ${builtInCandidates.length} built-in`;
             }
 
             if(!candidates.length){
-                const messages={
-                    de:"No unambiguous German case phrase was found in this Deutsch list yet.",
-                    es:"I couldn't find a Spanish form in the saved sentences that the local parser can quiz reliably.",
-                    ja:"I couldn't find a Japanese particle or supported predicate ending in the saved sentences."
-                };
+                const messages=currentLanguageQuizPracticeMode(quizLanguage)==="blank"
+                    ? {
+                        de:"No reliable German article or pronoun blank was found.",
+                        es:"No reliable Spanish verb or pronoun blank was found.",
+                        ja:"No reliable Japanese particle blank was found."
+                    }
+                    : {
+                        de:"No unambiguous German case phrase was found in this Deutsch list yet.",
+                        es:"I couldn't find a Spanish form in the saved sentences that the local parser can quiz reliably.",
+                        ja:"I couldn't find a Japanese particle or supported predicate ending in the saved sentences."
+                    };
                 if(sentenceBox) sentenceBox.innerHTML=`<span class="text-rose-700 font-semibold text-xs">${escapeHtml(messages[quizLanguage])}</span>`;
                 const qText=document.getElementById("quiz-second-question-text");
                 if(qText) qText.textContent="Try another saved sentence; Translation Flashcards are still available.";
@@ -8201,7 +8555,8 @@ Plain text only.`;
                 targetWord.classList.add("hidden");
             }
 
-            renderHighlightedQuizSentence(q.sentence,q.focus);
+            if(q.blank) renderBlankQuizSentence(q.sentence,q.focus);
+            else renderHighlightedQuizSentence(q.sentence,q.focus);
             setQuizChoices(q.choices,q.answer);
 
             // Last-mile visibility enforcement for Safari/mobile.
@@ -8242,9 +8597,10 @@ Plain text only.`;
                 feedback.className=correct
                     ? "p-3 rounded-xl text-xs font-semibold animate-fadeIn border bg-emerald-50 text-emerald-800 border-emerald-100 leading-relaxed"
                     : "p-3 rounded-xl text-xs font-semibold animate-fadeIn border bg-rose-50 text-rose-800 border-rose-100 leading-relaxed";
+                const practice=currentLanguageQuizPracticeMode(syncQuizLanguageToTutor());
                 feedback.textContent=correct
                     ? quizSecondExplanation
-                    : `The best answer is ${quizSecondCorrectLabel}. ${quizSecondExplanation}`;
+                    : `${practice==="blank" ? "The correct form is" : "The best answer is"} ${quizSecondCorrectLabel}. ${quizSecondExplanation}`;
             }
 
             if(correct) quizScore++;
