@@ -3872,16 +3872,16 @@ body.conversation-first-layout #mobile-right-column{
 
                 <!-- Tutor Mode Tabs -->
                 <div class="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 shrink-0">
-                    <button type="button" id="tutor-mode-text-btn" onclick="setTutorInteractionMode('text')" class="rounded-lg bg-white text-indigo-700 shadow-sm px-3 py-2 text-xs font-bold transition">
-                        💬 Text Chat
-                    </button>
-                    <button type="button" id="tutor-mode-voice-btn" onclick="setTutorInteractionMode('voice')" class="rounded-lg text-slate-600 px-3 py-2 text-xs font-bold transition">
+                    <button type="button" id="tutor-mode-voice-btn" onclick="setTutorInteractionMode('voice')" class="rounded-lg bg-white text-indigo-700 shadow-sm px-3 py-2 text-xs font-bold transition">
                         🎙 Voice Conversation
+                    </button>
+                    <button type="button" id="tutor-mode-text-btn" onclick="setTutorInteractionMode('text')" class="rounded-lg text-slate-600 px-3 py-2 text-xs font-bold transition">
+                        💬 Text Chat
                     </button>
                 </div>
 
                 <!-- TEXT CHAT -->
-                <div id="chat-text-mode" class="flex-1 min-h-0 flex flex-col justify-between overflow-hidden">
+                <div id="chat-text-mode" class="hidden flex-1 min-h-0 flex flex-col justify-between overflow-hidden">
                     <div id="chat-messages-log" class="flex-grow overflow-y-auto pr-2 space-y-3 pb-3 text-xs flex flex-col">
                         <div id="ai-tutor-welcome" class="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[90%] self-start">
                             <p id="ai-tutor-welcome-label" class="font-bold mb-1 text-[10px] text-indigo-700">AI GRAMMAR TUTOR</p>
@@ -3906,7 +3906,7 @@ body.conversation-first-layout #mobile-right-column{
                 </div>
 
                 <!-- VOICE CONVERSATION -->
-                <div id="chat-voice-mode" class="hidden min-h-0 flex flex-col gap-2 overflow-hidden">
+                <div id="chat-voice-mode" class="min-h-0 flex flex-col gap-2 overflow-hidden">
                     <div class="shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <div class="flex flex-wrap items-start justify-between gap-2">
                             <div>
@@ -3973,9 +3973,24 @@ body.conversation-first-layout #mobile-right-column{
                             </label>
                         </div>
 
-                        <div id="voice-roleplay-wrap" class="hidden mt-2">
-                            <label class="text-[10px] font-bold text-slate-500">Role-play situation
-                                <input id="voice-roleplay-scenario" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm sm:text-xs text-slate-700" value="ordering at a café" placeholder="e.g. train station, restaurant, meeting someone" oninput="saveVoiceTutorSettings()">
+                        <div id="voice-roleplay-wrap" class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="text-[10px] font-bold text-slate-500">Scenario / topic
+                                <select id="voice-scenario-preset" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm sm:text-xs text-slate-700" onchange="updateVoiceTutorScenario(); saveVoiceTutorSettings()">
+                                    <option value="open">Open conversation</option>
+                                    <option value="greeting" selected>Greeting & meeting someone</option>
+                                    <option value="cafe">Ordering at a café</option>
+                                    <option value="restaurant">Restaurant</option>
+                                    <option value="travel">Travelling / airport</option>
+                                    <option value="train">Train station</option>
+                                    <option value="hotel">Hotel / check-in</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="directions">Asking for directions</option>
+                                    <option value="work">Work / school</option>
+                                    <option value="custom">Custom scenario…</option>
+                                </select>
+                            </label>
+                            <label id="voice-custom-scenario-wrap" class="hidden text-[10px] font-bold text-slate-500">Custom scenario
+                                <input id="voice-roleplay-scenario" class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm sm:text-xs text-slate-700" value="" placeholder="e.g. meeting a friend's family" oninput="saveVoiceTutorSettings()">
                             </label>
                         </div>
                             </div>
@@ -3994,6 +4009,9 @@ body.conversation-first-layout #mobile-right-column{
                         </button>
                         <button type="button" id="voice-english-turn-btn" onclick="askVoiceTutorInEnglish()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 text-xs font-bold transition">
                             🇺🇸 Ask in English
+                        </button>
+                        <button type="button" id="voice-restate-btn" onclick="restateLastVoiceTurn()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-bold transition" title="Discard the last captured turn and say it again">
+                            ↺ Restate
                         </button>
                         <button type="button" onclick="newVoiceConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold transition">
                             New conversation
@@ -9826,7 +9844,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     // ---------- Voice Conversation Tutor ----------
     const VOICE_TUTOR_SETTINGS_KEY = "languagetutor_voice_tutor_settings_v1";
-    let tutorInteractionMode = "text";
+    let tutorInteractionMode = "voice";
     const voiceTutorHistories = {de:[],es:[],ja:[]};
     const textTutorHistories = {de:[],es:[],ja:[]};
     const textTutorBusy = {de:false,es:false,ja:false};
@@ -9855,7 +9873,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             level:"intermediate",
             corrections:"important",
             englishHelp:"ask",
-            scenario:"ordering at a café"
+            scenarioPreset:"greeting",
+            scenario:"greeting and meeting someone"
         };
         try{
             const saved=JSON.parse(safeStorageGet(VOICE_TUTOR_SETTINGS_KEY)||"{}");
@@ -9865,6 +9884,34 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         }
     }
 
+    const VOICE_SCENARIOS={
+        open:"",
+        greeting:"greeting and meeting someone",
+        cafe:"ordering at a café",
+        restaurant:"ordering and interacting at a restaurant",
+        travel:"travelling through an airport",
+        train:"buying a ticket or asking questions at a train station",
+        hotel:"checking into a hotel and asking about the stay",
+        shopping:"shopping and asking about products, sizes, or prices",
+        directions:"asking for and understanding directions",
+        work:"a work or school conversation"
+    };
+
+    function selectedVoiceScenario(){
+        const preset=document.getElementById("voice-scenario-preset")?.value||"open";
+        if(preset==="custom"){
+            return document.getElementById("voice-roleplay-scenario")?.value.trim()||"";
+        }
+        return VOICE_SCENARIOS[preset]||"";
+    }
+
+    window.updateVoiceTutorScenario=function(){
+        const preset=document.getElementById("voice-scenario-preset")?.value||"open";
+        const customWrap=document.getElementById("voice-custom-scenario-wrap");
+        customWrap?.classList.toggle("hidden",preset!=="custom");
+        updateVoiceSettingsSummary();
+    };
+
     function updateVoiceSettingsSummary(){
         const summary=document.getElementById("voice-settings-summary-text");
         if(!summary)return;
@@ -9873,6 +9920,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const level=document.getElementById("voice-level");
         const corrections=document.getElementById("voice-corrections");
         const help=document.getElementById("voice-english-help");
+        const scenario=document.getElementById("voice-scenario-preset");
         const speed=document.getElementById("voice-speech-speed");
 
         const labelOf=el=>el?.selectedOptions?.[0]?.textContent?.trim() || "";
@@ -9880,6 +9928,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
         summary.textContent=[
             labelOf(conversation),
+            labelOf(scenario),
             labelOf(level),
             labelOf(corrections),
             labelOf(help),
@@ -9889,12 +9938,14 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     window.saveVoiceTutorSettings=function(){
         updateVoiceSettingsSummary();
+        const scenarioPreset=document.getElementById("voice-scenario-preset")?.value||"open";
         const settings={
             conversation:document.getElementById("voice-conversation-mode")?.value||"natural",
             level:document.getElementById("voice-level")?.value||"intermediate",
             corrections:document.getElementById("voice-corrections")?.value||"important",
             englishHelp:document.getElementById("voice-english-help")?.value||"ask",
-            scenario:document.getElementById("voice-roleplay-scenario")?.value.trim()||"ordering at a café"
+            scenarioPreset,
+            scenario:selectedVoiceScenario()
         };
         safeStorageSet(VOICE_TUTOR_SETTINGS_KEY,JSON.stringify(settings));
     };
@@ -9911,16 +9962,24 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             const el=document.getElementById(id);
             if(el)el.value=value;
         });
-        const scenario=document.getElementById("voice-roleplay-scenario");
-        if(scenario)scenario.value=settings.scenario;
+        const presetEl=document.getElementById("voice-scenario-preset");
+        const customEl=document.getElementById("voice-roleplay-scenario");
+        let preset=settings.scenarioPreset||"";
+        if(!preset){
+            const match=Object.entries(VOICE_SCENARIOS).find(([,value])=>value===settings.scenario);
+            preset=match?.[0] || (settings.scenario ? "custom" : "open");
+        }
+        if(presetEl) presetEl.value=VOICE_SCENARIOS[preset]!==undefined || preset==="custom" ? preset : "custom";
+        if(customEl) customEl.value=(preset==="custom" ? settings.scenario : "")||"";
+        updateVoiceTutorScenario();
         updateVoiceTutorRoleplayVisibility();
         updateVoiceSettingsSummary();
     }
 
     window.updateVoiceTutorRoleplayVisibility=function(){
         const wrap=document.getElementById("voice-roleplay-wrap");
-        const mode=document.getElementById("voice-conversation-mode")?.value||"natural";
-        wrap?.classList.toggle("hidden",mode!=="roleplay");
+        if(wrap)wrap.classList.remove("hidden");
+        updateVoiceTutorScenario();
     };
 
     window.setTutorInteractionMode=function(mode){
@@ -9935,8 +9994,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         text?.classList.toggle("hidden",voiceMode);
         voice?.classList.toggle("hidden",!voiceMode);
 
-        // Voice mode needs more vertical room because the inline conversation
-        // transcript intentionally shows several card-style turns at once.
+        // Voice is the primary conversation workspace; Text Chat remains available as the second tab.
         const tutorContainer=document.getElementById("socratic-chat-container");
         if(tutorContainer){
             tutorContainer.style.height=voiceMode ? "auto" : "430px";
@@ -9951,6 +10009,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             renderVoiceTutorLanguageUI();
             restoreVoiceTutorSettings();
             renderVoiceTutorTranscript();
+            updateVoiceRestateButton();
         }
     };
 
@@ -10010,6 +10069,14 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     function voiceTutorHistory(){
         return voiceTutorHistories[currentStudyLanguage] || [];
     }
+    function updateVoiceRestateButton(){
+        const button=document.getElementById("voice-restate-btn");
+        if(!button)return;
+        const history=voiceTutorHistory();
+        const hasUserTurn=history.some(entry=>entry.role==="user");
+        button.classList.toggle("hidden",!voiceTutorState.active || !hasUserTurn);
+    }
+
 
     async function copyVoiceConversationTranscript(button){
         const history=voiceTutorHistory();
@@ -10514,6 +10581,7 @@ Do not add quotation marks or labels.`;
         // Keep local session memory bounded too. The prompt uses an even smaller slice.
         if(history.length>200) history.splice(0,history.length-200);
         appendVoiceTutorBubble(entry,true);
+        updateVoiceRestateButton();
     }
 
     function renderVoiceLiveTurn(listeningText=""){
@@ -10537,6 +10605,7 @@ Do not add quotation marks or labels.`;
         voiceTutorState.liveUserText="";
         voiceTutorState.liveTutorText="";
         renderVoiceLiveTurn();
+        updateVoiceRestateButton();
         voiceTutorStatus("Ready.");
     };
 
@@ -10550,11 +10619,14 @@ Do not add quotation marks or labels.`;
             history.pop();
         }
         const recentHistory=history.slice(-10);
+        const scenarioInstruction=settings.scenario
+            ? `Conversation scenario/topic: ${settings.scenario}.`
+            : "Conversation scenario/topic: open conversation.";
         const modeInstructions={
-            natural:"Have a natural everyday conversation. Respond like a patient native-speaking conversation partner, not a worksheet.",
-            beginner:"Use short, high-frequency sentences and ask one simple follow-up question at a time. Keep the conversation easy to continue.",
-            roleplay:`Stay in this role-play situation: ${settings.scenario}. Act as the other person in the scene and keep it realistic.`,
-            free:"Follow the learner's topic freely while remaining a helpful language conversation partner."
+            natural:`Have a natural everyday conversation. Respond like a patient native-speaking conversation partner, not a worksheet. ${scenarioInstruction} Let the scenario guide the conversation without making it rigid.`,
+            beginner:`Use short, high-frequency sentences and ask one simple follow-up question at a time. Keep the conversation easy to continue. ${scenarioInstruction}`,
+            roleplay:`Stay in this role-play situation: ${settings.scenario||"an everyday encounter"}. Act as the other person in the scene and keep it realistic.`,
+            free:`Follow the learner's topic freely while remaining a helpful language conversation partner. ${settings.scenario ? "If useful, use this as a starting topic: "+settings.scenario+"." : ""}`
         };
         const correctionInstructions={
             important:"Only mention a correction when an error meaningfully affects grammar, meaning, or natural communication. Keep the conversation flowing first.",
@@ -10911,6 +10983,57 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
     }
 
+    window.restateLastVoiceTurn=function(){
+        if(!voiceTutorState.active)return;
+        if(voiceTutorState.phase==="processing"){
+            voiceTutorStatus("Wait for the tutor to finish this turn, then tap Restate.","normal");
+            return;
+        }
+
+        const history=voiceTutorHistory();
+        let userIndex=-1;
+        for(let i=history.length-1;i>=0;i--){
+            if(history[i]?.role==="user"){
+                userIndex=i;
+                break;
+            }
+        }
+        if(userIndex<0){
+            voiceTutorStatus("There is no captured turn to restate yet.","normal");
+            updateVoiceRestateButton();
+            return;
+        }
+
+        const previousUser=history[userIndex];
+        const inputMode=previousUser?.inputMode==="english" ? "english" : "target";
+
+        // Remove the learner turn and anything the tutor produced after it.
+        history.splice(userIndex);
+        renderVoiceTutorTranscript();
+
+        // Stop speech and recognition so the replacement begins cleanly.
+        try{window.speechSynthesis?.cancel();}catch(e){}
+        voiceTutorState.speaking=false;
+        clearVoiceSilenceTimer();
+        destroyVoiceRecognition();
+        setVoiceMicIndicator(false);
+
+        voiceTutorState.liveUserText="";
+        voiceTutorState.liveTutorText="";
+        voiceTutorState.phase="idle";
+        voiceTutorState.inputMode=inputMode;
+        renderVoiceLiveTurn("Restate your last turn…");
+        voiceTutorStatus(
+            inputMode==="english"
+                ? "Restate your English question."
+                : `Restate your ${langConfig().name} turn.`,
+            "listening"
+        );
+        updateVoiceRestateButton();
+
+        setTimeout(()=>resumeVoiceRecognition(true,inputMode),150);
+    };
+
     window.startVoiceConversation=function(){
         if(!getActiveAIKey()){
             alert("Add an AI API key in Settings first.");
@@ -10939,6 +11062,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         stop?.classList.remove("hidden");
         listen?.classList.remove("hidden");
         english?.classList.remove("hidden");
+        updateVoiceRestateButton();
 
         createVoiceRecognition("target");
         voiceTutorStatus(`Conversation started. Speak in ${langConfig().name}. Listening pauses after 10 seconds of silence.`);
@@ -10959,6 +11083,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         document.getElementById("voice-stop-btn")?.classList.add("hidden");
         document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
         document.getElementById("voice-english-turn-btn")?.classList.add("hidden");
+        document.getElementById("voice-restate-btn")?.classList.add("hidden");
         renderVoiceLiveTurn();
         if(!silent)voiceTutorStatus("Conversation stopped.");
     };
@@ -16230,6 +16355,9 @@ Current work: ${context||"No sentence has been entered yet."}`;
         // Conversation is the starting point in the redesigned interface.
         chat.classList.remove("hidden");
         if(chatToggle) chatToggle.setAttribute("aria-expanded","true");
+        if(typeof window.setTutorInteractionMode==="function"){
+            window.setTutorInteractionMode("voice");
+        }
     }
 
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",build);
