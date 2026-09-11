@@ -3223,42 +3223,54 @@ body.conversation-first-layout main.conversation-first-main{
 .conversation-first-section{
     width:100%;
     min-width:0;
-}
-.conversation-first-section-label{
-    display:flex;
-    align-items:end;
-    justify-content:space-between;
-    gap:12px;
-    margin:0 2px 7px;
-}
-.conversation-first-section-label h2{
-    margin:0;
-    color:#1e293b;
-    font-size:15px;
-    font-weight:800;
-}
-.conversation-first-section-label p{
-    margin:2px 0 0;
-    color:#64748b;
-    font-size:10px;
-    line-height:1.4;
-}
-#conversation-primary-section #conversation-tutor-toggle{
+}#conversation-primary-section #conversation-tutor-toggle{
     border-color:#c7d2fe;
     background:#eef2ff;
 }
 #conversation-primary-section #socratic-chat-container{
     width:100%;
 }
-#conversation-analysis-section #mobile-parser-card{
+#conversation-analysis-section[open] #mobile-parser-card{
     display:block!important;
 }
 #conversation-grammar-section #cheat-sheet-container,
 #conversation-grammar-section #japanese-kana-resource{
     width:100%;
 }
-#conversation-study-section #mobile-study-card{
+#conversation-study-section[open] #mobile-study-card{
     display:block!important;
+}
+.conversation-fold{
+    width:100%;
+    border:1px solid #e2e8f0;
+    border-radius:16px;
+    background:#fff;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+    overflow:hidden;
+}
+.conversation-fold > summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    min-height:46px;
+    padding:10px 14px;
+    cursor:pointer;
+    color:#475569;
+    font-size:12px;
+    font-weight:800;
+    list-style:none;
+}
+.conversation-fold > summary::-webkit-details-marker{display:none}
+.conversation-fold > summary .fold-chevron{
+    color:#94a3b8;
+    transition:transform .18s ease;
+}
+.conversation-fold[open] > summary .fold-chevron{
+    transform:rotate(180deg);
+}
+.conversation-fold-body{
+    padding:0 12px 12px;
 }
 #manual-language-tools{
     width:100%;
@@ -3316,10 +3328,7 @@ body.conversation-first-layout #mobile-right-column{
     body.conversation-first-layout main.conversation-first-main{
         padding-top:14px!important;
         gap:14px!important;
-    }
-    .conversation-first-section-label{align-items:flex-start}
-    .conversation-first-section-label p{font-size:9px}
-    #manual-language-tools-body{padding:0 10px 10px}
+    }    #manual-language-tools-body{padding:0 10px 10px}
     body.conversation-first-layout #socratic-chat-container{
         height:auto!important;
         min-height:0!important;
@@ -3933,14 +3942,7 @@ body.conversation-first-layout #mobile-right-column{
                 <!-- VOICE CONVERSATION -->
                 <div id="chat-voice-mode" class="min-h-0 flex flex-col gap-2 overflow-hidden">
                     <div class="shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <div>
-                                <div id="voice-tutor-heading" class="text-sm font-bold text-slate-800">German Voice Conversation</div>
-                            </div>
-                            <span id="voice-tutor-language-badge" class="rounded-lg bg-slate-900 text-white px-2 py-1 text-[9px] font-bold">DE</span>
-                        </div>
-
-                        <details id="voice-settings-panel" class="voice-settings-panel mt-3">
+                        <details id="voice-settings-panel" class="voice-settings-panel">
                             <summary class="voice-settings-summary">
                                 <div class="min-w-0">
                                     <div class="voice-settings-summary-title">Conversation settings</div>
@@ -10068,13 +10070,6 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     function renderVoiceTutorLanguageUI(){
         const cfg=langConfig();
-        const heading=document.getElementById("voice-tutor-heading");
-        const badge=document.getElementById("voice-tutor-language-badge");
-        if(heading) heading.textContent=`${cfg.name} Voice Conversation`;
-        if(badge){
-            badge.textContent=cfg.badge;
-            badge.className=voiceTutorLanguageBadgeClass(currentStudyLanguage);
-        }
 
         const targetMicLabel=document.getElementById("voice-target-mic-label");
         if(targetMicLabel) targetMicLabel.textContent=`Speak ${cfg.name}`;
@@ -12573,10 +12568,15 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             updateNonGermanParserControls();
         }
 
+        const analysisSection=document.getElementById("conversation-analysis-section");
+        if(analysisSection && analysisSection.tagName==="DETAILS"){
+            analysisSection.open=true;
+        }
+
         const parser=document.getElementById("mobile-parser-card");
         if(parser){
             parser.classList.remove("hidden");
-            parser.scrollIntoView({behavior:"smooth",block:"start"});
+            requestAnimationFrame(()=>parser.scrollIntoView({behavior:"smooth",block:"start"}));
         }
     };
 
@@ -16380,23 +16380,30 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
 <script id="conversation-first-layout-init">
 (function(){
-    function sectionLabel(title,description){
-        const wrap=document.createElement("div");
-        wrap.className="conversation-first-section-label";
-        const copy=document.createElement("div");
-        const h=document.createElement("h2");
-        h.textContent=title;
-        const p=document.createElement("p");
-        p.textContent=description;
-        copy.append(h,p);
-        wrap.appendChild(copy);
-        return wrap;
+    function makeFold(id,label,content,open=false){
+        const details=document.createElement("details");
+        details.id=id;
+        details.className="conversation-first-section conversation-fold";
+        details.open=Boolean(open);
+
+        const summary=document.createElement("summary");
+        const title=document.createElement("span");
+        title.textContent=label;
+        const chevron=document.createElement("span");
+        chevron.className="fold-chevron";
+        chevron.textContent="⌄";
+        summary.append(title,chevron);
+
+        const body=document.createElement("div");
+        body.className="conversation-fold-body";
+        if(content)body.appendChild(content);
+
+        details.append(summary,body);
+        return details;
     }
 
     function build(){
         const main=document.querySelector("main");
-        const left=document.getElementById("mobile-left-column");
-        const right=document.getElementById("mobile-right-column");
         const chatToggle=document.getElementById("conversation-tutor-toggle");
         const chat=document.getElementById("socratic-chat-container");
         const parser=document.getElementById("mobile-parser-card");
@@ -16414,55 +16421,30 @@ Current work: ${context||"No sentence has been entered yet."}`;
         const primary=document.createElement("section");
         primary.id="conversation-primary-section";
         primary.className="conversation-first-section";
-        primary.appendChild(sectionLabel(
-            "1. Conversation",
-            "Speak or type naturally. Review corrections, replay them, and save the transcript."
-        ));
         if(chatToggle)primary.appendChild(chatToggle);
         primary.appendChild(chat);
 
-        const analysis=document.createElement("section");
-        analysis.id="conversation-analysis-section";
-        analysis.className="conversation-first-section";
-        analysis.appendChild(sectionLabel(
-            "2. Analyze what was said",
-            "Use 🔍 Analyze on any conversation sentence to inspect its grammar without retyping it."
-        ));
-        analysis.appendChild(parser);
+        const analysis=makeFold("conversation-analysis-section","Analyze",parser,false);
 
-        const grammarSection=document.createElement("section");
-        grammarSection.id="conversation-grammar-section";
-        grammarSection.className="conversation-first-section";
-        grammarSection.appendChild(sectionLabel(
-            "3. Grammar tools",
-            "Explore forms, patterns, particles, cases, conjugations, and the quick translator when needed."
-        ));
-        if(kana)grammarSection.appendChild(kana);
-        if(grammarToggle)grammarSection.appendChild(grammarToggle);
-        grammarSection.appendChild(grammar);
+        // The outer fold now handles collapsing, so the older inner Grammar Tools
+        // toggle is redundant. Keep its content, but not the extra toggle row.
+        if(grammarToggle)grammarToggle.remove();
+        grammar.classList.remove("hidden");
+        const grammarBody=document.createElement("div");
+        if(kana)grammarBody.appendChild(kana);
+        grammarBody.appendChild(grammar);
+        const grammarSection=makeFold("conversation-grammar-section","Grammar Tools",grammarBody,false);
 
-        const studySection=document.createElement("section");
-        studySection.id="conversation-study-section";
-        studySection.className="conversation-first-section";
-        studySection.appendChild(sectionLabel(
-            "4. Study & review",
-            "Practice saved language and return to material from your conversations."
-        ));
-        studySection.appendChild(study);
+        const studySection=makeFold("conversation-study-section","Study & Review",study,false);
 
-        const manualDetails=document.createElement("details");
-        manualDetails.id="manual-language-tools";
-        manualDetails.className="conversation-first-section";
-        const summary=document.createElement("summary");
-        summary.innerHTML='<span>Translation & Manual Input <span style="font-weight:600;color:#94a3b8">(optional)</span></span><span>⌄</span>';
-        const manualBody=document.createElement("div");
-        manualBody.id="manual-language-tools-body";
-        if(manual)manualBody.appendChild(manual);
-        manualDetails.append(summary,manualBody);
+        const manualDetails=makeFold("manual-language-tools","Translation & Manual Input",manual,false);
+        manualDetails.classList.add("conversation-fold");
+        const manualBody=manualDetails.querySelector(".conversation-fold-body");
+        if(manualBody)manualBody.id="manual-language-tools-body";
 
         main.replaceChildren(primary,analysis,grammarSection,studySection,manualDetails);
 
-        // Conversation is the starting point in the redesigned interface.
+        // Conversation remains the default open workspace.
         chat.classList.remove("hidden");
         if(chatToggle) chatToggle.setAttribute("aria-expanded","true");
         if(typeof window.setTutorInteractionMode==="function"){
