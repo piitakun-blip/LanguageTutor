@@ -2876,6 +2876,21 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
     font-size:12px;font-weight:800;cursor:pointer
 }
 .teacher-note-play:hover{background:#fffbeb}
+.voice-english-reply-translation{
+    margin-top:8px;padding:8px 9px;border:1px solid #bae6fd;border-radius:9px;
+    background:#f0f9ff;color:#0c4a6e;
+}
+.voice-english-reply-label{
+    display:block;margin-bottom:3px;color:#0369a1;font-size:9px;font-weight:800;
+    text-transform:uppercase;letter-spacing:.05em;
+}
+.voice-english-reply-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.voice-english-reply-text{flex:1 1 auto;min-width:0;font-size:12px;line-height:1.5;font-weight:650}
+.voice-english-reply-actions{display:flex;flex:0 0 auto;gap:5px}
+.voice-english-reply-actions button{
+    min-width:31px;min-height:29px;padding:4px 7px;border:1px solid #7dd3fc;
+    border-radius:8px;background:#fff;color:#0369a1;font-size:11px;font-weight:800;
+}
 
 #voice-transcript-window.collapsed{
     height:48px !important;
@@ -3305,6 +3320,16 @@ body.conversation-first-layout #mobile-right-column{
     .conversation-first-section-label{align-items:flex-start}
     .conversation-first-section-label p{font-size:9px}
     #manual-language-tools-body{padding:0 10px 10px}
+    body.conversation-first-layout #socratic-chat-container{
+        height:auto!important;
+        min-height:0!important;
+        max-height:none!important;
+        overflow:visible!important;
+    }
+    body.conversation-first-layout #chat-voice-mode,
+    body.conversation-first-layout #conversation-primary-section{
+        overflow:visible!important;
+    }
 }
 </style>
 </head>
@@ -4007,8 +4032,8 @@ body.conversation-first-layout #mobile-right-column{
                         <button type="button" id="voice-listen-now-btn" onclick="resumeVoiceRecognition(true,'target')" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 text-xs font-bold transition">
                             🎤 <span id="voice-target-mic-label">Speak German</span>
                         </button>
-                        <button type="button" id="voice-english-turn-btn" onclick="askVoiceTutorInEnglish()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 text-xs font-bold transition">
-                            🇺🇸 Ask in English
+                        <button type="button" id="voice-english-turn-btn" onclick="replyToVoiceTutorInEnglish()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 text-xs font-bold transition" title="Say your reply in English and see how to say it in the target language">
+                            🇺🇸 Reply in English
                         </button>
                         <button type="button" id="voice-restate-btn" onclick="restateLastVoiceTurn()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-bold transition" title="Discard the last captured turn and say it again">
                             ↺ Restate
@@ -4044,7 +4069,7 @@ body.conversation-first-layout #mobile-right-column{
 
                     <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-2 overscroll-contain" aria-live="polite">
                         <div id="voice-tutor-empty" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400">
-                            Start a conversation in the selected language. Tap “Ask in English” for one English question; after the tutor answers, listening automatically returns to the selected language.
+                            Start a conversation in the selected language. Tap “Reply in English” for one English question; after the tutor answers, listening automatically returns to the selected language.
                         </div>
                     </div>
 
@@ -9860,6 +9885,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         inputMode:"target",
         silenceTimer:null,
         liveUserText:"",
+        liveUserTargetTranslation:"",
         liveTutorText:""
     };
 
@@ -10187,6 +10213,10 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
             block.append(speaker,content);
 
+            if(entry.role==="user" && entry.inputMode==="english" && entry.targetTranslation){
+                appendEnglishReplyTranslation(block,entry,currentStudyLanguage);
+            }
+
             if(entry.note){
                 const note=document.createElement("div");
                 note.className="voice-transcript-note teacher-note-row";
@@ -10284,7 +10314,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             const empty=document.createElement("div");
             empty.id="voice-tutor-empty";
             empty.className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400";
-            empty.textContent=`Start a ${langConfig().name} conversation and speak naturally. Use “Ask in English” whenever you want one English question; after the answer, listening returns to ${langConfig().name}.`;
+            empty.textContent=`Start a ${langConfig().name} conversation and speak naturally. Use “Reply in English” whenever you want one English question; after the answer, listening returns to ${langConfig().name}.`;
             log.appendChild(empty);
             return;
         }
@@ -10378,6 +10408,44 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             playTeacherCorrection(entry,languageCode);
         });
         return button;
+    }
+
+    function appendEnglishReplyTranslation(container,entry,languageCode=currentStudyLanguage){
+        const translation=String(entry?.targetTranslation||"").trim();
+        if(!container || !translation)return;
+        const cfg=LANGUAGE_MODES[languageCode] || langConfig();
+
+        const box=document.createElement("div");
+        box.className="voice-english-reply-translation";
+        const label=document.createElement("span");
+        label.className="voice-english-reply-label";
+        label.textContent=`How to say it in ${cfg.name}`;
+
+        const row=document.createElement("div");
+        row.className="voice-english-reply-row";
+        const text=document.createElement("div");
+        text.className="voice-english-reply-text";
+        text.textContent=translation;
+
+        const actions=document.createElement("div");
+        actions.className="voice-english-reply-actions";
+
+        const play=document.createElement("button");
+        play.type="button";
+        play.textContent="🔊";
+        play.title=`Play the ${cfg.name} version`;
+        play.addEventListener("click",()=>speakRawText(translation,cfg.locale));
+
+        const analyze=document.createElement("button");
+        analyze.type="button";
+        analyze.textContent="🔍";
+        analyze.title=`Analyze the ${cfg.name} version`;
+        analyze.addEventListener("click",()=>window.analyzeTutorSentence(translation,languageCode));
+
+        actions.append(play,analyze);
+        row.append(text,actions);
+        box.append(label,row);
+        container.appendChild(box);
     }
 
     function voiceTutorControlButton(label,title,handler){
@@ -10503,6 +10571,10 @@ Do not add quotation marks or labels.`;
         else renderTutorMarkdown(text,entry.text);
         wrap.appendChild(text);
 
+        if(user && entry.inputMode==="english" && entry.targetTranslation){
+            appendEnglishReplyTranslation(wrap,entry,currentStudyLanguage);
+        }
+
         if(entry.note){
             const details=document.createElement("details");
             details.className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] text-amber-950";
@@ -10588,10 +10660,12 @@ Do not add quotation marks or labels.`;
         const live=document.getElementById("voice-live-transcript");
         if(!live)return;
         const user=String(voiceTutorState.liveUserText||"").trim();
+        const targetTranslation=String(voiceTutorState.liveUserTargetTranslation||"").trim();
         const tutor=stripTutorMarkdown(voiceTutorState.liveTutorText);
         const listening=String(listeningText||"").trim();
         const lines=[];
         if(user) lines.push(`You: ${user}`);
+        if(targetTranslation) lines.push(`${langConfig().name}: ${targetTranslation}`);
         if(tutor) lines.push(`Tutor: ${tutor}`);
         if(listening) lines.push(listening);
         live.textContent=lines.length ? lines.join("\n\n") : "What the microphone hears will appear here.";
@@ -10603,6 +10677,7 @@ Do not add quotation marks or labels.`;
         voiceTutorHistories[currentStudyLanguage]=[];
         renderVoiceTutorTranscript();
         voiceTutorState.liveUserText="";
+        voiceTutorState.liveUserTargetTranslation="";
         voiceTutorState.liveTutorText="";
         renderVoiceLiveTurn();
         updateVoiceRestateButton();
@@ -10635,33 +10710,33 @@ Do not add quotation marks or labels.`;
             none:"Do not correct the learner unless they explicitly ask for correction."
         };
         const englishInstructions={
-            ask: inputMode==="english"
-                ? `The learner deliberately chose the English-question microphone. Answer the question clearly in English when that is most useful, then you may add a short ${cfg.name} continuation.`
-                : `Use ${cfg.name} for the spoken reply. Use English only if the learner explicitly asks for it.`,
-            support: inputMode==="english"
-                ? `Understand and answer the English question directly. A concise English explanation followed by a short ${cfg.name} continuation is appropriate.`
+            ask: inputMode==="english-reply"
+                ? `The learner used English only because they did not know how to phrase the reply. Continue speaking in ${cfg.name}.`
+                : `Use ${cfg.name} for the spoken reply. Use English only if the learner explicitly asks for an explanation.`,
+            support: inputMode==="english-reply"
+                ? `Continue in ${cfg.name}. A short English learning note may appear in teacher_note if useful, but keep the spoken reply in ${cfg.name}.`
                 : `Use mostly ${cfg.name}. If the learner appears stuck, a short English support note may appear in teacher_note; keep the spoken reply in ${cfg.name}.`,
-            target:`Use only ${cfg.name}, even when the learner deliberately asks a question in English.`
+            target:`Use only ${cfg.name}.`
         };
 
         const transcript=recentHistory.map(h=>{
             if(h.role==="user"){
-                const tag=h.inputMode==="english" ? "Learner (English question)" : `Learner (${cfg.name})`;
+                const tag=h.inputMode==="english" ? "Learner (English-assisted reply)" : `Learner (${cfg.name})`;
                 return `${tag}: ${h.text}`;
             }
             const tag=h.replyLanguage==="en" ? "Tutor (English)" : `Tutor (${cfg.name})`;
             return `${tag}: ${h.text}`;
         }).join("\n");
 
-        const latestInputNote=inputMode==="english"
-            ? `The latest utterance was intentionally recognized with an English (en-US) microphone. Treat it as an English question inside the ongoing ${cfg.name} lesson.`
+        const latestInputNote=inputMode==="english-reply"
+            ? `The learner got stuck and used English as a bridge. The latest text has already been translated into ${cfg.name}. Treat it as the learner's intended ${cfg.name} reply and continue in ${cfg.name}.`
             : `The latest utterance was recognized with the ${cfg.name} microphone (${cfg.locale}).`;
 
         return `You are the voice-conversation tutor inside LanguageTutor.
 Target language: ${cfg.name}.
 Learner level: ${settings.level}.
 Conversation mode: ${settings.conversation}.
-Latest input mode: ${inputMode==="english" ? "English question" : cfg.name + " speaking turn"}.
+Latest input mode: ${inputMode==="english-reply" ? "English-assisted reply" : cfg.name + " speaking turn"}.
 ${latestInputNote}
 
 ${modeInstructions[settings.conversation]}
@@ -10919,7 +10994,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
     };
 
-    window.askVoiceTutorInEnglish=function(){
+    window.replyToVoiceTutorInEnglish=function(){
         if(voiceTutorState.phase==="processing" || voiceTutorState.speaking)return;
         if(!getActiveAIKey()){
             alert("Add an AI API key in Settings first.");
@@ -10946,23 +11021,54 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         setTimeout(()=>resumeVoiceRecognition(true,"english"),120);
     };
+    window.askVoiceTutorInEnglish=window.replyToVoiceTutorInEnglish;
 
     async function handleVoiceTutorUtterance(text,inputMode="target"){
         if(!voiceTutorState.active)return;
         document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
         document.getElementById("voice-english-turn-btn")?.classList.add("hidden");
-        voiceTutorState.liveUserText=String(text||"").trim();
-        voiceTutorState.liveTutorText="";
-        renderVoiceLiveTurn("Tutor is thinking…");
 
-        recordVoiceTutorEntry({role:"user",text,inputMode});
-        voiceTutorStatus(inputMode==="english" ? "Tutor is answering your English question…" : "Tutor is thinking…","thinking");
+        const spokenText=String(text||"").trim();
+        let targetTranslation="";
+        voiceTutorState.liveUserText=spokenText;
+        voiceTutorState.liveUserTargetTranslation="";
+        voiceTutorState.liveTutorText="";
+        renderVoiceLiveTurn(inputMode==="english" ? `Creating your ${langConfig().name} reply…` : "Tutor is thinking…");
+
+        if(inputMode==="english"){
+            voiceTutorStatus(`Turning your English reply into natural ${langConfig().name}…`,"thinking");
+            try{
+                targetTranslation=String(
+                    await googleTranslateApiCall(spokenText,"en",currentStudyLanguage)
+                ).trim();
+                voiceTutorState.liveUserTargetTranslation=targetTranslation;
+                renderVoiceLiveTurn("Tutor is thinking…");
+            }catch(e){
+                console.warn("English reply translation failed:",e);
+            }
+        }
+
+        recordVoiceTutorEntry({role:"user",text:spokenText,inputMode,targetTranslation});
+        voiceTutorStatus(
+            inputMode==="english" && targetTranslation
+                ? `Your ${langConfig().name} version is shown below. Tutor is responding…`
+                : "Tutor is thinking…",
+            "thinking"
+        );
 
         try{
-            const result=await getVoiceTutorReply(text,inputMode);
+            const promptText=(inputMode==="english" && targetTranslation) ? targetTranslation : spokenText;
+            const promptMode=inputMode==="english" ? "english-reply" : inputMode;
+            const result=await getVoiceTutorReply(promptText,promptMode);
             if(!voiceTutorState.active)return;
 
-            recordVoiceTutorEntry({role:"assistant",text:result.reply,note:result.note,correctionAudio:result.correctionAudio||"",replyLanguage:result.replyLanguage});
+            recordVoiceTutorEntry({
+                role:"assistant",
+                text:result.reply,
+                note:result.note,
+                correctionAudio:result.correctionAudio||"",
+                replyLanguage:result.replyLanguage
+            });
             voiceTutorState.liveTutorText=String(result.reply||"").trim();
             renderVoiceLiveTurn();
             await speakVoiceTutorText(result.reply,result.replyLanguage);
@@ -10970,7 +11076,6 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             if(voiceTutorState.active){
                 clearVoiceSilenceTimer();
                 voiceTutorState.phase="listening";
-                // English is deliberately one turn only.
                 setTimeout(()=>resumeVoiceRecognition(false,"target"),250);
             }
         }catch(e){
@@ -11019,6 +11124,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         setVoiceMicIndicator(false);
 
         voiceTutorState.liveUserText="";
+        voiceTutorState.liveUserTargetTranslation="";
         voiceTutorState.liveTutorText="";
         voiceTutorState.phase="idle";
         voiceTutorState.inputMode=inputMode;
@@ -12269,6 +12375,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             text:String(entry.text||"").trim(),
             note:String(entry.note||"").trim(),
             correctionAudio:String(entry.correctionAudio||"").trim(),
+            targetTranslation:String(entry.targetTranslation||"").trim(),
             inputMode:entry.inputMode||"",
             replyLanguage:entry.replyLanguage||""
         })).filter(entry=>entry.text);
@@ -12376,6 +12483,9 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             if(entry.role==="user")content.textContent=entry.text;
             else renderTutorMarkdown(content,entry.text);
             block.append(speaker,content);
+            if(entry.role==="user" && entry.inputMode==="english" && entry.targetTranslation){
+                appendEnglishReplyTranslation(block,entry,selected.language||currentStudyLanguage);
+            }
             if(entry.note){
                 const note=document.createElement("div");
                 note.className="voice-transcript-note teacher-note-row";
