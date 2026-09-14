@@ -2031,7 +2031,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
     }
 
     #language-badge {
-        font-size:14px !important;
+        font-size:20px !important;
         line-height:1 !important;
     }
 
@@ -2210,6 +2210,39 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 </style>
 
 
+<style id="language-flag-badge-v1">
+#language-badge-wrap{
+    width:44px;
+    min-width:44px;
+    height:38px;
+    padding:0 !important;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    background:#ffffff;
+}
+#language-badge{
+    display:block;
+    font-size:25px !important;
+    line-height:1 !important;
+    font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+}
+@media(max-width:640px){
+    #language-badge-wrap{
+        width:34px !important;
+        min-width:34px !important;
+        height:34px !important;
+        padding:0 !important;
+    }
+    #language-badge{
+        font-size:20px !important;
+        line-height:1 !important;
+    }
+}
+</style>
+
+
 <style id="mobile-language-banner-contrast-v3">
 @media (max-width:640px) {
     /* On phones, keep the flag-inspired palette but remove artwork from behind
@@ -2236,14 +2269,12 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
         height:34px !important;
         padding:0 !important;
         border-radius:9999px !important;
-        background:#bc002d !important;
+        background:#ffffff !important;
         border:2px solid #bc002d !important;
         box-shadow:none !important;
     }
     #language-header[data-language="ja"] #language-badge {
-        color:#ffffff !important;
-        -webkit-text-fill-color:#ffffff !important;
-        font-size:11px !important;
+        font-size:20px !important;
         line-height:1 !important;
     }
 
@@ -3528,7 +3559,7 @@ body.conversation-first-layout #mobile-right-column{
             <div class="flex items-center gap-3">
                 <div id="language-badge-wrap" class="p-2 rounded-lg text-black font-bold shadow-inner flex items-center justify-center"
                      style="background:#b8bec7 !important;border:1px solid #7b8491 !important;">
-                    <span id="language-badge" class="text-xl">DE</span>
+                    <span id="language-badge" class="text-xl" aria-label="German flag">🇩🇪</span>
                 </div>
                 <div>
                     <h1 id="language-title" class="text-2xl font-bold tracking-tight" style="color:#fbbf24 !important;">
@@ -10462,11 +10493,11 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     const LANGUAGE_MODES = {
         de: {
             code:"de", locale:"de-DE", name:"German", native:"Deutsch",
-            title:"DeutschTutor", badge:"DE",
+            title:"DeutschTutor", badge:"🇩🇪",
             subtitle:"Interactive German Grammar & Translation Companion",
             header:"linear-gradient(180deg,#111111 0%,#111111 72%,#dd0000 72%,#dd0000 86%,#ffcc00 86%,#ffcc00 100%)",
             headerText:"#fff8d6", titleColor:"#ffcc00", subtitleColor:"#fff0a6", bylineColor:"#f8fafc",
-            badgeBg:"#111111", badgeText:"#ffcc00", badgeBorder:"#dd0000",
+            badgeBg:"#ffffff", badgeText:"#111111", badgeBorder:"#111111",
             selectorBg:"rgba(255,204,0,.94)", selectorText:"#111111", selectorBorder:"#ffdf57",
             selectBg:"#111111", selectText:"#ffcc00",
             statusBg:"rgba(255,204,0,.96)", statusText:"#111111", statusBorder:"#dd0000",
@@ -10475,11 +10506,11 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         },
         es: {
             code:"es", locale:"es-ES", name:"Spanish", native:"Español",
-            title:"Tutor de Español", badge:"ES",
+            title:"Tutor de Español", badge:"🇪🇸",
             subtitle:"Interactive Spanish Grammar & Translation Companion",
             header:"linear-gradient(180deg,#aa151b 0%,#aa151b 25%,#f1bf00 25%,#f1bf00 80%,#aa151b 80%,#aa151b 100%)",
             headerText:"#5b0b0f", titleColor:"#6f0f15", subtitleColor:"#5b0b0f", bylineColor:"#7b171c",
-            badgeBg:"#f1bf00", badgeText:"#8b1017", badgeBorder:"#8b1017",
+            badgeBg:"#ffffff", badgeText:"#111111", badgeBorder:"#aa151b",
             selectorBg:"rgba(139,16,23,.94)", selectorText:"#fff7d6", selectorBorder:"#f1bf00",
             selectBg:"#fff7d6", selectText:"#6f0f15",
             statusBg:"rgba(255,247,214,.95)", statusText:"#5b0b0f", statusBorder:"#8b1017",
@@ -10488,11 +10519,11 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         },
         ja: {
             code:"ja", locale:"ja-JP", name:"Japanese", native:"日本語",
-            title:"日本語チューター", badge:"JP",
+            title:"日本語チューター", badge:"🇯🇵",
             subtitle:"Interactive Japanese Grammar & Translation Companion",
             header:"radial-gradient(circle at 18% 50%,#bc002d 0 24px,transparent 25px),linear-gradient(180deg,#ffffff 0%,#ffffff 88%,#bc002d 88%,#bc002d 100%)",
             headerText:"#1f2937", titleColor:"#bc002d", subtitleColor:"#475569", bylineColor:"#64748b",
-            badgeBg:"#ffffff", badgeText:"#bc002d", badgeBorder:"#bc002d",
+            badgeBg:"#ffffff", badgeText:"#111111", badgeBorder:"#bc002d",
             selectorBg:"rgba(188,0,45,.08)", selectorText:"#7f001f", selectorBorder:"#e6a5b5",
             selectBg:"#ffffff", selectText:"#7f001f",
             statusBg:"rgba(255,255,255,.90)", statusText:"#1f2937", statusBorder:"#d7a2af",
@@ -11414,13 +11445,19 @@ Do not add quotation marks or labels.`;
             none:"Do not correct the learner unless they explicitly ask for correction."
         };
         const englishInstructions={
-            ask: inputMode==="english-reply"
-                ? `The learner used English only because they did not know how to phrase the reply. Continue speaking in ${cfg.name}.`
-                : `Use ${cfg.name} for the spoken reply. Use English only if the learner explicitly asks for an explanation.`,
-            support: inputMode==="english-reply"
-                ? `Continue in ${cfg.name}. A short English learning note may appear in teacher_note if useful, but keep the spoken reply in ${cfg.name}.`
-                : `Use mostly ${cfg.name}. If the learner appears stuck, a short English support note may appear in teacher_note; keep the spoken reply in ${cfg.name}.`,
-            target:`Use only ${cfg.name}.`
+            ask: inputMode==="english-question"
+                ? `The learner is asking the tutor a teaching/explanation question in English. Answer the explanation in English, while keeping examples, corrections, and model phrases in ${cfg.name}.`
+                : inputMode==="english-reply"
+                    ? `The learner used English only because they did not know how to phrase the reply. Continue speaking in ${cfg.name}.`
+                    : `Use ${cfg.name} for the conversational reply. Use English when the learner explicitly asks a teaching/explanation question in English.`,
+            support: inputMode==="english-question"
+                ? `Answer the learner's teaching/explanation question primarily in English. Keep ${cfg.name} examples in ${cfg.name}.`
+                : inputMode==="english-reply"
+                    ? `Continue in ${cfg.name}. A short English learning note may appear in teacher_note if useful, but keep the conversational reply in ${cfg.name}.`
+                    : `Use mostly ${cfg.name}. If the learner appears stuck, a short English support note may appear in teacher_note; keep the conversational reply in ${cfg.name}.`,
+            target: inputMode==="english-question"
+                ? `The learner asked a teaching question in English, but English help is disabled. Give a concise explanation in ${cfg.name}.`
+                : `Use only ${cfg.name}.`
         };
 
         const transcript=recentHistory.map(h=>{
@@ -11432,17 +11469,19 @@ Do not add quotation marks or labels.`;
             return `${tag}: ${h.text}`;
         }).join("\n");
 
-        const latestInputNote=inputMode==="english-reply"
-            ? `The learner got stuck and used English as a bridge. The latest text has already been translated into ${cfg.name}. Treat it as the learner's intended ${cfg.name} reply and continue in ${cfg.name}.`
-            : inputMode==="typed-target"
-                ? `The learner typed the latest reply directly in ${cfg.name}. Treat it exactly like a normal ${cfg.name} conversation turn.`
-                : `The latest utterance was recognized with the ${cfg.name} microphone (${cfg.locale}).`;
+        const latestInputNote=inputMode==="english-question"
+            ? `The learner intentionally asked the tutor a teaching/explanation question in English. Do not treat it as a sentence they are trying to say in ${cfg.name}. Answer the question directly.`
+            : inputMode==="english-reply"
+                ? `The learner got stuck and used English as a bridge. The latest text has already been translated into ${cfg.name}. Treat it as the learner's intended ${cfg.name} reply and continue in ${cfg.name}.`
+                : inputMode==="typed-target"
+                    ? `The learner typed the latest reply directly in ${cfg.name}. Treat it exactly like a normal ${cfg.name} conversation turn.`
+                    : `The latest utterance was recognized with the ${cfg.name} microphone (${cfg.locale}).`;
 
         return `You are the voice-conversation tutor inside LanguageTutor.
 Target language: ${cfg.name}.
 Learner level: ${settings.level}.
 Conversation mode: ${settings.conversation}.
-Latest input mode: ${inputMode==="english-reply" ? "English-assisted reply" : inputMode==="typed-target" ? cfg.name + " typed turn" : cfg.name + " speaking turn"}.
+Latest input mode: ${inputMode==="english-question" ? "English teaching question" : inputMode==="english-reply" ? "English-assisted reply" : inputMode==="typed-target" ? cfg.name + " typed turn" : cfg.name + " speaking turn"}.
 ${latestInputNote}
 
 ${modeInstructions[settings.conversation]}
@@ -11450,9 +11489,9 @@ ${correctionInstructions[settings.corrections]}
 ${englishInstructions[settings.englishHelp]}
 
 Important behavior:
-- The field "reply" is what will be spoken aloud. Make it natural, conversational ${cfg.name}.
-- Keep reply concise enough for spoken conversation: normally 1-3 sentences.
-- Usually end with a natural question or conversational opening so the learner can respond.
+- The field "reply" is what will be spoken aloud. For a normal conversation turn or English-assisted bridge reply, make it natural conversational ${cfg.name}. For an English teaching question, reply primarily in English unless English help is set to target language only.
+- Keep reply concise enough for spoken conversation: normally 1-3 sentences. A direct teaching answer may be slightly longer when needed to explain clearly.
+- For normal conversation turns, usually end with a natural question or conversational opening so the learner can respond. For a teaching question, answer the question directly; a follow-up question is optional.
 - Do not repeat the learner's entire sentence unless needed.
 - Do not put pronunciation notation, markdown, bullet lists, or meta commentary in reply.
 - Put any correction/explanation in teacher_note, not in reply.
@@ -11489,9 +11528,11 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }catch(jsonError){
             console.warn("Voice Tutor JSON response failed; using text fallback.",jsonError);
             const fallback=String(await callAI(
-                prompt + `\nIf structured JSON cannot be produced, reply with only a short natural ${langConfig().name} conversational response.`
+                prompt + (inputMode==="english-question" && voiceTutorSettings().englishHelp!=="target"
+                    ? `\nIf structured JSON cannot be produced, answer the learner's teaching question briefly in English, keeping target-language examples in ${langConfig().name}.`
+                    : `\nIf structured JSON cannot be produced, reply with only a short natural ${langConfig().name} conversational response.`)
             )).trim();
-            return {reply:fallback,note:"",replyLanguage:inputMode==="english" && voiceTutorSettings().englishHelp!=="target" ? "en" : "target"};
+            return {reply:fallback,note:"",replyLanguage:inputMode==="english-question" && voiceTutorSettings().englishHelp!=="target" ? "en" : "target"};
         }
     }
 
@@ -11734,6 +11775,21 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     };
     window.askVoiceTutorInEnglish=window.replyToVoiceTutorInEnglish;
 
+    function englishTutorIntent(text){
+        const raw=String(text||"").trim();
+        const t=raw.toLowerCase();
+        if(!t)return "bridge";
+
+        // Explicit requests about the language, grammar, meaning, usage, or the
+        // tutor itself are teaching questions, not attempted conversation turns.
+        const explicitTeaching=/\b(what does|what do .* mean|what is the difference|what's the difference|why (?:is|does|do|did|would|can|can't|cannot)|how do (?:i|you|we) (?:say|use|conjugate|form|pronounce)|how would (?:i|you) say|when do (?:i|you|we) use|when should (?:i|you|we) use|which (?:case|article|word|tense|ending|particle|pronoun|preposition)|is this (?:correct|natural|formal|informal)|can you (?:explain|tell me|show me|correct)|could you (?:explain|tell me|show me|correct)|please explain|explain (?:this|that|the)|grammar|conjugat|declension|accusative|dative|nominative|genitive|subjunctive|preterite|imperfect|particle|kanji|hiragana|katakana|romaji)\b/i;
+        if(explicitTeaching.test(raw))return "question";
+
+        // A question mark alone is not enough: "Where is the station?" is often
+        // exactly the English sentence a learner wants to use as a bridge.
+        return "bridge";
+    }
+
     async function handleVoiceTutorUtterance(text,inputMode="target"){
         if(!voiceTutorState.active)return;
         document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
@@ -11746,7 +11802,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         voiceTutorState.liveTutorText="";
         renderVoiceLiveTurn(inputMode==="english" ? `Creating your ${langConfig().name} reply…` : "Tutor is thinking…");
 
-        if(inputMode==="english"){
+        const englishIntent=inputMode==="english" ? englishTutorIntent(spokenText) : "";
+        if(inputMode==="english" && englishIntent==="bridge"){
             voiceTutorStatus(`Turning your English reply into natural ${langConfig().name}…`,"thinking");
             try{
                 targetTranslation=String(
@@ -11757,9 +11814,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             }catch(e){
                 console.warn("English reply translation failed:",e);
             }
+        }else if(inputMode==="english" && englishIntent==="question"){
+            voiceTutorStatus("Tutor is answering your question in English…","thinking");
+            renderVoiceLiveTurn("Tutor is thinking…");
         }
 
-        recordVoiceTutorEntry({role:"user",text:spokenText,inputMode,targetTranslation});
+        recordVoiceTutorEntry({role:"user",text:spokenText,inputMode,targetTranslation,englishIntent});
         voiceTutorStatus(
             inputMode==="english" && targetTranslation
                 ? `Your ${langConfig().name} version is shown below. Tutor is responding…`
@@ -11769,7 +11829,9 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         try{
             const promptText=(inputMode==="english" && targetTranslation) ? targetTranslation : spokenText;
-            const promptMode=inputMode==="english" ? "english-reply" : inputMode;
+            const promptMode=inputMode==="english"
+                ? (englishIntent==="question" ? "english-question" : "english-reply")
+                : inputMode;
             const result=await getVoiceTutorReply(promptText,promptMode);
             if(!voiceTutorState.active)return;
 
@@ -13510,6 +13572,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const badge=document.getElementById("language-badge");
         if(badge){
             badge.textContent=cfg.badge;
+            badge.setAttribute("aria-label",`${cfg.name} flag`);
             badge.parentElement.style.background=cfg.badgeBg;
             badge.parentElement.style.color=cfg.badgeText;
             badge.parentElement.style.borderColor=cfg.badgeBorder;
