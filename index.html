@@ -2093,19 +2093,21 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 
 
 <style id="floating-kana-particle-strip-styles">
-.floating-kana-quick-strip{
+.floating-kana-sticky-strips{
     margin:0 0 10px;
     padding:7px 8px;
     border:1px solid #fecdd3;
     border-radius:11px;
     background:#fff7f9;
 }
+.floating-kana-quick-strip{
+    margin:7px 0 0;
+    padding:7px 0 0;
+    border-top:1px solid #fecdd3;
+}
 .floating-kana-particle-strip{
-    margin:0 0 7px;
-    padding:7px 8px;
-    border:1px solid #fecdd3;
-    border-radius:11px;
-    background:#fff7f9;
+    margin:0;
+    padding:0;
 }
 .floating-kana-particle-label{
     display:block;
@@ -2151,11 +2153,12 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
     color:#9f1239;
 }
 @media(max-width:640px){
-    .floating-kana-particle-strip{
+    .floating-kana-sticky-strips{
         position:sticky;
         top:0;
-        z-index:3;
+        z-index:4;
         margin-bottom:8px;
+        box-shadow:0 2px 5px rgba(15,23,42,.08);
     }
     .floating-kana-particle-key{
         min-width:44px;
@@ -16268,6 +16271,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <strong id="floating-kana-target-name">Select a text box</strong>
         </div>
 
+        <div class="floating-kana-sticky-strips" aria-label="Japanese quick-access particles and endings">
         <div class="floating-kana-particle-strip" aria-label="Common Japanese particles">
             <span class="floating-kana-particle-label">Particles</span>
             <div id="floating-kana-particle-keys" class="floating-kana-particle-keys">
@@ -16295,6 +16299,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
                 <button type="button" class="floating-kana-particle-key" data-kana-insert="ござい" title="Stem used before ます / ません">ござい <small class="floating-kana-romaji">gozai-</small></button>
                 <button type="button" class="floating-kana-particle-key" data-kana-insert="か" title="Question particle">か <small class="floating-kana-romaji">ka</small></button>
             </div>
+        </div>
         </div>
 
         <div class="floating-kana-section-label">Basic kana</div>
