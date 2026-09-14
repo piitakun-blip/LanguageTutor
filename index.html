@@ -2207,6 +2207,76 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 </style>
 
 
+<style id="mobile-language-banner-contrast-v3">
+@media (max-width:640px) {
+    /* On phones, keep the flag-inspired palette but remove artwork from behind
+       the title. This prevents the Japanese red disc (and Spanish/German bands)
+       from crossing text on narrow screens. */
+    #language-header[data-language="ja"] {
+        background:linear-gradient(180deg,#ffffff 0%,#ffffff 91%,#bc002d 91%,#bc002d 100%) !important;
+        color:#111827 !important;
+    }
+    #language-header[data-language="ja"] #language-title {
+        color:#7f001f !important;
+        -webkit-text-fill-color:#7f001f !important;
+        text-shadow:none !important;
+        font-size:1rem !important;
+        line-height:1.12rem !important;
+    }
+    #language-header[data-language="ja"] #language-title > span {
+        color:#475569 !important;
+        -webkit-text-fill-color:#475569 !important;
+    }
+    #language-header[data-language="ja"] #language-badge-wrap {
+        width:34px !important;
+        min-width:34px !important;
+        height:34px !important;
+        padding:0 !important;
+        border-radius:9999px !important;
+        background:#bc002d !important;
+        border:2px solid #bc002d !important;
+        box-shadow:none !important;
+    }
+    #language-header[data-language="ja"] #language-badge {
+        color:#ffffff !important;
+        -webkit-text-fill-color:#ffffff !important;
+        font-size:11px !important;
+        line-height:1 !important;
+    }
+
+    /* Same phone-safe principle for the other two languages:
+       one dominant high-contrast field behind the title, flag accents at edge. */
+    #language-header[data-language="de"] {
+        background:linear-gradient(180deg,#111111 0%,#111111 84%,#dd0000 84%,#dd0000 92%,#ffcc00 92%,#ffcc00 100%) !important;
+    }
+    #language-header[data-language="de"] #language-title {
+        color:#ffcc00 !important;
+        -webkit-text-fill-color:#ffcc00 !important;
+        text-shadow:none !important;
+    }
+    #language-header[data-language="es"] {
+        background:linear-gradient(180deg,#f1bf00 0%,#f1bf00 90%,#aa151b 90%,#aa151b 100%) !important;
+        color:#5b0b0f !important;
+    }
+    #language-header[data-language="es"] #language-title {
+        color:#5b0b0f !important;
+        -webkit-text-fill-color:#5b0b0f !important;
+        text-shadow:none !important;
+    }
+
+    /* The byline is useful on desktop but competes with the title on a 320–430px
+       header. Hide it on phones instead of shrinking the main language title. */
+    #language-header #language-title > span {
+        display:none !important;
+    }
+
+    #language-badge-wrap {
+        flex:0 0 auto !important;
+    }
+}
+</style>
+
+
 <style id="compact-mobile-language-banner-v2">
 @media (max-width:640px) {
     header h1 {
@@ -3453,7 +3523,7 @@ body.conversation-first-layout #mobile-right-column{
     <header id="language-header" class="text-white shadow-md" style="background:linear-gradient(180deg,#111111 0%,#111111 72%,#dd0000 72%,#dd0000 86%,#ffcc00 86%,#ffcc00 100%);">
         <div class="max-screen-xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
-                <div class="p-2 rounded-lg text-black font-bold shadow-inner flex items-center justify-center"
+                <div id="language-badge-wrap" class="p-2 rounded-lg text-black font-bold shadow-inner flex items-center justify-center"
                      style="background:#b8bec7 !important;border:1px solid #7b8491 !important;">
                     <span id="language-badge" class="text-xl">DE</span>
                 </div>
@@ -13429,6 +13499,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         const header=document.getElementById("language-header");
         if(header){
+            header.dataset.language=currentStudyLanguage;
             header.style.background=cfg.header;
             header.style.color=cfg.headerText;
         }
