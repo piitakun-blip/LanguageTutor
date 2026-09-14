@@ -3023,6 +3023,9 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
     flex:0 0 auto !important;
     min-height:0;
 }
+#conversation-keyboard-btn{
+    white-space:nowrap;
+}
 #unified-text-entry textarea{
     -webkit-appearance:none;
 }
@@ -4082,11 +4085,18 @@ body.conversation-first-layout #mobile-right-column{
                             <div id="voice-text-input-hint" class="text-[10px] text-slate-400">
                                 Type in German, or use English → German if you get stuck.
                             </div>
-                            <button type="button" id="voice-text-english-btn" onclick="sendUnifiedTutorText('english')"
-                                class="min-h-[36px] px-3 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-700 text-[10px] font-bold transition"
-                                title="Translate this English reply into the target language and continue the conversation">
-                                English → German
-                            </button>
+                            <div class="flex flex-wrap items-center gap-2 ml-auto">
+                                <button type="button" id="conversation-keyboard-btn" onclick="openConversationKeyboard()"
+                                    class="min-h-[36px] px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold transition"
+                                    title="Open a movable language keyboard">
+                                    ⌨ German keys
+                                </button>
+                                <button type="button" id="voice-text-english-btn" onclick="sendUnifiedTutorText('english')"
+                                    class="min-h-[36px] px-3 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-700 text-[10px] font-bold transition"
+                                    title="Translate this English reply into the target language and continue the conversation">
+                                    English → German
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -10570,7 +10580,36 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             englishBtn.textContent=`English → ${cfg.name}`;
             englishBtn.title=`Translate this English reply into ${cfg.name} and continue the conversation`;
         }
+
+        const keyboardBtn=document.getElementById("conversation-keyboard-btn");
+        if(keyboardBtn){
+            keyboardBtn.textContent=cfg.code==="ja" ? "⌨ Kana keyboard" : `⌨ ${cfg.name} keys`;
+            keyboardBtn.title=cfg.code==="ja"
+                ? "Open the movable Hiragana / Katakana keyboard"
+                : `Open movable ${cfg.name} special-character keys`;
+        }
     }
+
+    window.openConversationKeyboard=function(){
+        const input=document.getElementById("voice-text-input");
+        if(input){
+            input.focus();
+            // The existing palette tracks the most recently focused text input.
+            // Dispatching focus makes the conversation field the insertion target.
+            input.dispatchEvent(new Event("focus",{bubbles:true}));
+        }
+
+        if(currentStudyLanguage==="ja"){
+            if(typeof window.openFloatingKanaChart==="function"){
+                window.openFloatingKanaChart();
+            }
+            return;
+        }
+
+        if(typeof window.openLanguageCharacterTool==="function"){
+            window.openLanguageCharacterTool();
+        }
+    };
 
     window.handleUnifiedTutorTextKey=function(event){
         if(event.key==="Enter" && !event.shiftKey){
