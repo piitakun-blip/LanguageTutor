@@ -3015,15 +3015,6 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 }
 </style>
 
-<style id="text-chat-compact-height">
-#chat-text-mode{min-height:0}
-#chat-messages-log{
-    min-height:0;
-    overflow-y:auto;
-    scrollbar-gutter:stable;
-}
-</style>
-
 <style id="voice-inline-transcript-height">
 /* The inline conversation transcript fills whatever vertical room remains.
    Its own scrollbar carries the full conversation, so the latest card is
@@ -3032,6 +3023,22 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
     flex:0 0 auto !important;
     min-height:0;
 }
+#unified-text-entry textarea{
+    -webkit-appearance:none;
+}
+@media(max-width:640px){
+    #unified-text-entry{
+        padding:9px!important;
+    }
+    #voice-text-input{
+        min-height:58px;
+        font-size:16px!important;
+    }
+    #voice-text-send-btn{
+        min-width:58px;
+    }
+}
+
 #voice-chat-messages-log{
     flex:0 0 auto !important;
     min-height:120px !important;
@@ -3940,42 +3947,8 @@ body.conversation-first-layout #mobile-right-column{
                     <p class="text-[10px] text-slate-400 leading-relaxed max-w-[240px]">Choose an AI provider in Settings and save its API key to unlock Text Chat and Voice Conversation.</p>
                 </div>
 
-                <!-- Tutor Mode Tabs -->
-                <div class="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1 shrink-0">
-                    <button type="button" id="tutor-mode-voice-btn" onclick="setTutorInteractionMode('voice')" class="rounded-lg bg-white text-indigo-700 shadow-sm px-3 py-2 text-xs font-bold transition">
-                        🎙 Voice Conversation
-                    </button>
-                    <button type="button" id="tutor-mode-text-btn" onclick="setTutorInteractionMode('text')" class="rounded-lg text-slate-600 px-3 py-2 text-xs font-bold transition">
-                        💬 Text Chat
-                    </button>
-                </div>
-
-                <!-- TEXT CHAT -->
-                <div id="chat-text-mode" class="hidden flex-1 min-h-0 flex flex-col justify-between overflow-hidden">
-                    <div id="chat-messages-log" class="flex-grow overflow-y-auto pr-2 space-y-3 pb-3 text-xs flex flex-col">
-                        <div id="ai-tutor-welcome" class="bg-indigo-50/70 border border-indigo-100 text-indigo-900 rounded-xl p-3 leading-relaxed max-w-[90%] self-start">
-                            <p id="ai-tutor-welcome-label" class="font-bold mb-1 text-[10px] text-indigo-700">AI GRAMMAR TUTOR</p>
-                            <span id="ai-tutor-welcome-text">Guten Tag! I can explain German grammar or help with the sentence you are working on.</span>
-                        </div>
-                    </div>
-
-                    <div class="shrink-0 border-t border-slate-100 pt-3">
-                        <div class="flex gap-2">
-                            <input type="text" id="chat-user-input" class="flex-grow min-w-0 px-3 py-2 border border-slate-200 focus:outline-none focus:border-indigo-500 rounded-lg text-sm sm:text-xs placeholder-slate-400 text-slate-700 font-medium" placeholder="Ask your AI tutor a question..." onkeydown="handleChatKeyPress(event)">
-                            <button type="button" onclick="sendChatMessage()" class="min-w-[44px] min-h-[44px] p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shrink-0 flex items-center justify-center" title="Send">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg>
-                            </button>
-                        </div>
-
-                        <div class="mt-2 flex flex-wrap gap-2 justify-end">
-                            <button type="button" onclick="openTextTranscriptWindow()" class="min-h-[34px] px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">↗ Open transcript</button>
-                            <button type="button" onclick="saveCurrentTutorTranscript('text',this)" class="min-h-[34px] px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
-                            <button type="button" onclick="openSavedTutorTranscripts()" class="min-h-[34px] px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">🗂 Saved</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- VOICE CONVERSATION -->
+                <!-- UNIFIED CONVERSATION: voice + typed input -->
+                <!-- CONVERSATION -->
                 <div id="chat-voice-mode" class="min-h-0 flex flex-col gap-2 overflow-hidden">
                     <div class="shrink-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
                         <details id="voice-settings-panel" class="voice-settings-panel">
@@ -4079,6 +4052,28 @@ body.conversation-first-layout #mobile-right-column{
                         <button type="button" onclick="newVoiceConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold transition">
                             New conversation
                         </button>
+                    </div>
+
+                    <div id="unified-text-entry" class="shrink-0 rounded-xl border border-slate-200 bg-white p-2.5">
+                        <div class="flex gap-2 items-end">
+                            <textarea id="voice-text-input" rows="2"
+                                class="flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-base sm:text-sm text-slate-700 outline-none resize-none focus:border-indigo-400"
+                                placeholder="Type your reply…"
+                                onkeydown="handleUnifiedTutorTextKey(event)"></textarea>
+                            <button type="button" id="voice-text-send-btn" onclick="sendUnifiedTutorText('target')"
+                                class="min-w-[52px] min-h-[44px] px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition"
+                                title="Send as a target-language reply">Send</button>
+                        </div>
+                        <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+                            <div id="voice-text-input-hint" class="text-[10px] text-slate-400">
+                                Type in German, or use English → German if you get stuck.
+                            </div>
+                            <button type="button" id="voice-text-english-btn" onclick="sendUnifiedTutorText('english')"
+                                class="min-h-[36px] px-3 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-700 text-[10px] font-bold transition"
+                                title="Translate this English reply into the target language and continue the conversation">
+                                English → German
+                            </button>
+                        </div>
                     </div>
 
                     <div class="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2">
@@ -10366,6 +10361,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     const voiceTutorState = {
         active:false,
+        micSession:false,
         recognition:null,
         phase:"idle",
         language:"de",
@@ -10497,35 +10493,21 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         updateVoiceTutorScenario();
     };
 
-    window.setTutorInteractionMode=function(mode){
-        tutorInteractionMode=mode==="voice" ? "voice" : "text";
-        const text=document.getElementById("chat-text-mode");
+    window.setTutorInteractionMode=function(){
+        tutorInteractionMode="voice";
         const voice=document.getElementById("chat-voice-mode");
-        const textBtn=document.getElementById("tutor-mode-text-btn");
-        const voiceBtn=document.getElementById("tutor-mode-voice-btn");
+        voice?.classList.remove("hidden");
 
-        const voiceMode=tutorInteractionMode==="voice";
-        if(!voiceMode && voiceTutorState.active) window.stopVoiceConversation(true);
-        text?.classList.toggle("hidden",voiceMode);
-        voice?.classList.toggle("hidden",!voiceMode);
-
-        // Voice is the primary conversation workspace; Text Chat remains available as the second tab.
         const tutorContainer=document.getElementById("socratic-chat-container");
         if(tutorContainer){
-            tutorContainer.style.height=voiceMode ? "auto" : "430px";
+            tutorContainer.style.height="auto";
         }
 
-        if(textBtn) textBtn.className="rounded-lg px-3 py-2 text-xs font-bold transition " +
-            (!voiceMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600");
-        if(voiceBtn) voiceBtn.className="rounded-lg px-3 py-2 text-xs font-bold transition " +
-            (voiceMode ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600");
-
-        if(voiceMode){
-            renderVoiceTutorLanguageUI();
-            restoreVoiceTutorSettings();
-            renderVoiceTutorTranscript();
-            updateVoiceRestateButton();
-        }
+        renderVoiceTutorLanguageUI();
+        restoreVoiceTutorSettings();
+        renderVoiceTutorTranscript();
+        updateVoiceRestateButton();
+        updateUnifiedTutorTextUI();
     };
 
     function voiceTutorStatus(text,tone="normal"){
@@ -10561,6 +10543,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const targetMicLabel=document.getElementById("voice-target-mic-label");
         if(targetMicLabel) targetMicLabel.textContent=`Speak ${cfg.name}`;
 
+        updateUnifiedTutorTextUI();
+
         const ctor=voiceRecognitionConstructor();
         const start=document.getElementById("voice-start-btn");
         if(start){
@@ -10573,6 +10557,57 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             voiceTutorStatus("Speech recognition is not available in this browser/device.","error");
         }
     }
+
+    function updateUnifiedTutorTextUI(){
+        const cfg=langConfig();
+        const input=document.getElementById("voice-text-input");
+        const hint=document.getElementById("voice-text-input-hint");
+        const englishBtn=document.getElementById("voice-text-english-btn");
+
+        if(input) input.placeholder=`Type your ${cfg.name} reply…`;
+        if(hint) hint.textContent=`Type in ${cfg.name}, or use English → ${cfg.name} if you get stuck.`;
+        if(englishBtn){
+            englishBtn.textContent=`English → ${cfg.name}`;
+            englishBtn.title=`Translate this English reply into ${cfg.name} and continue the conversation`;
+        }
+    }
+
+    window.handleUnifiedTutorTextKey=function(event){
+        if(event.key==="Enter" && !event.shiftKey){
+            event.preventDefault();
+            window.sendUnifiedTutorText("target");
+        }
+    };
+
+    window.sendUnifiedTutorText=async function(inputMode="target"){
+        const input=document.getElementById("voice-text-input");
+        const text=String(input?.value||"").trim();
+        if(!text)return;
+
+        if(voiceTutorState.phase==="processing" || voiceTutorState.speaking){
+            voiceTutorStatus("Wait for the tutor to finish this turn, then send your reply.","normal");
+            return;
+        }
+        if(!getActiveAIKey()){
+            alert("Add an AI API key in Settings first.");
+            return;
+        }
+
+        // If a microphone conversation is already running, pause recognition
+        // for the typed turn and resume it after the Tutor speaks.
+        const resumeMic=Boolean(voiceTutorState.micSession);
+        clearVoiceSilenceTimer();
+        setVoiceMicIndicator(false);
+        destroyVoiceRecognition();
+
+        voiceTutorState.active=true;
+        voiceTutorState.phase="processing";
+        voiceTutorState.inputMode=inputMode==="english" ? "english" : "typed-target";
+        voiceTutorState.resumeMicAfterTurn=resumeMic;
+
+        if(input) input.value="";
+        await handleVoiceTutorUtterance(text,inputMode==="english" ? "english" : "typed-target");
+    };
 
     function voiceTutorHistory(){
         return voiceTutorHistories[currentStudyLanguage] || [];
@@ -10796,7 +10831,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             const empty=document.createElement("div");
             empty.id="voice-tutor-empty";
             empty.className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400";
-            empty.textContent=`Start a ${langConfig().name} conversation and speak naturally. Use “Reply in English” whenever you want one English question; after the answer, listening returns to ${langConfig().name}.`;
+            empty.textContent=`Start speaking or type a ${langConfig().name} reply below. If you get stuck, you can reply in English and keep the ${langConfig().name} version in the transcript.`;
             log.appendChild(empty);
             return;
         }
@@ -11156,6 +11191,8 @@ Do not add quotation marks or labels.`;
 
     window.newVoiceConversation=function(){
         if(voiceTutorState.active) stopVoiceConversation(true);
+        voiceTutorState.micSession=false;
+        voiceTutorState.resumeMicAfterTurn=false;
         voiceTutorHistories[currentStudyLanguage]=[];
         renderVoiceTutorTranscript();
         voiceTutorState.liveUserText="";
@@ -11212,13 +11249,15 @@ Do not add quotation marks or labels.`;
 
         const latestInputNote=inputMode==="english-reply"
             ? `The learner got stuck and used English as a bridge. The latest text has already been translated into ${cfg.name}. Treat it as the learner's intended ${cfg.name} reply and continue in ${cfg.name}.`
-            : `The latest utterance was recognized with the ${cfg.name} microphone (${cfg.locale}).`;
+            : inputMode==="typed-target"
+                ? `The learner typed the latest reply directly in ${cfg.name}. Treat it exactly like a normal ${cfg.name} conversation turn.`
+                : `The latest utterance was recognized with the ${cfg.name} microphone (${cfg.locale}).`;
 
         return `You are the voice-conversation tutor inside LanguageTutor.
 Target language: ${cfg.name}.
 Learner level: ${settings.level}.
 Conversation mode: ${settings.conversation}.
-Latest input mode: ${inputMode==="english-reply" ? "English-assisted reply" : cfg.name + " speaking turn"}.
+Latest input mode: ${inputMode==="english-reply" ? "English-assisted reply" : inputMode==="typed-target" ? cfg.name + " typed turn" : cfg.name + " speaking turn"}.
 ${latestInputNote}
 
 ${modeInstructions[settings.conversation]}
@@ -11395,6 +11434,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 voiceTutorState.phase="processing";
                 setVoiceMicIndicator(false);
                 try{rec.stop();}catch(e){}
+                voiceTutorState.resumeMicAfterTurn=true;
                 handleVoiceTutorUtterance(finalText.trim(),voiceTutorState.inputMode);
             }
         };
@@ -11490,9 +11530,11 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         if(!voiceTutorState.active){
             voiceTutorState.active=true;
             voiceTutorState.language=currentStudyLanguage;
-            document.getElementById("voice-start-btn")?.classList.add("hidden");
-            document.getElementById("voice-stop-btn")?.classList.remove("hidden");
         }
+        voiceTutorState.micSession=true;
+        voiceTutorState.resumeMicAfterTurn=true;
+        document.getElementById("voice-start-btn")?.classList.add("hidden");
+        document.getElementById("voice-stop-btn")?.classList.remove("hidden");
 
         try{window.speechSynthesis?.cancel();}catch(e){}
         voiceTutorState.speaking=false;
@@ -11557,15 +11599,26 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
             if(voiceTutorState.active){
                 clearVoiceSilenceTimer();
-                voiceTutorState.phase="listening";
-                setTimeout(()=>resumeVoiceRecognition(false,"target"),250);
+                if(voiceTutorState.resumeMicAfterTurn && voiceTutorState.micSession){
+                    voiceTutorState.phase="listening";
+                    setTimeout(()=>resumeVoiceRecognition(false,"target"),250);
+                }else{
+                    voiceTutorState.phase="idle";
+                    document.getElementById("voice-start-btn")?.classList.remove("hidden");
+                    document.getElementById("voice-stop-btn")?.classList.add("hidden");
+                    document.getElementById("voice-listen-now-btn")?.classList.add("hidden");
+                    document.getElementById("voice-english-turn-btn")?.classList.add("hidden");
+                    voiceTutorStatus(`Ready for your next ${langConfig().name} reply — type or start the microphone.`);
+                }
             }
         }catch(e){
             console.error("Voice Tutor turn failed:",e);
             if(!voiceTutorState.active)return;
             voiceTutorStatus("Voice Tutor had trouble responding: "+((e&&e.message)?e.message:String(e)),"error");
-            document.getElementById("voice-listen-now-btn")?.classList.remove("hidden");
-            document.getElementById("voice-english-turn-btn")?.classList.remove("hidden");
+            if(voiceTutorState.micSession){
+                document.getElementById("voice-listen-now-btn")?.classList.remove("hidden");
+                document.getElementById("voice-english-turn-btn")?.classList.remove("hidden");
+            }
             voiceTutorState.phase="idle";
         }
     }
@@ -11632,13 +11685,15 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             return;
         }
 
-        if(voiceTutorState.active){
+        if(voiceTutorState.micSession){
             resumeVoiceRecognition(true);
             return;
         }
 
         saveVoiceTutorSettings();
         voiceTutorState.active=true;
+        voiceTutorState.micSession=true;
+        voiceTutorState.resumeMicAfterTurn=true;
         voiceTutorState.language=currentStudyLanguage;
         voiceTutorState.phase="idle";
 
@@ -11659,6 +11714,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
     window.stopVoiceConversation=function(silent=false){
         voiceTutorState.active=false;
+        voiceTutorState.micSession=false;
+        voiceTutorState.resumeMicAfterTurn=false;
         voiceTutorState.phase="idle";
         voiceTutorState.speaking=false;
         clearVoiceSilenceTimer();
