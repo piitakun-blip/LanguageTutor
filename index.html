@@ -3411,6 +3411,82 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 
 
 
+<style id="language-themed-collapsed-sections-v1">
+/* Collapsed navigation cards use very light colors from each language theme.
+   Open cards return to white so the active workspace stays clean. */
+body.conversation-first-layout .conversation-fold,
+body.conversation-first-layout #manual-language-tools{
+    transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+
+/* German: gold → soft rose → cool gray → warm cream */
+body[data-study-language="de"] #conversation-analysis-section:not([open]){
+    background:#fff8d8;
+    border-color:#f1d66a;
+}
+body[data-study-language="de"] #conversation-grammar-section:not([open]){
+    background:#fff0f1;
+    border-color:#efb8bd;
+}
+body[data-study-language="de"] #conversation-study-section:not([open]){
+    background:#f1f3f5;
+    border-color:#cbd0d6;
+}
+body[data-study-language="de"] #manual-language-tools:not([open]){
+    background:#fff5cf;
+    border-color:#e8cc5d;
+}
+
+/* Spanish: warm yellow → pale red → cream → soft gold */
+body[data-study-language="es"] #conversation-analysis-section:not([open]){
+    background:#fff5c7;
+    border-color:#e4c44e;
+}
+body[data-study-language="es"] #conversation-grammar-section:not([open]){
+    background:#fff0ee;
+    border-color:#e8b8b5;
+}
+body[data-study-language="es"] #conversation-study-section:not([open]){
+    background:#fffaf0;
+    border-color:#ead8ae;
+}
+body[data-study-language="es"] #manual-language-tools:not([open]){
+    background:#fff2bd;
+    border-color:#dfbd43;
+}
+
+/* Japanese: white ↔ sakura pink */
+body[data-study-language="ja"] #conversation-analysis-section:not([open]){
+    background:#ffffff;
+    border-color:#e7d9dd;
+}
+body[data-study-language="ja"] #conversation-grammar-section:not([open]){
+    background:#fff1f4;
+    border-color:#efc4cf;
+}
+body[data-study-language="ja"] #conversation-study-section:not([open]){
+    background:#ffffff;
+    border-color:#e7d9dd;
+}
+body[data-study-language="ja"] #manual-language-tools:not([open]){
+    background:#ffecef;
+    border-color:#ecb8c5;
+}
+
+/* Keep expanded workspaces neutral regardless of language. */
+body.conversation-first-layout .conversation-fold[open],
+body.conversation-first-layout #manual-language-tools[open]{
+    background:#ffffff !important;
+    border-color:#e2e8f0 !important;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+body.conversation-first-layout .conversation-fold > summary,
+body.conversation-first-layout #manual-language-tools > summary{
+    background:transparent !important;
+}
+</style>
+
+
 <style id="conversation-first-layout-styles">
 body.conversation-first-layout .mobile-app-tabs{display:none!important}
 body.conversation-first-layout main.conversation-first-main{
@@ -13550,6 +13626,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
     function updateVisibleLanguageUI(){
         const cfg=langConfig();
+        document.body.dataset.studyLanguage=currentStudyLanguage||"de";
         renderSpecialCharacterPalette();
 
         const mlGrammarTitle=document.getElementById("ml-grammar-title");
