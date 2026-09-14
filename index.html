@@ -3195,7 +3195,7 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 <style id="voice-inline-transcript-height">
 /* The inline conversation transcript fills whatever vertical room remains.
    Its own scrollbar carries the full conversation, so the latest card is
-   never clipped by the fixed-height Voice Tutor panel. */
+   never clipped by the Tutor panel. */
 #chat-voice-mode{
     flex:0 0 auto !important;
     min-height:0;
@@ -4200,7 +4200,7 @@ body.conversation-first-layout #mobile-right-column{
                 <div id="chat-locked-overlay" class="absolute inset-3 bg-slate-50/95 rounded-xl flex flex-col items-center justify-center p-6 text-center z-20 space-y-2">
                     <svg class="w-8 h-8 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"></path></svg>
                     <span class="text-xs font-bold text-slate-700">AI Tutor Locked</span>
-                    <p class="text-[10px] text-slate-400 leading-relaxed max-w-[240px]">Choose an AI provider in Settings and save its API key to unlock Text Chat and Voice Conversation.</p>
+                    <p class="text-[10px] text-slate-400 leading-relaxed max-w-[240px]">Choose an AI provider in Settings and save its API key to unlock the Tutor.</p>
                 </div>
 
                 <!-- UNIFIED CONVERSATION: voice + typed input -->
@@ -10614,7 +10614,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     let currentStudyLanguage = "de";
 
-    // ---------- Voice Conversation Tutor ----------
+    // ---------- Unified Conversation Tutor ----------
     const VOICE_TUTOR_SETTINGS_KEY = "languagetutor_voice_tutor_settings_v1";
     let tutorInteractionMode = "voice";
     const voiceTutorHistories = {de:[],es:[],ja:[]};
@@ -10931,7 +10931,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             if(user){
                 speaker=entry.inputMode==="english" ? "You (English)" : `You (${languageName})`;
             }else{
-                speaker=entry.replyLanguage==="en" ? `${languageName} Voice Tutor (English)` : `${languageName} Voice Tutor`;
+                speaker=entry.replyLanguage==="en" ? `${languageName} Tutor (English)` : `${languageName} Tutor`;
             }
 
             let block=`${speaker}: ${String(entry.text||"").trim()}`;
@@ -10942,7 +10942,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         });
 
         const transcript=[
-            `${languageName} Voice Conversation`,
+            `${languageName} Tutor Conversation`,
             "",
             ...lines
         ].join("\n\n").trim();
@@ -11011,8 +11011,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                     : `You • ${languageName}`;
             }else{
                 speaker.textContent=entry.replyLanguage==="en"
-                    ? `${languageName} Voice Tutor • English`
-                    : `${languageName} Voice Tutor`;
+                    ? `${languageName} Tutor • English`
+                    : `${languageName} Tutor`;
             }
 
             const content=document.createElement("div");
@@ -11329,7 +11329,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const output=box.querySelector(".voice-tutor-translation-text");
         try{
             const languageName=langConfig().name;
-            const prompt=`Translate this ${languageName} Voice Tutor reply into natural English for a language learner.
+            const prompt=`Translate this ${languageName} Tutor reply into natural English for a language learner.
 
 ${languageName}: "${String(entry.text||"").trim()}"
 
@@ -11369,8 +11369,8 @@ Do not add quotation marks or labels.`;
                 : `You • ${langConfig().name} speech`;
         }else{
             label.textContent=entry.replyLanguage==="en"
-                ? `${langConfig().name} Voice Tutor • English reply`
-                : `${langConfig().name} Voice Tutor`;
+                ? `${langConfig().name} Tutor • English reply`
+                : `${langConfig().name} Tutor`;
         }
         wrap.appendChild(label);
 
@@ -11553,7 +11553,7 @@ Do not add quotation marks or labels.`;
                     ? `The learner typed the latest reply directly in ${cfg.name}. Treat it exactly like a normal ${cfg.name} conversation turn.`
                     : `The latest utterance was recognized with the ${cfg.name} microphone (${cfg.locale}).`;
 
-        return `You are the voice-conversation tutor inside LanguageTutor.
+        return `You are the conversation tutor inside LanguageTutor. The learner may type or speak.
 Target language: ${cfg.name}.
 Learner level: ${settings.level}.
 Conversation mode: ${settings.conversation}.
@@ -11602,7 +11602,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             if(reply)return {reply,note,correctionAudio,replyLanguage};
             throw new Error("AI returned no spoken reply.");
         }catch(jsonError){
-            console.warn("Voice Tutor JSON response failed; using text fallback.",jsonError);
+            console.warn("Tutor JSON response failed; using text fallback.",jsonError);
             const fallback=String(await callAI(
                 prompt + (inputMode==="english-question" && voiceTutorSettings().englishHelp!=="target"
                     ? `\nIf structured JSON cannot be produced, answer the learner's teaching question briefly in English, keeping target-language examples in ${langConfig().name}.`
@@ -11937,9 +11937,9 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 }
             }
         }catch(e){
-            console.error("Voice Tutor turn failed:",e);
+            console.error("Tutor turn failed:",e);
             if(!voiceTutorState.active)return;
-            voiceTutorStatus("Voice Tutor had trouble responding: "+((e&&e.message)?e.message:String(e)),"error");
+            voiceTutorStatus("Tutor had trouble responding: "+((e&&e.message)?e.message:String(e)),"error");
             if(voiceTutorState.micSession){
                 document.getElementById("voice-listen-now-btn")?.classList.remove("hidden");
                 document.getElementById("voice-english-turn-btn")?.classList.remove("hidden");
@@ -13282,7 +13282,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     function savedTranscriptLabel(item){
         const dt=new Date(item.savedAt);
         const when=Number.isNaN(dt.getTime()) ? "Saved transcript" : dt.toLocaleString();
-        return `${item.languageName||item.language||"Language"} • ${item.mode==="voice"?"Voice":"Text"} • ${when}`;
+        return `${item.languageName||item.language||"Language"} • Tutor • ${when}`;
     }
 
     function renderSavedTutorTranscripts(selectedId=""){
@@ -13298,7 +13298,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             empty.className="saved-transcript-empty";
             empty.textContent="No saved transcripts yet.";
             list.appendChild(empty);
-            body.innerHTML='<div class="text-sm text-slate-400 italic">Save a Text or Voice Tutor conversation and it will appear here on this browser.</div>';
+            body.innerHTML='<div class="text-sm text-slate-400 italic">Save a Tutor conversation and it will appear here on this browser.</div>';
             return;
         }
 
@@ -13340,7 +13340,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             if(entry.role==="user"){
                 speaker.textContent=entry.inputMode==="english" ? "You • English" : "You";
             }else{
-                speaker.textContent=`${selected.languageName||"Language"} ${selected.mode==="voice"?"Voice":"Text"} Tutor`;
+                speaker.textContent=`${selected.languageName||"Language"} Tutor`;
             }
             const content=document.createElement("div");
             content.className="voice-transcript-text";
@@ -17215,7 +17215,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     </div>
 </div>
 
-<div id="voice-transcript-window" hidden aria-label="Voice conversation transcript window">
+<div id="voice-transcript-window" hidden aria-label="Tutor conversation transcript window">
     <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
         <div class="voice-transcript-titlecopy">
             <div id="voice-transcript-window-title" class="voice-transcript-window-title">Conversation transcript</div>
