@@ -2092,6 +2092,79 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 </style>
 
 
+<style id="floating-kana-particle-strip-styles">
+.floating-kana-quick-strip{
+    margin:0 0 10px;
+    padding:7px 8px;
+    border:1px solid #fecdd3;
+    border-radius:11px;
+    background:#fff7f9;
+}
+.floating-kana-particle-strip{
+    margin:0 0 7px;
+    padding:7px 8px;
+    border:1px solid #fecdd3;
+    border-radius:11px;
+    background:#fff7f9;
+}
+.floating-kana-particle-label{
+    display:block;
+    margin-bottom:5px;
+    font-size:10px;
+    line-height:1;
+    font-weight:800;
+    color:#9f1239;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+}
+.floating-kana-particle-keys{
+    display:flex;
+    gap:5px;
+    overflow-x:auto;
+    padding-bottom:2px;
+    scrollbar-width:thin;
+    -webkit-overflow-scrolling:touch;
+}
+.floating-kana-particle-key{
+    flex:0 0 auto;
+    min-width:42px;
+    min-height:38px;
+    padding:4px 7px;
+    border:1px solid #fda4af;
+    border-radius:9px;
+    background:#fff;
+    color:#881337;
+    font-size:17px;
+    line-height:1;
+    font-weight:800;
+    cursor:pointer;
+}
+.floating-kana-particle-key:hover{
+    background:#ffe4e6;
+}
+.floating-kana-particle-key small{
+    display:block;
+    margin-top:3px;
+    font-size:8px;
+    line-height:1;
+    font-weight:700;
+    color:#9f1239;
+}
+@media(max-width:640px){
+    .floating-kana-particle-strip{
+        position:sticky;
+        top:0;
+        z-index:3;
+        margin-bottom:8px;
+    }
+    .floating-kana-particle-key{
+        min-width:44px;
+        min-height:42px;
+    }
+}
+</style>
+
+
 <style id="floating-kana-traditional-desktop-layout">
 @media (min-width:701px) {
     #floating-kana-basic-grid.floating-kana-grid {
@@ -16122,6 +16195,34 @@ Current work: ${context||"No sentence has been entered yet."}`;
         <div class="floating-kana-target">
             <span>Typing into:</span>
             <strong id="floating-kana-target-name">Select a text box</strong>
+        </div>
+
+        <div class="floating-kana-particle-strip" aria-label="Common Japanese particles">
+            <span class="floating-kana-particle-label">Particles</span>
+            <div id="floating-kana-particle-keys" class="floating-kana-particle-keys">
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="は" title="Topic particle — pronounced wa">は <small>wa</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="が" title="Subject / focus particle">が <small>ga</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="を" title="Direct-object particle — pronounced o">を <small>o</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="に" title="Time / destination / target particle">に <small>ni</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="で" title="Place of action / means particle">で <small>de</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="へ" title="Direction particle — pronounced e">へ <small>e</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="と" title="With / and / quotation particle">と <small>to</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="の" title="Possession / noun-linking particle">の <small>no</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="も" title="Also / too particle">も <small>mo</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="から" title="From / because">から <small>kara</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="まで" title="Until / as far as">まで <small>made</small></button>
+            </div>
+        </div>
+
+        <div class="floating-kana-quick-strip" aria-label="Useful Japanese endings">
+            <span class="floating-kana-particle-label">Useful endings</span>
+            <div class="floating-kana-particle-keys">
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="です" title="Polite copula">です <small>desu</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="ます" title="Polite verb ending">ます <small>masu</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="でした" title="Polite past copula">でした <small>deshita</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="ません" title="Polite negative verb ending">ません <small>masen</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="ござい" title="Stem used before ます / ません">ござい <small>gozai-</small></button>
+            </div>
         </div>
 
         <div class="floating-kana-section-label">Basic kana</div>
