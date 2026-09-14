@@ -11310,10 +11310,12 @@ Important behavior:
 - Do not repeat the learner's entire sentence unless needed.
 - Do not put pronunciation notation, markdown, bullet lists, or meta commentary in reply.
 - Put any correction/explanation in teacher_note, not in reply.
-- teacher_note should be concise English unless English help is set to target language only.
-- If you correct the learner, put the exact corrected ${cfg.name} phrase or sentence in correction_audio, with no English explanation, labels, quotation marks, or pronunciation notation.
+- teacher_note may explain the grammar or correction in concise English unless English help is set to target language only.
+- IMPORTANT: whenever teacher_note gives a corrected, improved, or more natural way to say something, the actual example phrase/sentence itself MUST be written in ${cfg.name}, not translated into English. English may explain why, but the learner must be able to see the natural ${cfg.name} wording.
+- For Japanese specifically, when suggesting a more natural expression, write the Japanese expression in Japanese script. Do not give only an English paraphrase of the suggested wording.
+- If you correct or suggest a more natural target-language wording, put that exact ${cfg.name} phrase or sentence in correction_audio, with no English explanation, labels, quotation marks, or pronunciation notation.
 - correction_audio is specifically for text-to-speech playback, so it must contain only natural ${cfg.name} that should be spoken aloud.
-- If no correction is needed, both teacher_note and correction_audio must be empty strings.
+- If no correction or natural rephrasing is useful, both teacher_note and correction_audio must be empty strings.
 - Do not invent that you heard pronunciation details; you receive a speech-to-text transcript, not raw audio.
 
 Recent conversation:
@@ -11323,7 +11325,7 @@ Latest learner utterance:
 "${userText}"
 
 Return JSON only:
-{"reply":"natural spoken response","teacher_note":"optional concise correction/explanation or empty string","correction_audio":"exact corrected target-language phrase for playback or empty string","reply_language":"target or en"}
+{"reply":"natural spoken response","teacher_note":"optional concise explanation; any corrected/natural example itself must be in the target language","correction_audio":"exact corrected or more-natural target-language phrase for playback or empty string","reply_language":"target or en"}
 
 Set reply_language to "en" only when the spoken reply is primarily English; otherwise use "target".`;
     }
