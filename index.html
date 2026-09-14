@@ -2142,7 +2142,7 @@ body[data-mobile-tab="translate"] #mobile-grammar-tools-card,
 .floating-kana-particle-key:hover{
     background:#ffe4e6;
 }
-.floating-kana-particle-key small{
+.floating-kana-particle-key small.floating-kana-romaji{
     display:block;
     margin-top:3px;
     font-size:8px;
@@ -16271,29 +16271,29 @@ Current work: ${context||"No sentence has been entered yet."}`;
         <div class="floating-kana-particle-strip" aria-label="Common Japanese particles">
             <span class="floating-kana-particle-label">Particles</span>
             <div id="floating-kana-particle-keys" class="floating-kana-particle-keys">
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="は" title="Topic particle — pronounced wa">は <small>wa</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="が" title="Subject / focus particle">が <small>ga</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="を" title="Direct-object particle — pronounced o">を <small>o</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="に" title="Time / destination / target particle">に <small>ni</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="で" title="Place of action / means particle">で <small>de</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="へ" title="Direction particle — pronounced e">へ <small>e</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="と" title="With / and / quotation particle">と <small>to</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="の" title="Possession / noun-linking particle">の <small>no</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="も" title="Also / too particle">も <small>mo</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="から" title="From / because">から <small>kara</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="まで" title="Until / as far as">まで <small>made</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="は" title="Topic particle — pronounced wa">は <small class="floating-kana-romaji">wa</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="が" title="Subject / focus particle">が <small class="floating-kana-romaji">ga</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="を" title="Direct-object particle — pronounced o">を <small class="floating-kana-romaji">o</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="に" title="Time / destination / target particle">に <small class="floating-kana-romaji">ni</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="で" title="Place of action / means particle">で <small class="floating-kana-romaji">de</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="へ" title="Direction particle — pronounced e">へ <small class="floating-kana-romaji">e</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="と" title="With / and / quotation particle">と <small class="floating-kana-romaji">to</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="の" title="Possession / noun-linking particle">の <small class="floating-kana-romaji">no</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="も" title="Also / too particle">も <small class="floating-kana-romaji">mo</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="から" title="From / because">から <small class="floating-kana-romaji">kara</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="まで" title="Until / as far as">まで <small class="floating-kana-romaji">made</small></button>
             </div>
         </div>
 
         <div class="floating-kana-quick-strip" aria-label="Useful Japanese endings">
             <span class="floating-kana-particle-label">Useful endings</span>
             <div class="floating-kana-particle-keys">
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="です" title="Polite copula">です <small>desu</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="ます" title="Polite verb ending">ます <small>masu</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="でした" title="Polite past copula">でした <small>deshita</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="ません" title="Polite negative verb ending">ません <small>masen</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="ござい" title="Stem used before ます / ません">ござい <small>gozai-</small></button>
-                <button type="button" class="floating-kana-particle-key" data-kana-insert="か" title="Question particle">か <small>ka</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="です" title="Polite copula">です <small class="floating-kana-romaji">desu</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="ます" title="Polite verb ending">ます <small class="floating-kana-romaji">masu</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="でした" title="Polite past copula">でした <small class="floating-kana-romaji">deshita</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="ません" title="Polite negative verb ending">ません <small class="floating-kana-romaji">masen</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="ござい" title="Stem used before ます / ません">ござい <small class="floating-kana-romaji">gozai-</small></button>
+                <button type="button" class="floating-kana-particle-key" data-kana-insert="か" title="Question particle">か <small class="floating-kana-romaji">ka</small></button>
             </div>
         </div>
 
