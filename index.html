@@ -18837,7 +18837,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <button type="button" onclick="workspaceOpenTool('keyboard')">⌨ Keyboard</button>
         </div>
 
-        <div id="analysis-workbench-status">Choose an analysis. Translation works without AI. Parse and Diagram automatically use AI when available and fall back to local analysis when it is not.</div>
+        <div id="analysis-workbench-status">Choose an analysis. Translation works without AI. Parse and Diagram call your configured AI immediately when a key is loaded; local analysis is used only when no key is loaded or the AI request fails.</div>
         <div id="analysis-workbench-results">
             <div class="analysis-workbench-empty">
                 Study the selected utterance here without cluttering the conversation.<br>
@@ -19121,17 +19121,73 @@ Current work: ${context||"No sentence has been entered yet."}`;
         return {nodes};
     }
 
-    async function getWorkbenchParseData(){
-        if(state.grammar?.chunks?.length)return state.grammar;
+    function resolveWorkbenchAIConfig(){
+        // Use the same provider/key storage as the rest of LanguageTutor.
+        // If Settings is currently open and contains a key the learner has loaded
+        // but not yet committed with Save, adopt that visible configuration too.
+        const providerSelect=document.getElementById("ai-provider-select");
+        const keyInput=document.getElementById("ai-api-key-input");
+        const modelInput=document.getElementById("ai-model-input");
 
-        const localChunks=workbenchLocalChunks();
-        const localResult={
-            source:"LOCAL",
-            chunks:localChunks,
-            diagram:workbenchFallbackDiagram(localChunks)
+        const uiProvider=String(providerSelect?.value||"").trim();
+        const storedProvider=typeof getSelectedAIProvider==="function" ? getSelectedAIProvider() : "";
+        const provider=uiProvider || storedProvider || "gemini";
+
+        let key=typeof getProviderKey==="function" ? String(getProviderKey(provider)||"").trim() : "";
+        const visibleKey=String(keyInput?.value||"").trim();
+
+        // Only adopt the visible key when the Settings provider matches the provider
+        // being resolved. This avoids accidentally assigning a key to another service.
+        if(!key && visibleKey && (!uiProvider || uiProvider===provider)){
+            if(typeof setSelectedAIProvider==="function")setSelectedAIProvider(provider);
+            if(typeof setProviderKey==="function")setProviderKey(provider,visibleKey);
+
+            const visibleModel=String(modelInput?.value||"").trim();
+            if(visibleModel && typeof setProviderModel==="function"){
+                setProviderModel(provider,visibleModel);
+            }
+            key=visibleKey;
+            if(typeof updateApiStatusHeader==="function")updateApiStatusHeader();
+        }
+
+        // If the visible provider differs from the stored selection but already has
+        // a stored key, make that visible selection active before the AI request.
+        if(uiProvider && uiProvider!==storedProvider && key){
+            if(typeof setSelectedAIProvider==="function")setSelectedAIProvider(uiProvider);
+        }
+
+        return {
+            available:Boolean(key),
+            provider,
+            key,
+            providerName:typeof providerDisplayName==="function"
+                ? providerDisplayName(provider)
+                : provider
         };
+    }
 
-        if(!getActiveAIKey()){
+    async function getWorkbenchParseData(options={}){
+        const ai=resolveWorkbenchAIConfig();
+        const forceAI=Boolean(options.forceAI);
+
+        // An AI result is reusable. A LOCAL result must never block a later AI call
+        // after a key becomes available.
+        if(state.grammar?.source==="AI" && state.grammar?.chunks?.length){
+            return state.grammar;
+        }
+        if(!ai.available && state.grammar?.source==="LOCAL" && state.grammar?.chunks?.length){
+            return state.grammar;
+        }
+
+        // Critical path: when AI exists, call it BEFORE doing any local parsing.
+        if(!ai.available){
+            const localChunks=workbenchLocalChunks();
+            const localResult={
+                source:"LOCAL",
+                reason:"NO_KEY",
+                chunks:localChunks,
+                diagram:workbenchFallbackDiagram(localChunks)
+            };
             state.grammar=localResult;
             state.diagram=localResult.diagram;
             return localResult;
@@ -19203,6 +19259,14 @@ Rules:
             return result;
         }catch(e){
             console.warn("Workbench AI parse failed; using local parser.",e);
+            const localChunks=workbenchLocalChunks();
+            const localResult={
+                source:"LOCAL",
+                reason:"AI_FAILED",
+                aiError:(e&&e.message)?e.message:String(e),
+                chunks:localChunks,
+                diagram:workbenchFallbackDiagram(localChunks)
+            };
             state.grammar=localResult;
             state.diagram=localResult.diagram;
             return localResult;
@@ -19282,11 +19346,17 @@ Rules:
 
         const card=section("Grammar Parser");
         const old=button?.textContent||"Parse";
-        if(button){button.disabled=true;button.textContent="Parsing…";}
-        status(getActiveAIKey() ? "Parsing with AI…" : "Parsing with the built-in grammar parser…");
+        const ai=resolveWorkbenchAIConfig();
+        if(button){
+            button.disabled=true;
+            button.textContent=ai.available ? "✨ Asking AI…" : "Local parse…";
+        }
+        status(ai.available
+            ? `✨ Asking ${ai.providerName}…`
+            : "No AI key is currently loaded — using the built-in grammar parser.");
 
         try{
-            const parsed=await getWorkbenchParseData();
+            const parsed=await getWorkbenchParseData({forceAI:ai.available});
 
             card.replaceChildren();
             const heading=document.createElement("div");
@@ -19295,14 +19365,20 @@ Rules:
 
             const badge=document.createElement("span");
             badge.className=parsed.source==="AI" ? "analysis-full-parse-ai-badge" : "analysis-full-parse-local-badge";
-            badge.textContent=parsed.source;
+            badge.textContent=parsed.source==="AI"
+                ? `✨ ${ai.providerName}`
+                : (parsed.reason==="AI_FAILED" ? "LOCAL • AI FALLBACK" : "LOCAL • NO AI KEY");
             heading.appendChild(badge);
             card.appendChild(heading);
 
             renderWorkbenchParserTiles(card,parsed);
-            status(parsed.source==="AI"
-                ? "Parse shown with AI."
-                : "Parse shown with the built-in parser because AI is unavailable.","success");
+            if(parsed.source==="AI"){
+                status(`✨ ${ai.providerName} parse shown.`,"success");
+            }else if(parsed.reason==="AI_FAILED"){
+                status(`AI request failed (${parsed.aiError||"unknown error"}). Showing the built-in parser instead.`,"error");
+            }else{
+                status("No AI key is currently loaded. Showing the built-in parser.","success");
+            }
         }catch(e){
             card.textContent="Parse failed: "+((e&&e.message)?e.message:String(e));
             status("Parse failed.","error");
@@ -19376,13 +19452,17 @@ Rules:
 
         const card=section("Sentence Diagram");
         const old=button?.textContent||"Diagram";
-        if(button){button.disabled=true;button.textContent="Building…";}
-        status(getActiveAIKey()
-            ? "Building the diagram from the structured AI parse…"
-            : "Building a local phrase/dependency diagram…");
+        const ai=resolveWorkbenchAIConfig();
+        if(button){
+            button.disabled=true;
+            button.textContent=ai.available ? "✨ Asking AI…" : "Building locally…";
+        }
+        status(ai.available
+            ? `✨ Asking ${ai.providerName} for structured diagram data…`
+            : "No AI key is currently loaded — building a local phrase/dependency diagram.");
 
         try{
-            const parsed=await getWorkbenchParseData();
+            const parsed=await getWorkbenchParseData({forceAI:ai.available});
             const tree=buildDiagramTree(parsed.diagram || workbenchFallbackDiagram(parsed.chunks));
             card.replaceChildren();
 
@@ -19392,7 +19472,9 @@ Rules:
 
             const badge=document.createElement("span");
             badge.className=parsed.source==="AI" ? "analysis-full-parse-ai-badge" : "analysis-full-parse-local-badge";
-            badge.textContent=parsed.source;
+            badge.textContent=parsed.source==="AI"
+                ? `✨ ${ai.providerName}`
+                : (parsed.reason==="AI_FAILED" ? "LOCAL • AI FALLBACK" : "LOCAL • NO AI KEY");
             heading.appendChild(badge);
             card.appendChild(heading);
 
