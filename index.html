@@ -4980,6 +4980,22 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+<style id="coach-v74-fixes">
+#language-coach-results:not(:empty){
+    display:flex!important;
+    flex-direction:column;
+    gap:9px;
+    margin-top:10px;
+    min-height:56px;
+}
+#language-coach-results .language-coach-result-card{
+    flex:0 0 auto;
+}
+#language-coach-window .language-coach-body{
+    overflow-y:auto;
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -12325,7 +12341,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
             let block=`${speaker}: ${String(entry.text||"").trim()}`;
             if(entry.note){
-                block+=`\nTeacher note: ${String(entry.note).trim()}`;
+                block+=`\nTutor note: ${String(entry.note).trim()}`;
             }
             return block;
         });
@@ -12558,6 +12574,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(note) speakRawText(note,"en-US");
     }
 
+    // Internal function name retained for backward compatibility; UI calls this a Tutor note.
     function teacherNotePlayButton(entry,languageCode=currentStudyLanguage){
         const button=document.createElement("button");
         button.type="button";
@@ -12565,7 +12582,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         button.textContent="🔊";
         button.title=entry?.correctionAudio
             ? "Play the corrected target-language phrase"
-            : "Play this teacher note";
+            : "Play this tutor note";
         button.setAttribute("aria-label",button.title);
         button.addEventListener("click",event=>{
             event.preventDefault();
@@ -13004,7 +13021,7 @@ Keep the entire answer under about 70 words.`;
             details.className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] text-amber-950";
             const summary=document.createElement("summary");
             summary.className="cursor-pointer font-bold text-amber-700";
-            summary.textContent="Teacher note";
+            summary.textContent="Tutor note";
             const noteRow=document.createElement("div");
             noteRow.className="teacher-note-row mt-1";
             const note=document.createElement("div");
@@ -13099,8 +13116,8 @@ Keep the entire answer under about 70 words.`;
             support: inputMode==="english-question"
                 ? `Answer the learner's teaching/explanation question primarily in English. Keep ${cfg.name} examples in ${cfg.name}.`
                 : inputMode==="english-reply"
-                    ? `Continue in ${cfg.name}. A short English learning note may appear in teacher_note if useful, but keep the conversational reply in ${cfg.name}.`
-                    : `Use mostly ${cfg.name}. If the learner appears stuck, a short English support note may appear in teacher_note; keep the conversational reply in ${cfg.name}.`,
+                    ? `Continue in ${cfg.name}. A short English learning note may appear in tutor_note if useful, but keep the conversational reply in ${cfg.name}.`
+                    : `Use mostly ${cfg.name}. If the learner appears stuck, a short English support note may appear in tutor_note; keep the conversational reply in ${cfg.name}.`,
             target: inputMode==="english-question"
                 ? `The learner asked a teaching question in English, but English help is disabled. Give a concise explanation in ${cfg.name}.`
                 : `Use only ${cfg.name}.`
@@ -13140,13 +13157,13 @@ Important behavior:
 - For normal conversation turns, usually end with a natural question or conversational opening so the learner can respond. For a teaching question, answer the question directly; a follow-up question is optional.
 - Do not repeat the learner's entire sentence unless needed.
 - Do not put pronunciation notation, markdown, bullet lists, or meta commentary in reply.
-- Put any correction/explanation in teacher_note, not in reply.
-- teacher_note may explain the grammar or correction in concise English unless English help is set to target language only.
-- IMPORTANT: whenever teacher_note gives a corrected, improved, or more natural way to say something, the actual example phrase/sentence itself MUST be written in ${cfg.name}, not translated into English. English may explain why, but the learner must be able to see the natural ${cfg.name} wording.
+- Put any correction/explanation in tutor_note, not in reply.
+- tutor_note is learner-facing feedback and MUST ALWAYS be written in English, regardless of the Conversation Settings language-help preference.
+- IMPORTANT: whenever tutor_note gives a corrected, improved, or more natural way to say something, the EXPLANATION remains English but the actual example phrase/sentence itself MUST be written in ${cfg.name}. The learner should see both the English explanation and the natural ${cfg.name} wording.
 - For Japanese specifically, when suggesting a more natural expression, write the Japanese expression in Japanese script. Do not give only an English paraphrase of the suggested wording.
 - If you correct or suggest a more natural target-language wording, put that exact ${cfg.name} phrase or sentence in correction_audio, with no English explanation, labels, quotation marks, or pronunciation notation.
 - correction_audio is specifically for text-to-speech playback, so it must contain only natural ${cfg.name} that should be spoken aloud.
-- If no correction or natural rephrasing is useful, both teacher_note and correction_audio must be empty strings.
+- If no correction or natural rephrasing is useful, both tutor_note and correction_audio must be empty strings.
 - Do not invent that you heard pronunciation details; you receive a speech-to-text transcript, not raw audio.
 
 Recent conversation:
@@ -13156,7 +13173,7 @@ Latest learner utterance:
 "${userText}"
 
 Return JSON only:
-{"reply":"natural spoken response","teacher_note":"optional concise explanation; any corrected/natural example itself must be in the target language","correction_audio":"exact corrected or more-natural target-language phrase for playback or empty string","reply_language":"target or en"}
+{"reply":"natural spoken response","tutor_note":"optional concise ENGLISH explanation; any corrected/natural example itself must be in the target language","correction_audio":"exact corrected or more-natural target-language phrase for playback or empty string","reply_language":"target or en"}
 
 Set reply_language to "en" only when the spoken reply is primarily English; otherwise use "target".`;
     }
@@ -13166,7 +13183,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         try{
             const result=await callAIJson(prompt);
             const reply=String(result?.reply||"").trim();
-            const note=String(result?.teacher_note||"").trim();
+            const note=String(result?.tutor_note||result?.teacher_note||"").trim();
             const correctionAudio=String(result?.correction_audio||"").trim();
             const replyLanguage=result?.reply_language==="en" ? "en" : "target";
             if(reply)return {reply,note,correctionAudio,replyLanguage};
@@ -13347,6 +13364,15 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
     window.resumeVoiceRecognition=function(manual=false,inputMode="target"){
         if(!voiceTutorState.active)return;
+        // The private Coach owns the mic while its window is open. This prevents
+        // Tutor speech completion / recognition onend from silently restarting
+        // the live conversation microphone behind Coach dictation.
+        const coachWindow=document.getElementById("language-coach-window");
+        if(coachWindow && !coachWindow.hidden){
+            voiceTutorState.coachMicPaused=true;
+            return;
+        }
+        voiceTutorState.coachMicPaused=false;
         if(voiceTutorState.speaking || voiceTutorState.phase==="processing")return;
 
         const requestedMode=inputMode==="english" ? "english" : "target";
@@ -14925,7 +14951,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 note.className="voice-transcript-note teacher-note-row";
                 const noteText=document.createElement("div");
                 noteText.className="flex-1";
-                noteText.textContent=`Teacher note: ${entry.note}`;
+                noteText.textContent=`Tutor note: ${entry.note}`;
                 note.append(noteText,teacherNotePlayButton(entry,selected.language||currentStudyLanguage));
                 block.appendChild(note);
             }
@@ -19637,14 +19663,30 @@ Do not continue the conversation.`;
     function setCoachStatus(text,tone="normal"){
         const el=document.getElementById("language-coach-status");
         if(!el)return;
-        el.textContent=text;
+        const clean=String(text||"").trim();
+        el.textContent=clean;
+        el.hidden=!clean;
         el.style.color=tone==="error" ? "#be123c" : tone==="success" ? "#15803d" : "#64748b";
     }
 
     function clearCoachResults(){
         const box=document.getElementById("language-coach-results");
-        if(box)box.replaceChildren();
+        if(box){
+            box.replaceChildren();
+            box.hidden=false;
+            box.classList.remove("hidden");
+        }
         coachState.lastPrimary="";
+    }
+
+    function revealCoachResults(){
+        const box=document.getElementById("language-coach-results");
+        if(!box)return;
+        box.hidden=false;
+        box.classList.remove("hidden");
+        requestAnimationFrame(()=>{
+            try{box.scrollIntoView({behavior:"smooth",block:"nearest"});}catch(e){}
+        });
     }
 
     function coachContextText(){
@@ -19762,7 +19804,7 @@ Do not continue the conversation.`;
             typeof voiceTutorState!=="undefined" &&
             voiceTutorState.active &&
             voiceTutorState.micSession &&
-            voiceTutorState.phase==="listening"
+            (voiceTutorState.phase==="listening" || voiceTutorState.recognition)
         );
 
         if(coachState.resumeRecognition){
@@ -19799,6 +19841,9 @@ Do not continue the conversation.`;
     window.closeLanguageCoach=function(){
         const win=document.getElementById("language-coach-window");
         if(win)win.hidden=true;
+        try{
+            if(typeof voiceTutorState!=="undefined")voiceTutorState.coachMicPaused=false;
+        }catch(e){}
 
         if(coachState.pausedSpeech){
             try{window.speechSynthesis?.resume()}catch(e){}
@@ -19857,7 +19902,8 @@ Do not continue the conversation.`;
                 `Quick ${cfg.name}`,
                 true
             );
-            setCoachStatus("Nothing has been sent to the Tutor. Choose “Use in reply” when you are ready.","success");
+            revealCoachResults();
+            setCoachStatus("");
         }catch(e){
             setCoachStatus("Quick translation failed: "+((e&&e.message)?e.message:String(e)),"error");
         }finally{
@@ -19928,24 +19974,47 @@ Requirements:
                 result={primary:fallback,primary_note:"AI fallback response",alternatives:[],explanation:""};
             }
 
-            const primary=String(result?.primary||"").trim();
+            // Accept the requested schema plus a few harmless provider wrappers.
+            const payload=(result?.result && typeof result.result==="object") ? result.result
+                : (result?.data && typeof result.data==="object") ? result.data
+                : result;
+
+            const primary=String(
+                payload?.primary ||
+                payload?.suggestion ||
+                payload?.response ||
+                payload?.text ||
+                ""
+            ).trim();
+
             if(primary){
-                addCoachPhraseCard(primary,String(result?.primary_note||"").trim(),"Best fit",true);
+                addCoachPhraseCard(
+                    primary,
+                    String(payload?.primary_note||payload?.note||"").trim(),
+                    "Best fit",
+                    true
+                );
             }
 
-            const alternatives=Array.isArray(result?.alternatives) ? result.alternatives.slice(0,3) : [];
+            const alternatives=Array.isArray(payload?.alternatives)
+                ? payload.alternatives.slice(0,3)
+                : Array.isArray(payload?.options)
+                    ? payload.options.slice(0,3)
+                    : [];
+
             alternatives.forEach((item,index)=>{
-                const phrase=typeof item==="string" ? item : item?.text;
-                const note=typeof item==="string" ? "" : item?.note;
+                const phrase=typeof item==="string" ? item : (item?.text||item?.phrase||item?.response);
+                const note=typeof item==="string" ? "" : (item?.note||item?.explanation);
                 addCoachPhraseCard(phrase,note||"",`Alternative ${index+1}`,false);
             });
 
-            addCoachExplanation(String(result?.explanation||"").trim());
+            addCoachExplanation(String(payload?.explanation||payload?.grammar_note||"").trim());
 
             if(!primary && !alternatives.length){
                 throw new Error("The Coach returned no usable phrase.");
             }
-            setCoachStatus("Private coaching complete. Nothing has been sent to the Tutor.","success");
+            revealCoachResults();
+            setCoachStatus("");
         }catch(e){
             setCoachStatus("Coach could not generate options: "+((e&&e.message)?e.message:String(e)),"error");
         }finally{
@@ -20263,6 +20332,44 @@ Requirements:
         if(btn)btn.textContent="🎙 Dictate";
     }
 
+    function pauseConversationMicForCoach(){
+        try{
+            if(typeof voiceTutorState==="undefined" || !voiceTutorState?.active)return false;
+
+            const wasMicSession=Boolean(voiceTutorState.micSession);
+            const wasListening=voiceTutorState.phase==="listening" || Boolean(voiceTutorState.recognition);
+
+            if(typeof clearVoiceSilenceTimer==="function")clearVoiceSilenceTimer();
+            if(typeof destroyVoiceRecognition==="function")destroyVoiceRecognition();
+            if(typeof setVoiceMicIndicator==="function")setVoiceMicIndicator(false);
+
+            // Do not end the conversation session. The Coach temporarily owns
+            // speech recognition while its dictation control is active.
+            if(voiceTutorState.phase==="listening")voiceTutorState.phase="idle";
+            voiceTutorState.coachMicPaused=true;
+
+            if(typeof voiceTutorStatus==="function"){
+                voiceTutorStatus("Conversation microphone paused while you dictate to the Coach.");
+            }
+            return wasMicSession && wasListening;
+        }catch(e){
+            return false;
+        }
+    }
+
+    function keepConversationMicPausedWhileCoachOpen(){
+        try{
+            if(typeof voiceTutorState==="undefined" || !voiceTutorState?.active)return;
+            if(document.getElementById("language-coach-window")?.hidden)return;
+            if(voiceTutorState.recognition){
+                if(typeof destroyVoiceRecognition==="function")destroyVoiceRecognition();
+                if(typeof setVoiceMicIndicator==="function")setVoiceMicIndicator(false);
+                if(voiceTutorState.phase==="listening")voiceTutorState.phase="idle";
+            }
+            voiceTutorState.coachMicPaused=true;
+        }catch(e){}
+    }
+
     window.toggleLanguageCoachDictation=function(){
         if(coachDictationRecognition){
             stopCoachDictation();
@@ -20275,6 +20382,10 @@ Requirements:
             if(status)status.textContent="Speech recognition is not available in this browser/device.";
             return;
         }
+
+        // Coach dictation and live Conversation recognition must never compete
+        // for the microphone.
+        pauseConversationMicForCoach();
 
         const input=document.getElementById("language-coach-input");
         const mode=document.getElementById("language-coach-dictation-language")?.value||"en";
@@ -20307,6 +20418,7 @@ Requirements:
         rec.onend=()=>{
             coachDictationRecognition=null;
             if(btn)btn.textContent="🎙 Dictate";
+            keepConversationMicPausedWhileCoachOpen();
         };
 
         try{rec.start()}catch(e){stopCoachDictation()}
