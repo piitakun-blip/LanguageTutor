@@ -5090,6 +5090,11 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+<style id="coach-v78-action-visibility">
+#language-coach-status:not([hidden]){display:block!important;min-height:18px}
+#language-coach-results:not(:empty){display:flex!important;visibility:visible!important;opacity:1!important}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -19784,10 +19789,10 @@ Do not continue the conversation.`;
         </div>
 
         <div class="language-coach-actions">
-            <button type="button" id="language-coach-quick-btn" class="language-coach-quick" onclick="languageCoachQuickTranslate()">
+            <button type="button" id="language-coach-quick-btn" class="language-coach-quick">
                 🌐 Quick translation
             </button>
-            <button type="button" id="language-coach-ai-btn" class="language-coach-ai" onclick="languageCoachNaturalOptions()">
+            <button type="button" id="language-coach-ai-btn" class="language-coach-ai">
                 ✨ Natural options
             </button>
         </div>
@@ -20030,6 +20035,14 @@ Do not continue the conversation.`;
         }
     };
 
+    async function coachAwait(promise,timeoutMs=15000){
+        let timer;
+        const timeout=new Promise((_,reject)=>{
+            timer=setTimeout(()=>reject(new Error(`Coach request timed out after ${Math.round(timeoutMs/1000)} seconds.`)),timeoutMs);
+        });
+        return Promise.race([promise,timeout]).finally(()=>clearTimeout(timer));
+    }
+
     window.languageCoachQuickTranslate=async function(){
         const input=document.getElementById("language-coach-input");
         const text=String(input?.value||"").trim();
@@ -20043,7 +20056,10 @@ Do not continue the conversation.`;
         setCoachStatus(`Creating a quick English → ${cfg.name} version…`);
 
         try{
-            let translated=String(await googleTranslateApiCall(text,"en",cfg.code)).trim();
+            let translated=String(await coachAwait(
+                googleTranslateApiCall(text,"en",cfg.code),
+                12000
+            )).trim();
             if(typeof normalizeTargetText==="function"){
                 translated=normalizeTargetText(translated,cfg.code);
             }
@@ -20068,7 +20084,10 @@ Do not continue the conversation.`;
         if(!request){setCoachStatus("Write what you want to say or ask first.","error");return;}
 
         const cfg=currentCoachConfig();
-        if(!getActiveAIKey()){
+        const ai=(typeof resolveWorkbenchAIConfig==="function")
+            ? resolveWorkbenchAIConfig()
+            : {available:Boolean(typeof getActiveAIKey==="function" && getActiveAIKey())};
+        if(!ai.available){
             setCoachStatus("Natural options need an AI API key. Quick translation remains available without one.","error");
             return;
         }
@@ -20114,13 +20133,16 @@ Requirements:
         try{
             let result;
             try{
-                result=await callAIJson(prompt);
+                result=await coachAwait(callAIJson(prompt),15000);
             }catch(jsonError){
                 console.warn("Coach JSON response failed:",jsonError);
-                const fallback=String(await callAI(
-                    `Privately help a learner say this naturally in ${cfg.name}: "${request}". `+
-                    `Give one concise ${cfg.name} phrase first, then one short English explanation. `+
-                    `Do not role-play or continue the conversation.`
+                const fallback=String(await coachAwait(
+                    callAI(
+                        `Privately help a learner say this naturally in ${cfg.name}: "${request}". `+
+                        `Give one concise ${cfg.name} phrase first, then one short English explanation. `+
+                        `Do not role-play or continue the conversation.`
+                    ),
+                    15000
                 )).trim();
                 result={primary:fallback,primary_note:"AI fallback response",alternatives:[],explanation:""};
             }
@@ -20367,6 +20389,37 @@ Requirements:
 
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",build);
     else build();
+    function bindLanguageCoachActions(){
+        const quick=document.getElementById("language-coach-quick-btn");
+        const natural=document.getElementById("language-coach-ai-btn");
+
+        if(quick && !quick.dataset.coachBound){
+            quick.dataset.coachBound="1";
+            quick.addEventListener("click",(event)=>{
+                event.preventDefault();
+                setCoachStatus("Starting quick translation…");
+                window.languageCoachQuickTranslate().catch(err=>{
+                    setCoachStatus("Quick translation failed: "+((err&&err.message)?err.message:String(err)),"error");
+                });
+            });
+        }
+
+        if(natural && !natural.dataset.coachBound){
+            natural.dataset.coachBound="1";
+            natural.addEventListener("click",(event)=>{
+                event.preventDefault();
+                setCoachStatus("Starting AI Coach…");
+                window.languageCoachNaturalOptions().catch(err=>{
+                    setCoachStatus("Coach failed: "+((err&&err.message)?err.message:String(err)),"error");
+                });
+            });
+        }
+    }
+
+    bindLanguageCoachActions();
+    if(document.readyState==="loading"){
+        document.addEventListener("DOMContentLoaded",bindLanguageCoachActions,{once:true});
+    }
 })();
 </script>
 
