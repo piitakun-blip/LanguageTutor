@@ -410,12 +410,8 @@
             }
         }
 
-    
-        @media (max-width: 640px) {
-        }
 
-
-        /* Gender text colors: masculine blue, feminine pink/red, neuter teal, plural purple. */
+/* Gender text colors: masculine blue, feminine pink/red, neuter teal, plural purple. */
         .gender-masc { color:#2563eb !important; border-color:#60a5fa !important; }
         .gender-fem { color:#db2777 !important; border-color:#f472b6 !important; }
         .gender-neut { color:#0f9f8f !important; border-color:#2dd4bf !important; }
@@ -2584,7 +2580,6 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 </style>
 
 
-
 <style id="selective-output-copy-buttons">
 .copy-output-host{
     position:relative;
@@ -3410,7 +3405,6 @@ body[data-study-language="es"] #tiles-container .es-gender-fem {
 </style>
 
 
-
 <style id="language-themed-collapsed-sections-v1">
 /* Collapsed navigation cards use very light colors from each language theme.
    Open cards return to white so the active workspace stays clean. */
@@ -3827,7 +3821,6 @@ body.conversation-first-layout #mobile-right-column{
         <div id="mobile-left-column" class="lg:col-span-2 space-y-6">
 
 
-
             <!-- Inputs and Outputs Console (Two Separate Workspaces) -->
             <div id="mobile-input-workspaces" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
@@ -3925,7 +3918,7 @@ body.conversation-first-layout #mobile-right-column{
                         </div>
 
                         <!-- AI Grammar Coach Box (Hidden by default, shown if Gemini API has correction notes) -->
-                        
+
 
                     </div>
                 </div>
@@ -4429,7 +4422,7 @@ body.conversation-first-layout #mobile-right-column{
 
             <!-- Always-visible interactive grammar tools -->
                 <!-- Interactive Grammar Tools -->
-                
+
 
             <!-- Toggle Button for Reference -->
             <button id="grammar-tools-toggle" onclick="toggleCheatSheet()" class="w-full py-3.5 px-5 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between font-bold text-slate-700 text-sm transition duration-150 group">
@@ -4441,14 +4434,14 @@ body.conversation-first-layout #mobile-right-column{
             </button>
 
             <!-- Collapsible Reference Content Container -->
-            
+
 <div id="cheat-sheet-container" class="hidden animate-fadeIn">
 
                 <div class="grammar-tools-shell bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                     <div class="p-3 sm:p-4 border-b border-slate-100 bg-slate-50/70">
                         <div class="text-sm font-bold text-slate-800">Grammar Tools</div>
                         <div class="text-[10px] text-slate-500 mt-0.5">Choose the grammar area you want to work with.</div>
-                        
+
 
                         <div class="grammar-main-tabs mt-3" role="tablist" aria-label="Grammar topics">
                             <button type="button" id="grammar-tab-verbs" class="grammar-main-tab active" onclick="setGrammarMainTab('verbs')" role="tab" aria-selected="true">Verbs</button>
@@ -4467,10 +4460,10 @@ body.conversation-first-layout #mobile-right-column{
                                 Conjugation changes the verb to match the subject. Use this section for verb forms, separable verbs, and irregular patterns.
                             </p>
                         </div>
-                        
 
 
-                        
+
+
 
                         <section id="cheat-tool-verb" class="space-y-4">
                         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
@@ -4511,7 +4504,7 @@ body.conversation-first-layout #mobile-right-column{
                             <div id="verb-conjugation-grid" class="verb-conjugation-grid"></div>
                             <div id="verb-extra-info" class="hidden px-4 py-3 border-t border-slate-100 bg-white text-[11px] text-slate-600"></div>
                         </div>
-                    
+
 
 </section>
 <div class="grammar-section-ai">
@@ -4519,8 +4512,8 @@ body.conversation-first-layout #mobile-right-column{
                             <div id="grammar-ai-verb" class="grammar-section-ai-result hidden"></div>
                         </div>
 
-                    
-                        
+
+
 
                         </section>
 
@@ -4535,10 +4528,10 @@ body.conversation-first-layout #mobile-right-column{
 
                         <div class="grammar-topic-subsection">
                             <div class="grammar-topic-subheading">Build a phrase</div>
-                            
 
 
-                        
+
+
 
                         <section id="cheat-tool-builder" class="space-y-3">
                         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
@@ -4626,28 +4619,28 @@ body.conversation-first-layout #mobile-right-column{
                             <div id="builder-result" data-grammar-gender-text class="text-xl font-bold mt-1 break-words"></div>
                             <div id="builder-rule" class="text-[11px] text-slate-600 mt-2"></div>
                         </div>
-                    
+
 <div class="grammar-section-ai">
                             <button type="button" onclick="askGrammarSectionAI('builder', this)" class="grammar-section-ai-btn">✨ Ask AI about this phrase</button>
                             <div id="grammar-ai-builder" class="grammar-section-ai-result hidden"></div>
                         </div>
 </section>
-                    
-                        
+
+
                         </div>
 
                         <div class="grammar-topic-divider"></div>
 
                         <div class="grammar-topic-subsection">
                             <div class="grammar-topic-subheading">Learn why: Preposition Explorer</div>
-                            
 
 
-                        
+
+
 
                         <section id="cheat-tool-prep" class="space-y-4">
                         <div id="prep-tool-result" class="grammar-case-card rounded-xl border p-4 space-y-4"></div>
-                    
+
 
 </section>
 <div class="grammar-section-ai">
@@ -4675,8 +4668,8 @@ body.conversation-first-layout #mobile-right-column{
                     </div>
                 </div>
             </div>
-                    
-                        
+
+
                         </div>
 
                         </section>
@@ -4756,10 +4749,10 @@ body.conversation-first-layout #mobile-right-column{
                                 Articles show gender and case. Use the Article Finder for a specific noun, then use the tables below to compare the full pattern.
                             </p>
                         </div>
-                        
 
 
-                        
+
+
 
                         <!-- Quick Reference Table: Definite & Indefinite Articles -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-5">
@@ -4879,8 +4872,8 @@ body.conversation-first-layout #mobile-right-column{
                 </div>
                     </div>
             </div>
-                    
-                        
+
+
 
                         </section>
 
@@ -16920,9 +16913,6 @@ Current work: ${context||"No sentence has been entered yet."}`;
 </script>
 
 
-
-
-
 <script id="selective-output-copy-system">
 (function(){
     /*
@@ -17120,7 +17110,6 @@ Current work: ${context||"No sentence has been entered yet."}`;
     else boot();
 })();
 </script>
-
 
 
 <script id="shared-speech-speed-sync">
@@ -17502,4 +17491,4 @@ Current work: ${context||"No sentence has been entered yet."}`;
 </script>
 </body>
 </html>
-                            
+
