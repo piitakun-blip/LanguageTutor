@@ -18869,7 +18869,9 @@ Current work: ${context||"No sentence has been entered yet."}`;
     function status(text,tone="normal"){
         const el=document.getElementById("analysis-workbench-status");
         if(!el)return;
-        el.textContent=text;
+        const clean=String(text||"").trim();
+        el.textContent=clean;
+        el.hidden=!clean;
         el.style.color=tone==="error" ? "#be123c" : tone==="success" ? "#15803d" : "#64748b";
     }
 
@@ -18997,7 +18999,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         card?.appendChild(output);
 
         if(state.translation){
-            status("Translation shown.","success");
+
             return;
         }
 
@@ -19006,7 +19008,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         try{
             state.translation=String(await googleTranslateApiCall(state.sentence,state.languageCode,"en")).trim();
             output.textContent=state.translation || "Translation unavailable.";
-            status("Translation shown. The transcript remains unchanged.","success");
+
         }catch(e){
             output.textContent="Translation is temporarily unavailable.";
             status("Translation failed: "+((e&&e.message)?e.message:String(e)),"error");
@@ -19373,11 +19375,11 @@ Rules:
 
             renderWorkbenchParserTiles(card,parsed);
             if(parsed.source==="AI"){
-                status(`✨ ${ai.providerName} parse shown.`,"success");
+                status("");
             }else if(parsed.reason==="AI_FAILED"){
                 status(`AI request failed (${parsed.aiError||"unknown error"}). Showing the built-in parser instead.`,"error");
             }else{
-                status("No AI key is currently loaded. Showing the built-in parser.","success");
+                status("");
             }
         }catch(e){
             card.textContent="Parse failed: "+((e&&e.message)?e.message:String(e));
@@ -19485,7 +19487,7 @@ Rules:
                 empty.textContent="A diagram could not be built for this sentence.";
                 card.appendChild(empty);
             }
-            status("Diagram shown. Parse and Diagram share the same structured analysis.","success");
+
         }catch(e){
             card.textContent="Diagram failed: "+((e&&e.message)?e.message:String(e));
             status("Diagram failed.","error");
@@ -19535,7 +19537,7 @@ Do not continue the conversation.`;
             output.textContent=(typeof stripTutorMarkdown==="function"
                 ? stripTutorMarkdown(cleaned)
                 : cleaned) || "No explanation returned.";
-            status("Concise explanation shown.","success");
+
         }catch(e){
             output.textContent="Why? failed: "+((e&&e.message)?e.message:String(e));
             status("Why? failed.","error");
