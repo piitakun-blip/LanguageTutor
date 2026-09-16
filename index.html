@@ -5002,6 +5002,94 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+<style id="analysis-parser-visual-language-v77">
+/*
+  Preserve the original Grammar Parser visual grammar:
+  CASE   = card background
+  GENDER = word/phrase text color
+*/
+.analysis-parser-legend-toggle{
+    display:inline-flex;
+    align-items:center;
+    min-height:30px;
+    margin:0 0 8px;
+    padding:5px 9px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#fff;
+    color:#475569;
+    font-size:9px;
+    font-weight:800;
+    cursor:pointer;
+}
+.analysis-parser-legend.hidden{display:none!important}
+.analysis-parser-legend{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:7px;
+    margin:0 0 9px;
+    padding:8px;
+    border:1px solid #e2e8f0;
+    border-radius:9px;
+    background:#fff;
+}
+.analysis-parser-key-group{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:6px;
+}
+.analysis-parser-key-group>strong{
+    min-width:118px;
+    font-size:8px;
+    color:#64748b;
+}
+.analysis-parser-key-group span{
+    padding:4px 7px;
+    border-radius:9999px;
+    border:1px solid #cbd5e1;
+    font-size:8px;
+    font-weight:800;
+}
+
+/* Case remains the fill/background cue. */
+.analysis-parser-tiles .grammar-tile.case-nom,
+.analysis-diagram-node.case-nom{background:#dbeafe!important;border-color:#bfdbfe!important}
+.analysis-parser-tiles .grammar-tile.case-acc,
+.analysis-diagram-node.case-acc{background:#c7f5d8!important;border-color:#9ee8bb!important}
+.analysis-parser-tiles .grammar-tile.case-dat,
+.analysis-diagram-node.case-dat{background:#fef9c3!important;border-color:#fef08a!important}
+.analysis-parser-tiles .grammar-tile.case-gen,
+.analysis-diagram-node.case-gen{background:#f3e8ff!important;border-color:#e9d5ff!important}
+.analysis-parser-tiles .grammar-tile.case-multi,
+.analysis-diagram-node.case-multi{background:#ffedd5!important;border-color:#fed7aa!important}
+.analysis-parser-tiles .grammar-tile.case-none,
+.analysis-diagram-node.case-none{background:#f3f4f6!important;border-color:#e5e7eb!important}
+
+/* Gender remains the text cue — both Parser and Diagram use exactly the same classes. */
+.analysis-parser-phrase.gender-masc,
+.analysis-diagram-node strong.gender-masc,
+.analysis-parser-key-group .gender-masc{color:#2563eb!important}
+.analysis-parser-phrase.gender-fem,
+.analysis-diagram-node strong.gender-fem,
+.analysis-parser-key-group .gender-fem{color:#db2777!important}
+.analysis-parser-phrase.gender-neut,
+.analysis-diagram-node strong.gender-neut,
+.analysis-parser-key-group .gender-neut{color:#0f9f8f!important}
+.analysis-parser-phrase.gender-plural,
+.analysis-diagram-node strong.gender-plural,
+.analysis-parser-key-group .gender-plural{color:#7c3aed!important}
+
+/* Don't let the older generic diagram phrase rule overwrite gender. */
+.analysis-diagram-node strong.gender-none{color:#1e293b}
+
+@media(max-width:640px){
+    .analysis-parser-legend-toggle{min-height:36px}
+    .analysis-parser-key-group>strong{width:100%;min-width:0}
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -19321,16 +19409,38 @@ Rules:
     }
 
     function renderWorkbenchParserTiles(card,parsed){
+        // Keep the parser itself visually self-explanatory. The color key is
+        // available on demand instead of occupying space above every parse.
+        const legendToggle=document.createElement("button");
+        legendToggle.type="button";
+        legendToggle.className="analysis-parser-legend-toggle";
+        legendToggle.textContent="Show color key";
+
         const legend=document.createElement("div");
-        legend.className="analysis-parser-legend";
+        legend.className="analysis-parser-legend hidden";
         legend.innerHTML=`
-            <span class="case-nom">Nominative</span>
-            <span class="case-acc">Accusative</span>
-            <span class="case-dat">Dative</span>
-            <span class="case-gen">Genitive</span>
-            <span class="case-multi">Ambiguous</span>
+            <div class="analysis-parser-key-group">
+                <strong>Case = card background</strong>
+                <span class="case-nom">Nominative</span>
+                <span class="case-acc">Accusative</span>
+                <span class="case-dat">Dative</span>
+                <span class="case-gen">Genitive</span>
+                <span class="case-multi">Ambiguous</span>
+            </div>
+            <div class="analysis-parser-key-group">
+                <strong>Gender = word color</strong>
+                <span class="gender-masc">Masculine</span>
+                <span class="gender-fem">Feminine</span>
+                <span class="gender-neut">Neuter</span>
+                <span class="gender-plural">Plural</span>
+            </div>
         `;
-        card.appendChild(legend);
+        legendToggle.addEventListener("click",()=>{
+            const opening=legend.classList.contains("hidden");
+            legend.classList.toggle("hidden",!opening);
+            legendToggle.textContent=opening ? "Hide color key" : "Show color key";
+        });
+        card.append(legendToggle,legend);
 
         const tiles=document.createElement("div");
         tiles.className="analysis-parser-tiles";
@@ -19486,6 +19596,7 @@ Rules:
             box.className=`analysis-diagram-node ${workbenchCaseClass(node.label)} ${workbenchGenderClass(node.gender)}`;
 
             const phrase=document.createElement("strong");
+            phrase.className=workbenchGenderClass(node.gender);
             phrase.textContent=String(node.text||"");
 
             const meta=document.createElement("span");
