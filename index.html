@@ -4457,6 +4457,123 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+
+<style id="clean-transcript-side-analysis-v5-styles">
+/* Transcript v5: conversation first. One Analysis action per analyzable turn. */
+.transcript-line-with-analysis,
+.conversation-line-with-analysis{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:start;
+    gap:10px;
+}
+.transcript-single-analysis-row{
+    display:flex !important;
+    align-items:flex-start;
+    justify-content:flex-end;
+    flex:0 0 auto;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    opacity:1 !important;
+}
+.transcript-single-analysis-row button{
+    min-height:30px !important;
+    padding:5px 9px !important;
+    border:1px solid #c7d2fe !important;
+    border-radius:8px !important;
+    background:#f8faff !important;
+    color:#4f46e5 !important;
+    font-size:9px !important;
+    font-weight:800 !important;
+    line-height:1.1 !important;
+    white-space:nowrap;
+    box-shadow:none !important;
+}
+.transcript-single-analysis-row button:hover{
+    background:#eef2ff !important;
+    border-color:#a5b4fc !important;
+    color:#3730a3 !important;
+}
+.transcript-single-analysis-row button.active-analysis-turn{
+    background:#e0e7ff !important;
+    border-color:#818cf8 !important;
+    color:#312e81 !important;
+}
+
+/* Hide legacy inline analysis panels if an older session left one rendered. */
+.voice-transcript-entry > .transcript-inline-study-panel,
+.conversation-turn-card > .transcript-inline-study-panel{
+    display:none !important;
+}
+
+/* Workbench organizes study tools; transcript stays sparse. */
+.analysis-workbench-primary-tools{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:7px;
+}
+.analysis-workbench-primary-tools button{
+    min-height:42px;
+    padding:7px 8px;
+    border:1px solid #c7d2fe;
+    border-radius:9px;
+    background:#eef2ff;
+    color:#4338ca;
+    font-size:10px;
+    font-weight:800;
+}
+.analysis-workbench-primary-tools button.ai{
+    border-color:#fde68a;
+    background:#fffbeb;
+    color:#92400e;
+}
+.analysis-workbench-utility-tools{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    padding-top:7px;
+    border-top:1px solid #eef2f7;
+}
+.analysis-workbench-utility-tools button{
+    min-height:32px;
+    padding:5px 8px;
+    border:1px solid #dbe3ee;
+    border-radius:8px;
+    background:#fff;
+    color:#64748b;
+    font-size:9px;
+    font-weight:800;
+}
+
+/* When the workbench is automatically opened beside a floating transcript,
+   make the relationship visually obvious without docking permanently. */
+#analysis-workbench-window.side-by-side-analysis{
+    box-shadow:0 20px 60px rgba(15,23,42,.20);
+}
+
+@media(max-width:900px){
+    .analysis-workbench-primary-tools{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+@media(max-width:640px){
+    .transcript-line-with-analysis,
+    .conversation-line-with-analysis{
+        grid-template-columns:minmax(0,1fr) auto;
+        gap:6px;
+    }
+    .transcript-single-analysis-row button{
+        min-height:34px !important;
+        padding:5px 7px !important;
+        font-size:9px !important;
+    }
+    .analysis-workbench-primary-tools{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -11851,7 +11968,17 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             if(entry.role==="user") content.textContent=String(entry.text||"").trim();
             else renderTutorMarkdown(content,String(entry.text||"").trim());
 
-            block.append(speaker,content);
+            block.appendChild(speaker);
+
+            const lineRow=document.createElement("div");
+            lineRow.className="transcript-line-with-analysis";
+
+            const actions=document.createElement("div");
+            appendTranscriptTurnActions(actions,entry,block,currentStudyLanguage);
+
+            lineRow.appendChild(content);
+            if(actions.childElementCount) lineRow.appendChild(actions);
+            block.appendChild(lineRow);
 
             if(entry.role==="user" && entry.inputMode==="english" && entry.targetTranslation){
                 appendEnglishReplyTranslation(block,entry,currentStudyLanguage);
@@ -11866,11 +11993,6 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                 note.append(noteText,teacherNotePlayButton(entry,currentStudyLanguage));
                 block.appendChild(note);
             }
-
-            const actions=document.createElement("div");
-            actions.className="transcript-analyze-row";
-            appendTranscriptTurnActions(actions,entry,block,currentStudyLanguage);
-            block.appendChild(actions);
 
             body.appendChild(block);
         });
@@ -11948,7 +12070,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             const empty=document.createElement("div");
             empty.id="voice-tutor-empty";
             empty.className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400";
-            empty.textContent=`Start speaking or type a ${langConfig().name} reply below. Tap Analyze on any target-language turn to open the movable Analysis Workbench. If you know what you want to say but cannot formulate it, open the private Coach.`;
+            empty.textContent=`Start speaking or type a ${langConfig().name} reply below. Use Analysis beside a target-language turn when you want to study it; use Coach when you need help formulating your next response.`;
             log.appendChild(empty);
             return;
         }
@@ -12405,40 +12527,22 @@ Keep the entire answer under about 70 words.`;
     }
 
     function appendTranscriptTurnActions(actions,entry,wrap,languageCode=currentStudyLanguage){
-        if(!actions || !entry || !wrap)return;
-        actions.classList.add("transcript-hub-actions");
+        if(!actions || !entry)return;
+        actions.className="transcript-single-analysis-row";
 
-        const raw=transcriptTurnRawText(entry);
         const target=transcriptTurnTargetText(entry);
-        const english=transcriptTurnIsEnglish(entry);
-        const cfg=LANGUAGE_MODES[languageCode] || langConfig();
-        const replayLocale=english ? "en-US" : cfg.locale;
+        if(!target)return;
 
-        if(target && !english){
-            const analyze=voiceTutorControlButton("🔎 Analyze","Open this turn in the movable Analysis Workbench",()=>
-                window.openAnalysisWorkbench(target,languageCode,entry)
-            );
-            analyze.classList.add("transcript-action-primary");
-            actions.appendChild(analyze);
-        }
-
-        actions.appendChild(
-            voiceTutorControlButton("🔊 Replay","Replay this turn",()=>speakRawText(raw,replayLocale))
-        );
-
-        actions.appendChild(
-            voiceTutorControlButton("⧉ Copy","Copy this turn",ev=>
-                copyVoiceTutorText(raw,ev.currentTarget)
-            )
-        );
-
-        if(target && !english){
-            actions.appendChild(
-                voiceTutorControlButton("☆ Save","Save this phrase to the active Study Board",ev=>
-                    window.saveVoiceTutorPhrase(target,languageCode,ev.currentTarget)
-                )
-            );
-        }
+        const button=document.createElement("button");
+        button.type="button";
+        button.textContent="Analysis";
+        button.title="Open this utterance in the Analysis Workbench";
+        button.addEventListener("click",()=>{
+            document.querySelectorAll(".active-analysis-turn").forEach(el=>el.classList.remove("active-analysis-turn"));
+            button.classList.add("active-analysis-turn");
+            window.openAnalysisWorkbench(target,languageCode,entry);
+        });
+        actions.appendChild(button);
     }
 
     function appendVoiceTutorBubble(entry,scroll=true){
@@ -12467,11 +12571,20 @@ Keep the entire answer under about 70 words.`;
         }
         wrap.appendChild(label);
 
+        const lineRow=document.createElement("div");
+        lineRow.className="conversation-line-with-analysis";
+
         const text=document.createElement("div");
         text.className="leading-relaxed whitespace-pre-wrap break-words";
         if(user) text.textContent=entry.text;
         else renderTutorMarkdown(text,entry.text);
-        wrap.appendChild(text);
+
+        const actions=document.createElement("div");
+        appendTranscriptTurnActions(actions,entry,wrap,currentStudyLanguage);
+
+        lineRow.appendChild(text);
+        if(actions.childElementCount) lineRow.appendChild(actions);
+        wrap.appendChild(lineRow);
 
         if(user && entry.inputMode==="english" && entry.targetTranslation){
             appendEnglishReplyTranslation(wrap,entry,currentStudyLanguage);
@@ -12492,11 +12605,6 @@ Keep the entire answer under about 70 words.`;
             details.append(summary,noteRow);
             wrap.appendChild(details);
         }
-
-        const actions=document.createElement("div");
-        actions.className="voice-tutor-actions";
-        appendTranscriptTurnActions(actions,entry,wrap,currentStudyLanguage);
-        wrap.appendChild(actions);
 
         log.appendChild(wrap);
         if(scroll){
@@ -18268,7 +18376,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
         <div class="voice-transcript-titlecopy">
             <div id="voice-transcript-window-title" class="voice-transcript-window-title">Conversation transcript</div>
-            <div class="voice-transcript-window-subtitle">Tap Analyze on a turn to open the movable Analysis Workbench; use Coach when you need help formulating a reply.</div>
+            <div class="voice-transcript-window-subtitle">Conversation first. Use Analysis beside a line only when you want to study that utterance.</div>
         </div>
         <div class="voice-transcript-window-actions">
             <button type="button" id="voice-transcript-collapse-btn" onclick="toggleVoiceTranscriptCollapse()" title="Collapse transcript">—</button>
@@ -18305,11 +18413,14 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <div id="analysis-workbench-sentence"></div>
         </div>
 
-        <div class="analysis-workbench-toolbar">
-            <button type="button" class="primary" onclick="analysisWorkbenchTranslate(this)">🌐 Translation</button>
-            <button type="button" class="primary" onclick="analysisWorkbenchStructure(this)">🧩 Structure</button>
-            <button type="button" class="ai" onclick="analysisWorkbenchGrammar(this)">✨ Grammar parse</button>
-            <button type="button" class="ai" onclick="analysisWorkbenchWhy(this)">💡 Why?</button>
+        <div class="analysis-workbench-primary-tools">
+            <button type="button" onclick="analysisWorkbenchTranslate(this)">Translation</button>
+            <button type="button" onclick="analysisWorkbenchStructure(this)">Structure</button>
+            <button type="button" class="ai" onclick="analysisWorkbenchGrammar(this)">Grammar parse</button>
+            <button type="button" class="ai" onclick="analysisWorkbenchWhy(this)">Why?</button>
+        </div>
+
+        <div class="analysis-workbench-utility-tools">
             <button type="button" onclick="analysisWorkbenchListen()">🔊 Listen</button>
             <button type="button" onclick="analysisWorkbenchCopy(this)">⧉ Copy</button>
             <button type="button" onclick="analysisWorkbenchSave(this)">☆ Save</button>
@@ -18320,7 +18431,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         <div id="analysis-workbench-status">Choose an analysis. Translation and local structure do not require an AI key.</div>
         <div id="analysis-workbench-results">
             <div class="analysis-workbench-empty">
-                This window keeps deeper study out of the conversation transcript.<br>
+                Study the selected utterance here without cluttering the conversation.<br>
                 Choose Translation, Structure, Grammar parse, or Why?.
             </div>
         </div>
@@ -18390,6 +18501,57 @@ Current work: ${context||"No sentence has been entered yet."}`;
         results()?.appendChild(empty);
     }
 
+    function placeAnalysisWorkbenchBesideTranscript(){
+        const win=document.getElementById("analysis-workbench-window");
+        if(!win || window.innerWidth<=640)return;
+
+        const gap=12;
+        const edge=8;
+        const transcript=document.getElementById("voice-transcript-window");
+        const transcriptVisible=transcript && !transcript.hidden;
+
+        win.classList.add("side-by-side-analysis");
+        win.style.right="auto";
+        win.style.bottom="auto";
+
+        if(transcriptVisible){
+            const r=transcript.getBoundingClientRect();
+            const rightSpace=Math.max(0,window.innerWidth-r.right-gap-edge);
+            const leftSpace=Math.max(0,r.left-gap-edge);
+            const preferred=500;
+            const minimum=360;
+
+            let width=Math.min(preferred,Math.max(minimum,rightSpace));
+            let left;
+
+            if(rightSpace>=minimum){
+                width=Math.min(preferred,rightSpace);
+                left=r.right+gap;
+            }else if(leftSpace>=minimum){
+                width=Math.min(preferred,leftSpace);
+                left=r.left-gap-width;
+            }else{
+                width=Math.min(500,Math.max(360,window.innerWidth*.42));
+                left=window.innerWidth-width-edge;
+            }
+
+            const maxHeight=Math.max(360,window.innerHeight-edge*2);
+            const desiredHeight=Math.min(Math.max(420,r.height),Math.min(720,maxHeight));
+            const top=Math.min(Math.max(edge,r.top),Math.max(edge,window.innerHeight-desiredHeight-edge));
+
+            win.style.width=`${Math.floor(width)}px`;
+            win.style.height=`${Math.floor(desiredHeight)}px`;
+            win.style.left=`${Math.floor(Math.max(edge,left))}px`;
+            win.style.top=`${Math.floor(top)}px`;
+            return;
+        }
+
+        const width=Math.min(520,Math.max(380,window.innerWidth*.40));
+        win.style.width=`${Math.floor(width)}px`;
+        win.style.left=`${Math.floor(window.innerWidth-width-18)}px`;
+        win.style.top="70px";
+    }
+
     window.openAnalysisWorkbench=function(sentence,languageCode=currentStudyLanguage,entry=null){
         const clean=String(sentence||"").trim();
         if(!clean)return;
@@ -18397,12 +18559,16 @@ Current work: ${context||"No sentence has been entered yet."}`;
         const win=document.getElementById("analysis-workbench-window");
         const sentenceEl=document.getElementById("analysis-workbench-sentence");
         const subtitle=document.getElementById("analysis-workbench-subtitle");
+        const wasHidden=!win || win.hidden;
 
         resetForSentence(clean,languageCode,entry);
         if(sentenceEl)sentenceEl.textContent=clean;
         if(subtitle)subtitle.textContent=`${cfg().name} transcript turn`;
-        if(win)win.hidden=false;
-        status("Choose an analysis. Translation and local structure do not require an AI key.");
+        if(win){
+            win.hidden=false;
+            if(wasHidden)requestAnimationFrame(placeAnalysisWorkbenchBesideTranscript);
+        }
+        status("Choose Translation, Structure, Grammar parse, or Why?.");
     };
 
     window.closeAnalysisWorkbench=function(){
@@ -19032,7 +19198,7 @@ Requirements:
             title.textContent="Conversation transcript";
             const subtitle=document.createElement("div");
             subtitle.className="transcript-hub-subtitle";
-            subtitle.textContent="Your conversation is the workspace. Tap Analyze on a turn to open translation and grammar tools in a separate movable workbench.";
+            subtitle.textContent="Keep the conversation clean. Use the single Analysis button beside a turn when you want translation or grammar help.";
             copy.append(title,subtitle);
 
             const actions=document.createElement("div");
