@@ -4574,6 +4574,89 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+
+<style id="analysis-workbench-v6-full-parse">
+.analysis-full-parse-summary{
+    margin-bottom:9px;
+    padding:8px 9px;
+    border:1px solid #dbeafe;
+    border-radius:9px;
+    background:#eff6ff;
+    color:#1e40af;
+    font-size:10px;
+    line-height:1.45;
+}
+.analysis-full-parse-clause{
+    margin-top:9px;
+    padding-top:8px;
+    border-top:1px solid #eef2f7;
+}
+.analysis-full-parse-clause:first-of-type{
+    margin-top:0;
+    padding-top:0;
+    border-top:0;
+}
+.analysis-full-parse-clause-title{
+    color:#475569;
+    font-size:9px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    margin-bottom:5px;
+}
+.analysis-full-parse-line{
+    display:grid;
+    grid-template-columns:minmax(90px,.8fr) minmax(90px,.85fr) minmax(0,1.5fr);
+    gap:8px;
+    padding:6px 0;
+    border-bottom:1px solid #f1f5f9;
+}
+.analysis-full-parse-line:last-child{border-bottom:0}
+.analysis-full-parse-line .word{
+    color:#1e293b;
+    font-size:11px;
+    font-weight:800;
+}
+.analysis-full-parse-line .role{
+    color:#4338ca;
+    font-size:9px;
+    font-weight:800;
+}
+.analysis-full-parse-line .note{
+    color:#64748b;
+    font-size:9px;
+    line-height:1.4;
+}
+.analysis-full-parse-local-badge,
+.analysis-full-parse-ai-badge{
+    display:inline-flex;
+    align-items:center;
+    min-height:22px;
+    padding:3px 7px;
+    margin-left:6px;
+    border-radius:9999px;
+    font-size:8px;
+    font-weight:900;
+    vertical-align:middle;
+}
+.analysis-full-parse-local-badge{
+    background:#f1f5f9;
+    color:#64748b;
+    border:1px solid #cbd5e1;
+}
+.analysis-full-parse-ai-badge{
+    background:#fffbeb;
+    color:#92400e;
+    border:1px solid #fde68a;
+}
+@media(max-width:640px){
+    .analysis-full-parse-line{
+        grid-template-columns:1fr;
+        gap:2px;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -18415,24 +18498,23 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
         <div class="analysis-workbench-primary-tools">
             <button type="button" onclick="analysisWorkbenchTranslate(this)">Translation</button>
-            <button type="button" onclick="analysisWorkbenchStructure(this)">Structure</button>
-            <button type="button" class="ai" onclick="analysisWorkbenchGrammar(this)">Grammar parse</button>
+            <button type="button" class="ai" onclick="analysisWorkbenchFullParse(this)">Parse</button>
             <button type="button" class="ai" onclick="analysisWorkbenchWhy(this)">Why?</button>
+            <button type="button" onclick="analysisWorkbenchStructure(this)">Structure</button>
         </div>
 
         <div class="analysis-workbench-utility-tools">
             <button type="button" onclick="analysisWorkbenchListen()">🔊 Listen</button>
             <button type="button" onclick="analysisWorkbenchCopy(this)">⧉ Copy</button>
             <button type="button" onclick="analysisWorkbenchSave(this)">☆ Save</button>
-            <button type="button" onclick="analysisWorkbenchOpenFullParser()">↗ Full parser</button>
             <button type="button" onclick="analysisWorkbenchCoach()">🧭 Coach</button>
         </div>
 
-        <div id="analysis-workbench-status">Choose an analysis. Translation and local structure do not require an AI key.</div>
+        <div id="analysis-workbench-status">Choose an analysis. Translation and Structure work without AI. Parse automatically uses AI when available and falls back locally when it is not.</div>
         <div id="analysis-workbench-results">
             <div class="analysis-workbench-empty">
                 Study the selected utterance here without cluttering the conversation.<br>
-                Choose Translation, Structure, Grammar parse, or Why?.
+                Choose Translation, Parse, Why?, or Structure.
             </div>
         </div>
     </div>
@@ -18568,7 +18650,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
             win.hidden=false;
             if(wasHidden)requestAnimationFrame(placeAnalysisWorkbenchBesideTranscript);
         }
-        status("Choose Translation, Structure, Grammar parse, or Why?.");
+        status("Choose Translation, Parse, Why?, or Structure.");
     };
 
     window.closeAnalysisWorkbench=function(){
@@ -18643,90 +18725,205 @@ Current work: ${context||"No sentence has been entered yet."}`;
         status("Local structure shown — no AI key used.","success");
     };
 
-    window.analysisWorkbenchGrammar=async function(button){
-        if(!state.sentence)return;
-        if(!getActiveAIKey()){
-            clearResults();
-            const card=section("Grammar parse","ai");
+    function renderLocalFullParse(card){
+        const items=state.localItems || (
+            typeof transcriptLocalParseItems==="function"
+                ? transcriptLocalParseItems(state.sentence,state.languageCode)
+                : []
+        );
+        state.localItems=items;
+
+        const summary=document.createElement("div");
+        summary.className="analysis-full-parse-summary";
+        summary.textContent="Local parser result. AI was not available, so the app used its built-in grammar rules.";
+        card.appendChild(summary);
+
+        if(!items.length){
             const msg=document.createElement("div");
             msg.className="analysis-workbench-hint";
-            msg.textContent="Detailed grammar parsing uses your selected AI provider. Local Structure and Translation remain available without an AI key.";
-            card?.appendChild(msg);
-            status("AI grammar parse needs an API key.");
+            msg.textContent="The local parser could not confidently produce a detailed parse for this sentence.";
+            card.appendChild(msg);
             return;
         }
 
+        items.forEach(item=>{
+            const row=document.createElement("div");
+            row.className="analysis-full-parse-line";
+
+            const word=document.createElement("div");
+            word.className="word";
+            word.textContent=item.text||"";
+
+            const role=document.createElement("div");
+            role.className="role";
+            role.textContent=item.label||"";
+
+            const note=document.createElement("div");
+            note.className="note";
+            note.textContent=item.detail||"";
+
+            row.append(word,role,note);
+            card.appendChild(row);
+        });
+    }
+
+    function renderAIFullParse(card,data){
+        const summaryText=String(data?.summary||"").trim();
+        if(summaryText){
+            const summary=document.createElement("div");
+            summary.className="analysis-full-parse-summary";
+            summary.textContent=summaryText;
+            card.appendChild(summary);
+        }
+
+        const clauses=Array.isArray(data?.clauses) ? data.clauses : [];
+        if(clauses.length){
+            clauses.forEach((clause,index)=>{
+                const section=document.createElement("div");
+                section.className="analysis-full-parse-clause";
+
+                const title=document.createElement("div");
+                title.className="analysis-full-parse-clause-title";
+                title.textContent=String(clause?.label||`Clause ${index+1}`);
+                section.appendChild(title);
+
+                const items=Array.isArray(clause?.items) ? clause.items : [];
+                items.forEach(item=>{
+                    const row=document.createElement("div");
+                    row.className="analysis-full-parse-line";
+
+                    const word=document.createElement("div");
+                    word.className="word";
+                    word.textContent=String(item?.text||"");
+
+                    const role=document.createElement("div");
+                    role.className="role";
+                    role.textContent=String(item?.role||"");
+
+                    const note=document.createElement("div");
+                    note.className="note";
+                    note.textContent=String(item?.note||"");
+
+                    row.append(word,role,note);
+                    section.appendChild(row);
+                });
+
+                card.appendChild(section);
+            });
+            return;
+        }
+
+        const items=Array.isArray(data?.items) ? data.items : [];
+        items.forEach(item=>{
+            const row=document.createElement("div");
+            row.className="analysis-full-parse-line";
+
+            const word=document.createElement("div");
+            word.className="word";
+            word.textContent=String(item?.text||"");
+
+            const role=document.createElement("div");
+            role.className="role";
+            role.textContent=String(item?.role||"");
+
+            const note=document.createElement("div");
+            note.className="note";
+            note.textContent=String(item?.note||"");
+
+            row.append(word,role,note);
+            card.appendChild(row);
+        });
+    }
+
+    window.analysisWorkbenchFullParse=async function(button){
+        if(!state.sentence)return;
+
         clearResults();
-        const card=section("Grammar parse","ai");
+        const useAI=Boolean(getActiveAIKey());
+        const card=section("Full parse",useAI ? "ai" : "");
+
+        const heading=card?.querySelector(".analysis-workbench-section-title");
+        if(heading){
+            const badge=document.createElement("span");
+            badge.className=useAI ? "analysis-full-parse-ai-badge" : "analysis-full-parse-local-badge";
+            badge.textContent=useAI ? "AI" : "LOCAL";
+            heading.appendChild(badge);
+        }
+
+        if(!useAI){
+            renderLocalFullParse(card);
+            status("Full parse shown using the local parser because no AI key is loaded.","success");
+            return;
+        }
+
         const loading=document.createElement("div");
-        loading.textContent="Parsing grammar…";
+        loading.textContent="Parsing with AI…";
         card?.appendChild(loading);
 
-        const old=button?.textContent||"✨ Grammar parse";
+        const old=button?.textContent||"Parse";
         if(button){button.disabled=true;button.textContent="Parsing…";}
+
         try{
-            const prompt=`You are a language-analysis engine inside LanguageTutor.
+            const prompt=`You are the grammar parsing engine inside LanguageTutor.
 Target language: ${cfg().name}
 Sentence: "${state.sentence}"
 
 Return JSON only:
 {
-  "items":[
+  "summary":"one short sentence describing the overall structure",
+  "clauses":[
     {
-      "text":"exact word or phrase",
-      "role":"short grammatical role",
-      "note":"short useful grammar note"
+      "label":"short clause label",
+      "items":[
+        {
+          "text":"exact word or meaningful phrase",
+          "role":"short grammatical role",
+          "note":"concise learner-facing grammar note"
+        }
+      ]
     }
   ]
 }
 
-Rules:
+Requirements:
 - Preserve sentence order.
-- Prefer meaningful phrase units where appropriate.
-- Keep role labels short.
-- Each note should be one concise learner-facing phrase, not a paragraph.
-- Mention case/gender/agreement/particle/verb form only when relevant.
-- Do not translate the whole sentence here.
-- Do not compare with other languages.`;
+- Use meaningful phrase units where appropriate.
+- Identify clause boundaries when present.
+- Mention case, gender, agreement, particles, verb form, word order, or dependency only when relevant.
+- Keep each note concise.
+- Do not translate the entire sentence here.
+- Do not compare with other languages.
+- Do not continue the conversation.
+- Do not give a long prose lesson.`;
 
             const data=await callAIJson(prompt);
-            const items=Array.isArray(data?.items) ? data.items.filter(x=>x && x.text) : [];
-            state.grammar=items;
 
             card?.replaceChildren();
-            const heading=document.createElement("div");
-            heading.className="analysis-workbench-section-title";
-            heading.textContent="Grammar parse";
-            card?.appendChild(heading);
+            const title=document.createElement("div");
+            title.className="analysis-workbench-section-title";
+            title.textContent="Full parse";
+            const badge=document.createElement("span");
+            badge.className="analysis-full-parse-ai-badge";
+            badge.textContent="AI";
+            title.appendChild(badge);
+            card?.appendChild(title);
 
-            if(!items.length){
-                const msg=document.createElement("div");
-                msg.textContent="No structured parse was returned.";
-                card?.appendChild(msg);
-            }else{
-                items.forEach(item=>{
-                    const row=document.createElement("div");
-                    row.className="analysis-workbench-json-row";
-
-                    const word=document.createElement("strong");
-                    word.textContent=String(item.text||"");
-
-                    const role=document.createElement("div");
-                    role.className="role";
-                    role.textContent=String(item.role||"");
-
-                    const note=document.createElement("div");
-                    note.className="note";
-                    note.textContent=String(item.note||"");
-
-                    row.append(word,role,note);
-                    card?.appendChild(row);
-                });
-            }
-            status("Detailed grammar parse shown.","success");
+            renderAIFullParse(card,data);
+            state.grammar=data;
+            status("Full parse shown using AI.","success");
         }catch(e){
-            loading.textContent="Grammar parse failed: "+((e&&e.message)?e.message:String(e));
-            status("Grammar parse failed.","error");
+            card?.replaceChildren();
+            const title=document.createElement("div");
+            title.className="analysis-workbench-section-title";
+            title.textContent="Full parse";
+            const badge=document.createElement("span");
+            badge.className="analysis-full-parse-local-badge";
+            badge.textContent="LOCAL FALLBACK";
+            title.appendChild(badge);
+            card?.appendChild(title);
+
+            renderLocalFullParse(card);
+            status("AI parse failed, so the app fell back to the local parser.","error");
         }finally{
             if(button){button.disabled=false;button.textContent=old;}
         }
@@ -18800,10 +18997,9 @@ Do not continue the conversation.`;
     };
 
     window.analysisWorkbenchOpenFullParser=function(){
-        if(!state.sentence)return;
-        if(typeof window.analyzeTutorSentence==="function"){
-            window.analyzeTutorSentence(state.sentence,state.languageCode);
-        }
+        const button=[...document.querySelectorAll("#analysis-workbench-window button")]
+            .find(btn=>btn.textContent.trim()==="Parse");
+        return window.analysisWorkbenchFullParse(button||null);
     };
 
     window.analysisWorkbenchCoach=function(){
