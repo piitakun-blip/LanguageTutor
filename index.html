@@ -4657,6 +4657,329 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+
+<style id="workspace-v7-styles">
+/* ---------- Grammar-parser visual reuse inside Analysis ---------- */
+.analysis-parser-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:10px;
+    font-size:8px;
+    font-weight:800;
+}
+.analysis-parser-legend span{
+    padding:4px 7px;
+    border-radius:9999px;
+    border-width:1px;
+    border-style:solid;
+}
+.analysis-parser-tiles{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    padding:10px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+}
+.analysis-parser-tiles .grammar-tile{
+    min-width:90px;
+    min-height:62px;
+    padding:11px 14px;
+    border-radius:12px;
+    border:1px solid #cbd5e1;
+    background:#f3f4f6;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    font-weight:800;
+    box-shadow:0 1px 2px rgba(15,23,42,.05);
+    cursor:pointer;
+    transition:transform .12s ease,box-shadow .12s ease;
+}
+.analysis-parser-tiles .grammar-tile:hover{
+    transform:translateY(-1px);
+    box-shadow:0 4px 12px rgba(15,23,42,.08);
+}
+.analysis-parser-tiles .grammar-tile.case-nom{background:#dbeafe;border-color:#bfdbfe}
+.analysis-parser-tiles .grammar-tile.case-acc{background:#c7f5d8;border-color:#9ee8bb}
+.analysis-parser-tiles .grammar-tile.case-dat{background:#fef9c3;border-color:#fef08a}
+.analysis-parser-tiles .grammar-tile.case-gen{background:#f3e8ff;border-color:#e9d5ff}
+.analysis-parser-tiles .grammar-tile.case-multi{background:#ffedd5;border-color:#fed7aa}
+.analysis-parser-phrase{font-size:13px;color:#334155}
+.analysis-parser-phrase.gender-masc{color:#2563eb!important}
+.analysis-parser-phrase.gender-fem{color:#db2777!important}
+.analysis-parser-phrase.gender-neut{color:#0f9f8f!important}
+.analysis-parser-phrase.gender-plural{color:#7c3aed!important}
+.analysis-parser-label{
+    font-size:8px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#64748b;
+}
+.analysis-parser-punctuation{
+    font-size:20px;
+    font-weight:800;
+    color:#94a3b8;
+}
+.analysis-parser-detail{
+    margin-top:9px;
+    padding:9px 10px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    background:#fff;
+}
+.analysis-parser-detail.hidden{display:none!important}
+.analysis-parser-detail strong{font-size:12px;color:#1e293b}
+.analysis-parser-detail-meta{margin-top:3px;font-size:9px;color:#64748b;line-height:1.45}
+
+/* ---------- Sentence diagram ---------- */
+.analysis-diagram-tree,
+.analysis-diagram-tree ul{
+    position:relative;
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    padding-top:16px;
+    padding-left:0;
+    margin:0;
+    list-style:none;
+}
+.analysis-diagram-tree{padding-top:4px;overflow:auto;justify-content:flex-start}
+.analysis-diagram-tree li{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-width:max-content;
+}
+.analysis-diagram-tree li::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:50%;
+    width:1px;
+    height:16px;
+    background:#cbd5e1;
+}
+.analysis-diagram-tree>li::before{display:none}
+.analysis-diagram-tree ul::before{
+    content:"";
+    position:absolute;
+    top:8px;
+    left:12%;
+    right:12%;
+    height:1px;
+    background:#cbd5e1;
+}
+.analysis-diagram-node{
+    min-width:105px;
+    max-width:190px;
+    padding:8px 9px;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    background:#fff;
+    text-align:center;
+    box-shadow:0 1px 2px rgba(15,23,42,.05);
+}
+.analysis-diagram-node.case-nom{background:#dbeafe;border-color:#bfdbfe}
+.analysis-diagram-node.case-acc{background:#c7f5d8;border-color:#9ee8bb}
+.analysis-diagram-node.case-dat{background:#fef9c3;border-color:#fef08a}
+.analysis-diagram-node.case-gen{background:#f3e8ff;border-color:#e9d5ff}
+.analysis-diagram-node.case-multi{background:#ffedd5;border-color:#fed7aa}
+.analysis-diagram-node strong{display:block;font-size:11px;color:#1e293b}
+.analysis-diagram-node span{display:block;margin-top:3px;font-size:8px;line-height:1.25;color:#64748b}
+
+/* ---------- Coach speech controls ---------- */
+.language-coach-input-tools{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    gap:7px;
+    margin-top:7px;
+}
+.language-coach-input-tools select,
+.language-coach-input-tools button{
+    min-height:38px;
+    border:1px solid #cbd5e1;
+    border-radius:9px;
+    background:#fff;
+    color:#475569;
+    padding:6px 9px;
+    font-size:10px;
+    font-weight:800;
+}
+.language-coach-input-tools button:first-of-type{
+    border-color:#a7f3d0;
+    background:#ecfdf5;
+    color:#047857;
+}
+
+/* ---------- Docked desktop workspace ---------- */
+#conversation-workspace-dock{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.workspace-dock-slot:empty{display:none}
+.workspace-docked{
+    position:relative!important;
+    inset:auto!important;
+    left:auto!important;
+    top:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:100%!important;
+    height:auto!important;
+    max-width:none!important;
+    max-height:none!important;
+    min-width:0!important;
+    min-height:0!important;
+    resize:none!important;
+    box-shadow:0 4px 18px rgba(15,23,42,.08)!important;
+    z-index:auto!important;
+    margin:0!important;
+}
+.workspace-docked .analysis-workbench-body,
+.workspace-docked .language-coach-body,
+.workspace-docked .special-character-body,
+.workspace-docked .floating-kana-body{
+    max-height:560px;
+}
+.workspace-docked .analysis-workbench-titlebar,
+.workspace-docked .language-coach-titlebar,
+.workspace-docked .special-character-titlebar,
+.workspace-docked .floating-kana-titlebar{
+    cursor:default!important;
+}
+
+.workspace-title-action{
+    width:32px;
+    min-width:32px;
+    height:32px;
+    min-height:32px;
+    display:inline-grid;
+    place-items:center;
+    border:0;
+    border-radius:8px;
+    background:transparent;
+    color:#64748b;
+    font-size:15px;
+    font-weight:800;
+}
+.workspace-title-action:hover{background:rgba(99,102,241,.08);color:#4338ca}
+
+#workspace-minimized-tray{
+    position:fixed;
+    left:50%;
+    bottom:10px;
+    transform:translateX(-50%);
+    z-index:19000;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:6px;
+    pointer-events:none;
+}
+#workspace-minimized-tray:empty{display:none}
+.workspace-minimized-chip{
+    pointer-events:auto;
+    min-height:34px;
+    padding:6px 10px;
+    border:1px solid #cbd5e1;
+    border-radius:9999px;
+    background:#fff;
+    color:#475569;
+    box-shadow:0 4px 18px rgba(15,23,42,.16);
+    font-size:10px;
+    font-weight:800;
+}
+
+/* ---------- Voice selector ---------- */
+#conversation-voice-select{min-width:0}
+
+/* ---------- iPhone / small-phone workspace navigation ---------- */
+#mobile-workspace-tabs{display:none}
+@media(max-width:640px){
+    body.workspace-mobile-tabs-ready{
+        padding-top:58px!important;
+    }
+    #mobile-workspace-tabs{
+        display:grid;
+        grid-template-columns:repeat(5,minmax(0,1fr));
+        position:fixed;
+        left:0;
+        right:0;
+        top:0;
+        z-index:22000;
+        gap:3px;
+        padding:6px calc(6px + env(safe-area-inset-right)) 6px calc(6px + env(safe-area-inset-left));
+        background:rgba(248,250,252,.97);
+        border-bottom:1px solid #cbd5e1;
+        -webkit-backdrop-filter:blur(12px);
+        backdrop-filter:blur(12px);
+    }
+    #mobile-workspace-tabs button{
+        min-width:0;
+        min-height:44px;
+        padding:4px 2px;
+        border-radius:9px;
+        color:#64748b;
+        font-size:8px;
+        line-height:1.1;
+        font-weight:800;
+        background:transparent;
+    }
+    #mobile-workspace-tabs button span{
+        display:block;
+        font-size:15px;
+        margin-bottom:2px;
+    }
+    #mobile-workspace-tabs button.active{
+        background:#fff;
+        color:#4338ca;
+        box-shadow:0 1px 4px rgba(15,23,42,.12);
+    }
+
+    #voice-transcript-window,
+    #analysis-workbench-window,
+    #language-coach-window,
+    #special-character-palette,
+    #floating-kana-tool{
+        top:58px!important;
+        left:6px!important;
+        right:auto!important;
+        bottom:6px!important;
+        width:calc(100vw - 12px)!important;
+        height:calc(100vh - 70px)!important;
+        max-width:none!important;
+        max-height:none!important;
+        min-width:0!important;
+        min-height:0!important;
+        resize:none!important;
+        border-radius:13px!important;
+        z-index:21000!important;
+    }
+    .workspace-docked{
+        position:relative!important;
+        left:auto!important;
+        top:auto!important;
+        width:100%!important;
+        height:auto!important;
+    }
+    #workspace-minimized-tray{display:none!important}
+    .language-coach-input-tools{
+        grid-template-columns:1fr 1fr;
+    }
+    .language-coach-input-tools select{grid-column:1 / -1;font-size:16px}
+    .analysis-parser-tiles{gap:7px;padding:8px}
+    .analysis-parser-tiles .grammar-tile{min-width:78px;padding:9px 8px}
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -5294,6 +5617,19 @@ body.conversation-first-layout #mobile-right-column{
                                     <button type="button" data-voice-rate="1.2">1.2×</button>
                                 </div>
                             </label>
+                            <label class="voice-setting-card">Tutor voice
+                                <select id="conversation-voice-select"
+                                    class="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700"
+                                    onchange="saveLanguageTutorVoicePreference()">
+                                    <option value="">Automatic best voice</option>
+                                </select>
+                                <div class="mt-2 flex gap-2">
+                                    <button type="button" onclick="testConversationVoice()"
+                                        class="min-h-[34px] px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold">
+                                        🔊 Test voice
+                                    </button>
+                                </div>
+                            </label>
                         </div>
 
                         <div id="voice-roleplay-wrap" class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -5387,7 +5723,7 @@ body.conversation-first-layout #mobile-right-column{
                     <div class="shrink-0 flex flex-wrap gap-2 justify-end">
                         <button type="button" id="voice-open-transcript-btn" onclick="openVoiceTranscriptWindow()"
                             class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition"
-                            title="Open the conversation in a movable transcript window">↗ Open transcript</button>
+                            title="Move the live transcript into a movable window">↗ Float transcript</button>
                         <button type="button" onclick="saveCurrentTutorTranscript('voice',this)"
                             class="min-h-[36px] px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
                         <button type="button" onclick="openSavedTutorTranscripts()"
@@ -7975,10 +8311,27 @@ Plain text only.`;
         function chooseVoiceForLocale(voices, lang) {
             const wanted = String(lang || "").toLowerCase();
             const base = wanted.split("-")[0];
-            const exact = voices.filter(v => String(v.lang || "").toLowerCase() === wanted);
-            const sameLanguage = voices.filter(v => String(v.lang || "").toLowerCase().startsWith(base + "-") || String(v.lang || "").toLowerCase() === base);
 
-            // Prefer an exact locale and a local/system voice when available.
+            const preferredName = typeof window.getLanguageTutorPreferredVoiceName==="function"
+                ? window.getLanguageTutorPreferredVoiceName(wanted)
+                : "";
+
+            if(preferredName){
+                const preferred = voices.find(v =>
+                    String(v.name||"")===preferredName &&
+                    (String(v.lang||"").toLowerCase()===wanted ||
+                     String(v.lang||"").toLowerCase().startsWith(base+"-") ||
+                     String(v.lang||"").toLowerCase()===base)
+                );
+                if(preferred) return preferred;
+            }
+
+            const exact = voices.filter(v => String(v.lang || "").toLowerCase() === wanted);
+            const sameLanguage = voices.filter(v =>
+                String(v.lang || "").toLowerCase().startsWith(base + "-") ||
+                String(v.lang || "").toLowerCase() === base
+            );
+
             return exact.find(v => v.localService) ||
                    exact[0] ||
                    sameLanguage.find(v => v.localService) ||
@@ -11727,6 +12080,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const help=document.getElementById("voice-english-help");
         const scenario=document.getElementById("voice-scenario-preset");
         const speed=document.getElementById("voice-speech-speed");
+        const voice=document.getElementById("conversation-voice-select");
 
         const labelOf=el=>el?.selectedOptions?.[0]?.textContent?.trim() || "";
         const speedText=speed ? `${Number(speed.value||1).toFixed(1)}×` : "1.0×";
@@ -11737,6 +12091,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             labelOf(level),
             labelOf(corrections),
             labelOf(help),
+            voice?.value ? labelOf(voice) : "",
             speedText
         ].filter(Boolean).join(" • ");
     }
@@ -11849,6 +12204,9 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         }
         if(!ctor && tutorInteractionMode==="voice" && !voiceTutorState.active){
             voiceTutorStatus("Speech recognition is not available in this browser/device.","error");
+        }
+        if(typeof window.populateConversationVoiceSelect==="function"){
+            window.populateConversationVoiceSelect();
         }
     }
 
@@ -12012,88 +12370,56 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         }
     }
 
-    function renderVoiceTranscriptWindow(){
-        const body=document.getElementById("voice-transcript-window-body");
-        const title=document.getElementById("voice-transcript-window-title");
-        if(!body)return;
+    function ensureVoiceTranscriptHomeAnchor(){
+        const log=document.getElementById("voice-chat-messages-log");
+        if(!log)return null;
 
-        const history=voiceTutorHistory();
-        const languageName=langConfig().name;
-        if(title)title.textContent=`${languageName} conversation transcript`;
-        body.innerHTML="";
-
-        if(!history.length){
-            const empty=document.createElement("div");
-            empty.className="text-sm text-slate-400 italic";
-            empty.textContent="No conversation has been recorded yet.";
-            body.appendChild(empty);
-            return;
+        let anchor=document.getElementById("voice-transcript-home-anchor");
+        if(!anchor){
+            anchor=document.createElement("div");
+            anchor.id="voice-transcript-home-anchor";
+            anchor.hidden=true;
+            log.parentElement?.insertBefore(anchor,log);
         }
+        return anchor;
+    }
 
-        history.forEach(entry=>{
-            const block=document.createElement("div");
-            block.className="voice-transcript-entry";
-
-            const speaker=document.createElement("div");
-            speaker.className="voice-transcript-speaker";
-            if(entry.role==="user"){
-                speaker.textContent=entry.inputMode==="english"
-                    ? "You • English"
-                    : `You • ${languageName}`;
-            }else{
-                speaker.textContent=entry.replyLanguage==="en"
-                    ? `${languageName} Tutor • English`
-                    : `${languageName} Tutor`;
-            }
-
-            const content=document.createElement("div");
-            content.className="voice-transcript-text";
-            if(entry.role==="user") content.textContent=String(entry.text||"").trim();
-            else renderTutorMarkdown(content,String(entry.text||"").trim());
-
-            block.appendChild(speaker);
-
-            const lineRow=document.createElement("div");
-            lineRow.className="transcript-line-with-analysis";
-
-            const actions=document.createElement("div");
-            appendTranscriptTurnActions(actions,entry,block,currentStudyLanguage);
-
-            lineRow.appendChild(content);
-            if(actions.childElementCount) lineRow.appendChild(actions);
-            block.appendChild(lineRow);
-
-            if(entry.role==="user" && entry.inputMode==="english" && entry.targetTranslation){
-                appendEnglishReplyTranslation(block,entry,currentStudyLanguage);
-            }
-
-            if(entry.note){
-                const note=document.createElement("div");
-                note.className="voice-transcript-note teacher-note-row";
-                const noteText=document.createElement("div");
-                noteText.className="flex-1";
-                noteText.textContent=`Teacher note: ${String(entry.note).trim()}`;
-                note.append(noteText,teacherNotePlayButton(entry,currentStudyLanguage));
-                block.appendChild(note);
-            }
-
-            body.appendChild(block);
-        });
+    function renderVoiceTranscriptWindow(){
+        // v7 has ONE live transcript DOM element. This function only keeps
+        // the floating shell title current; it no longer creates a second copy.
+        const title=document.getElementById("voice-transcript-window-title");
+        if(title)title.textContent=`${langConfig().name} conversation transcript`;
     }
 
     window.openVoiceTranscriptWindow=function(){
         const win=document.getElementById("voice-transcript-window");
-        if(!win)return;
+        const body=document.getElementById("voice-transcript-window-body");
+        const log=document.getElementById("voice-chat-messages-log");
+        if(!win || !body || !log)return;
+
+        ensureVoiceTranscriptHomeAnchor();
+        body.replaceChildren(log);
         renderVoiceTranscriptWindow();
         win.hidden=false;
         win.classList.remove("collapsed");
         const btn=document.getElementById("voice-transcript-collapse-btn");
         if(btn)btn.textContent="—";
+        if(typeof window.workspaceMarkOpen==="function")window.workspaceMarkOpen("transcript",true);
+    };
+
+    window.dockVoiceTranscript=function(){
+        const log=document.getElementById("voice-chat-messages-log");
+        const anchor=ensureVoiceTranscriptHomeAnchor();
+        const win=document.getElementById("voice-transcript-window");
+        if(log && anchor?.parentElement){
+            anchor.parentElement.insertBefore(log,anchor.nextSibling);
+        }
+        if(win)win.hidden=true;
+        if(typeof window.workspaceMarkOpen==="function")window.workspaceMarkOpen("transcript",false);
     };
 
     window.closeVoiceTranscriptWindow=function(){
-        const win=document.getElementById("voice-transcript-window");
-        if(win)win.hidden=true;
+        window.dockVoiceTranscript();
     };
 
     window.toggleVoiceTranscriptCollapse=function(){
@@ -18428,7 +18754,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         </div>
     </div>
     <div class="voice-transcript-toolbar">
-        <span class="voice-transcript-toolbar-note">Text is selectable. Drag or resize this window on desktop.</span>
+        <span class="voice-transcript-toolbar-note">This is the same live transcript moved out of the conversation. Drag or resize it on desktop.</span>
         <div class="flex gap-2">
             <button type="button" onclick="saveCurrentTutorTranscript('text',this)">💾 Save</button>
             <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
@@ -18472,7 +18798,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
             <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
             <button type="button" onclick="openLanguageCoach()">🧭 Coach</button>
-            <button type="button" onclick="refreshVoiceTranscriptWindow()">↻ Refresh</button>
+            <button type="button" onclick="dockVoiceTranscript()">⇲ Dock transcript</button>
         </div>
     </div>
     <div id="voice-transcript-window-body" class="voice-transcript-body"></div>
@@ -18499,8 +18825,8 @@ Current work: ${context||"No sentence has been entered yet."}`;
         <div class="analysis-workbench-primary-tools">
             <button type="button" onclick="analysisWorkbenchTranslate(this)">Translation</button>
             <button type="button" class="ai" onclick="analysisWorkbenchFullParse(this)">Parse</button>
+            <button type="button" class="ai" onclick="analysisWorkbenchDiagram(this)">Diagram</button>
             <button type="button" class="ai" onclick="analysisWorkbenchWhy(this)">Why?</button>
-            <button type="button" onclick="analysisWorkbenchStructure(this)">Structure</button>
         </div>
 
         <div class="analysis-workbench-utility-tools">
@@ -18508,13 +18834,14 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <button type="button" onclick="analysisWorkbenchCopy(this)">⧉ Copy</button>
             <button type="button" onclick="analysisWorkbenchSave(this)">☆ Save</button>
             <button type="button" onclick="analysisWorkbenchCoach()">🧭 Coach</button>
+            <button type="button" onclick="workspaceOpenTool('keyboard')">⌨ Keyboard</button>
         </div>
 
-        <div id="analysis-workbench-status">Choose an analysis. Translation and Structure work without AI. Parse automatically uses AI when available and falls back locally when it is not.</div>
+        <div id="analysis-workbench-status">Choose an analysis. Translation works without AI. Parse and Diagram automatically use AI when available and fall back to local analysis when it is not.</div>
         <div id="analysis-workbench-results">
             <div class="analysis-workbench-empty">
                 Study the selected utterance here without cluttering the conversation.<br>
-                Choose Translation, Parse, Why?, or Structure.
+                Choose Translation, Parse, Diagram, or Why?.
             </div>
         </div>
     </div>
@@ -18529,6 +18856,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         translation:"",
         localItems:null,
         grammar:null,
+        diagram:null,
         why:""
     };
 
@@ -18574,6 +18902,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         state.translation="";
         state.localItems=null;
         state.grammar=null;
+        state.diagram=null;
         state.why="";
         clearResults();
 
@@ -18650,7 +18979,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
             win.hidden=false;
             if(wasHidden)requestAnimationFrame(placeAnalysisWorkbenchBesideTranscript);
         }
-        status("Choose Translation, Parse, Why?, or Structure.");
+        status("Choose Translation, Parse, Diagram, or Why?.");
     };
 
     window.closeAnalysisWorkbench=function(){
@@ -18725,205 +19054,359 @@ Current work: ${context||"No sentence has been entered yet."}`;
         status("Local structure shown — no AI key used.","success");
     };
 
-    function renderLocalFullParse(card){
-        const items=state.localItems || (
-            typeof transcriptLocalParseItems==="function"
-                ? transcriptLocalParseItems(state.sentence,state.languageCode)
-                : []
-        );
-        state.localItems=items;
-
-        const summary=document.createElement("div");
-        summary.className="analysis-full-parse-summary";
-        summary.textContent="Local parser result. AI was not available, so the app used its built-in grammar rules.";
-        card.appendChild(summary);
-
-        if(!items.length){
-            const msg=document.createElement("div");
-            msg.className="analysis-workbench-hint";
-            msg.textContent="The local parser could not confidently produce a detailed parse for this sentence.";
-            card.appendChild(msg);
-            return;
-        }
-
-        items.forEach(item=>{
-            const row=document.createElement("div");
-            row.className="analysis-full-parse-line";
-
-            const word=document.createElement("div");
-            word.className="word";
-            word.textContent=item.text||"";
-
-            const role=document.createElement("div");
-            role.className="role";
-            role.textContent=item.label||"";
-
-            const note=document.createElement("div");
-            note.className="note";
-            note.textContent=item.detail||"";
-
-            row.append(word,role,note);
-            card.appendChild(row);
-        });
+    function workbenchCaseClass(label){
+        const c=String(label||"").toLowerCase();
+        if(c==="nominative")return "case-nom";
+        if(c==="accusative")return "case-acc";
+        if(c==="dative")return "case-dat";
+        if(c==="genitive")return "case-gen";
+        if((c.includes("nominative")&&c.includes("accusative")) ||
+           (c.includes("dative")&&c.includes("genitive")))return "case-multi";
+        return "case-none";
     }
 
-    function renderAIFullParse(card,data){
-        const summaryText=String(data?.summary||"").trim();
-        if(summaryText){
-            const summary=document.createElement("div");
-            summary.className="analysis-full-parse-summary";
-            summary.textContent=summaryText;
-            card.appendChild(summary);
-        }
-
-        const clauses=Array.isArray(data?.clauses) ? data.clauses : [];
-        if(clauses.length){
-            clauses.forEach((clause,index)=>{
-                const section=document.createElement("div");
-                section.className="analysis-full-parse-clause";
-
-                const title=document.createElement("div");
-                title.className="analysis-full-parse-clause-title";
-                title.textContent=String(clause?.label||`Clause ${index+1}`);
-                section.appendChild(title);
-
-                const items=Array.isArray(clause?.items) ? clause.items : [];
-                items.forEach(item=>{
-                    const row=document.createElement("div");
-                    row.className="analysis-full-parse-line";
-
-                    const word=document.createElement("div");
-                    word.className="word";
-                    word.textContent=String(item?.text||"");
-
-                    const role=document.createElement("div");
-                    role.className="role";
-                    role.textContent=String(item?.role||"");
-
-                    const note=document.createElement("div");
-                    note.className="note";
-                    note.textContent=String(item?.note||"");
-
-                    row.append(word,role,note);
-                    section.appendChild(row);
-                });
-
-                card.appendChild(section);
-            });
-            return;
-        }
-
-        const items=Array.isArray(data?.items) ? data.items : [];
-        items.forEach(item=>{
-            const row=document.createElement("div");
-            row.className="analysis-full-parse-line";
-
-            const word=document.createElement("div");
-            word.className="word";
-            word.textContent=String(item?.text||"");
-
-            const role=document.createElement("div");
-            role.className="role";
-            role.textContent=String(item?.role||"");
-
-            const note=document.createElement("div");
-            note.className="note";
-            note.textContent=String(item?.note||"");
-
-            row.append(word,role,note);
-            card.appendChild(row);
-        });
+    function workbenchGenderClass(gender){
+        const g=String(gender||"").toLowerCase();
+        if(g==="masculine")return "gender-masc";
+        if(g==="feminine")return "gender-fem";
+        if(g==="neuter")return "gender-neut";
+        if(g==="plural")return "gender-plural";
+        return "gender-none";
     }
 
-    window.analysisWorkbenchFullParse=async function(button){
-        if(!state.sentence)return;
-
-        clearResults();
-        const useAI=Boolean(getActiveAIKey());
-        const card=section("Full parse",useAI ? "ai" : "");
-
-        const heading=card?.querySelector(".analysis-workbench-section-title");
-        if(heading){
-            const badge=document.createElement("span");
-            badge.className=useAI ? "analysis-full-parse-ai-badge" : "analysis-full-parse-local-badge";
-            badge.textContent=useAI ? "AI" : "LOCAL";
-            heading.appendChild(badge);
+    function workbenchLocalChunks(){
+        if(state.languageCode==="de" && typeof parseGermanPhrases==="function"){
+            return parseGermanPhrases(state.sentence).map(ch=>({
+                words:Array.isArray(ch.words)?ch.words.map(String):String(ch.text||"").split(/\s+/).filter(Boolean),
+                type:String(ch.type||"word"),
+                label:String(ch.label||"Word"),
+                gender:String(ch.gender||""),
+                note:""
+            }));
         }
 
-        if(!useAI){
-            renderLocalFullParse(card);
-            status("Full parse shown using the local parser because no AI key is loaded.","success");
-            return;
+        if(typeof localParseForLanguage==="function"){
+            return localParseForLanguage(state.languageCode,state.sentence).map(item=>({
+                words:[String(item.text||"")],
+                type:String(item.role||item.type||"word"),
+                label:String(item.label||item.role||"Word"),
+                gender:String(item.gender||""),
+                note:[
+                    item.reading ? `Reading: ${item.reading}` : "",
+                    item.romaji ? `Romaji: ${item.romaji}` : "",
+                    item.grammar ? String(item.grammar) : "",
+                    item.meaning ? String(item.meaning) : ""
+                ].filter(Boolean).join(" • ")
+            })).filter(x=>x.words[0]);
+        }
+        return [];
+    }
+
+    function workbenchFallbackDiagram(chunks){
+        const usable=chunks.filter(ch=>ch.type!=="punctuation" && ch.words?.length);
+        if(!usable.length)return {nodes:[]};
+
+        let rootIndex=usable.findIndex(ch=>/verb|modal|auxiliary|predicate/i.test(`${ch.type} ${ch.label}`));
+        if(rootIndex<0)rootIndex=0;
+
+        const nodes=usable.map((ch,index)=>({
+            id:`n${index}`,
+            text:ch.words.join(" "),
+            role:String(ch.label||ch.type||""),
+            parent:index===rootIndex ? "" : `n${rootIndex}`,
+            relation:index===rootIndex ? "root" : String(ch.type||"dependent"),
+            label:String(ch.label||""),
+            gender:String(ch.gender||"")
+        }));
+        return {nodes};
+    }
+
+    async function getWorkbenchParseData(){
+        if(state.grammar?.chunks?.length)return state.grammar;
+
+        const localChunks=workbenchLocalChunks();
+        const localResult={
+            source:"LOCAL",
+            chunks:localChunks,
+            diagram:workbenchFallbackDiagram(localChunks)
+        };
+
+        if(!getActiveAIKey()){
+            state.grammar=localResult;
+            state.diagram=localResult.diagram;
+            return localResult;
         }
 
-        const loading=document.createElement("div");
-        loading.textContent="Parsing with AI…";
-        card?.appendChild(loading);
-
-        const old=button?.textContent||"Parse";
-        if(button){button.disabled=true;button.textContent="Parsing…";}
-
-        try{
-            const prompt=`You are the grammar parsing engine inside LanguageTutor.
-Target language: ${cfg().name}
+        const languageName=cfg().name;
+        const prompt=`You are the structured grammar parser inside LanguageTutor.
+Target language: ${languageName}
 Sentence: "${state.sentence}"
 
 Return JSON only:
 {
-  "summary":"one short sentence describing the overall structure",
-  "clauses":[
+  "items":[
     {
-      "label":"short clause label",
-      "items":[
-        {
-          "text":"exact word or meaningful phrase",
-          "role":"short grammatical role",
-          "note":"concise learner-facing grammar note"
-        }
-      ]
+      "text":"exact word or meaningful phrase from the sentence",
+      "type":"short machine-friendly type such as pronoun, verb, noun_phrase, prepositional, adverb, conjunction, particle, word, punctuation",
+      "label":"short learner-facing grammatical label; for German noun phrases use Nominative, Accusative, Dative, or Genitive when known",
+      "gender":"Masculine, Feminine, Neuter, Plural, or empty string",
+      "note":"one short useful note or empty string"
     }
-  ]
+  ],
+  "diagram":{
+    "nodes":[
+      {
+        "id":"n1",
+        "text":"exact word or phrase",
+        "role":"short role",
+        "parent":"id of the word/phrase this depends on, or empty string for root",
+        "relation":"short dependency such as subject, direct object, determiner, modifier, adverb, complement, subordinate clause",
+        "label":"case/grammar label when useful",
+        "gender":"gender when useful"
+      }
+    ]
+  }
 }
 
-Requirements:
-- Preserve sentence order.
-- Use meaningful phrase units where appropriate.
-- Identify clause boundaries when present.
-- Mention case, gender, agreement, particles, verb form, word order, or dependency only when relevant.
-- Keep each note concise.
-- Do not translate the entire sentence here.
-- Do not compare with other languages.
-- Do not continue the conversation.
-- Do not give a long prose lesson.`;
+Rules:
+- Preserve original sentence order in items.
+- Every visible word should be represented once.
+- Group article + adjective + noun when that is pedagogically useful, matching a grammar-parser tile.
+- Resolve German case from sentence context, not article form alone.
+- Use language-appropriate roles for Spanish and Japanese.
+- Diagram must form one usable dependency tree; avoid cycles.
+- Keep labels and notes concise.
+- No markdown and no prose outside JSON.`;
 
+        try{
             const data=await callAIJson(prompt);
+            const raw=Array.isArray(data?.items)?data.items:[];
+            if(!raw.length)throw new Error("AI returned no parse items.");
 
-            card?.replaceChildren();
-            const title=document.createElement("div");
-            title.className="analysis-workbench-section-title";
-            title.textContent="Full parse";
-            const badge=document.createElement("span");
-            badge.className="analysis-full-parse-ai-badge";
-            badge.textContent="AI";
-            title.appendChild(badge);
-            card?.appendChild(title);
+            const chunks=raw.map(item=>({
+                words:String(item?.text||"").trim().split(/\s+/).filter(Boolean),
+                type:String(item?.type||item?.role||"word").toLowerCase().replace(/\s+/g,"_"),
+                label:String(item?.label||item?.case||item?.role||"Word"),
+                gender:String(item?.gender||""),
+                note:String(item?.note||"")
+            })).filter(ch=>ch.words.length);
 
-            renderAIFullParse(card,data);
-            state.grammar=data;
-            status("Full parse shown using AI.","success");
+            if(!chunks.length)throw new Error("AI parse was empty.");
+
+            const diagram=(data?.diagram && Array.isArray(data.diagram.nodes) && data.diagram.nodes.length)
+                ? data.diagram
+                : workbenchFallbackDiagram(chunks);
+
+            const result={source:"AI",chunks,diagram};
+            state.grammar=result;
+            state.diagram=diagram;
+            return result;
         }catch(e){
-            card?.replaceChildren();
-            const title=document.createElement("div");
-            title.className="analysis-workbench-section-title";
-            title.textContent="Full parse";
-            const badge=document.createElement("span");
-            badge.className="analysis-full-parse-local-badge";
-            badge.textContent="LOCAL FALLBACK";
-            title.appendChild(badge);
-            card?.appendChild(title);
+            console.warn("Workbench AI parse failed; using local parser.",e);
+            state.grammar=localResult;
+            state.diagram=localResult.diagram;
+            return localResult;
+        }
+    }
 
-            renderLocalFullParse(card);
-            status("AI parse failed, so the app fell back to the local parser.","error");
+    function renderWorkbenchParserTiles(card,parsed){
+        const legend=document.createElement("div");
+        legend.className="analysis-parser-legend";
+        legend.innerHTML=`
+            <span class="case-nom">Nominative</span>
+            <span class="case-acc">Accusative</span>
+            <span class="case-dat">Dative</span>
+            <span class="case-gen">Genitive</span>
+            <span class="case-multi">Ambiguous</span>
+        `;
+        card.appendChild(legend);
+
+        const tiles=document.createElement("div");
+        tiles.className="analysis-parser-tiles";
+
+        const detail=document.createElement("div");
+        detail.className="analysis-parser-detail hidden";
+
+        parsed.chunks.forEach(ch=>{
+            const phrase=ch.words.join(" ");
+            if(ch.type==="punctuation"){
+                const punctuation=document.createElement("span");
+                punctuation.className="analysis-parser-punctuation";
+                punctuation.textContent=phrase;
+                tiles.appendChild(punctuation);
+                return;
+            }
+
+            const caseClass=workbenchCaseClass(ch.label);
+            const genderClass=workbenchGenderClass(ch.gender);
+            const tile=document.createElement("button");
+            tile.type="button";
+            tile.className=`grammar-tile ${caseClass} ${genderClass}`;
+
+            const words=document.createElement("span");
+            words.className=`analysis-parser-phrase ${genderClass}`;
+            words.textContent=phrase;
+
+            const label=document.createElement("span");
+            label.className="analysis-parser-label";
+            label.textContent=ch.label || ch.type || "Word";
+
+            tile.append(words,label);
+            tile.addEventListener("click",()=>{
+                detail.classList.remove("hidden");
+                detail.replaceChildren();
+
+                const title=document.createElement("strong");
+                title.textContent=phrase;
+
+                const meta=document.createElement("div");
+                meta.className="analysis-parser-detail-meta";
+                meta.textContent=[
+                    ch.label,
+                    ch.gender,
+                    ch.type && ch.type!==ch.label ? ch.type.replace(/_/g," ") : "",
+                    ch.note
+                ].filter(Boolean).join(" • ");
+
+                detail.append(title,meta);
+            });
+            tiles.appendChild(tile);
+        });
+
+        card.append(tiles,detail);
+    }
+
+    window.analysisWorkbenchFullParse=async function(button){
+        if(!state.sentence)return;
+        clearResults();
+
+        const card=section("Grammar Parser");
+        const old=button?.textContent||"Parse";
+        if(button){button.disabled=true;button.textContent="Parsing…";}
+        status(getActiveAIKey() ? "Parsing with AI…" : "Parsing with the built-in grammar parser…");
+
+        try{
+            const parsed=await getWorkbenchParseData();
+
+            card.replaceChildren();
+            const heading=document.createElement("div");
+            heading.className="analysis-workbench-section-title";
+            heading.textContent="Grammar Parser";
+
+            const badge=document.createElement("span");
+            badge.className=parsed.source==="AI" ? "analysis-full-parse-ai-badge" : "analysis-full-parse-local-badge";
+            badge.textContent=parsed.source;
+            heading.appendChild(badge);
+            card.appendChild(heading);
+
+            renderWorkbenchParserTiles(card,parsed);
+            status(parsed.source==="AI"
+                ? "Parse shown with AI."
+                : "Parse shown with the built-in parser because AI is unavailable.","success");
+        }catch(e){
+            card.textContent="Parse failed: "+((e&&e.message)?e.message:String(e));
+            status("Parse failed.","error");
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
+        }
+    };
+
+    function buildDiagramTree(diagram){
+        const nodes=Array.isArray(diagram?.nodes)?diagram.nodes:[];
+        if(!nodes.length)return null;
+
+        const map=new Map();
+        nodes.forEach((node,index)=>{
+            const id=String(node?.id||`n${index}`);
+            map.set(id,{...node,id,children:[]});
+        });
+
+        const roots=[];
+        map.forEach(node=>{
+            const parentId=String(node.parent||"");
+            if(parentId && parentId!==node.id && map.has(parentId)){
+                map.get(parentId).children.push(node);
+            }else{
+                roots.push(node);
+            }
+        });
+
+        // Safety for malformed AI output: never recurse forever.
+        const renderNode=(node,seen=new Set())=>{
+            if(seen.has(node.id))return null;
+            const nextSeen=new Set(seen);
+            nextSeen.add(node.id);
+
+            const li=document.createElement("li");
+            const box=document.createElement("div");
+            box.className=`analysis-diagram-node ${workbenchCaseClass(node.label)} ${workbenchGenderClass(node.gender)}`;
+
+            const phrase=document.createElement("strong");
+            phrase.textContent=String(node.text||"");
+
+            const meta=document.createElement("span");
+            meta.textContent=[node.role,node.relation,node.label].filter(Boolean).join(" • ");
+
+            box.append(phrase,meta);
+            li.appendChild(box);
+
+            const children=node.children
+                .map(child=>renderNode(child,nextSeen))
+                .filter(Boolean);
+            if(children.length){
+                const ul=document.createElement("ul");
+                children.forEach(child=>ul.appendChild(child));
+                li.appendChild(ul);
+            }
+            return li;
+        };
+
+        const tree=document.createElement("ul");
+        tree.className="analysis-diagram-tree";
+        roots.forEach(root=>{
+            const rendered=renderNode(root);
+            if(rendered)tree.appendChild(rendered);
+        });
+        return tree;
+    }
+
+    window.analysisWorkbenchDiagram=async function(button){
+        if(!state.sentence)return;
+        clearResults();
+
+        const card=section("Sentence Diagram");
+        const old=button?.textContent||"Diagram";
+        if(button){button.disabled=true;button.textContent="Building…";}
+        status(getActiveAIKey()
+            ? "Building the diagram from the structured AI parse…"
+            : "Building a local phrase/dependency diagram…");
+
+        try{
+            const parsed=await getWorkbenchParseData();
+            const tree=buildDiagramTree(parsed.diagram || workbenchFallbackDiagram(parsed.chunks));
+            card.replaceChildren();
+
+            const heading=document.createElement("div");
+            heading.className="analysis-workbench-section-title";
+            heading.textContent="Sentence Diagram";
+
+            const badge=document.createElement("span");
+            badge.className=parsed.source==="AI" ? "analysis-full-parse-ai-badge" : "analysis-full-parse-local-badge";
+            badge.textContent=parsed.source;
+            heading.appendChild(badge);
+            card.appendChild(heading);
+
+            if(tree)card.appendChild(tree);
+            else{
+                const empty=document.createElement("div");
+                empty.className="analysis-workbench-hint";
+                empty.textContent="A diagram could not be built for this sentence.";
+                card.appendChild(empty);
+            }
+            status("Diagram shown. Parse and Diagram share the same structured analysis.","success");
+        }catch(e){
+            card.textContent="Diagram failed: "+((e&&e.message)?e.message:String(e));
+            status("Diagram failed.","error");
         }finally{
             if(button){button.disabled=false;button.textContent=old;}
         }
@@ -18963,9 +19446,13 @@ Do not compare with other languages.
 Do not continue the conversation.`;
 
             state.why=String(await callAI(prompt)).trim();
-            output.replaceChildren();
-            if(typeof renderTutorMarkdown==="function")renderTutorMarkdown(output,state.why||"No explanation returned.");
-            else output.textContent=state.why||"No explanation returned.";
+            const cleaned=String(state.why||"")
+                .replace(/\\([*_#`])/g,"$1")
+                .replace(/^#{1,6}\s+/gm,"")
+                .replace(/^\s*[-*]\s+/gm,"• ");
+            output.textContent=(typeof stripTutorMarkdown==="function"
+                ? stripTutorMarkdown(cleaned)
+                : cleaned) || "No explanation returned.";
             status("Concise explanation shown.","success");
         }catch(e){
             output.textContent="Why? failed: "+((e&&e.message)?e.message:String(e));
@@ -19025,6 +19512,15 @@ Do not continue the conversation.`;
 
         <textarea id="language-coach-input"
             placeholder="e.g. I want to say: I don't mind where we eat, but I'd rather sit outside."></textarea>
+
+        <div class="language-coach-input-tools">
+            <select id="language-coach-dictation-language" title="Language you will speak">
+                <option value="en">Speak my idea in English</option>
+                <option value="target">Speak a target-language attempt</option>
+            </select>
+            <button type="button" id="language-coach-dictate-btn" onclick="toggleLanguageCoachDictation()">🎙 Dictate</button>
+            <button type="button" onclick="focusCoachAndOpenKeyboard()">⌨ Keyboard</button>
+        </div>
 
         <div class="language-coach-actions">
             <button type="button" id="language-coach-quick-btn" class="language-coach-quick" onclick="languageCoachQuickTranslate()">
@@ -19569,6 +20065,663 @@ Requirements:
     else build();
 })();
 </script>
+
+<script id="workspace-v7-runtime">
+(function(){
+    const LAYOUT_KEY="languagetutor_workspace_layout_v7";
+    const VOICE_KEY="languagetutor_voice_preferences_v1";
+    let coachDictationRecognition=null;
+
+    function storageGet(key){
+        try{
+            if(typeof safeStorageGet==="function")return safeStorageGet(key);
+            return localStorage.getItem(key);
+        }catch(e){return null}
+    }
+    function storageSet(key,value){
+        try{
+            if(typeof safeStorageSet==="function")return safeStorageSet(key,value);
+            localStorage.setItem(key,value);
+        }catch(e){}
+    }
+
+    // ---------------- Voice preferences ----------------
+    function readVoicePrefs(){
+        try{
+            const parsed=JSON.parse(storageGet(VOICE_KEY)||"{}");
+            return parsed && typeof parsed==="object" ? parsed : {};
+        }catch(e){return {}}
+    }
+    function voiceBase(lang){
+        return String(lang||"").toLowerCase().split("-")[0] || "de";
+    }
+
+    window.getLanguageTutorPreferredVoiceName=function(lang){
+        return String(readVoicePrefs()[voiceBase(lang)]||"");
+    };
+
+    window.saveLanguageTutorVoicePreference=function(){
+        const select=document.getElementById("conversation-voice-select");
+        if(!select)return;
+        const prefs=readVoicePrefs();
+        const base=voiceBase(typeof langConfig==="function" ? langConfig().locale : currentStudyLanguage);
+        prefs[base]=String(select.value||"");
+        storageSet(VOICE_KEY,JSON.stringify(prefs));
+        if(typeof updateVoiceSettingsSummary==="function")updateVoiceSettingsSummary();
+    };
+
+    window.populateConversationVoiceSelect=async function(){
+        const select=document.getElementById("conversation-voice-select");
+        if(!select || !("speechSynthesis" in window))return;
+
+        const cfg=typeof langConfig==="function" ? langConfig() : {locale:"de-DE",name:"German"};
+        const base=voiceBase(cfg.locale);
+        const preferred=window.getLanguageTutorPreferredVoiceName(cfg.locale);
+
+        let voices=[];
+        try{
+            voices=typeof getSpeechVoicesReady==="function"
+                ? await getSpeechVoicesReady()
+                : window.speechSynthesis.getVoices();
+        }catch(e){
+            voices=window.speechSynthesis.getVoices()||[];
+        }
+
+        const matches=voices
+            .filter(v=>{
+                const l=String(v.lang||"").toLowerCase();
+                return l===base || l.startsWith(base+"-");
+            })
+            .sort((a,b)=>{
+                const exactA=String(a.lang||"").toLowerCase()===String(cfg.locale||"").toLowerCase()?0:1;
+                const exactB=String(b.lang||"").toLowerCase()===String(cfg.locale||"").toLowerCase()?0:1;
+                return exactA-exactB || Number(Boolean(b.localService))-Number(Boolean(a.localService)) || String(a.name).localeCompare(String(b.name));
+            });
+
+        select.replaceChildren();
+        const auto=document.createElement("option");
+        auto.value="";
+        auto.textContent="Automatic best voice";
+        select.appendChild(auto);
+
+        matches.forEach(v=>{
+            const option=document.createElement("option");
+            option.value=v.name;
+            option.textContent=`${v.name} — ${v.lang}${v.localService ? " • system" : ""}`;
+            select.appendChild(option);
+        });
+
+        select.value=matches.some(v=>v.name===preferred) ? preferred : "";
+        if(typeof updateVoiceSettingsSummary==="function")updateVoiceSettingsSummary();
+    };
+
+    window.testConversationVoice=function(){
+        const cfg=typeof langConfig==="function" ? langConfig() : {code:"de",locale:"de-DE"};
+        const samples={
+            de:"Hallo! Schön, dass wir miteinander sprechen.",
+            es:"Hola. Me alegra hablar contigo.",
+            ja:"こんにちは。いっしょに話しましょう。"
+        };
+        if(typeof speakRawText==="function")speakRawText(samples[cfg.code]||samples.de,cfg.locale);
+    };
+
+    // ---------------- Private Coach dictation ----------------
+    function coachRecognitionCtor(){
+        return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+    }
+
+    function stopCoachDictation(){
+        if(coachDictationRecognition){
+            try{coachDictationRecognition.onend=null;coachDictationRecognition.abort()}catch(e){}
+            coachDictationRecognition=null;
+        }
+        const btn=document.getElementById("language-coach-dictate-btn");
+        if(btn)btn.textContent="🎙 Dictate";
+    }
+
+    window.toggleLanguageCoachDictation=function(){
+        if(coachDictationRecognition){
+            stopCoachDictation();
+            return;
+        }
+
+        const Ctor=coachRecognitionCtor();
+        if(!Ctor){
+            const status=document.getElementById("language-coach-status");
+            if(status)status.textContent="Speech recognition is not available in this browser/device.";
+            return;
+        }
+
+        const input=document.getElementById("language-coach-input");
+        const mode=document.getElementById("language-coach-dictation-language")?.value||"en";
+        const cfg=typeof langConfig==="function" ? langConfig() : {locale:"de-DE",name:"German"};
+        const rec=new Ctor();
+        coachDictationRecognition=rec;
+        rec.lang=mode==="target" ? cfg.locale : "en-US";
+        rec.continuous=false;
+        rec.interimResults=true;
+        rec.maxAlternatives=1;
+
+        const existing=String(input?.value||"").trim();
+        const prefix=existing ? existing+" " : "";
+        const btn=document.getElementById("language-coach-dictate-btn");
+        if(btn)btn.textContent="■ Stop";
+
+        rec.onresult=event=>{
+            let finalText="",interim="";
+            for(let i=event.resultIndex;i<event.results.length;i++){
+                const piece=event.results[i]?.[0]?.transcript||"";
+                if(event.results[i].isFinal)finalText+=piece;
+                else interim+=piece;
+            }
+            if(input)input.value=prefix+String(finalText||interim||"").trim();
+        };
+        rec.onerror=event=>{
+            const status=document.getElementById("language-coach-status");
+            if(status)status.textContent=`Dictation error: ${event?.error||"unknown error"}`;
+        };
+        rec.onend=()=>{
+            coachDictationRecognition=null;
+            if(btn)btn.textContent="🎙 Dictate";
+        };
+
+        try{rec.start()}catch(e){stopCoachDictation()}
+    };
+
+    window.focusCoachAndOpenKeyboard=function(){
+        const input=document.getElementById("language-coach-input");
+        input?.focus();
+        input?.dispatchEvent(new Event("focus",{bubbles:true}));
+        if(typeof window.workspaceOpenTool==="function")window.workspaceOpenTool("keyboard");
+        else if(typeof window.openLanguageCharacterTool==="function")window.openLanguageCharacterTool();
+    };
+
+    // Stop private dictation when the Coach closes.
+    const originalCoachClose=window.closeLanguageCoach;
+    if(typeof originalCoachClose==="function"){
+        window.closeLanguageCoach=function(){
+            stopCoachDictation();
+            return originalCoachClose.apply(this,arguments);
+        };
+    }
+
+    // ---------------- Workspace state ----------------
+    function readLayout(){
+        try{
+            const parsed=JSON.parse(storageGet(LAYOUT_KEY)||"{}");
+            return parsed && typeof parsed==="object" ? parsed : {};
+        }catch(e){return {}}
+    }
+    function writeLayout(layout){storageSet(LAYOUT_KEY,JSON.stringify(layout))}
+
+    function panelFor(name){
+        if(name==="transcript")return document.getElementById("voice-transcript-window");
+        if(name==="analysis")return document.getElementById("analysis-workbench-window");
+        if(name==="coach")return document.getElementById("language-coach-window");
+        if(name==="keyboard"){
+            return currentStudyLanguage==="ja"
+                ? document.getElementById("floating-kana-tool")
+                : document.getElementById("special-character-palette");
+        }
+        return null;
+    }
+
+    function titlebarFor(name,panel){
+        if(name==="transcript")return document.getElementById("voice-transcript-drag-handle");
+        if(name==="analysis")return document.getElementById("analysis-workbench-drag-handle");
+        if(name==="coach")return document.getElementById("language-coach-drag-handle");
+        if(name==="keyboard"){
+            return currentStudyLanguage==="ja"
+                ? document.getElementById("floating-kana-titlebar")
+                : document.getElementById("special-character-drag-handle");
+        }
+        return panel?.firstElementChild||null;
+    }
+
+    function ensureWorkspaceDock(){
+        let dock=document.getElementById("conversation-workspace-dock");
+        if(dock)return dock;
+
+        const primary=document.getElementById("conversation-primary-section");
+        if(!primary)return null;
+
+        dock=document.createElement("div");
+        dock.id="conversation-workspace-dock";
+
+        ["analysis","coach","keyboard"].forEach(name=>{
+            const slot=document.createElement("div");
+            slot.id=`workspace-dock-${name}`;
+            slot.className="workspace-dock-slot";
+            slot.dataset.workspaceSlot=name;
+            dock.appendChild(slot);
+        });
+
+        primary.appendChild(dock);
+        return dock;
+    }
+
+    function ensureTray(){
+        let tray=document.getElementById("workspace-minimized-tray");
+        if(tray)return tray;
+        tray=document.createElement("div");
+        tray.id="workspace-minimized-tray";
+        document.body.appendChild(tray);
+        return tray;
+    }
+
+    function labelFor(name){
+        return {transcript:"Transcript",analysis:"Analysis",coach:"Coach",keyboard:"Keyboard"}[name]||name;
+    }
+
+    function stateFor(name){
+        return readLayout()[name]||{};
+    }
+
+    function captureRect(panel){
+        if(!panel || panel.hidden || panel.classList.contains("workspace-docked"))return null;
+        const r=panel.getBoundingClientRect();
+        return {
+            left:Math.round(r.left),
+            top:Math.round(r.top),
+            width:Math.round(r.width),
+            height:Math.round(r.height)
+        };
+    }
+
+    function saveState(name,patch={}){
+        const layout=readLayout();
+        const panel=panelFor(name);
+        const prior=layout[name]||{};
+        const rect=captureRect(panel);
+        layout[name]={...prior,...(rect?{rect}:{}),...patch};
+        writeLayout(layout);
+    }
+
+    function applyRect(panel,rect){
+        if(!panel || !rect || window.innerWidth<=640)return;
+        const width=Math.min(Math.max(320,Number(rect.width)||480),window.innerWidth-16);
+        const height=Math.min(Math.max(240,Number(rect.height)||520),window.innerHeight-16);
+        const left=Math.min(Math.max(8,Number(rect.left)||40),Math.max(8,window.innerWidth-width-8));
+        const top=Math.min(Math.max(8,Number(rect.top)||70),Math.max(8,window.innerHeight-height-8));
+        panel.style.left=left+"px";
+        panel.style.top=top+"px";
+        panel.style.width=width+"px";
+        panel.style.height=height+"px";
+        panel.style.right="auto";
+        panel.style.bottom="auto";
+    }
+
+    function restoreChip(name){
+        const tray=ensureTray();
+        let chip=tray.querySelector(`[data-workspace-chip="${name}"]`);
+        if(chip)return;
+        chip=document.createElement("button");
+        chip.type="button";
+        chip.className="workspace-minimized-chip";
+        chip.dataset.workspaceChip=name;
+        chip.textContent=`□ ${labelFor(name)}`;
+        chip.addEventListener("click",()=>window.workspaceRestoreTool(name));
+        tray.appendChild(chip);
+    }
+
+    function removeChip(name){
+        ensureTray().querySelector(`[data-workspace-chip="${name}"]`)?.remove();
+    }
+
+    window.workspaceMarkOpen=function(name,open){
+        saveState(name,{open:Boolean(open),minimized:false});
+        if(open)removeChip(name);
+    };
+
+    window.workspaceDockTool=function(name){
+        ensureWorkspaceDock();
+
+        if(name==="transcript"){
+            if(typeof window.dockVoiceTranscript==="function")window.dockVoiceTranscript();
+            saveState(name,{docked:true,open:false,minimized:false});
+            removeChip(name);
+            return;
+        }
+
+        const panel=panelFor(name);
+        const slot=document.getElementById(`workspace-dock-${name}`);
+        if(!panel || !slot)return;
+
+        panel.hidden=false;
+        panel.classList.add("workspace-docked");
+        panel.style.left="";
+        panel.style.top="";
+        panel.style.right="";
+        panel.style.bottom="";
+        panel.style.width="";
+        panel.style.height="";
+        slot.appendChild(panel);
+        saveState(name,{docked:true,open:true,minimized:false});
+        removeChip(name);
+    };
+
+    window.workspaceFloatTool=function(name){
+        const panel=panelFor(name);
+        if(!panel)return;
+
+        if(name==="transcript"){
+            if(typeof window.openVoiceTranscriptWindow==="function")window.openVoiceTranscriptWindow();
+            const saved=stateFor(name);
+            applyRect(panel,saved.rect);
+            saveState(name,{docked:false,open:true,minimized:false});
+            removeChip(name);
+            return;
+        }
+
+        if(panel.parentElement!==document.body)document.body.appendChild(panel);
+        panel.classList.remove("workspace-docked");
+        panel.hidden=false;
+        const saved=stateFor(name);
+        applyRect(panel,saved.rect);
+        saveState(name,{docked:false,open:true,minimized:false});
+        removeChip(name);
+    };
+
+    window.workspaceMinimizeTool=function(name){
+        const panel=panelFor(name);
+        if(!panel)return;
+        saveState(name,{minimized:true,open:true,docked:panel.classList.contains("workspace-docked")});
+        panel.hidden=true;
+        restoreChip(name);
+    };
+
+    window.workspaceRestoreTool=function(name){
+        const saved=stateFor(name);
+        removeChip(name);
+
+        if(name==="transcript"){
+            if(saved.docked){
+                window.workspaceDockTool(name);
+                return;
+            }
+            window.workspaceFloatTool(name);
+            return;
+        }
+
+        const panel=panelFor(name);
+        if(!panel)return;
+
+        if(saved.docked)window.workspaceDockTool(name);
+        else window.workspaceFloatTool(name);
+        saveState(name,{minimized:false,open:true});
+    };
+
+    window.workspaceOpenTool=function(name){
+        if(name==="transcript"){
+            window.workspaceFloatTool("transcript");
+            setMobileActive("transcript");
+            return;
+        }
+
+        if(name==="analysis"){
+            const panel=panelFor("analysis");
+            if(panel){
+                panel.hidden=false;
+                if(stateFor("analysis").docked)window.workspaceDockTool("analysis");
+                else window.workspaceFloatTool("analysis");
+            }
+            setMobileActive("analysis");
+            return;
+        }
+
+        if(name==="coach"){
+            if(typeof window.openLanguageCoach==="function")window.openLanguageCoach();
+            const panel=panelFor("coach");
+            if(panel && stateFor("coach").docked)window.workspaceDockTool("coach");
+            else if(panel)window.workspaceFloatTool("coach");
+            setMobileActive("coach");
+            return;
+        }
+
+        if(name==="keyboard"){
+            if(typeof window.openLanguageCharacterTool==="function")window.openLanguageCharacterTool();
+            setTimeout(()=>{
+                const panel=panelFor("keyboard");
+                if(!panel)return;
+                if(stateFor("keyboard").docked)window.workspaceDockTool("keyboard");
+                else window.workspaceFloatTool("keyboard");
+            },0);
+            setMobileActive("keyboard");
+        }
+    };
+
+    function addWorkspaceControls(name){
+        const panel=panelFor(name);
+        const titlebar=titlebarFor(name,panel);
+        if(!panel || !titlebar || titlebar.dataset.workspaceControls==="1")return;
+        titlebar.dataset.workspaceControls="1";
+
+        // Prevent old drag handlers from dragging docked panels.
+        titlebar.addEventListener("pointerdown",event=>{
+            if(panel.classList.contains("workspace-docked") && !event.target.closest("button")){
+                event.stopImmediatePropagation();
+            }
+        },true);
+
+        let actions=titlebar.querySelector(".voice-transcript-window-actions,.special-character-window-actions,.floating-kana-window-actions");
+        if(!actions){
+            actions=document.createElement("div");
+            actions.className="voice-transcript-window-actions";
+            titlebar.appendChild(actions);
+        }
+
+        const minimize=document.createElement("button");
+        minimize.type="button";
+        minimize.className="workspace-title-action";
+        minimize.textContent="—";
+        minimize.title="Minimize";
+        minimize.addEventListener("click",event=>{
+            event.stopPropagation();
+            window.workspaceMinimizeTool(name);
+        });
+
+        const dock=document.createElement("button");
+        dock.type="button";
+        dock.className="workspace-title-action";
+        dock.textContent="⇲";
+        dock.title="Dock back into the main workspace";
+        dock.addEventListener("click",event=>{
+            event.stopPropagation();
+            window.workspaceDockTool(name);
+        });
+
+        actions.prepend(dock);
+        actions.prepend(minimize);
+    }
+
+    function currentOpenTool(){
+        for(const name of ["transcript","analysis","coach","keyboard"]){
+            const panel=panelFor(name);
+            if(panel && !panel.hidden && !panel.classList.contains("workspace-docked"))return name;
+        }
+        return "conversation";
+    }
+
+    // ---------------- Mobile top tabs ----------------
+    function ensureMobileTabs(){
+        if(document.getElementById("mobile-workspace-tabs"))return;
+        const tabs=document.createElement("nav");
+        tabs.id="mobile-workspace-tabs";
+        tabs.setAttribute("aria-label","LanguageTutor workspace");
+
+        const defs=[
+            ["conversation","💬","Chat"],
+            ["transcript","☰","Transcript"],
+            ["analysis","🔎","Analysis"],
+            ["coach","🧭","Coach"],
+            ["keyboard","⌨","Keyboard"]
+        ];
+        defs.forEach(([name,icon,label])=>{
+            const btn=document.createElement("button");
+            btn.type="button";
+            btn.dataset.mobileWorkspace=name;
+            btn.innerHTML=`<span>${icon}</span>${label}`;
+            btn.addEventListener("click",()=>showMobileWorkspace(name));
+            tabs.appendChild(btn);
+        });
+        document.body.appendChild(tabs);
+        document.body.classList.add("workspace-mobile-tabs-ready");
+        setMobileActive("conversation");
+    }
+
+    function hideFloatingMobileTools(except=""){
+        ["transcript","analysis","coach","keyboard"].forEach(name=>{
+            if(name===except)return;
+            const panel=panelFor(name);
+            if(panel && !panel.classList.contains("workspace-docked"))panel.hidden=true;
+        });
+    }
+
+    function showMobileWorkspace(name){
+        if(window.innerWidth>640)return;
+
+        if(name==="conversation"){
+            hideFloatingMobileTools("");
+            if(typeof window.dockVoiceTranscript==="function")window.dockVoiceTranscript();
+            document.getElementById("conversation-primary-section")?.scrollIntoView({block:"start"});
+            setMobileActive(name);
+            return;
+        }
+
+        if(name!=="transcript" && typeof window.dockVoiceTranscript==="function"){
+            window.dockVoiceTranscript();
+        }
+        hideFloatingMobileTools(name);
+
+        if(name==="transcript"){
+            window.workspaceFloatTool("transcript");
+        }else if(name==="analysis"){
+            const panel=panelFor("analysis");
+            if(panel){
+                panel.classList.remove("workspace-docked");
+                if(panel.parentElement!==document.body)document.body.appendChild(panel);
+                panel.hidden=false;
+            }
+        }else if(name==="coach"){
+            if(typeof window.openLanguageCoach==="function")window.openLanguageCoach();
+            const panel=panelFor("coach");
+            if(panel){
+                panel.classList.remove("workspace-docked");
+                if(panel.parentElement!==document.body)document.body.appendChild(panel);
+                panel.hidden=false;
+            }
+        }else if(name==="keyboard"){
+            if(typeof window.openLanguageCharacterTool==="function")window.openLanguageCharacterTool();
+            setTimeout(()=>{
+                const panel=panelFor("keyboard");
+                if(panel){
+                    panel.classList.remove("workspace-docked");
+                    if(panel.parentElement!==document.body)document.body.appendChild(panel);
+                    panel.hidden=false;
+                }
+            },0);
+        }
+        setMobileActive(name);
+    }
+
+    function setMobileActive(name){
+        document.querySelectorAll("#mobile-workspace-tabs button").forEach(btn=>{
+            btn.classList.toggle("active",btn.dataset.mobileWorkspace===name);
+        });
+    }
+    window.workspaceSetMobileTab=setMobileActive;
+
+    // Preserve geometry after drag/resize.
+    function bindPersistence(){
+        document.addEventListener("pointerup",()=>{
+            ["transcript","analysis","coach","keyboard"].forEach(name=>{
+                const panel=panelFor(name);
+                if(panel && !panel.hidden && !panel.classList.contains("workspace-docked")){
+                    saveState(name,{open:true,docked:false,minimized:false});
+                }
+            });
+        },true);
+
+        if("ResizeObserver" in window){
+            const observer=new ResizeObserver(entries=>{
+                entries.forEach(entry=>{
+                    const panel=entry.target;
+                    const name=
+                        panel.id==="voice-transcript-window" ? "transcript" :
+                        panel.id==="analysis-workbench-window" ? "analysis" :
+                        panel.id==="language-coach-window" ? "coach" :
+                        (panel.id==="special-character-palette" || panel.id==="floating-kana-tool") ? "keyboard" : "";
+                    if(name && !panel.hidden && !panel.classList.contains("workspace-docked")){
+                        saveState(name,{open:true,docked:false,minimized:false});
+                    }
+                });
+            });
+            ["transcript","analysis","coach"].forEach(name=>{
+                const panel=panelFor(name);
+                if(panel)observer.observe(panel);
+            });
+            const kb=panelFor("keyboard");
+            if(kb)observer.observe(kb);
+        }
+    }
+
+    function restoreLayout(){
+        ensureWorkspaceDock();
+        ensureTray();
+
+        ["transcript","analysis","coach"].forEach(addWorkspaceControls);
+        addWorkspaceControls("keyboard");
+
+        const layout=readLayout();
+        ["analysis","coach","keyboard"].forEach(name=>{
+            const saved=layout[name];
+            if(!saved)return;
+            const panel=panelFor(name);
+            if(!panel)return;
+
+            if(saved.minimized){
+                panel.hidden=true;
+                restoreChip(name);
+            }else if(saved.open && saved.docked){
+                window.workspaceDockTool(name);
+            }else if(saved.open){
+                window.workspaceFloatTool(name);
+            }
+        });
+
+        const transcript=layout.transcript;
+        if(transcript?.minimized){
+            const panel=panelFor("transcript");
+            if(panel)panel.hidden=true;
+            restoreChip("transcript");
+        }else if(transcript?.open && !transcript?.docked && window.innerWidth>640){
+            window.workspaceFloatTool("transcript");
+        }
+    }
+
+    function boot(){
+        ensureWorkspaceDock();
+        ensureTray();
+        ensureMobileTabs();
+        restoreLayout();
+        bindPersistence();
+
+        window.populateConversationVoiceSelect?.();
+        if("speechSynthesis" in window){
+            window.speechSynthesis.addEventListener?.("voiceschanged",()=>{
+                window.populateConversationVoiceSelect?.();
+            });
+        }
+
+        // Add workspace controls after language-specific keyboard windows exist.
+        setTimeout(()=>addWorkspaceControls("keyboard"),50);
+    }
+
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);
+    else boot();
+})();
+</script>
+
 </body>
 </html>
 
