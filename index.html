@@ -17275,7 +17275,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     }
 
     function init(){
-        if(typeof initVoiceTranscriptDragging==="function") initVoiceTranscriptDragging();
+        bindDrag("voice-transcript-window","voice-transcript-drag-handle");
         bindDrag("text-transcript-window","text-transcript-drag-handle");
         bindDrag("saved-transcripts-window","saved-transcripts-drag-handle");
     }
