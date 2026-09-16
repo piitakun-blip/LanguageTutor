@@ -3625,6 +3625,61 @@ body.conversation-first-layout #mobile-right-column{
     }
 }
 </style>
+
+<style id="safe-conversation-analysis-v1-styles">
+/* SAFE ADDITIVE REVISION v1
+   Extends the existing movable transcript without replacing conversation,
+   recognition, parser, storage, provider, or study-board logic. */
+.transcript-utterance-actions{
+    justify-content:flex-start !important;
+    flex-wrap:wrap;
+    gap:6px;
+}
+.transcript-secondary-action,
+.transcript-ai-action{
+    min-height:30px;
+    padding:5px 9px;
+    border-radius:8px;
+    font-size:10px;
+    font-weight:800;
+    cursor:pointer;
+}
+.transcript-secondary-action{
+    border:1px solid #cbd5e1;
+    background:#f8fafc;
+    color:#475569;
+}
+.transcript-secondary-action:hover{background:#f1f5f9}
+.transcript-ai-action{
+    border:1px solid #fcd34d;
+    background:#fffbeb;
+    color:#92400e;
+}
+.transcript-ai-action:hover{background:#fef3c7}
+.transcript-ai-action:disabled{opacity:.65;cursor:wait}
+.transcript-inline-ai-result{
+    margin-top:8px;
+    padding:10px 11px;
+    border:1px solid #fde68a;
+    border-radius:10px;
+    background:#fffbeb;
+    color:#78350f;
+    font-size:12px;
+    line-height:1.55;
+    user-select:text;
+}
+@media(max-width:640px){
+    .transcript-utterance-actions{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .transcript-utterance-actions > button{
+        width:100%;
+        min-height:40px;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -11040,10 +11095,92 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                 ? entry.inputMode!=="english"
                 : entry.replyLanguage!=="en";
             if(targetLanguageEntry){
+                const sentenceText=stripTutorMarkdown(entry.text);
                 const row=document.createElement("div");
-                row.className="transcript-analyze-row";
-                const analyze=createTranscriptAnalyzeButton(stripTutorMarkdown(entry.text),currentStudyLanguage);
+                row.className="transcript-analyze-row transcript-utterance-actions";
+
+                const analyze=createTranscriptAnalyzeButton(sentenceText,currentStudyLanguage);
                 if(analyze)row.appendChild(analyze);
+
+                const listen=document.createElement("button");
+                listen.type="button";
+                listen.className="transcript-secondary-action";
+                listen.textContent="🔊 Listen";
+                listen.title=`Hear this ${languageName} utterance`;
+                listen.addEventListener("click",()=>{
+                    if(typeof speakRawText==="function") speakRawText(sentenceText,langConfig().locale);
+                });
+                row.appendChild(listen);
+
+                const copy=document.createElement("button");
+                copy.type="button";
+                copy.className="transcript-secondary-action";
+                copy.textContent="⧉ Copy";
+                copy.title="Copy this utterance";
+                copy.addEventListener("click",async()=>{
+                    try{
+                        await navigator.clipboard.writeText(sentenceText);
+                        const prior=copy.textContent;
+                        copy.textContent="✓ Copied";
+                        setTimeout(()=>copy.textContent=prior,1000);
+                    }catch(e){
+                        voiceTutorStatus("Could not copy this utterance.","error");
+                    }
+                });
+                row.appendChild(copy);
+
+                const explain=document.createElement("button");
+                explain.type="button";
+                explain.className="transcript-ai-action";
+                explain.textContent="✨ Explain";
+                explain.title="Ask your selected AI tutor to explain the grammar in this utterance";
+                explain.addEventListener("click",async()=>{
+                    if(!getActiveAIKey()){
+                        alert("AI explanation needs an API key. Add Gemini, OpenAI, or Anthropic in Settings. Local Analyze remains available without a key.");
+                        return;
+                    }
+
+                    let result=block.querySelector(".transcript-inline-ai-result");
+                    if(!result){
+                        result=document.createElement("div");
+                        result.className="transcript-inline-ai-result";
+                        block.appendChild(result);
+                    }
+
+                    const previous=explain.textContent;
+                    explain.disabled=true;
+                    explain.textContent="Explaining…";
+                    result.textContent="Asking your AI tutor…";
+
+                    try{
+                        const cfg=langConfig();
+                        const prompt=`You are a supportive ${cfg.name} language tutor.
+Explain the following utterance for a learner.
+
+Utterance:
+${sentenceText}
+
+Give a compact explanation with:
+1. Natural English meaning.
+2. Clause structure and word order.
+3. Important grammar forms (case/gender/agreement for German; relevant equivalents for Spanish/Japanese).
+4. What modifies or depends on what when useful.
+5. One short "why this form?" note for the most instructive feature.
+
+Do not overwhelm the learner. Be precise and use the language-learning terminology appropriate to ${cfg.name}.`;
+
+                        const answer=await callAI(prompt);
+                        result.replaceChildren();
+                        renderTutorMarkdown(result,String(answer||"").trim());
+                    }catch(e){
+                        result.textContent="AI explanation failed: "+((e&&e.message)?e.message:String(e));
+                    }finally{
+                        explain.disabled=false;
+                        explain.textContent=previous;
+                    }
+                });
+                row.appendChild(explain);
+
                 block.appendChild(row);
             }
 
