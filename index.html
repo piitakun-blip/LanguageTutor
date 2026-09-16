@@ -3674,6 +3674,497 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+
+<style id="transcript-first-coach-v2-styles">
+/* ============================================================
+   Transcript-first Conversation Workspace + Private Coach v2
+   ============================================================
+   Design rule:
+   - Tutor = role-play/conversation partner.
+   - Transcript = primary learning surface.
+   - Coach = private backstage help; coach exchanges never enter
+     the tutor conversation history unless the learner chooses
+     to place a suggested phrase into the reply box and sends it.
+*/
+
+#transcript-hub-heading{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 11px;
+    border:1px solid #e2e8f0;
+    border-bottom:0;
+    border-radius:12px 12px 0 0;
+    background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%);
+}
+.transcript-hub-title{
+    color:#1e293b;
+    font-size:12px;
+    font-weight:900;
+}
+.transcript-hub-subtitle{
+    margin-top:2px;
+    color:#64748b;
+    font-size:9px;
+    line-height:1.4;
+}
+.transcript-hub-heading-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:6px;
+}
+.transcript-hub-heading-actions button{
+    min-height:32px;
+    padding:5px 9px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#fff;
+    color:#475569;
+    font-size:9px;
+    font-weight:800;
+}
+.transcript-hub-heading-actions button:hover{
+    border-color:#a5b4fc;
+    color:#4338ca;
+    background:#eef2ff;
+}
+
+/* The transcript is now the central conversation surface. */
+#voice-chat-messages-log.transcript-hub-log{
+    flex:1 1 auto !important;
+    min-height:270px !important;
+    max-height:min(52vh,540px) !important;
+    overflow-y:auto !important;
+    overflow-x:hidden;
+    margin-top:0 !important;
+    padding:10px !important;
+    border:1px solid #e2e8f0;
+    border-radius:0 0 12px 12px;
+    background:#f8fafc;
+    scrollbar-gutter:stable;
+    overscroll-behavior:contain;
+    scroll-behavior:smooth;
+}
+#voice-chat-messages-log .conversation-turn-card{
+    position:relative;
+    width:min(95%,760px);
+    max-width:95% !important;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+    transition:border-color .15s ease,box-shadow .15s ease;
+}
+#voice-chat-messages-log .conversation-turn-card:hover{
+    border-color:#a5b4fc !important;
+    box-shadow:0 3px 10px rgba(15,23,42,.07);
+}
+.voice-tutor-actions.transcript-hub-actions,
+.transcript-hub-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    margin-top:9px;
+    padding-top:8px;
+    border-top:1px solid rgba(148,163,184,.20);
+}
+.transcript-hub-actions button,
+.transcript-turn-action{
+    min-height:30px;
+    padding:5px 8px !important;
+    border:1px solid #cbd5e1 !important;
+    border-radius:8px !important;
+    background:#fff !important;
+    color:#475569 !important;
+    font-size:10px !important;
+    font-weight:800 !important;
+    line-height:1.15;
+    cursor:pointer;
+    white-space:nowrap;
+}
+.transcript-hub-actions button:hover,
+.transcript-turn-action:hover{
+    border-color:#a5b4fc !important;
+    color:#4338ca !important;
+    background:#f8fafc !important;
+}
+.transcript-hub-actions .transcript-action-primary,
+.transcript-turn-action.transcript-action-primary{
+    border-color:#c7d2fe !important;
+    background:#eef2ff !important;
+    color:#4338ca !important;
+}
+.transcript-hub-actions .transcript-action-ai,
+.transcript-turn-action.transcript-action-ai{
+    border-color:#fde68a !important;
+    background:#fffbeb !important;
+    color:#92400e !important;
+}
+.transcript-hub-actions button:disabled,
+.transcript-turn-action:disabled{
+    opacity:.62;
+    cursor:wait;
+}
+
+.transcript-inline-study-panel{
+    margin-top:8px;
+    padding:10px 11px;
+    border:1px solid #dbe3ee;
+    border-radius:11px;
+    background:#fff;
+    color:#334155;
+    font-size:11px;
+    line-height:1.5;
+    user-select:text;
+}
+.transcript-inline-study-panel[hidden]{display:none!important}
+.transcript-inline-study-panel.transcript-panel-ai{
+    background:#fffbeb;
+    border-color:#fde68a;
+    color:#78350f;
+}
+.transcript-inline-panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:8px;
+}
+.transcript-inline-panel-title{
+    color:#334155;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+.transcript-inline-panel-source{
+    color:#94a3b8;
+    font-size:9px;
+    font-weight:700;
+}
+.transcript-inline-translation-text{
+    color:#1e3a5f;
+    font-size:13px;
+    font-weight:700;
+    line-height:1.55;
+}
+.transcript-local-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+.transcript-local-chip{
+    min-width:72px;
+    max-width:100%;
+    padding:7px 9px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    background:#f8fafc;
+}
+.transcript-local-chip.case-nom{background:#dbeafe;border-color:#bfdbfe}
+.transcript-local-chip.case-acc{background:#c7f5d8;border-color:#9ee8bb}
+.transcript-local-chip.case-dat{background:#fef9c3;border-color:#fef08a}
+.transcript-local-chip.case-gen{background:#f3e8ff;border-color:#e9d5ff}
+.transcript-local-chip.case-multi{background:#ffedd5;border-color:#fed7aa}
+.transcript-local-chip-word{
+    display:block;
+    color:#1e293b;
+    font-size:12px;
+    font-weight:800;
+    overflow-wrap:anywhere;
+}
+.transcript-local-chip-meta{
+    display:block;
+    margin-top:2px;
+    color:#64748b;
+    font-size:9px;
+    font-weight:700;
+    line-height:1.3;
+}
+.transcript-inline-panel-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:9px;
+}
+.transcript-inline-panel-actions button{
+    min-height:30px;
+    padding:5px 9px;
+    border:1px solid #c7d2fe;
+    border-radius:8px;
+    background:#eef2ff;
+    color:#4338ca;
+    font-size:10px;
+    font-weight:800;
+}
+
+/* ---------------- Private Language Coach ---------------- */
+#language-coach-window[hidden]{display:none!important}
+#language-coach-window{
+    position:fixed;
+    right:38px;
+    top:70px;
+    width:min(520px,calc(100vw - 76px));
+    height:min(650px,calc(100vh - 112px));
+    min-width:380px;
+    min-height:360px;
+    max-width:calc(100vw - 16px);
+    max-height:calc(100vh - 16px);
+    resize:both;
+    overflow:hidden;
+    z-index:12550;
+    background:#fff;
+    border:1px solid #c7d2fe;
+    border-radius:16px;
+    box-shadow:0 24px 70px rgba(15,23,42,.24);
+    color:#1e293b;
+}
+.language-coach-titlebar{
+    height:54px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 10px 0 14px;
+    background:linear-gradient(135deg,#eef2ff,#f5f3ff);
+    border-bottom:1px solid #c7d2fe;
+    cursor:move;
+    user-select:none;
+    touch-action:none;
+}
+.language-coach-titlecopy{min-width:0}
+.language-coach-title{
+    color:#312e81;
+    font-size:14px;
+    font-weight:900;
+}
+.language-coach-subtitle{
+    margin-top:1px;
+    color:#64748b;
+    font-size:9px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.language-coach-close{
+    width:34px;
+    min-width:34px;
+    height:34px;
+    min-height:34px;
+    border:0;
+    border-radius:8px;
+    background:transparent;
+    color:#4338ca;
+    font-size:20px;
+    font-weight:800;
+}
+.language-coach-close:hover{background:rgba(79,70,229,.08)}
+.language-coach-body{
+    height:calc(100% - 54px);
+    overflow:auto;
+    padding:13px;
+    background:#fff;
+}
+.language-coach-private-note{
+    padding:9px 10px;
+    border:1px solid #dbeafe;
+    border-radius:10px;
+    background:#eff6ff;
+    color:#1e40af;
+    font-size:10px;
+    line-height:1.45;
+}
+#language-coach-input{
+    width:100%;
+    min-height:96px;
+    margin-top:10px;
+    padding:11px 12px;
+    border:1.5px solid #cbd5e1;
+    border-radius:11px;
+    background:#fff;
+    color:#1e293b;
+    font-size:14px;
+    line-height:1.45;
+    resize:vertical;
+    outline:none;
+}
+#language-coach-input:focus{
+    border-color:#818cf8;
+    box-shadow:0 0 0 3px rgba(99,102,241,.12);
+}
+.language-coach-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-top:9px;
+}
+.language-coach-actions button{
+    min-height:40px;
+    padding:8px 11px;
+    border-radius:9px;
+    font-size:11px;
+    font-weight:800;
+}
+.language-coach-quick{
+    border:1px solid #bfdbfe;
+    background:#eff6ff;
+    color:#1d4ed8;
+}
+.language-coach-ai{
+    border:1px solid #fde68a;
+    background:#fffbeb;
+    color:#92400e;
+}
+#language-coach-status{
+    margin-top:8px;
+    color:#64748b;
+    font-size:10px;
+    line-height:1.4;
+}
+#language-coach-results{
+    margin-top:11px;
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+}
+.language-coach-result-card{
+    padding:11px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+}
+.language-coach-result-card.primary{
+    border-color:#a5b4fc;
+    background:#eef2ff;
+}
+.language-coach-result-label{
+    color:#64748b;
+    font-size:9px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+.language-coach-result-text{
+    margin-top:4px;
+    color:#1e293b;
+    font-size:15px;
+    font-weight:800;
+    line-height:1.45;
+    overflow-wrap:anywhere;
+}
+.language-coach-result-note{
+    margin-top:5px;
+    color:#64748b;
+    font-size:10px;
+    line-height:1.45;
+}
+.language-coach-result-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:9px;
+}
+.language-coach-result-actions button{
+    min-height:32px;
+    padding:5px 8px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#fff;
+    color:#475569;
+    font-size:9px;
+    font-weight:800;
+}
+.language-coach-result-actions .coach-use{
+    border-color:#86efac;
+    background:#f0fdf4;
+    color:#15803d;
+}
+.language-coach-explanation{
+    padding:10px 11px;
+    border:1px solid #fde68a;
+    border-radius:11px;
+    background:#fffbeb;
+    color:#78350f;
+    font-size:11px;
+    line-height:1.5;
+}
+
+/* Make the composer feel attached to the transcript rather than preceding it. */
+#unified-text-entry{
+    margin-top:2px;
+}
+#language-coach-open-btn{
+    border-color:#c4b5fd !important;
+    background:#f5f3ff !important;
+    color:#6d28d9 !important;
+}
+
+@media(min-width:641px){
+    body.conversation-first-layout #socratic-chat-container{
+        min-height:690px !important;
+    }
+}
+@media(max-width:640px){
+    #transcript-hub-heading{
+        flex-direction:column;
+        align-items:stretch;
+    }
+    .transcript-hub-heading-actions{
+        justify-content:flex-start;
+    }
+    #voice-chat-messages-log.transcript-hub-log{
+        min-height:260px !important;
+        max-height:46vh !important;
+        padding:8px !important;
+    }
+    #voice-chat-messages-log .conversation-turn-card{
+        width:98%;
+        max-width:98% !important;
+    }
+    .transcript-hub-actions{
+        flex-wrap:nowrap !important;
+        overflow-x:auto;
+        padding-bottom:3px;
+        -webkit-overflow-scrolling:touch;
+    }
+    .transcript-hub-actions button{
+        flex:0 0 auto;
+        min-height:38px;
+    }
+    .transcript-local-chips{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    #language-coach-window{
+        left:8px !important;
+        right:auto !important;
+        top:auto !important;
+        bottom:8px;
+        width:calc(100vw - 16px) !important;
+        height:min(76vh,680px);
+        min-width:0;
+        min-height:300px;
+        max-width:none;
+        max-height:calc(100vh - 16px);
+        resize:none;
+        border-radius:15px;
+    }
+    .language-coach-titlebar{cursor:default}
+    #language-coach-input{
+        min-height:88px;
+        font-size:16px;
+    }
+    .language-coach-actions{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+    }
+    .language-coach-actions button{
+        width:100%;
+        min-height:44px;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -10876,9 +11367,9 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const englishBtn=document.getElementById("voice-text-english-btn");
 
         if(input) input.placeholder=`Type your ${cfg.name} reply…`;
-        if(hint) hint.textContent=`Type in ${cfg.name}, or use English → ${cfg.name} if you get stuck.`;
+        if(hint) hint.textContent=`Type in ${cfg.name}. Need help formulating it? Open Coach privately, or use English → ${cfg.name} & send.`;
         if(englishBtn){
-            englishBtn.textContent=`English → ${cfg.name}`;
+            englishBtn.textContent=`English → ${cfg.name} & send`;
             englishBtn.title=`Translate this English reply into ${cfg.name} and continue the conversation`;
         }
 
@@ -11084,98 +11575,10 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                 block.appendChild(note);
             }
 
-            const targetLanguageEntry=entry.role==="user"
-                ? entry.inputMode!=="english"
-                : entry.replyLanguage!=="en";
-            if(targetLanguageEntry){
-                const sentenceText=stripTutorMarkdown(entry.text);
-                const row=document.createElement("div");
-                row.className="transcript-analyze-row transcript-utterance-actions";
-
-                const analyze=createTranscriptAnalyzeButton(sentenceText,currentStudyLanguage);
-                if(analyze)row.appendChild(analyze);
-
-                const listen=document.createElement("button");
-                listen.type="button";
-                listen.className="transcript-secondary-action";
-                listen.textContent="🔊 Listen";
-                listen.title=`Hear this ${languageName} utterance`;
-                listen.addEventListener("click",()=>{
-                    if(typeof speakRawText==="function") speakRawText(sentenceText,langConfig().locale);
-                });
-                row.appendChild(listen);
-
-                const copy=document.createElement("button");
-                copy.type="button";
-                copy.className="transcript-secondary-action";
-                copy.textContent="⧉ Copy";
-                copy.title="Copy this utterance";
-                copy.addEventListener("click",async()=>{
-                    try{
-                        await navigator.clipboard.writeText(sentenceText);
-                        const prior=copy.textContent;
-                        copy.textContent="✓ Copied";
-                        setTimeout(()=>copy.textContent=prior,1000);
-                    }catch(e){
-                        voiceTutorStatus("Could not copy this utterance.","error");
-                    }
-                });
-                row.appendChild(copy);
-
-                const explain=document.createElement("button");
-                explain.type="button";
-                explain.className="transcript-ai-action";
-                explain.textContent="✨ Explain";
-                explain.title="Ask your selected AI tutor to explain the grammar in this utterance";
-                explain.addEventListener("click",async()=>{
-                    if(!getActiveAIKey()){
-                        alert("AI explanation needs an API key. Add Gemini, OpenAI, or Anthropic in Settings. Local Analyze remains available without a key.");
-                        return;
-                    }
-
-                    let result=block.querySelector(".transcript-inline-ai-result");
-                    if(!result){
-                        result=document.createElement("div");
-                        result.className="transcript-inline-ai-result";
-                        block.appendChild(result);
-                    }
-
-                    const previous=explain.textContent;
-                    explain.disabled=true;
-                    explain.textContent="Explaining…";
-                    result.textContent="Asking your AI tutor…";
-
-                    try{
-                        const cfg=langConfig();
-                        const prompt=`You are a supportive ${cfg.name} language tutor.
-Explain the following utterance for a learner.
-
-Utterance:
-${sentenceText}
-
-Give a compact explanation with:
-1. Natural English meaning.
-2. Clause structure and word order.
-3. Important grammar forms (case/gender/agreement for German; relevant equivalents for Spanish/Japanese).
-4. What modifies or depends on what when useful.
-5. One short "why this form?" note for the most instructive feature.
-
-Do not overwhelm the learner. Be precise and use the language-learning terminology appropriate to ${cfg.name}.`;
-
-                        const answer=await callAI(prompt);
-                        result.replaceChildren();
-                        renderTutorMarkdown(result,String(answer||"").trim());
-                    }catch(e){
-                        result.textContent="AI explanation failed: "+((e&&e.message)?e.message:String(e));
-                    }finally{
-                        explain.disabled=false;
-                        explain.textContent=previous;
-                    }
-                });
-                row.appendChild(explain);
-
-                block.appendChild(row);
-            }
+            const actions=document.createElement("div");
+            actions.className="transcript-analyze-row";
+            appendTranscriptTurnActions(actions,entry,block,currentStudyLanguage);
+            block.appendChild(actions);
 
             body.appendChild(block);
         });
@@ -11253,7 +11656,7 @@ Do not overwhelm the learner. Be precise and use the language-learning terminolo
             const empty=document.createElement("div");
             empty.id="voice-tutor-empty";
             empty.className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400";
-            empty.textContent=`Start speaking or type a ${langConfig().name} reply below. If you get stuck, you can reply in English and keep the ${langConfig().name} version in the transcript.`;
+            empty.textContent=`Start speaking or type a ${langConfig().name} reply below. Each turn becomes interactive here: translate it, analyze it, replay it, or save it. If you know what you want to say but cannot formulate it, open the private Coach.`;
             log.appendChild(empty);
             return;
         }
@@ -11479,6 +11882,293 @@ Do not add quotation marks or labels.`;
         }
     }
 
+
+    // ---------- Transcript-first turn interactions ----------
+    function transcriptTurnRawText(entry){
+        if(!entry)return "";
+        return entry.role==="user"
+            ? String(entry.text||"").trim()
+            : stripTutorMarkdown(entry.text);
+    }
+
+    function transcriptTurnIsEnglish(entry){
+        return Boolean(entry && (entry.inputMode==="english" || entry.replyLanguage==="en"));
+    }
+
+    function transcriptTurnTargetText(entry){
+        if(!entry)return "";
+        if(!transcriptTurnIsEnglish(entry))return transcriptTurnRawText(entry);
+        if(entry.role==="user" && entry.targetTranslation){
+            return String(entry.targetTranslation||"").trim();
+        }
+        return "";
+    }
+
+    function transcriptInlinePanel(wrap,key,className=""){
+        if(!wrap)return null;
+        let panel=wrap.querySelector(`[data-transcript-inline="${key}"]`);
+        if(panel)return panel;
+        panel=document.createElement("div");
+        panel.className=`transcript-inline-study-panel ${className}`.trim();
+        panel.dataset.transcriptInline=key;
+        panel.hidden=true;
+        wrap.appendChild(panel);
+        return panel;
+    }
+
+    function transcriptPanelHeader(title,source=""){
+        const head=document.createElement("div");
+        head.className="transcript-inline-panel-head";
+        const name=document.createElement("div");
+        name.className="transcript-inline-panel-title";
+        name.textContent=title;
+        const src=document.createElement("div");
+        src.className="transcript-inline-panel-source";
+        src.textContent=source;
+        head.append(name,src);
+        return head;
+    }
+
+    function transcriptCaseClass(label){
+        const v=String(label||"").toLowerCase();
+        if(v==="nominative")return "case-nom";
+        if(v==="accusative")return "case-acc";
+        if(v==="dative")return "case-dat";
+        if(v==="genitive")return "case-gen";
+        if(v.includes("nominative") && v.includes("accusative"))return "case-multi";
+        if(v.includes("dative") && v.includes("genitive"))return "case-multi";
+        return "";
+    }
+
+    function transcriptLocalParseItems(sentence,languageCode=currentStudyLanguage){
+        const lang=LANGUAGE_MODES[languageCode] ? languageCode : currentStudyLanguage;
+
+        if(lang==="de" && typeof parseGermanPhrases==="function"){
+            return parseGermanPhrases(sentence).map(item=>({
+                text:Array.isArray(item.words) ? item.words.join(" ") : String(item.text||""),
+                label:String(item.label||item.type||"Word"),
+                detail:[item.gender,item.type].filter(Boolean).join(" • "),
+                caseClass:transcriptCaseClass(item.label)
+            })).filter(item=>item.text);
+        }
+
+        if(typeof localParseForLanguage==="function"){
+            return localParseForLanguage(lang,sentence).map(item=>({
+                text:String(item.text||item.words?.join(" ")||""),
+                label:String(item.label||item.role||item.type||"Word"),
+                detail:[
+                    item.reading ? `Reading: ${item.reading}` : "",
+                    item.romaji ? `Romaji: ${item.romaji}` : "",
+                    item.grammar ? String(item.grammar) : "",
+                    item.meaning ? String(item.meaning) : ""
+                ].filter(Boolean).join(" • "),
+                caseClass:""
+            })).filter(item=>item.text);
+        }
+        return [];
+    }
+
+    function toggleTranscriptLocalAnalysis(entry,wrap,button,languageCode=currentStudyLanguage){
+        const sentence=transcriptTurnTargetText(entry);
+        if(!sentence || !wrap)return;
+
+        const cfg=LANGUAGE_MODES[languageCode] || langConfig();
+        const panel=transcriptInlinePanel(wrap,"analysis");
+        const opening=panel.hidden;
+        panel.hidden=!opening;
+        if(button)button.textContent=opening ? "▾ Hide analysis" : "🔎 Analyze";
+        if(!opening)return;
+
+        panel.replaceChildren();
+        panel.appendChild(transcriptPanelHeader(`Local ${cfg.name} analysis`,"No API key"));
+
+        const items=transcriptLocalParseItems(sentence,languageCode);
+        if(!items.length){
+            const empty=document.createElement("div");
+            empty.textContent="The local parser could not confidently break down this turn.";
+            panel.appendChild(empty);
+        }else{
+            const chips=document.createElement("div");
+            chips.className="transcript-local-chips";
+            items.forEach(item=>{
+                const chip=document.createElement("div");
+                chip.className=`transcript-local-chip ${item.caseClass}`.trim();
+
+                const word=document.createElement("span");
+                word.className="transcript-local-chip-word";
+                word.textContent=item.text;
+
+                const meta=document.createElement("span");
+                meta.className="transcript-local-chip-meta";
+                meta.textContent=[item.label,item.detail].filter(Boolean).join(" • ");
+
+                chip.append(word,meta);
+                chips.appendChild(chip);
+            });
+            panel.appendChild(chips);
+        }
+
+        const actions=document.createElement("div");
+        actions.className="transcript-inline-panel-actions";
+
+        const full=document.createElement("button");
+        full.type="button";
+        full.textContent="Open full parser";
+        full.title="Use the existing full parser workspace for this exact turn";
+        full.addEventListener("click",()=>window.analyzeTutorSentence(sentence,languageCode));
+        actions.appendChild(full);
+
+        panel.appendChild(actions);
+    }
+
+    async function toggleTranscriptTranslation(entry,wrap,button,languageCode=currentStudyLanguage){
+        const sentence=transcriptTurnTargetText(entry);
+        if(!sentence || !wrap)return;
+
+        const panel=transcriptInlinePanel(wrap,"translation");
+        if(panel.dataset.ready==="1"){
+            const opening=panel.hidden;
+            panel.hidden=!opening;
+            if(button)button.textContent=opening ? "▾ Hide translation" : "🌐 Translate";
+            return;
+        }
+
+        panel.hidden=false;
+        panel.replaceChildren();
+        panel.appendChild(transcriptPanelHeader("English meaning",getTranslationKey() ? "Translation API" : "Free/public fallback"));
+
+        const output=document.createElement("div");
+        output.className="transcript-inline-translation-text";
+        output.textContent="Translating…";
+        panel.appendChild(output);
+
+        const old=button?.textContent||"🌐 Translate";
+        if(button){button.disabled=true;button.textContent="Translating…";}
+
+        try{
+            const translated=String(await googleTranslateApiCall(sentence,languageCode,"en")).trim();
+            output.textContent=translated || "Translation unavailable.";
+            panel.dataset.ready=translated ? "1" : "0";
+            if(button)button.textContent="▾ Hide translation";
+        }catch(e){
+            output.textContent="Translation is temporarily unavailable. Local analysis, replay, copy, and saving still work.";
+            panel.dataset.ready="0";
+            if(button)button.textContent=old;
+        }finally{
+            if(button)button.disabled=false;
+        }
+    }
+
+    async function toggleTranscriptExplanation(entry,wrap,button,languageCode=currentStudyLanguage){
+        const sentence=transcriptTurnTargetText(entry);
+        if(!sentence || !wrap)return;
+
+        const cfg=LANGUAGE_MODES[languageCode] || langConfig();
+        const panel=transcriptInlinePanel(wrap,"explanation","transcript-panel-ai");
+
+        if(panel.dataset.ready==="1"){
+            const opening=panel.hidden;
+            panel.hidden=!opening;
+            if(button)button.textContent=opening ? "▾ Hide explanation" : "✨ Explain";
+            return;
+        }
+
+        panel.hidden=false;
+        panel.replaceChildren();
+        panel.appendChild(transcriptPanelHeader("Tutor explanation",getActiveAIKey() ? "AI" : "API key optional"));
+
+        if(!getActiveAIKey()){
+            const msg=document.createElement("div");
+            msg.textContent="Deep explanation uses your selected AI provider. Translation, local analysis, replay, copy, and saving remain available without an AI key.";
+            panel.appendChild(msg);
+            if(button)button.textContent="▾ Hide explanation";
+            return;
+        }
+
+        const output=document.createElement("div");
+        output.textContent="Explaining this turn…";
+        panel.appendChild(output);
+
+        const old=button?.textContent||"✨ Explain";
+        if(button){button.disabled=true;button.textContent="Explaining…";}
+
+        try{
+            const prompt=`You are the private grammar coach inside LanguageTutor.
+Target language: ${cfg.name}.
+
+Explain this exact transcript turn:
+"${sentence}"
+
+Keep the explanation compact and learner-friendly. Include:
+1. Natural English meaning.
+2. Clause structure / word order.
+3. Important grammar forms.
+4. Case, gender, agreement, particles, or verb form where relevant.
+5. One concise "why this form?" insight.
+
+Do not role-play as the conversation partner. Do not continue the conversation.`;
+            const answer=String(await callAI(prompt)).trim();
+            output.replaceChildren();
+            renderTutorMarkdown(output,answer||"No explanation returned.");
+            panel.dataset.ready=answer ? "1" : "0";
+            if(button)button.textContent="▾ Hide explanation";
+        }catch(e){
+            output.textContent="AI explanation failed: "+((e&&e.message)?e.message:String(e));
+            if(button)button.textContent=old;
+        }finally{
+            if(button)button.disabled=false;
+        }
+    }
+
+    function appendTranscriptTurnActions(actions,entry,wrap,languageCode=currentStudyLanguage){
+        if(!actions || !entry || !wrap)return;
+        actions.classList.add("transcript-hub-actions");
+
+        const raw=transcriptTurnRawText(entry);
+        const target=transcriptTurnTargetText(entry);
+        const english=transcriptTurnIsEnglish(entry);
+        const cfg=LANGUAGE_MODES[languageCode] || langConfig();
+        const replayLocale=english ? "en-US" : cfg.locale;
+
+        actions.appendChild(
+            voiceTutorControlButton("🔊 Replay","Replay this turn",()=>speakRawText(raw,replayLocale))
+        );
+
+        if(target && !english){
+            const translate=voiceTutorControlButton("🌐 Translate","Show the English meaning of this turn",ev=>
+                toggleTranscriptTranslation(entry,wrap,ev.currentTarget,languageCode)
+            );
+            translate.classList.add("transcript-action-primary");
+            actions.appendChild(translate);
+
+            const analyze=voiceTutorControlButton("🔎 Analyze","Open a local analysis directly under this transcript turn",ev=>
+                toggleTranscriptLocalAnalysis(entry,wrap,ev.currentTarget,languageCode)
+            );
+            analyze.classList.add("transcript-action-primary");
+            actions.appendChild(analyze);
+
+            const explain=voiceTutorControlButton("✨ Explain","Ask the private grammar coach to explain this turn",ev=>
+                toggleTranscriptExplanation(entry,wrap,ev.currentTarget,languageCode)
+            );
+            explain.classList.add("transcript-action-ai");
+            actions.appendChild(explain);
+        }
+
+        actions.appendChild(
+            voiceTutorControlButton("⧉ Copy","Copy this turn",ev=>
+                copyVoiceTutorText(raw,ev.currentTarget)
+            )
+        );
+
+        if(target && !english){
+            actions.appendChild(
+                voiceTutorControlButton("☆ Save","Save this phrase to the active Study Board",ev=>
+                    window.saveVoiceTutorPhrase(target,languageCode,ev.currentTarget)
+                )
+            );
+        }
+    }
+
     function appendVoiceTutorBubble(entry,scroll=true){
         const log=document.getElementById("voice-chat-messages-log");
         if(!log)return;
@@ -11490,6 +12180,7 @@ Do not add quotation marks or labels.`;
             ? "ml-auto bg-slate-100 text-slate-800 border border-slate-200"
             : "mr-auto bg-indigo-50/70 text-indigo-950 border border-indigo-100") +
             " rounded-xl p-3 max-w-[95%] text-xs";
+        wrap.classList.add("conversation-turn-card");
 
         const label=document.createElement("div");
         label.className="text-[9px] font-bold uppercase tracking-wider mb-1 " + (user?"text-slate-500":"text-indigo-600");
@@ -11531,48 +12222,8 @@ Do not add quotation marks or labels.`;
         }
 
         const actions=document.createElement("div");
-        actions.className="voice-tutor-actions flex flex-wrap gap-1.5 mt-2";
-        const isEnglishEntry=entry.inputMode==="english" || entry.replyLanguage==="en";
-        const replayLocale=isEnglishEntry ? "en-US" : langConfig().locale;
-
-        actions.appendChild(
-            voiceTutorControlButton("🔊 Replay","Replay this transcript",()=>speakRawText(user ? entry.text : stripTutorMarkdown(entry.text),replayLocale))
-        );
-
-        if(!isEnglishEntry){
-            actions.appendChild(
-                voiceTutorControlButton("🔍 Analyze","Analyze this sentence with the grammar parser",()=>
-                    window.analyzeTutorSentence(user ? entry.text : stripTutorMarkdown(entry.text),currentStudyLanguage)
-                )
-            );
-        }
-
-        // Keep extra transcript actions on tutor replies only so learner bubbles stay clean.
-        if(!user){
-            if(!isEnglishEntry){
-                actions.appendChild(
-                    voiceTutorControlButton("🌐 Translate","Translate this tutor reply to English",ev=>
-                        translateVoiceTutorReply(entry,wrap,ev.currentTarget)
-                    )
-                );
-            }
-
-            actions.appendChild(
-                voiceTutorControlButton("⧉ Copy","Copy this tutor reply",ev=>
-                    copyVoiceTutorText(stripTutorMarkdown(entry.text),ev.currentTarget)
-                )
-            );
-
-            // Only target-language tutor phrases belong in the active Study Board.
-            if(!isEnglishEntry){
-                actions.appendChild(
-                    voiceTutorControlButton("☆ Save phrase","Save this target-language phrase to the active Study Board",ev=>
-                        saveVoiceTutorPhrase(stripTutorMarkdown(entry.text),currentStudyLanguage,ev.currentTarget)
-                    )
-                );
-            }
-        }
-
+        actions.className="voice-tutor-actions";
+        appendTranscriptTurnActions(actions,entry,wrap,currentStudyLanguage);
         wrap.appendChild(actions);
 
         log.appendChild(wrap);
@@ -17345,7 +17996,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
         <div class="voice-transcript-titlecopy">
             <div id="voice-transcript-window-title" class="voice-transcript-window-title">Conversation transcript</div>
-            <div class="voice-transcript-window-subtitle">Select any text and copy it into your document for analysis.</div>
+            <div class="voice-transcript-window-subtitle">Interactive transcript — translate, analyze, explain, replay, save, or open the private Coach.</div>
         </div>
         <div class="voice-transcript-window-actions">
             <button type="button" id="voice-transcript-collapse-btn" onclick="toggleVoiceTranscriptCollapse()" title="Collapse transcript">—</button>
@@ -17357,11 +18008,445 @@ Current work: ${context||"No sentence has been entered yet."}`;
         <div class="flex gap-2">
             <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
             <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
+            <button type="button" onclick="openLanguageCoach()">🧭 Coach</button>
             <button type="button" onclick="refreshVoiceTranscriptWindow()">↻ Refresh</button>
         </div>
     </div>
     <div id="voice-transcript-window-body" class="voice-transcript-body"></div>
 </div>
+
+
+
+<div id="language-coach-window" hidden aria-label="Private language coach window">
+    <div id="language-coach-drag-handle" class="language-coach-titlebar">
+        <div class="language-coach-titlecopy">
+            <div id="language-coach-title" class="language-coach-title">🧭 Private Language Coach</div>
+            <div id="language-coach-subtitle" class="language-coach-subtitle">Backstage help — this does not become part of the Tutor conversation.</div>
+        </div>
+        <button type="button" class="language-coach-close" onclick="closeLanguageCoach()" title="Return to conversation">×</button>
+    </div>
+    <div class="language-coach-body">
+        <div class="language-coach-private-note">
+            <strong>Take a sidebar.</strong> Tell the Coach what you want to say. You can get a quick translation without an AI key, or ask AI for more natural/context-aware options. Nothing here is sent to the conversation Tutor automatically.
+        </div>
+
+        <textarea id="language-coach-input"
+            placeholder="e.g. I want to say: I don't mind where we eat, but I'd rather sit outside."></textarea>
+
+        <div class="language-coach-actions">
+            <button type="button" id="language-coach-quick-btn" class="language-coach-quick" onclick="languageCoachQuickTranslate()">
+                🌐 Quick translation
+            </button>
+            <button type="button" id="language-coach-ai-btn" class="language-coach-ai" onclick="languageCoachNaturalOptions()">
+                ✨ Natural options
+            </button>
+        </div>
+
+        <div id="language-coach-status">Quick translation uses the app's normal translation route. Natural options use your selected AI provider.</div>
+        <div id="language-coach-results" aria-live="polite"></div>
+    </div>
+</div>
+
+<script id="transcript-first-private-coach-v2">
+(function(){
+    const coachState={
+        resumeRecognition:false,
+        pausedSpeech:false,
+        lastPrimary:""
+    };
+
+    function currentCoachConfig(){
+        return (typeof LANGUAGE_MODES!=="undefined" && LANGUAGE_MODES[currentStudyLanguage])
+            ? LANGUAGE_MODES[currentStudyLanguage]
+            : (typeof langConfig==="function" ? langConfig() : {code:"de",name:"German",locale:"de-DE"});
+    }
+
+    function setCoachStatus(text,tone="normal"){
+        const el=document.getElementById("language-coach-status");
+        if(!el)return;
+        el.textContent=text;
+        el.style.color=tone==="error" ? "#be123c" : tone==="success" ? "#15803d" : "#64748b";
+    }
+
+    function clearCoachResults(){
+        const box=document.getElementById("language-coach-results");
+        if(box)box.replaceChildren();
+        coachState.lastPrimary="";
+    }
+
+    function coachContextText(){
+        if(typeof voiceTutorHistory!=="function")return "";
+        const cfg=currentCoachConfig();
+        return voiceTutorHistory().slice(-6).map(entry=>{
+            const raw=entry.role==="user"
+                ? String(entry.text||"").trim()
+                : (typeof stripTutorMarkdown==="function" ? stripTutorMarkdown(entry.text) : String(entry.text||"").trim());
+            const who=entry.role==="user" ? "Learner" : `${cfg.name} Tutor`;
+            return `${who}: ${raw}`;
+        }).join("\n");
+    }
+
+    function addCoachPhraseCard(text,note="",label="Suggested reply",primary=false){
+        const phrase=String(text||"").trim();
+        if(!phrase)return;
+        const cfg=currentCoachConfig();
+        const box=document.getElementById("language-coach-results");
+        if(!box)return;
+
+        const card=document.createElement("div");
+        card.className="language-coach-result-card"+(primary?" primary":"");
+
+        const lab=document.createElement("div");
+        lab.className="language-coach-result-label";
+        lab.textContent=label;
+
+        const phraseEl=document.createElement("div");
+        phraseEl.className="language-coach-result-text";
+        phraseEl.textContent=phrase;
+
+        card.append(lab,phraseEl);
+
+        if(note){
+            const noteEl=document.createElement("div");
+            noteEl.className="language-coach-result-note";
+            noteEl.textContent=note;
+            card.appendChild(noteEl);
+        }
+
+        const actions=document.createElement("div");
+        actions.className="language-coach-result-actions";
+
+        const use=document.createElement("button");
+        use.type="button";
+        use.className="coach-use";
+        use.textContent="↩ Use in reply";
+        use.title="Put this phrase in the conversation reply box without sending it";
+        use.addEventListener("click",()=>window.useLanguageCoachPhrase(phrase));
+
+        const listen=document.createElement("button");
+        listen.type="button";
+        listen.textContent="🔊 Listen";
+        listen.addEventListener("click",()=>{
+            if(typeof speakRawText==="function")speakRawText(phrase,cfg.locale);
+        });
+
+        const copy=document.createElement("button");
+        copy.type="button";
+        copy.textContent="⧉ Copy";
+        copy.addEventListener("click",async()=>{
+            if(typeof copyVoiceTutorText==="function"){
+                await copyVoiceTutorText(phrase,copy);
+            }else{
+                try{await navigator.clipboard.writeText(phrase)}catch(e){}
+            }
+        });
+
+        const analyze=document.createElement("button");
+        analyze.type="button";
+        analyze.textContent="🔎 Analyze";
+        analyze.addEventListener("click",()=>{
+            if(typeof window.analyzeTutorSentence==="function"){
+                window.analyzeTutorSentence(phrase,currentStudyLanguage);
+            }
+        });
+
+        const save=document.createElement("button");
+        save.type="button";
+        save.textContent="☆ Save";
+        save.addEventListener("click",()=>{
+            if(typeof window.saveVoiceTutorPhrase==="function"){
+                window.saveVoiceTutorPhrase(phrase,currentStudyLanguage,save);
+            }
+        });
+
+        actions.append(use,listen,copy,analyze,save);
+        card.appendChild(actions);
+        box.appendChild(card);
+
+        if(primary)coachState.lastPrimary=phrase;
+    }
+
+    function addCoachExplanation(text){
+        const clean=String(text||"").trim();
+        if(!clean)return;
+        const box=document.getElementById("language-coach-results");
+        if(!box)return;
+        const panel=document.createElement("div");
+        panel.className="language-coach-explanation";
+        if(typeof renderTutorMarkdown==="function")renderTutorMarkdown(panel,clean);
+        else panel.textContent=clean;
+        box.appendChild(panel);
+    }
+
+    window.openLanguageCoach=function(seed=""){
+        const win=document.getElementById("language-coach-window");
+        const input=document.getElementById("language-coach-input");
+        if(!win)return;
+
+        // This is a sidebar, not a new Tutor turn. Pause live recognition while
+        // the learner works privately, then resume when they return.
+        coachState.resumeRecognition=Boolean(
+            typeof voiceTutorState!=="undefined" &&
+            voiceTutorState.active &&
+            voiceTutorState.micSession &&
+            voiceTutorState.phase==="listening"
+        );
+
+        if(coachState.resumeRecognition){
+            try{
+                if(typeof clearVoiceSilenceTimer==="function")clearVoiceSilenceTimer();
+                if(typeof destroyVoiceRecognition==="function")destroyVoiceRecognition();
+                if(typeof setVoiceMicIndicator==="function")setVoiceMicIndicator(false);
+                voiceTutorState.phase="idle";
+                if(typeof voiceTutorStatus==="function")voiceTutorStatus("Conversation paused while you use the private Coach.");
+            }catch(e){}
+        }
+
+        // If the tutor is currently speaking, pause rather than cancel it.
+        coachState.pausedSpeech=false;
+        try{
+            if(window.speechSynthesis?.speaking && !window.speechSynthesis.paused){
+                window.speechSynthesis.pause();
+                coachState.pausedSpeech=true;
+            }
+        }catch(e){}
+
+        const cfg=currentCoachConfig();
+        const title=document.getElementById("language-coach-title");
+        if(title)title.textContent=`🧭 ${cfg.name} Language Coach`;
+
+        win.hidden=false;
+        if(input){
+            if(seed)input.value=String(seed);
+            setTimeout(()=>input.focus(),40);
+        }
+        setCoachStatus(`Private sidebar: formulate your ${cfg.name} response here. Nothing is sent until you choose a phrase and then send it yourself.`);
+    };
+
+    window.closeLanguageCoach=function(){
+        const win=document.getElementById("language-coach-window");
+        if(win)win.hidden=true;
+
+        if(coachState.pausedSpeech){
+            try{window.speechSynthesis?.resume()}catch(e){}
+            coachState.pausedSpeech=false;
+            // Existing Tutor speech completion logic will restore listening.
+            coachState.resumeRecognition=false;
+            return;
+        }
+
+        if(coachState.resumeRecognition){
+            coachState.resumeRecognition=false;
+            try{
+                if(voiceTutorState?.active && voiceTutorState?.micSession &&
+                   !voiceTutorState?.speaking && voiceTutorState?.phase!=="processing" &&
+                   typeof resumeVoiceRecognition==="function"){
+                    setTimeout(()=>resumeVoiceRecognition(true,"target"),100);
+                }
+            }catch(e){}
+        }
+    };
+
+    window.useLanguageCoachPhrase=function(phrase){
+        const input=document.getElementById("voice-text-input");
+        if(!input)return;
+        input.value=String(phrase||"").trim();
+        window.closeLanguageCoach();
+        setTimeout(()=>{
+            input.focus();
+            input.setSelectionRange?.(input.value.length,input.value.length);
+        },80);
+        if(typeof voiceTutorStatus==="function"){
+            voiceTutorStatus("Coach suggestion placed in your reply box. Review it, then send when you are ready.");
+        }
+    };
+
+    window.languageCoachQuickTranslate=async function(){
+        const input=document.getElementById("language-coach-input");
+        const text=String(input?.value||"").trim();
+        if(!text){setCoachStatus("Write what you want to say first.","error");return;}
+
+        const cfg=currentCoachConfig();
+        const btn=document.getElementById("language-coach-quick-btn");
+        const old=btn?.textContent||"🌐 Quick translation";
+        if(btn){btn.disabled=true;btn.textContent="Translating…";}
+        clearCoachResults();
+        setCoachStatus(`Creating a quick English → ${cfg.name} version…`);
+
+        try{
+            let translated=String(await googleTranslateApiCall(text,"en",cfg.code)).trim();
+            if(typeof normalizeTargetText==="function"){
+                translated=normalizeTargetText(translated,cfg.code);
+            }
+            addCoachPhraseCard(
+                translated,
+                "Quick translation. If context or tone matters, use Natural options for a more conversational formulation.",
+                `Quick ${cfg.name}`,
+                true
+            );
+            setCoachStatus("Nothing has been sent to the Tutor. Choose “Use in reply” when you are ready.","success");
+        }catch(e){
+            setCoachStatus("Quick translation failed: "+((e&&e.message)?e.message:String(e)),"error");
+        }finally{
+            if(btn){btn.disabled=false;btn.textContent=old;}
+        }
+    };
+
+    window.languageCoachNaturalOptions=async function(){
+        const input=document.getElementById("language-coach-input");
+        const request=String(input?.value||"").trim();
+        if(!request){setCoachStatus("Write what you want to say or ask first.","error");return;}
+
+        const cfg=currentCoachConfig();
+        if(!getActiveAIKey()){
+            setCoachStatus("Natural options need an AI API key. Quick translation remains available without one.","error");
+            return;
+        }
+
+        const btn=document.getElementById("language-coach-ai-btn");
+        const old=btn?.textContent||"✨ Natural options";
+        if(btn){btn.disabled=true;btn.textContent="Coaching…";}
+        clearCoachResults();
+        setCoachStatus(`Thinking about how a ${cfg.name} speaker would naturally formulate this…`);
+
+        const context=coachContextText();
+        const prompt=`You are the PRIVATE backstage language coach in LanguageTutor.
+You are NOT the role-play conversation partner and must not continue the conversation.
+Target language: ${cfg.name}.
+
+The learner is in a live conversation and privately wants help formulating a response.
+They may give an English idea, a rough ${cfg.name} attempt, or a question about how to phrase something.
+
+Recent conversation context (context only; do not answer as the Tutor):
+${context || "(No earlier context available.)"}
+
+Learner's private coaching request:
+"${request}"
+
+Return JSON only:
+{
+  "primary":"the best natural ${cfg.name} response for this context",
+  "primary_note":"short English note on tone/meaning",
+  "alternatives":[
+    {"text":"a genuinely different ${cfg.name} option","note":"when/why to use it"},
+    {"text":"another useful ${cfg.name} option","note":"when/why to use it"}
+  ],
+  "explanation":"brief English explanation of the key phrasing or grammar; keep target-language examples in ${cfg.name}"
+}
+
+Requirements:
+- Keep the primary response practical enough to say aloud.
+- Preserve the learner's intended meaning.
+- Do not invent facts the learner did not provide.
+- If formality/register matters, mention it briefly.
+- Do not put the coaching exchange into role-play form.`;
+
+        try{
+            let result;
+            try{
+                result=await callAIJson(prompt);
+            }catch(jsonError){
+                console.warn("Coach JSON response failed:",jsonError);
+                const fallback=String(await callAI(
+                    `Privately help a learner say this naturally in ${cfg.name}: "${request}". `+
+                    `Give one concise ${cfg.name} phrase first, then one short English explanation. `+
+                    `Do not role-play or continue the conversation.`
+                )).trim();
+                result={primary:fallback,primary_note:"AI fallback response",alternatives:[],explanation:""};
+            }
+
+            const primary=String(result?.primary||"").trim();
+            if(primary){
+                addCoachPhraseCard(primary,String(result?.primary_note||"").trim(),"Best fit",true);
+            }
+
+            const alternatives=Array.isArray(result?.alternatives) ? result.alternatives.slice(0,3) : [];
+            alternatives.forEach((item,index)=>{
+                const phrase=typeof item==="string" ? item : item?.text;
+                const note=typeof item==="string" ? "" : item?.note;
+                addCoachPhraseCard(phrase,note||"",`Alternative ${index+1}`,false);
+            });
+
+            addCoachExplanation(String(result?.explanation||"").trim());
+
+            if(!primary && !alternatives.length){
+                throw new Error("The Coach returned no usable phrase.");
+            }
+            setCoachStatus("Private coaching complete. Nothing has been sent to the Tutor.","success");
+        }catch(e){
+            setCoachStatus("Coach could not generate options: "+((e&&e.message)?e.message:String(e)),"error");
+        }finally{
+            if(btn){btn.disabled=false;btn.textContent=old;}
+        }
+    };
+
+    function buildTranscriptHub(){
+        const log=document.getElementById("voice-chat-messages-log");
+        const composer=document.getElementById("unified-text-entry");
+        if(!log || !composer || log.dataset.transcriptHubReady==="1")return;
+        log.dataset.transcriptHubReady="1";
+        log.classList.add("transcript-hub-log");
+
+        // Put conversation history before the composer, matching normal chat flow.
+        const parent=composer.parentElement;
+        if(parent){
+            parent.insertBefore(log,composer);
+
+            const heading=document.createElement("div");
+            heading.id="transcript-hub-heading";
+
+            const copy=document.createElement("div");
+            const title=document.createElement("div");
+            title.className="transcript-hub-title";
+            title.textContent="Conversation transcript";
+            const subtitle=document.createElement("div");
+            subtitle.className="transcript-hub-subtitle";
+            subtitle.textContent="Your conversation is the workspace. Use each turn to translate, analyze, replay, explain, copy, or save.";
+            copy.append(title,subtitle);
+
+            const actions=document.createElement("div");
+            actions.className="transcript-hub-heading-actions";
+
+            const coach=document.createElement("button");
+            coach.type="button";
+            coach.textContent="🧭 Private Coach";
+            coach.title="Take a private sidebar to figure out how you want to respond";
+            coach.addEventListener("click",()=>window.openLanguageCoach());
+
+            const floating=document.createElement("button");
+            floating.type="button";
+            floating.textContent="↗ Floating transcript";
+            floating.title="Open this conversation in a movable/resizable window";
+            floating.addEventListener("click",()=>window.openVoiceTranscriptWindow());
+
+            actions.append(coach,floating);
+            heading.append(copy,actions);
+            parent.insertBefore(heading,log);
+        }
+
+        // Add a Coach launch beside the existing keyboard / English bridge controls.
+        const english=document.getElementById("voice-text-english-btn");
+        const tools=english?.parentElement;
+        if(tools && !document.getElementById("language-coach-open-btn")){
+            const coach=document.createElement("button");
+            coach.type="button";
+            coach.id="language-coach-open-btn";
+            coach.className="min-h-[36px] px-3 py-1.5 rounded-lg border text-[10px] font-bold transition";
+            coach.textContent="🧭 Coach";
+            coach.title="Privately ask how to formulate your response without sending anything to the Tutor";
+            coach.addEventListener("click",()=>window.openLanguageCoach());
+            tools.insertBefore(coach,english);
+        }
+    }
+
+    function init(){
+        buildTranscriptHub();
+    }
+
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);
+    else init();
+})();
+</script>
 
 
 <script id="voice-transcript-window-init">
@@ -17404,6 +18489,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         bindDrag("voice-transcript-window","voice-transcript-drag-handle");
         bindDrag("text-transcript-window","text-transcript-drag-handle");
         bindDrag("saved-transcripts-window","saved-transcripts-drag-handle");
+        bindDrag("language-coach-window","language-coach-drag-handle");
     }
     if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init);
     else init();
