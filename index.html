@@ -4165,6 +4165,298 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+
+<style id="compact-transcript-analysis-v3">
+/* Transcript analysis should scan like annotations, not read like an essay. */
+.transcript-inline-study-panel[data-transcript-inline="analysis"]{
+    padding:8px 9px !important;
+}
+.transcript-inline-study-panel[data-transcript-inline="analysis"] .transcript-inline-panel-head{
+    margin-bottom:6px !important;
+}
+.transcript-inline-study-panel[data-transcript-inline="analysis"] .transcript-local-chips{
+    gap:5px !important;
+}
+.transcript-inline-study-panel[data-transcript-inline="analysis"] .transcript-local-chip{
+    min-width:0 !important;
+    padding:5px 7px !important;
+    border-radius:8px !important;
+}
+.transcript-inline-study-panel[data-transcript-inline="analysis"] .transcript-local-chip-word{
+    font-size:11px !important;
+}
+.transcript-inline-study-panel[data-transcript-inline="analysis"] .transcript-local-chip-meta{
+    font-size:8px !important;
+}
+.transcript-inline-study-panel[data-transcript-inline="explanation"]{
+    font-size:11px !important;
+    line-height:1.45 !important;
+}
+</style>
+
+
+<style id="analysis-workbench-v4-styles">
+#analysis-workbench-window[hidden]{display:none!important}
+#analysis-workbench-window{
+    position:fixed;
+    left:56px;
+    top:76px;
+    width:min(620px,calc(100vw - 112px));
+    height:min(720px,calc(100vh - 128px));
+    min-width:420px;
+    min-height:380px;
+    max-width:calc(100vw - 16px);
+    max-height:calc(100vh - 16px);
+    resize:both;
+    overflow:hidden;
+    z-index:12600;
+    background:#fff;
+    border:1px solid #cbd5e1;
+    border-radius:16px;
+    box-shadow:0 24px 70px rgba(15,23,42,.24);
+    color:#1e293b;
+}
+.analysis-workbench-titlebar{
+    height:54px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 10px 0 14px;
+    background:linear-gradient(135deg,#f8fafc,#eef2ff);
+    border-bottom:1px solid #dbe3ee;
+    cursor:move;
+    user-select:none;
+    touch-action:none;
+}
+.analysis-workbench-titlecopy{min-width:0}
+.analysis-workbench-title{
+    font-size:14px;
+    font-weight:900;
+    color:#1e293b;
+}
+.analysis-workbench-subtitle{
+    margin-top:1px;
+    color:#64748b;
+    font-size:9px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.analysis-workbench-close{
+    width:34px;
+    min-width:34px;
+    height:34px;
+    min-height:34px;
+    border:0;
+    border-radius:8px;
+    background:transparent;
+    color:#64748b;
+    font-size:20px;
+    font-weight:800;
+}
+.analysis-workbench-close:hover{background:#f1f5f9}
+.analysis-workbench-body{
+    height:calc(100% - 54px);
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    padding:12px;
+    gap:10px;
+}
+.analysis-workbench-source{
+    padding:11px 12px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+}
+.analysis-workbench-source-label{
+    color:#64748b;
+    font-size:9px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+#analysis-workbench-sentence{
+    margin-top:4px;
+    color:#0f172a;
+    font-size:16px;
+    font-weight:800;
+    line-height:1.45;
+    overflow-wrap:anywhere;
+}
+.analysis-workbench-toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+}
+.analysis-workbench-toolbar button{
+    min-height:38px;
+    padding:7px 10px;
+    border:1px solid #cbd5e1;
+    border-radius:9px;
+    background:#fff;
+    color:#475569;
+    font-size:10px;
+    font-weight:800;
+}
+.analysis-workbench-toolbar button:hover{
+    border-color:#a5b4fc;
+    background:#f8fafc;
+    color:#4338ca;
+}
+.analysis-workbench-toolbar button.primary{
+    background:#eef2ff;
+    color:#4338ca;
+    border-color:#c7d2fe;
+}
+.analysis-workbench-toolbar button.ai{
+    background:#fffbeb;
+    color:#92400e;
+    border-color:#fde68a;
+}
+.analysis-workbench-toolbar button:disabled{
+    opacity:.62;
+    cursor:wait;
+}
+#analysis-workbench-status{
+    color:#64748b;
+    font-size:9px;
+    line-height:1.4;
+}
+#analysis-workbench-results{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    padding:10px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#fbfdff;
+}
+.analysis-workbench-empty{
+    display:grid;
+    place-items:center;
+    min-height:160px;
+    text-align:center;
+    color:#94a3b8;
+    font-size:11px;
+    line-height:1.5;
+}
+.analysis-workbench-section{
+    margin-bottom:11px;
+    padding:10px 11px;
+    border:1px solid #e2e8f0;
+    border-radius:11px;
+    background:#fff;
+}
+.analysis-workbench-section:last-child{margin-bottom:0}
+.analysis-workbench-section.ai{
+    border-color:#fde68a;
+    background:#fffbeb;
+}
+.analysis-workbench-section-title{
+    margin-bottom:7px;
+    color:#475569;
+    font-size:9px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+.analysis-workbench-translation{
+    color:#1e3a5f;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.5;
+}
+.analysis-workbench-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+.analysis-workbench-chip{
+    padding:6px 8px;
+    border:1px solid #e2e8f0;
+    border-radius:9px;
+    background:#f8fafc;
+}
+.analysis-workbench-chip.case-nom{background:#dbeafe;border-color:#bfdbfe}
+.analysis-workbench-chip.case-acc{background:#c7f5d8;border-color:#9ee8bb}
+.analysis-workbench-chip.case-dat{background:#fef9c3;border-color:#fef08a}
+.analysis-workbench-chip.case-gen{background:#f3e8ff;border-color:#e9d5ff}
+.analysis-workbench-chip.case-multi{background:#ffedd5;border-color:#fed7aa}
+.analysis-workbench-chip strong{
+    display:block;
+    font-size:11px;
+    color:#1e293b;
+}
+.analysis-workbench-chip span{
+    display:block;
+    margin-top:2px;
+    color:#64748b;
+    font-size:8px;
+    line-height:1.3;
+}
+.analysis-workbench-json-row{
+    display:grid;
+    grid-template-columns:minmax(90px,.8fr) minmax(110px,1fr) minmax(0,1.4fr);
+    gap:8px;
+    align-items:start;
+    padding:7px 0;
+    border-bottom:1px solid #f1f5f9;
+}
+.analysis-workbench-json-row:last-child{border-bottom:0}
+.analysis-workbench-json-row strong{font-size:11px;color:#1e293b}
+.analysis-workbench-json-row .role{font-size:10px;font-weight:800;color:#4338ca}
+.analysis-workbench-json-row .note{font-size:10px;line-height:1.4;color:#64748b}
+.analysis-workbench-hint{
+    padding:8px 9px;
+    border:1px solid #dbeafe;
+    border-radius:9px;
+    background:#eff6ff;
+    color:#1e40af;
+    font-size:10px;
+    line-height:1.45;
+}
+
+/* Transcript itself stays intentionally light. */
+#voice-chat-messages-log .transcript-hub-actions{
+    opacity:.88;
+}
+#voice-chat-messages-log .transcript-hub-actions:hover{
+    opacity:1;
+}
+
+@media(max-width:640px){
+    #analysis-workbench-window{
+        left:8px!important;
+        right:auto!important;
+        top:auto!important;
+        bottom:8px;
+        width:calc(100vw - 16px)!important;
+        height:min(78vh,720px);
+        min-width:0;
+        min-height:320px;
+        max-width:none;
+        max-height:calc(100vh - 16px);
+        resize:none;
+        border-radius:15px;
+    }
+    .analysis-workbench-titlebar{cursor:default}
+    .analysis-workbench-toolbar{
+        display:grid;
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+    .analysis-workbench-toolbar button{
+        width:100%;
+        min-height:44px;
+    }
+    .analysis-workbench-json-row{
+        grid-template-columns:1fr;
+        gap:3px;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -11656,7 +11948,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             const empty=document.createElement("div");
             empty.id="voice-tutor-empty";
             empty.className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400";
-            empty.textContent=`Start speaking or type a ${langConfig().name} reply below. Each turn becomes interactive here: translate it, analyze it, replay it, or save it. If you know what you want to say but cannot formulate it, open the private Coach.`;
+            empty.textContent=`Start speaking or type a ${langConfig().name} reply below. Tap Analyze on any target-language turn to open the movable Analysis Workbench. If you know what you want to say but cannot formulate it, open the private Coach.`;
             log.appendChild(empty);
             return;
         }
@@ -11947,7 +12239,7 @@ Do not add quotation marks or labels.`;
             return parseGermanPhrases(sentence).map(item=>({
                 text:Array.isArray(item.words) ? item.words.join(" ") : String(item.text||""),
                 label:String(item.label||item.type||"Word"),
-                detail:[item.gender,item.type].filter(Boolean).join(" • "),
+                detail:[item.gender, (item.type && String(item.type)!==String(item.label) ? item.type : "")].filter(Boolean).join(" • "),
                 caseClass:transcriptCaseClass(item.label)
             })).filter(item=>item.text);
         }
@@ -11980,7 +12272,7 @@ Do not add quotation marks or labels.`;
         if(!opening)return;
 
         panel.replaceChildren();
-        panel.appendChild(transcriptPanelHeader(`Local ${cfg.name} analysis`,"No API key"));
+        panel.appendChild(transcriptPanelHeader(`${cfg.name} structure`,"Local • no API key"));
 
         const items=transcriptLocalParseItems(sentence,languageCode);
         if(!items.length){
@@ -12008,17 +12300,7 @@ Do not add quotation marks or labels.`;
             panel.appendChild(chips);
         }
 
-        const actions=document.createElement("div");
-        actions.className="transcript-inline-panel-actions";
 
-        const full=document.createElement("button");
-        full.type="button";
-        full.textContent="Open full parser";
-        full.title="Use the existing full parser workspace for this exact turn";
-        full.addEventListener("click",()=>window.analyzeTutorSentence(sentence,languageCode));
-        actions.appendChild(full);
-
-        panel.appendChild(actions);
     }
 
     async function toggleTranscriptTranslation(entry,wrap,button,languageCode=currentStudyLanguage){
@@ -12069,19 +12351,19 @@ Do not add quotation marks or labels.`;
         if(panel.dataset.ready==="1"){
             const opening=panel.hidden;
             panel.hidden=!opening;
-            if(button)button.textContent=opening ? "▾ Hide explanation" : "✨ Explain";
+            if(button)button.textContent=opening ? "▾ Hide why" : "💡 Why?";
             return;
         }
 
         panel.hidden=false;
         panel.replaceChildren();
-        panel.appendChild(transcriptPanelHeader("Tutor explanation",getActiveAIKey() ? "AI" : "API key optional"));
+        panel.appendChild(transcriptPanelHeader("Why this form?",getActiveAIKey() ? "AI • concise" : "API key optional"));
 
         if(!getActiveAIKey()){
             const msg=document.createElement("div");
             msg.textContent="Deep explanation uses your selected AI provider. Translation, local analysis, replay, copy, and saving remain available without an AI key.";
             panel.appendChild(msg);
-            if(button)button.textContent="▾ Hide explanation";
+            if(button)button.textContent="▾ Hide why";
             return;
         }
 
@@ -12089,29 +12371,31 @@ Do not add quotation marks or labels.`;
         output.textContent="Explaining this turn…";
         panel.appendChild(output);
 
-        const old=button?.textContent||"✨ Explain";
+        const old=button?.textContent||"💡 Why?";
         if(button){button.disabled=true;button.textContent="Explaining…";}
 
         try{
             const prompt=`You are the private grammar coach inside LanguageTutor.
 Target language: ${cfg.name}.
 
-Explain this exact transcript turn:
+Transcript turn:
 "${sentence}"
 
-Keep the explanation compact and learner-friendly. Include:
-1. Natural English meaning.
-2. Clause structure / word order.
-3. Important grammar forms.
-4. Case, gender, agreement, particles, or verb form where relevant.
-5. One concise "why this form?" insight.
+Give ONLY a compact learner note, maximum 3 short bullets:
+- English meaning, only if it is not obvious.
+- The single most useful grammar/form feature in this sentence.
+- A brief "why?" explanation for that feature.
 
-Do not role-play as the conversation partner. Do not continue the conversation.`;
+Prefer concrete wording such as "dir = dative of du because es geht jemandem takes dative."
+Do not give a full clause-by-clause lesson.
+Do not compare with Spanish, Japanese, or other languages unless the learner explicitly asked.
+Do not role-play or continue the conversation.
+Keep the entire answer under about 70 words.`;
             const answer=String(await callAI(prompt)).trim();
             output.replaceChildren();
             renderTutorMarkdown(output,answer||"No explanation returned.");
             panel.dataset.ready=answer ? "1" : "0";
-            if(button)button.textContent="▾ Hide explanation";
+            if(button)button.textContent="▾ Hide why";
         }catch(e){
             output.textContent="AI explanation failed: "+((e&&e.message)?e.message:String(e));
             if(button)button.textContent=old;
@@ -12130,29 +12414,17 @@ Do not role-play as the conversation partner. Do not continue the conversation.`
         const cfg=LANGUAGE_MODES[languageCode] || langConfig();
         const replayLocale=english ? "en-US" : cfg.locale;
 
-        actions.appendChild(
-            voiceTutorControlButton("🔊 Replay","Replay this turn",()=>speakRawText(raw,replayLocale))
-        );
-
         if(target && !english){
-            const translate=voiceTutorControlButton("🌐 Translate","Show the English meaning of this turn",ev=>
-                toggleTranscriptTranslation(entry,wrap,ev.currentTarget,languageCode)
-            );
-            translate.classList.add("transcript-action-primary");
-            actions.appendChild(translate);
-
-            const analyze=voiceTutorControlButton("🔎 Analyze","Open a local analysis directly under this transcript turn",ev=>
-                toggleTranscriptLocalAnalysis(entry,wrap,ev.currentTarget,languageCode)
+            const analyze=voiceTutorControlButton("🔎 Analyze","Open this turn in the movable Analysis Workbench",()=>
+                window.openAnalysisWorkbench(target,languageCode,entry)
             );
             analyze.classList.add("transcript-action-primary");
             actions.appendChild(analyze);
-
-            const explain=voiceTutorControlButton("✨ Explain","Ask the private grammar coach to explain this turn",ev=>
-                toggleTranscriptExplanation(entry,wrap,ev.currentTarget,languageCode)
-            );
-            explain.classList.add("transcript-action-ai");
-            actions.appendChild(explain);
         }
+
+        actions.appendChild(
+            voiceTutorControlButton("🔊 Replay","Replay this turn",()=>speakRawText(raw,replayLocale))
+        );
 
         actions.appendChild(
             voiceTutorControlButton("⧉ Copy","Copy this turn",ev=>
@@ -14190,8 +14462,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const button=document.createElement("button");
         button.type="button";
         button.className="transcript-analyze-btn";
-        button.textContent="🔍 Analyze";
-        button.title=`Analyze this sentence with the ${LANGUAGE_MODES[languageCode]?.name||"current language"} parser`;
+        button.textContent="↗ Full parser";
+        button.title=`Open this sentence in the full ${LANGUAGE_MODES[languageCode]?.name||"current language"} parser`;
         button.addEventListener("click",()=>window.analyzeTutorSentence(text,languageCode));
         return button;
     }
@@ -17996,7 +18268,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
         <div class="voice-transcript-titlecopy">
             <div id="voice-transcript-window-title" class="voice-transcript-window-title">Conversation transcript</div>
-            <div class="voice-transcript-window-subtitle">Interactive transcript — translate, analyze, explain, replay, save, or open the private Coach.</div>
+            <div class="voice-transcript-window-subtitle">Tap Analyze on a turn to open the movable Analysis Workbench; use Coach when you need help formulating a reply.</div>
         </div>
         <div class="voice-transcript-window-actions">
             <button type="button" id="voice-transcript-collapse-btn" onclick="toggleVoiceTranscriptCollapse()" title="Collapse transcript">—</button>
@@ -18016,6 +18288,365 @@ Current work: ${context||"No sentence has been entered yet."}`;
 </div>
 
 
+
+
+<div id="analysis-workbench-window" hidden aria-label="Analysis Workbench">
+    <div id="analysis-workbench-drag-handle" class="analysis-workbench-titlebar">
+        <div class="analysis-workbench-titlecopy">
+            <div class="analysis-workbench-title">🔎 Analysis Workbench</div>
+            <div id="analysis-workbench-subtitle" class="analysis-workbench-subtitle">Selected transcript turn</div>
+        </div>
+        <button type="button" class="analysis-workbench-close" onclick="closeAnalysisWorkbench()" title="Close analysis">×</button>
+    </div>
+
+    <div class="analysis-workbench-body">
+        <div class="analysis-workbench-source">
+            <div class="analysis-workbench-source-label">Selected utterance</div>
+            <div id="analysis-workbench-sentence"></div>
+        </div>
+
+        <div class="analysis-workbench-toolbar">
+            <button type="button" class="primary" onclick="analysisWorkbenchTranslate(this)">🌐 Translation</button>
+            <button type="button" class="primary" onclick="analysisWorkbenchStructure(this)">🧩 Structure</button>
+            <button type="button" class="ai" onclick="analysisWorkbenchGrammar(this)">✨ Grammar parse</button>
+            <button type="button" class="ai" onclick="analysisWorkbenchWhy(this)">💡 Why?</button>
+            <button type="button" onclick="analysisWorkbenchListen()">🔊 Listen</button>
+            <button type="button" onclick="analysisWorkbenchCopy(this)">⧉ Copy</button>
+            <button type="button" onclick="analysisWorkbenchSave(this)">☆ Save</button>
+            <button type="button" onclick="analysisWorkbenchOpenFullParser()">↗ Full parser</button>
+            <button type="button" onclick="analysisWorkbenchCoach()">🧭 Coach</button>
+        </div>
+
+        <div id="analysis-workbench-status">Choose an analysis. Translation and local structure do not require an AI key.</div>
+        <div id="analysis-workbench-results">
+            <div class="analysis-workbench-empty">
+                This window keeps deeper study out of the conversation transcript.<br>
+                Choose Translation, Structure, Grammar parse, or Why?.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="analysis-workbench-v4">
+(function(){
+    const state={
+        sentence:"",
+        languageCode:"de",
+        entry:null,
+        translation:"",
+        localItems:null,
+        grammar:null,
+        why:""
+    };
+
+    function cfg(){
+        return (typeof LANGUAGE_MODES!=="undefined" && LANGUAGE_MODES[state.languageCode])
+            ? LANGUAGE_MODES[state.languageCode]
+            : (typeof langConfig==="function" ? langConfig() : {name:"German",locale:"de-DE",code:"de"});
+    }
+
+    function status(text,tone="normal"){
+        const el=document.getElementById("analysis-workbench-status");
+        if(!el)return;
+        el.textContent=text;
+        el.style.color=tone==="error" ? "#be123c" : tone==="success" ? "#15803d" : "#64748b";
+    }
+
+    function results(){
+        return document.getElementById("analysis-workbench-results");
+    }
+
+    function clearResults(){
+        const box=results();
+        if(box)box.replaceChildren();
+    }
+
+    function section(title,kind=""){
+        const box=results();
+        if(!box)return null;
+        const card=document.createElement("div");
+        card.className="analysis-workbench-section"+(kind ? " "+kind : "");
+        const heading=document.createElement("div");
+        heading.className="analysis-workbench-section-title";
+        heading.textContent=title;
+        card.appendChild(heading);
+        box.appendChild(card);
+        return card;
+    }
+
+    function resetForSentence(sentence,languageCode,entry){
+        state.sentence=String(sentence||"").trim();
+        state.languageCode=languageCode || currentStudyLanguage || "de";
+        state.entry=entry || null;
+        state.translation="";
+        state.localItems=null;
+        state.grammar=null;
+        state.why="";
+        clearResults();
+
+        const empty=document.createElement("div");
+        empty.className="analysis-workbench-empty";
+        empty.innerHTML="Choose what you want to inspect.<br>Translation and local structure work without an AI key.";
+        results()?.appendChild(empty);
+    }
+
+    window.openAnalysisWorkbench=function(sentence,languageCode=currentStudyLanguage,entry=null){
+        const clean=String(sentence||"").trim();
+        if(!clean)return;
+
+        const win=document.getElementById("analysis-workbench-window");
+        const sentenceEl=document.getElementById("analysis-workbench-sentence");
+        const subtitle=document.getElementById("analysis-workbench-subtitle");
+
+        resetForSentence(clean,languageCode,entry);
+        if(sentenceEl)sentenceEl.textContent=clean;
+        if(subtitle)subtitle.textContent=`${cfg().name} transcript turn`;
+        if(win)win.hidden=false;
+        status("Choose an analysis. Translation and local structure do not require an AI key.");
+    };
+
+    window.closeAnalysisWorkbench=function(){
+        const win=document.getElementById("analysis-workbench-window");
+        if(win)win.hidden=true;
+    };
+
+    window.analysisWorkbenchTranslate=async function(button){
+        if(!state.sentence)return;
+        clearResults();
+        const card=section("English translation");
+        const output=document.createElement("div");
+        output.className="analysis-workbench-translation";
+        output.textContent=state.translation || "Translating…";
+        card?.appendChild(output);
+
+        if(state.translation){
+            status("Translation shown.","success");
+            return;
+        }
+
+        const old=button?.textContent||"🌐 Translation";
+        if(button){button.disabled=true;button.textContent="Translating…";}
+        try{
+            state.translation=String(await googleTranslateApiCall(state.sentence,state.languageCode,"en")).trim();
+            output.textContent=state.translation || "Translation unavailable.";
+            status("Translation shown. The transcript remains unchanged.","success");
+        }catch(e){
+            output.textContent="Translation is temporarily unavailable.";
+            status("Translation failed: "+((e&&e.message)?e.message:String(e)),"error");
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
+        }
+    };
+
+    window.analysisWorkbenchStructure=function(){
+        if(!state.sentence)return;
+        clearResults();
+        const card=section(`${cfg().name} local structure`);
+        const items=state.localItems || (
+            typeof transcriptLocalParseItems==="function"
+                ? transcriptLocalParseItems(state.sentence,state.languageCode)
+                : []
+        );
+        state.localItems=items;
+
+        if(!items.length){
+            const empty=document.createElement("div");
+            empty.className="analysis-workbench-hint";
+            empty.textContent="The local parser could not confidently break down this turn. Try Grammar parse or Full parser.";
+            card?.appendChild(empty);
+            status("No confident local structure found.");
+            return;
+        }
+
+        const chips=document.createElement("div");
+        chips.className="analysis-workbench-chips";
+        items.forEach(item=>{
+            const chip=document.createElement("div");
+            chip.className=`analysis-workbench-chip ${item.caseClass||""}`.trim();
+
+            const word=document.createElement("strong");
+            word.textContent=item.text||"";
+
+            const meta=document.createElement("span");
+            meta.textContent=[item.label,item.detail].filter(Boolean).join(" • ");
+
+            chip.append(word,meta);
+            chips.appendChild(chip);
+        });
+        card?.appendChild(chips);
+        status("Local structure shown — no AI key used.","success");
+    };
+
+    window.analysisWorkbenchGrammar=async function(button){
+        if(!state.sentence)return;
+        if(!getActiveAIKey()){
+            clearResults();
+            const card=section("Grammar parse","ai");
+            const msg=document.createElement("div");
+            msg.className="analysis-workbench-hint";
+            msg.textContent="Detailed grammar parsing uses your selected AI provider. Local Structure and Translation remain available without an AI key.";
+            card?.appendChild(msg);
+            status("AI grammar parse needs an API key.");
+            return;
+        }
+
+        clearResults();
+        const card=section("Grammar parse","ai");
+        const loading=document.createElement("div");
+        loading.textContent="Parsing grammar…";
+        card?.appendChild(loading);
+
+        const old=button?.textContent||"✨ Grammar parse";
+        if(button){button.disabled=true;button.textContent="Parsing…";}
+        try{
+            const prompt=`You are a language-analysis engine inside LanguageTutor.
+Target language: ${cfg().name}
+Sentence: "${state.sentence}"
+
+Return JSON only:
+{
+  "items":[
+    {
+      "text":"exact word or phrase",
+      "role":"short grammatical role",
+      "note":"short useful grammar note"
+    }
+  ]
+}
+
+Rules:
+- Preserve sentence order.
+- Prefer meaningful phrase units where appropriate.
+- Keep role labels short.
+- Each note should be one concise learner-facing phrase, not a paragraph.
+- Mention case/gender/agreement/particle/verb form only when relevant.
+- Do not translate the whole sentence here.
+- Do not compare with other languages.`;
+
+            const data=await callAIJson(prompt);
+            const items=Array.isArray(data?.items) ? data.items.filter(x=>x && x.text) : [];
+            state.grammar=items;
+
+            card?.replaceChildren();
+            const heading=document.createElement("div");
+            heading.className="analysis-workbench-section-title";
+            heading.textContent="Grammar parse";
+            card?.appendChild(heading);
+
+            if(!items.length){
+                const msg=document.createElement("div");
+                msg.textContent="No structured parse was returned.";
+                card?.appendChild(msg);
+            }else{
+                items.forEach(item=>{
+                    const row=document.createElement("div");
+                    row.className="analysis-workbench-json-row";
+
+                    const word=document.createElement("strong");
+                    word.textContent=String(item.text||"");
+
+                    const role=document.createElement("div");
+                    role.className="role";
+                    role.textContent=String(item.role||"");
+
+                    const note=document.createElement("div");
+                    note.className="note";
+                    note.textContent=String(item.note||"");
+
+                    row.append(word,role,note);
+                    card?.appendChild(row);
+                });
+            }
+            status("Detailed grammar parse shown.","success");
+        }catch(e){
+            loading.textContent="Grammar parse failed: "+((e&&e.message)?e.message:String(e));
+            status("Grammar parse failed.","error");
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
+        }
+    };
+
+    window.analysisWorkbenchWhy=async function(button){
+        if(!state.sentence)return;
+        if(!getActiveAIKey()){
+            clearResults();
+            const card=section("Why this form?","ai");
+            const msg=document.createElement("div");
+            msg.className="analysis-workbench-hint";
+            msg.textContent="The concise Why? explanation uses your selected AI provider.";
+            card?.appendChild(msg);
+            status("Why? needs an AI API key.");
+            return;
+        }
+
+        clearResults();
+        const card=section("Why this form?","ai");
+        const output=document.createElement("div");
+        output.textContent="Finding the most useful point…";
+        card?.appendChild(output);
+
+        const old=button?.textContent||"💡 Why?";
+        if(button){button.disabled=true;button.textContent="Thinking…";}
+        try{
+            const prompt=`You are the private grammar coach inside LanguageTutor.
+Target language: ${cfg().name}
+Sentence: "${state.sentence}"
+
+Explain ONLY the single most useful non-obvious form in this sentence.
+Maximum 3 short bullets and about 70 words total.
+Be concrete. Example style: "dir = dative of du because es geht jemandem takes dative."
+Do not give a full lesson.
+Do not compare with other languages.
+Do not continue the conversation.`;
+
+            state.why=String(await callAI(prompt)).trim();
+            output.replaceChildren();
+            if(typeof renderTutorMarkdown==="function")renderTutorMarkdown(output,state.why||"No explanation returned.");
+            else output.textContent=state.why||"No explanation returned.";
+            status("Concise explanation shown.","success");
+        }catch(e){
+            output.textContent="Why? failed: "+((e&&e.message)?e.message:String(e));
+            status("Why? failed.","error");
+        }finally{
+            if(button){button.disabled=false;button.textContent=old;}
+        }
+    };
+
+    window.analysisWorkbenchListen=function(){
+        if(!state.sentence)return;
+        if(typeof speakRawText==="function")speakRawText(state.sentence,cfg().locale);
+    };
+
+    window.analysisWorkbenchCopy=async function(button){
+        if(!state.sentence)return;
+        if(typeof copyVoiceTutorText==="function"){
+            await copyVoiceTutorText(state.sentence,button);
+            return;
+        }
+        try{await navigator.clipboard.writeText(state.sentence)}catch(e){}
+    };
+
+    window.analysisWorkbenchSave=function(button){
+        if(!state.sentence)return;
+        if(typeof window.saveVoiceTutorPhrase==="function"){
+            window.saveVoiceTutorPhrase(state.sentence,state.languageCode,button);
+        }
+    };
+
+    window.analysisWorkbenchOpenFullParser=function(){
+        if(!state.sentence)return;
+        if(typeof window.analyzeTutorSentence==="function"){
+            window.analyzeTutorSentence(state.sentence,state.languageCode);
+        }
+    };
+
+    window.analysisWorkbenchCoach=function(){
+        if(typeof window.openLanguageCoach==="function"){
+            window.openLanguageCoach();
+        }
+    };
+})();
+</script>
 
 <div id="language-coach-window" hidden aria-label="Private language coach window">
     <div id="language-coach-drag-handle" class="language-coach-titlebar">
@@ -18401,7 +19032,7 @@ Requirements:
             title.textContent="Conversation transcript";
             const subtitle=document.createElement("div");
             subtitle.className="transcript-hub-subtitle";
-            subtitle.textContent="Your conversation is the workspace. Use each turn to translate, analyze, replay, explain, copy, or save.";
+            subtitle.textContent="Your conversation is the workspace. Tap Analyze on a turn to open translation and grammar tools in a separate movable workbench.";
             copy.append(title,subtitle);
 
             const actions=document.createElement("div");
@@ -18490,6 +19121,7 @@ Requirements:
         bindDrag("text-transcript-window","text-transcript-drag-handle");
         bindDrag("saved-transcripts-window","saved-transcripts-drag-handle");
         bindDrag("language-coach-window","language-coach-drag-handle");
+        bindDrag("analysis-workbench-window","analysis-workbench-drag-handle");
     }
     if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",init);
     else init();
