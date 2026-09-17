@@ -5211,6 +5211,38 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+<style id="workspace-v84-ai-only-diagram-css">
+.analysis-diagram-unavailable{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+    padding:14px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:10px;
+    line-height:1.45;
+}
+.analysis-diagram-unavailable strong{
+    color:#334155;
+    font-size:11px;
+}
+.analysis-diagram-unavailable button{
+    margin-top:2px;
+    min-height:30px;
+    padding:5px 10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#fff;
+    color:#334155;
+    font-size:9px;
+    font-weight:800;
+    cursor:pointer;
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -19065,7 +19097,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
             <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
             <button type="button" onclick="openLanguageCoach()">🧭 Coach</button>
-            <button type="button" onclick="dockVoiceTranscript()">⇲ Dock transcript</button>
+            <button type="button" onclick="dockVoiceTranscript()">↩ Return to Chat</button>
         </div>
     </div>
     <div id="voice-transcript-window-body" class="voice-transcript-body"></div>
@@ -19673,41 +19705,57 @@ Rules:
 
             if(diagramHost.dataset.loaded==="1")return;
 
-            // Always show a useful local diagram immediately. AI may refine it
-            // in place, but a timeout must never leave this view blank.
-            const localDiagram=parsed?.diagram || workbenchFallbackDiagram(parsed?.chunks||[]);
-            diagramHost.replaceChildren();
-            const localTree=buildDiagramTree(localDiagram);
-            if(localTree)diagramHost.appendChild(localTree);
-
             const ai=resolveWorkbenchAIConfig();
+            diagramHost.replaceChildren();
+
             if(!ai.available){
+                const unavailable=document.createElement("div");
+                unavailable.className="analysis-diagram-unavailable";
+                unavailable.innerHTML="<strong>Sentence diagram unavailable.</strong><span>AI is required for a reliable diagram. Add or select an AI API key in Settings, then try again.</span>";
+                diagramHost.appendChild(unavailable);
                 diagramHost.dataset.loaded="1";
                 return;
             }
 
-            const badge=document.createElement("div");
-            badge.className="analysis-diagram-refining-badge";
-            badge.textContent="LOCAL • AI REFINING…";
-            diagramHost.prepend(badge);
+            const loading=document.createElement("div");
+            loading.className="analysis-diagram-refining-badge";
+            loading.textContent=`✨ ${ai.providerName||"AI"} • BUILDING DIAGRAM…`;
+            diagramHost.appendChild(loading);
 
             try{
                 const diagram=await getWorkbenchDiagramData(parsed);
                 const tree=buildDiagramTree(diagram);
-                if(tree){
-                    diagramHost.replaceChildren();
-                    const done=document.createElement("div");
-                    done.className="analysis-diagram-refining-badge";
-                    done.textContent="✨ OPENAI";
-                    diagramHost.append(done,tree);
-                }
-            }catch(e){
-                // Keep the local diagram. A background enhancement timeout is
-                // not a result-level error.
-                badge.textContent="LOCAL";
-                badge.title=(e&&e.message)?e.message:String(e);
-            }finally{
+                if(!tree)throw new Error("AI did not return a usable diagram.");
+
+                diagramHost.replaceChildren();
+                const done=document.createElement("div");
+                done.className="analysis-diagram-refining-badge";
+                done.textContent=`✨ ${ai.providerName||"AI"}`;
+                diagramHost.append(done,tree);
                 diagramHost.dataset.loaded="1";
+            }catch(e){
+                diagramHost.replaceChildren();
+                const unavailable=document.createElement("div");
+                unavailable.className="analysis-diagram-unavailable";
+
+                const title=document.createElement("strong");
+                title.textContent="Sentence diagram unavailable.";
+
+                const note=document.createElement("span");
+                note.textContent="AI could not produce a reliable diagram right now. Try Diagram again.";
+
+                const retry=document.createElement("button");
+                retry.type="button";
+                retry.textContent="Try again";
+                retry.addEventListener("click",()=>{
+                    diagramHost.dataset.loaded="";
+                    showDiagram();
+                });
+
+                unavailable.append(title,note,retry);
+                diagramHost.appendChild(unavailable);
+                // Deliberately do not cache failure, so retry can make a fresh request.
+                diagramHost.dataset.loaded="";
             }
         };
 
@@ -19793,7 +19841,7 @@ Rules:
 
         const ai=resolveWorkbenchAIConfig();
         if(!ai.available){
-            return parsed?.diagram || workbenchFallbackDiagram(parsed?.chunks||[]);
+            throw new Error("AI is required for sentence diagrams.");
         }
 
         const languageName=cfg().name;
@@ -21067,30 +21115,15 @@ Requirements:
     };
 
     window.workspaceDockTool=function(name){
-        ensureWorkspaceDock();
-
+        // General tool docking was retired in v8.3.
+        // Transcript alone has a natural home inside Conversation.
         if(name==="transcript"){
             if(typeof window.dockVoiceTranscript==="function")window.dockVoiceTranscript();
             saveState(name,{docked:true,open:false,minimized:false});
-            removeChip(name);
             return;
         }
-
-        const panel=panelFor(name);
-        const slot=document.getElementById(`workspace-dock-${name}`);
-        if(!panel || !slot)return;
-
-        panel.hidden=false;
-        panel.classList.add("workspace-docked");
-        panel.style.left="";
-        panel.style.top="";
-        panel.style.right="";
-        panel.style.bottom="";
-        panel.style.width="";
-        panel.style.height="";
-        slot.appendChild(panel);
-        saveState(name,{docked:true,open:true,minimized:false});
-        removeChip(name);
+        window.workspaceFloatTool(name);
+        saveState(name,{docked:false,open:true,minimized:false});
     };
 
     window.workspaceFloatTool=function(name){
@@ -21139,9 +21172,8 @@ Requirements:
         const panel=panelFor(name);
         if(!panel)return;
 
-        if(saved.docked)window.workspaceDockTool(name);
-        else window.workspaceFloatTool(name);
-        saveState(name,{minimized:false,open:true});
+        window.workspaceFloatTool(name);
+        saveState(name,{minimized:false,open:true,docked:false});
     };
 
     window.workspaceOpenTool=function(name){
@@ -21155,8 +21187,7 @@ Requirements:
             const panel=panelFor("analysis");
             if(panel){
                 panel.hidden=false;
-                if(stateFor("analysis").docked)window.workspaceDockTool("analysis");
-                else window.workspaceFloatTool("analysis");
+                window.workspaceFloatTool("analysis");
             }
             setMobileActive("analysis");
             return;
@@ -21165,8 +21196,7 @@ Requirements:
         if(name==="coach"){
             if(typeof window.openLanguageCoach==="function")window.openLanguageCoach();
             const panel=panelFor("coach");
-            if(panel && stateFor("coach").docked)window.workspaceDockTool("coach");
-            else if(panel)window.workspaceFloatTool("coach");
+            if(panel)window.workspaceFloatTool("coach");
             setMobileActive("coach");
             return;
         }
@@ -21176,8 +21206,7 @@ Requirements:
             setTimeout(()=>{
                 const panel=panelFor("keyboard");
                 if(!panel)return;
-                if(stateFor("keyboard").docked)window.workspaceDockTool("keyboard");
-                else window.workspaceFloatTool("keyboard");
+                window.workspaceFloatTool("keyboard");
             },0);
             setMobileActive("keyboard");
         }
@@ -21213,17 +21242,6 @@ Requirements:
             window.workspaceMinimizeTool(name);
         });
 
-        const dock=document.createElement("button");
-        dock.type="button";
-        dock.className="workspace-title-action";
-        dock.textContent="⇲";
-        dock.title="Dock back into the main workspace";
-        dock.addEventListener("click",event=>{
-            event.stopPropagation();
-            window.workspaceDockTool(name);
-        });
-
-        actions.prepend(dock);
         actions.prepend(minimize);
     }
 
@@ -21359,7 +21377,6 @@ Requirements:
     }
 
     function restoreLayout(){
-        ensureWorkspaceDock();
         ensureTray();
 
         ["transcript","analysis","coach"].forEach(addWorkspaceControls);
@@ -21375,10 +21392,10 @@ Requirements:
             if(saved.minimized){
                 panel.hidden=true;
                 restoreChip(name);
-            }else if(saved.open && saved.docked){
-                window.workspaceDockTool(name);
             }else if(saved.open){
+                // v8.3 migration: old docked tool state is now ordinary floating state.
                 window.workspaceFloatTool(name);
+                saveState(name,{open:true,docked:false,minimized:false});
             }
         });
 
@@ -21393,7 +21410,6 @@ Requirements:
     }
 
     function boot(){
-        ensureWorkspaceDock();
         ensureTray();
         ensureMobileTabs();
         restoreLayout();
@@ -21440,6 +21456,9 @@ Requirements:
         if(!win)return;
         win.classList.remove("workspace-docked");
         win.removeAttribute("data-workspace-docked");
+        if(win.parentElement?.classList?.contains("workspace-dock-slot")){
+            document.body.appendChild(win);
+        }
     }
 
     function removeToolDockControls(){
@@ -21464,7 +21483,7 @@ Requirements:
 
     function hideGeneralDockUI(){
         const dock=document.getElementById("conversation-workspace-dock");
-        if(dock)dock.hidden=true;
+        if(dock)dock.remove();
         document.querySelectorAll(
             "#workspace-dock-analysis,#workspace-dock-coach,#workspace-dock-keyboard,.workspace-dock-slot"
         ).forEach(el=>el.hidden=true);
