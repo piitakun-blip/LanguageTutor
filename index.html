@@ -5459,6 +5459,29 @@ body.conversation-first-layout #mobile-right-column{
 .analysis-grammar-gate-required{margin-top:8px;color:#92400e;font-size:8px;font-weight:800}
 </style>
 
+<style id="workspace-v97-universal-dependency-css">
+.analysis-universal-dependency-diagram{padding:12px 10px 10px;overflow-x:auto}
+.analysis-dependency-core,
+.analysis-dependency-core ul{list-style:none;margin:0;padding:0}
+.analysis-dependency-core{display:flex;justify-content:center;min-width:max-content}
+.analysis-dependency-item{position:relative;display:flex;flex-direction:column;align-items:center;padding:0 7px}
+.analysis-dependency-children{position:relative;display:flex;justify-content:center;align-items:flex-start;gap:0;margin-top:24px!important;padding-top:0!important}
+.analysis-dependency-children:before{content:"";position:absolute;top:-13px;left:50%;height:13px;border-left:1.5px solid #94a3b8}
+.analysis-dependency-children>.analysis-dependency-item:before{content:"";position:absolute;top:-12px;left:0;right:0;border-top:1.5px solid #94a3b8}
+.analysis-dependency-children>.analysis-dependency-item:first-child:before{left:50%}
+.analysis-dependency-children>.analysis-dependency-item:last-child:before{right:50%}
+.analysis-dependency-children>.analysis-dependency-item:only-child:before{left:50%;right:50%}
+.analysis-dependency-children>.analysis-dependency-item:after{content:"";position:absolute;top:-12px;left:50%;height:12px;border-left:1.5px solid #94a3b8}
+.analysis-diagram-node{position:relative;z-index:1}
+.analysis-diagram-discourse{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:16px;padding:9px 10px;border-top:1px dashed #cbd5e1;background:#f8fafc;border-radius:8px}
+.analysis-diagram-discourse-label{color:#94a3b8;font-size:7px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.analysis-diagram-discourse-node{background:#fff!important;border-style:dashed!important}
+@media(max-width:640px){
+ .analysis-universal-dependency-diagram{padding-left:4px;padding-right:4px}
+ .analysis-dependency-item{padding-left:4px;padding-right:4px}
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -20371,7 +20394,7 @@ The selected utterance may contain ONE OR MORE sentences. Sentence segmentation 
 Return JSON only:
 {"sentences":[
  {"text":"exact complete sentence","nodes":[
-  {"id":"s1n1","text":"exact word or phrase","role":"short grammatical role","parent":"parent node id or empty string","relation":"short dependency label","label":"case/grammar label when useful","gender":"Masculine|Feminine|Neuter|Plural|"}
+  {"id":"s1n1","text":"exact word or phrase","role":"short learner-friendly grammatical role","parent":"parent node id or empty string","relation":"subject|object|indirect_object|complement|modifier|clause|conjunction|particle|discourse|other","case":"Nominative|Accusative|Dative|Genitive|Ambiguous|","gender":"Masculine|Feminine|Neuter|Plural|","feature":"language-specific feature when useful"}
  ]}
 ]}
 
@@ -20389,7 +20412,16 @@ Diagram rules:
 - Do not force grammatical case onto fixed/elliptical expressions or forms of address.
 - Do not invent visible words omitted in conversational ellipsis.
 - Preserve case and gender metadata from the existing parse when correct.
-- Keep role/relation labels concise and learner-friendly.
+- The parent field is the actual syntactic/dependency parent. Never use visual word order as a substitute for dependency.
+- relation must describe the dependency to the parent using the controlled relation vocabulary in the schema.
+- Mark greetings, interjections, vocatives, parentheticals, and conversational add-ons such as German "danke" as relation "discourse" when they are outside the core clause.
+- Use feature for useful language-specific information that is not well represented by case/gender:
+  German: separable/modal/subordinate-clause information when useful.
+  Spanish: clitic/person/number/agreement information when useful.
+  Japanese: particle/topic/subject/object/direction/location information when useful.
+- For Japanese, particles may remain attached to the phrase they mark; describe the particle/function in feature rather than forcing a European case label.
+- Do not invent case or gender categories for languages/forms where they are not appropriate.
+- Keep role labels concise and learner-friendly.
 - JSON only.`;
 
         const task=(async()=>{
@@ -20406,9 +20438,10 @@ Diagram rules:
                     text:String(n.text||"").trim(),
                     role:String(n.role||"").trim(),
                     parent:String(n.parent||"").trim(),
-                    relation:String(n.relation||"").trim(),
-                    label:String(n.label||"").trim(),
-                    gender:String(n.gender||"").trim()
+                    relation:String(n.relation||"other").trim().toLowerCase(),
+                    case:String(n.case||n.label||"").trim(),
+                    gender:String(n.gender||"").trim(),
+                    feature:String(n.feature||"").trim()
                 })).filter(n=>n.text);
 
                 const ids=new Set(normalized.map(n=>n.id));
@@ -20469,57 +20502,95 @@ Diagram rules:
         const map=new Map();
         nodes.forEach((node,index)=>{
             const id=String(node?.id||`n${index}`);
-            map.set(id,{...node,id,children:[]});
+            map.set(id,{
+                ...node,
+                id,
+                relation:String(node?.relation||"other").toLowerCase(),
+                case:String(node?.case||node?.label||""),
+                feature:String(node?.feature||""),
+                children:[]
+            });
         });
 
-        const roots=[];
+        const coreRoots=[];
+        const discourse=[];
         map.forEach(node=>{
+            if(node.relation==="discourse"){
+                discourse.push(node);
+                return;
+            }
             const parentId=String(node.parent||"");
-            if(parentId && parentId!==node.id && map.has(parentId)){
+            if(parentId && parentId!==node.id && map.has(parentId) && map.get(parentId).relation!=="discourse"){
                 map.get(parentId).children.push(node);
             }else{
-                roots.push(node);
+                coreRoots.push(node);
             }
         });
 
-        // Safety for malformed AI output: never recurse forever.
         const renderNode=(node,seen=new Set())=>{
             if(seen.has(node.id))return null;
-            const nextSeen=new Set(seen);
-            nextSeen.add(node.id);
+            const nextSeen=new Set(seen); nextSeen.add(node.id);
 
             const li=document.createElement("li");
+            li.className="analysis-dependency-item";
+            li.dataset.relation=node.relation||"other";
+
             const box=document.createElement("div");
-            box.className=`analysis-diagram-node ${workbenchCaseClass(node.label)} ${workbenchGenderClass(node.gender)}`;
+            box.className=`analysis-diagram-node ${workbenchCaseClass(node.case)} ${workbenchGenderClass(node.gender)}`;
 
             const phrase=document.createElement("strong");
             phrase.className=workbenchGenderClass(node.gender);
             phrase.textContent=String(node.text||"");
 
             const meta=document.createElement("span");
-            meta.textContent=[node.role,node.relation,node.label].filter(Boolean).join(" • ");
-
+            meta.textContent=[node.role,node.relation,node.case,node.feature].filter(Boolean).join(" • ");
             box.append(phrase,meta);
             li.appendChild(box);
 
-            const children=node.children
-                .map(child=>renderNode(child,nextSeen))
-                .filter(Boolean);
+            const children=node.children.map(child=>renderNode(child,nextSeen)).filter(Boolean);
             if(children.length){
                 const ul=document.createElement("ul");
+                ul.className="analysis-dependency-children";
                 children.forEach(child=>ul.appendChild(child));
                 li.appendChild(ul);
             }
             return li;
         };
 
-        const tree=document.createElement("ul");
-        tree.className="analysis-diagram-tree";
-        roots.forEach(root=>{
-            const rendered=renderNode(root);
-            if(rendered)tree.appendChild(rendered);
-        });
-        return tree;
+        const shell=document.createElement("div");
+        shell.className="analysis-universal-dependency-diagram";
+
+        if(coreRoots.length){
+            const tree=document.createElement("ul");
+            tree.className="analysis-diagram-tree analysis-dependency-core";
+            coreRoots.forEach(root=>{
+                const rendered=renderNode(root);
+                if(rendered)tree.appendChild(rendered);
+            });
+            shell.appendChild(tree);
+        }
+
+        if(discourse.length){
+            const rail=document.createElement("div");
+            rail.className="analysis-diagram-discourse";
+            const label=document.createElement("span");
+            label.className="analysis-diagram-discourse-label";
+            label.textContent="Conversation / discourse";
+            rail.appendChild(label);
+            discourse.forEach(node=>{
+                const box=document.createElement("div");
+                box.className="analysis-diagram-node analysis-diagram-discourse-node";
+                const phrase=document.createElement("strong");
+                phrase.textContent=String(node.text||"");
+                const meta=document.createElement("span");
+                meta.textContent=[node.role,node.feature||node.relation].filter(Boolean).join(" • ");
+                box.append(phrase,meta);
+                rail.appendChild(box);
+            });
+            shell.appendChild(rail);
+        }
+
+        return shell.childElementCount ? shell : null;
     }
 
     window.analysisWorkbenchDiagram=async function(button){
@@ -20597,20 +20668,31 @@ Target language: ${cfg().name}
 Sentence: "${state.sentence}"
 
 Explain ONLY the single most useful non-obvious form in this sentence.
-Maximum 3 short bullets and about 70 words total.
+Use one concise plain-text paragraph, about 70 words maximum.
+Do not use Markdown, bullets, asterisks, backticks, headings, or numbered lists.
 Be concrete. Example style: "dir = dative of du because es geht jemandem takes dative."
 Do not give a full lesson.
 Do not compare with other languages.
 Do not continue the conversation.`;
 
             state.why=String(await callAI(prompt)).trim();
-            const cleaned=String(state.why||"")
-                .replace(/\\([*_#`])/g,"$1")
-                .replace(/^#{1,6}\s+/gm,"")
-                .replace(/^\s*[-*]\s+/gm,"• ");
-            output.textContent=(typeof stripTutorMarkdown==="function"
-                ? stripTutorMarkdown(cleaned)
-                : cleaned) || "No explanation returned.";
+            const cleanTutorExplanation=(value)=>String(value||"")
+                .replace(/\\([*_#`~>])/g,"$1")
+                .replace(/```[\s\S]*?```/g,block=>block.replace(/```(?:\w+)?/g,""))
+                .replace(/`([^`]+)`/g,"$1")
+                .replace(/\*\*([^*]+)\*\*/g,"$1")
+                .replace(/__([^_]+)__/g,"$1")
+                .replace(/\*([^*]+)\*/g,"$1")
+                .replace(/_([^_]+)_/g,"$1")
+                .replace(/^\s{0,3}#{1,6}\s*/gm,"")
+                .replace(/^\s*>\s?/gm,"")
+                .replace(/^\s*(?:[-*+]\s+|\d+[.)]\s+)/gm,"")
+                .replace(/\n{2,}/g," ")
+                .replace(/\s*\n\s*/g," ")
+                .replace(/\s{2,}/g," ")
+                .trim();
+            const cleaned=cleanTutorExplanation(state.why);
+            output.textContent=cleaned || "No explanation returned.";
 
         }catch(e){
             output.textContent="Why? failed: "+((e&&e.message)?e.message:String(e));
@@ -22405,7 +22487,15 @@ Requirements:
         if(note){
             const noteEl=document.createElement("div");
             noteEl.className="language-coach-result-note";
-            noteEl.textContent=note;
+            noteEl.textContent=String(note||"")
+                .replace(/`([^`]+)`/g,"$1")
+                .replace(/\*\*([^*]+)\*\*/g,"$1")
+                .replace(/__([^_]+)__/g,"$1")
+                .replace(/\*([^*]+)\*/g,"$1")
+                .replace(/^\s*(?:[-*+]\s+|\d+[.)]\s+)/gm,"")
+                .replace(/\s*\n\s*/g," ")
+                .replace(/\s{2,}/g," ")
+                .trim();
             card.appendChild(noteEl);
         }
 
