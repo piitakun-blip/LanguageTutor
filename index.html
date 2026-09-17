@@ -5482,6 +5482,64 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+<style id="workspace-v99-selectable-transcript-tools-css">
+.transcript-selection-toolbar{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    gap:8px 12px;
+    align-items:center;
+    padding:9px 10px;
+    border:1px solid #dbe3ee;
+    border-bottom:0;
+    border-radius:11px 11px 0 0;
+    background:#fff;
+}
+.transcript-selection-summary{min-width:0;display:flex;align-items:center;gap:7px}
+.transcript-selection-label{flex:none;color:#94a3b8;font-size:7px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+#transcript-selected-preview{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#334155;font-size:10px}
+.transcript-selection-actions{display:flex;gap:5px;justify-content:flex-end}
+.transcript-selection-actions button{
+    min-height:31px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:9px;font-weight:800
+}
+.transcript-selection-actions button:disabled{opacity:.42;cursor:default}
+.transcript-selected-translation{
+    grid-column:1/-1;padding:8px 9px;border-top:1px solid #eef2f7;color:#334155;font-size:10px;line-height:1.45
+}
+#voice-chat-messages-log .conversation-turn-card[data-transcript-selectable="1"]{cursor:pointer}
+#voice-chat-messages-log .conversation-turn-card.transcript-turn-selected{
+    border-color:#818cf8!important;
+    box-shadow:0 0 0 2px rgba(129,140,248,.16)!important;
+}
+#voice-chat-messages-log .transcript-single-analysis-row{display:none!important}
+@media(max-width:640px){
+ .transcript-selection-toolbar{grid-template-columns:1fr}
+ .transcript-selection-actions{justify-content:stretch}
+ .transcript-selection-actions button{flex:1;min-height:40px}
+}
+</style>
+
+<style id="workspace-v100-consolidated-tools-css">
+#mobile-parser-card[aria-hidden="true"]{display:none!important}
+.combined-language-tools-body{display:flex;flex-direction:column;gap:14px}
+.combined-language-tools-subsection{
+    padding:12px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#fff;
+}
+.combined-language-tools-heading{
+    margin-bottom:10px;
+    color:#334155;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.02em;
+}
+#conversation-language-tools-section>.conversation-fold-body{padding-top:10px}
+@media(max-width:640px){
+    .combined-language-tools-subsection{padding:9px}
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -13439,22 +13497,19 @@ Keep the entire answer under about 70 words.`;
     }
 
     function appendTranscriptTurnActions(actions,entry,wrap,languageCode=currentStudyLanguage){
-        if(!actions || !entry)return;
-        actions.className="transcript-single-analysis-row";
-
+        if(!entry || !wrap)return;
         const target=transcriptTurnTargetText(entry);
         if(!target)return;
 
-        const button=document.createElement("button");
-        button.type="button";
-        button.textContent="Analysis";
-        button.title="Open this utterance in the Analysis Workbench";
-        button.addEventListener("click",()=>{
-            document.querySelectorAll(".active-analysis-turn").forEach(el=>el.classList.remove("active-analysis-turn"));
-            button.classList.add("active-analysis-turn");
-            window.openAnalysisWorkbench(target,languageCode,entry);
-        });
-        actions.appendChild(button);
+        // v9.9: transcript turns are selected as whole lines. Actions live in
+        // one shared toolbar at the top of the transcript, not beside each line.
+        wrap.dataset.transcriptSelectable="1";
+        wrap.dataset.transcriptText=target;
+        wrap.dataset.transcriptLanguage=languageCode;
+        wrap.__transcriptEntry=entry;
+        wrap.tabIndex=0;
+        wrap.setAttribute("role","button");
+        wrap.setAttribute("aria-label","Select transcript line for Listen, Translate, or Analysis");
     }
 
     function appendVoiceTutorBubble(entry,scroll=true){
@@ -21329,25 +21384,47 @@ Requirements:
         if(chatToggle)primary.appendChild(chatToggle);
         primary.appendChild(chat);
 
-        const analysis=makeFold("conversation-analysis-section","Analyze",parser,false);
+        // Analysis Workbench has replaced the old below-chat Grammar Parser.
+        // Keep the legacy parser DOM/code available for compatibility, but remove
+        // it from the visible conversation-page layout.
+        parser.hidden=true;
+        parser.classList.add("hidden");
+        parser.setAttribute("aria-hidden","true");
 
-        // The outer fold now handles collapsing, so the older inner Grammar Tools
-        // toggle is redundant. Keep its content, but not the extra toggle row.
+        // Consolidate the remaining below-chat resources into one collapsible
+        // workspace. Their existing IDs/content remain intact for compatibility.
         if(grammarToggle)grammarToggle.remove();
         grammar.classList.remove("hidden");
+
+        const toolsBody=document.createElement("div");
+        toolsBody.className="combined-language-tools-body";
+
+        const subsection=(label,content,id)=>{
+            const section=document.createElement("section");
+            section.className="combined-language-tools-subsection";
+            if(id)section.id=id;
+            const heading=document.createElement("div");
+            heading.className="combined-language-tools-heading";
+            heading.textContent=label;
+            section.appendChild(heading);
+            if(content)section.appendChild(content);
+            return section;
+        };
+
         const grammarBody=document.createElement("div");
         if(kana)grammarBody.appendChild(kana);
         grammarBody.appendChild(grammar);
-        const grammarSection=makeFold("conversation-grammar-section","Grammar Tools",grammarBody,false);
+        toolsBody.appendChild(subsection("Grammar Tools",grammarBody,"combined-grammar-tools"));
 
-        const studySection=makeFold("conversation-study-section","Study & Review",study,false);
+        toolsBody.appendChild(subsection("Study & Review",study,"combined-study-review"));
 
-        const manualDetails=makeFold("manual-language-tools","Translation & Manual Input",manual,false);
-        manualDetails.classList.add("conversation-fold");
-        const manualBody=manualDetails.querySelector(".conversation-fold-body");
-        if(manualBody)manualBody.id="manual-language-tools-body";
+        const manualSection=subsection("Translation & Manual Input",manual,"combined-manual-tools");
+        const manualBody=manualSection.querySelector("#mobile-input-workspaces") || manualSection;
+        if(manualBody)manualBody.dataset.combinedManualTools="1";
+        toolsBody.appendChild(manualSection);
 
-        main.replaceChildren(primary,analysis,grammarSection,studySection,manualDetails);
+        const toolsSection=makeFold("conversation-language-tools-section","Language Tools & Study",toolsBody,false);
+        main.replaceChildren(primary,toolsSection);
 
         // Conversation remains the default open workspace.
         chat.classList.remove("hidden");
@@ -22878,6 +22955,160 @@ Do not continue the Tutor conversation. Keep output concise.`;
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});
     else boot();
     window.addEventListener("load",reconcileAll,{once:true});
+})();
+</script>
+
+
+<script id="workspace-v99-selectable-transcript-tools">
+(()=>{
+    "use strict";
+    const state={card:null,text:"",language:"",entry:null,translation:""};
+
+    function toolbar(){
+        let bar=document.getElementById("transcript-selection-toolbar");
+        if(bar)return bar;
+        bar=document.createElement("div");
+        bar.id="transcript-selection-toolbar";
+        bar.className="transcript-selection-toolbar";
+        bar.innerHTML=`
+          <div class="transcript-selection-summary">
+            <span class="transcript-selection-label">Selected line</span>
+            <strong id="transcript-selected-preview">Select a transcript line</strong>
+          </div>
+          <div class="transcript-selection-actions">
+            <button type="button" id="transcript-selected-listen" disabled>🔊 Listen</button>
+            <button type="button" id="transcript-selected-translate" disabled>🌐 Translate</button>
+            <button type="button" id="transcript-selected-analysis" disabled>🔎 Analysis</button>
+          </div>
+          <div id="transcript-selected-translation" class="transcript-selected-translation" hidden></div>`;
+        bindToolbar(bar);
+        return bar;
+    }
+
+    function mountToolbar(){
+        const log=document.getElementById("voice-chat-messages-log");
+        if(!log||!log.parentElement)return;
+        const bar=toolbar();
+        if(bar.parentElement!==log.parentElement || bar.nextElementSibling!==log){
+            log.parentElement.insertBefore(bar,log);
+        }
+    }
+
+    function clearSelection(){
+        state.card?.classList.remove("transcript-turn-selected");
+        state.card=null; state.text=""; state.language=""; state.entry=null; state.translation="";
+        document.querySelectorAll(".transcript-turn-selected").forEach(el=>el.classList.remove("transcript-turn-selected"));
+        const preview=document.getElementById("transcript-selected-preview");
+        if(preview)preview.textContent="Select a transcript line";
+        ["transcript-selected-listen","transcript-selected-translate","transcript-selected-analysis"].forEach(id=>{
+            const btn=document.getElementById(id); if(btn)btn.disabled=true;
+        });
+        const translation=document.getElementById("transcript-selected-translation");
+        if(translation){translation.hidden=true;translation.textContent="";}
+    }
+
+    function selectCard(card){
+        if(!card?.dataset?.transcriptSelectable)return;
+        const language=String(card.dataset.transcriptLanguage||currentStudyLanguage||"de");
+        if(language!==String(currentStudyLanguage||"de"))return;
+        state.card?.classList.remove("transcript-turn-selected");
+        state.card=card;
+        state.text=String(card.dataset.transcriptText||"").trim();
+        state.language=language;
+        state.entry=card.__transcriptEntry||{text:state.text};
+        state.translation="";
+        card.classList.add("transcript-turn-selected");
+
+        mountToolbar();
+        const preview=document.getElementById("transcript-selected-preview");
+        if(preview)preview.textContent=state.text;
+        ["transcript-selected-listen","transcript-selected-translate","transcript-selected-analysis"].forEach(id=>{
+            const btn=document.getElementById(id); if(btn)btn.disabled=!state.text;
+        });
+        const translation=document.getElementById("transcript-selected-translation");
+        if(translation){translation.hidden=true;translation.textContent="";}
+    }
+
+    async function translateSelected(button){
+        if(!state.text)return;
+        const output=document.getElementById("transcript-selected-translation");
+        const old=button.textContent;
+        button.disabled=true; button.textContent="Translating…";
+        try{
+            let translated="";
+            const cfg=(typeof resolveWorkbenchAIConfig==="function") ? resolveWorkbenchAIConfig() : {available:false};
+            if(cfg.available && typeof callAIJson==="function"){
+                const languageName=(typeof LANGUAGE_CONFIG!=="undefined" && LANGUAGE_CONFIG[state.language]?.name) || state.language;
+                const data=await Promise.race([
+                    callAIJson(`Translate this ${languageName} transcript line into concise natural English. Preserve meaning and tone. Return JSON only: {"translation":"..."}\nText: "${state.text}"`),
+                    new Promise((_,reject)=>setTimeout(()=>reject(new Error("Translation timed out")),15000))
+                ]);
+                translated=String(data?.translation||"").trim();
+            }else if(typeof googleTranslateApiCall==="function"){
+                translated=String(await googleTranslateApiCall(state.text,state.language,"en")).trim();
+            }
+            if(!translated)throw new Error("No translation returned");
+            state.translation=translated;
+            if(output){output.textContent=translated;output.hidden=false;}
+        }catch(e){
+            if(output){output.textContent="Translation unavailable. Try again.";output.hidden=false;}
+        }finally{
+            button.disabled=false; button.textContent=old;
+        }
+    }
+
+    function bindToolbar(bar){
+        bar.querySelector("#transcript-selected-listen")?.addEventListener("click",()=>{
+            if(!state.text)return;
+            const locale=(typeof LANGUAGE_CONFIG!=="undefined" && LANGUAGE_CONFIG[state.language]?.locale) || state.language;
+            if(typeof speakRawText==="function")speakRawText(state.text,locale);
+        });
+        bar.querySelector("#transcript-selected-translate")?.addEventListener("click",function(){translateSelected(this);});
+        bar.querySelector("#transcript-selected-analysis")?.addEventListener("click",()=>{
+            if(!state.text)return;
+            if(typeof window.openAnalysisWorkbench==="function"){
+                window.openAnalysisWorkbench(state.text,state.language,state.entry||{text:state.text});
+                window.workspaceOpenTool?.("analysis");
+            }
+        });
+    }
+
+    document.addEventListener("click",event=>{
+        const card=event.target.closest?.('[data-transcript-selectable="1"]');
+        if(card && !event.target.closest("button,a,input,textarea,select,summary"))selectCard(card);
+    });
+    document.addEventListener("keydown",event=>{
+        if((event.key==="Enter"||event.key===" ") && event.target?.matches?.('[data-transcript-selectable="1"]')){
+            event.preventDefault(); selectCard(event.target);
+        }
+    });
+
+    // Keep the toolbar immediately above the single transcript DOM wherever it lives.
+    const originalOpen=window.openVoiceTranscriptWindow;
+    if(typeof originalOpen==="function")window.openVoiceTranscriptWindow=function(...args){
+        const result=originalOpen.apply(this,args);
+        mountToolbar();
+        return result;
+    };
+    const originalDock=window.dockVoiceTranscript;
+    if(typeof originalDock==="function")window.dockVoiceTranscript=function(...args){
+        const result=originalDock.apply(this,args);
+        mountToolbar();
+        return result;
+    };
+
+    // Language changes must never carry a selected German/Spanish/Japanese line across.
+    const originalSet=window.setStudyLanguage;
+    if(typeof originalSet==="function")window.setStudyLanguage=function(...args){
+        clearSelection();
+        const result=originalSet.apply(this,args);
+        setTimeout(mountToolbar,0);
+        return result;
+    };
+
+    window.clearTranscriptLineSelection=clearSelection;
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mountToolbar,{once:true});
+    else mountToolbar();
 })();
 </script>
 
