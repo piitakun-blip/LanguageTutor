@@ -5372,6 +5372,35 @@ body.conversation-first-layout #mobile-right-column{
 .analysis-parser-context-translation{margin-top:9px;padding:8px 9px;border-radius:8px;background:#fff;color:#334155;font-size:10px;font-weight:700}
 </style>
 
+
+<style id="workspace-v94-authoritative-titlebar-layout">
+/* Authoritative desktop titlebar geometry: title | spacer | — | × */
+.analysis-workbench-titlebar,
+.language-coach-titlebar,
+.voice-transcript-window-titlebar,
+.special-character-titlebar,
+.floating-kana-titlebar{justify-content:flex-start!important;}
+.analysis-workbench-titlecopy,
+.language-coach-titlecopy,
+.voice-transcript-window-titlecopy,
+.special-character-titlecopy,
+.floating-kana-titlecopy{min-width:0;flex:1 1 auto!important;}
+.workspace-standard-window-actions{
+    margin-left:auto!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:2px!important;
+    flex:0 0 auto!important;
+    position:static!important;
+}
+.workspace-standard-window-actions>button{
+    position:static!important;
+    inset:auto!important;
+    left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    margin:0!important;transform:none!important;float:none!important;
+}
+</style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -21644,24 +21673,45 @@ Requirements:
             }
         },true);
 
-        let actions=titlebar.querySelector(".voice-transcript-window-actions,.special-character-window-actions,.floating-kana-window-actions");
+        // One conventional control group only: Minimize, then Close at far right.
+        // Do not create a second legacy action container; that was what left the
+        // close X stranded in the middle of the flex titlebar.
+        let actions=titlebar.querySelector(".workspace-standard-window-actions");
         if(!actions){
             actions=document.createElement("div");
-            actions.className="voice-transcript-window-actions";
+            actions.className="workspace-standard-window-actions";
             titlebar.appendChild(actions);
         }
 
-        const minimize=document.createElement("button");
-        minimize.type="button";
-        minimize.className="workspace-title-action";
-        minimize.textContent="—";
-        minimize.title="Minimize";
-        minimize.addEventListener("click",event=>{
-            event.stopPropagation();
-            window.workspaceMinimizeTool(name);
-        });
+        // Absorb any native/legacy close button into this same group.
+        const close=titlebar.querySelector(
+            ".analysis-workbench-close,.language-coach-close,.voice-transcript-close,.special-character-close,.floating-kana-close,#floating-kana-close"
+        );
 
-        actions.prepend(minimize);
+        let minimize=actions.querySelector('[data-standard-minimize]');
+        if(!minimize){
+            minimize=document.createElement("button");
+            minimize.type="button";
+            minimize.className="workspace-title-action";
+            minimize.dataset.standardMinimize="1";
+            minimize.textContent="—";
+            minimize.title="Minimize";
+            minimize.addEventListener("click",event=>{
+                event.stopPropagation();
+                window.workspaceMinimizeTool(name);
+            });
+            actions.appendChild(minimize);
+        }
+        if(close){
+            close.title="Close";
+            actions.appendChild(close); // last child = far-right X
+        }
+
+        // Remove empty legacy action wrappers so flexbox cannot create another
+        // right-side slot after the standard controls.
+        [...titlebar.querySelectorAll(".voice-transcript-window-actions,.special-character-window-actions,.floating-kana-window-actions")]
+            .filter(el=>el!==actions && !el.children.length)
+            .forEach(el=>el.remove());
     }
 
     function currentOpenTool(){
@@ -22470,51 +22520,47 @@ Do not continue the Tutor conversation. Keep output concise.`;
 </script>
 
 
-<script id="workspace-v92-standard-window-controls">
+<script id="workspace-v94-standard-window-controls">
 (()=>{
     "use strict";
     const defs=[
         ["analysis","analysis-workbench-window","analysis-workbench-drag-handle",".analysis-workbench-close"],
         ["coach","language-coach-window","language-coach-drag-handle",".language-coach-close"],
-        ["keyboard","special-character-palette","special-character-drag-handle",".special-character-close, .floating-kana-close"],
-        ["keyboard","floating-kana-tool","floating-kana-drag-handle",".floating-kana-close"]
+        ["transcript","voice-transcript-window","voice-transcript-drag-handle",".voice-transcript-close,.voice-transcript-window-close"],
+        ["keyboard","special-character-palette","special-character-drag-handle",".special-character-close"],
+        ["keyboard","floating-kana-tool","floating-kana-drag-handle",".floating-kana-close,#floating-kana-close"]
     ];
     const normalize=()=>{
         defs.forEach(([name,panelId,titlebarId,closeSelector])=>{
             const panel=document.getElementById(panelId);
-            const bar=document.getElementById(titlebarId) || panel?.querySelector('[class*="titlebar"]');
+            const bar=document.getElementById(titlebarId)||panel?.querySelector('[class*="titlebar"]');
             if(!panel||!bar)return;
             let actions=bar.querySelector(".workspace-standard-window-actions");
-            if(!actions){
-                actions=document.createElement("div");
-                actions.className="workspace-standard-window-actions";
-                bar.appendChild(actions);
-            }
-            // Remove legacy workspace minimize controls from anywhere else in the titlebar.
+            if(!actions){actions=document.createElement("div");actions.className="workspace-standard-window-actions";bar.appendChild(actions);}
+
+            // Remove duplicate minimize buttons generated by older workspace code.
             [...bar.querySelectorAll(".workspace-title-action")].forEach(btn=>{
-                if(!actions.contains(btn))btn.remove();
+                if(!actions.contains(btn)||btn!==actions.querySelector('[data-standard-minimize]'))btn.remove();
             });
             let minimize=actions.querySelector('[data-standard-minimize]');
             if(!minimize){
                 minimize=document.createElement("button");
-                minimize.type="button";
-                minimize.className="workspace-title-action";
-                minimize.dataset.standardMinimize="1";
-                minimize.textContent="—";
-                minimize.title="Minimize";
+                minimize.type="button"; minimize.className="workspace-title-action";
+                minimize.dataset.standardMinimize="1"; minimize.textContent="—"; minimize.title="Minimize";
                 minimize.addEventListener("click",e=>{e.stopPropagation();window.workspaceMinimizeTool?.(name);});
-                actions.appendChild(minimize);
+                actions.prepend(minimize);
             }
             const close=bar.querySelector(closeSelector);
-            if(close){
-                close.title="Close";
-                actions.appendChild(close); // always last = far right
-            }
+            if(close){close.title="Close";actions.appendChild(close);}
+
+            // Kill obsolete empty wrappers; they otherwise become extra flex children.
+            [...bar.querySelectorAll(".voice-transcript-window-actions,.special-character-window-actions,.floating-kana-window-actions")]
+                .filter(el=>el!==actions && !el.children.length).forEach(el=>el.remove());
         });
     };
-    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",normalize,{once:true}); else normalize();
+    const boot=()=>{normalize();setTimeout(normalize,0);setTimeout(normalize,300);};
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
     window.addEventListener("load",normalize,{once:true});
-    setTimeout(normalize,250);
 })();
 </script>
 
