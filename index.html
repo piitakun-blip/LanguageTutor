@@ -5326,6 +5326,12 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+<style id="workspace-v88-clean-ui-css">
+#language-coach-subtitle:empty{display:none}
+#language-coach-status:empty{display:none}
+.language-coach-body>#language-coach-input{margin-top:0}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -19219,13 +19225,8 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <button type="button" onclick="workspaceOpenTool('keyboard')">⌨ Keyboard</button>
         </div>
 
-        <div id="analysis-workbench-status">Choose an analysis. Translation works without AI. Parse and Diagram call your configured AI immediately when a key is loaded; local analysis is used only when no key is loaded or the AI request fails.</div>
-        <div id="analysis-workbench-results">
-            <div class="analysis-workbench-empty">
-                Study the selected utterance here without cluttering the conversation.<br>
-                Choose Translation, Parse, Diagram, or Why?.
-            </div>
-        </div>
+        <div id="analysis-workbench-status"></div>
+        <div id="analysis-workbench-results"></div>
     </div>
 </div>
 
@@ -19289,11 +19290,6 @@ Current work: ${context||"No sentence has been entered yet."}`;
         state.diagram=null;
         state.why="";
         clearResults();
-
-        const empty=document.createElement("div");
-        empty.className="analysis-workbench-empty";
-        empty.innerHTML="Choose what you want to inspect.<br>Translation and local structure work without an AI key.";
-        results()?.appendChild(empty);
     }
 
     function placeAnalysisWorkbenchBesideTranscript(){
@@ -19363,7 +19359,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
             win.hidden=false;
             if(wasHidden)requestAnimationFrame(placeAnalysisWorkbenchBesideTranscript);
         }
-        status("Choose Translation, Parse, Diagram, or Why?.");
+        status("");
     };
 
     window.closeAnalysisWorkbench=function(){
@@ -19553,6 +19549,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     const workbenchAIParseCache=new Map();
     const workbenchAIParseInflight=new Map();
     const WORKBENCH_AI_TIMEOUT_MS=12000;
+    const WORKBENCH_PARSE_TIMEOUT_MS=20000;
 
     function workbenchParseKey(){
         return `${state.languageCode}::${String(state.sentence||"").trim()}`;
@@ -19590,7 +19587,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
 Language: ${languageName}
 Selected utterance: "${state.sentence}"
 
-The selected utterance may contain ONE OR MORE independent sentences. Identify sentence boundaries first, then analyze each sentence independently.
+The selected utterance may contain ONE OR MORE sentences. Sentence segmentation is REQUIRED. Identify every sentence boundary first, then analyze each sentence independently. You MUST return the sentences[] envelope even when there is only one sentence.
 
 Return JSON only:
 {"sentences":[
@@ -19616,16 +19613,18 @@ Rules:
 - JSON only.`;
 
         const task=(async()=>{
-            const data=await withWorkbenchTimeout(callAIJson(prompt));
-            let rawSentences=Array.isArray(data?.sentences)?data.sentences:[];
-            // Backward tolerance for a provider that ignores the new envelope.
-            if(!rawSentences.length && Array.isArray(data?.items)){
-                rawSentences=[{text:state.sentence,items:data.items}];
+            const data=await withWorkbenchTimeout(callAIJson(prompt),WORKBENCH_PARSE_TIMEOUT_MS);
+            const rawSentences=Array.isArray(data?.sentences)?data.sentences:[];
+            if(!rawSentences.length){
+                throw new Error("AI did not return the required sentence-grouped parse.");
             }
-            if(!rawSentences.length)throw new Error("AI returned no parsed sentences.");
 
             const sentences=rawSentences.map((sentence,sentenceIndex)=>{
+                const sentenceText=String(sentence?.text||"").trim();
                 const rawItems=Array.isArray(sentence?.items)?sentence.items:[];
+                if(!sentenceText || !rawItems.length){
+                    throw new Error(`AI returned an incomplete parse for sentence ${sentenceIndex+1}.`);
+                }
                 const items=rawItems.map(item=>({
                     words:String(item?.text||"").trim().split(/\s+/).filter(Boolean),
                     type:String(item?.type||item?.role||"word").toLowerCase().replace(/\s+/g,"_"),
@@ -19638,12 +19637,14 @@ Rules:
                 });
                 return {
                     id:`s${sentenceIndex+1}`,
-                    text:String(sentence?.text||"").trim(),
+                    text:sentenceText,
                     items
                 };
-            }).filter(sentence=>sentence.items.length);
+            });
 
-            if(!sentences.length)throw new Error("AI parse was empty.");
+            if(!sentences.length || sentences.some(sentence=>!sentence.items.length)){
+                throw new Error("AI returned an incomplete sentence-grouped parse.");
+            }
             const chunks=sentences.flatMap(sentence=>sentence.items);
             const result={
                 source:"AI",
@@ -19998,7 +19999,7 @@ Language: ${languageName}
 Selected utterance: "${state.sentence}"
 Existing parse: ${JSON.stringify(parseSummary)}
 
-The selected utterance may contain ONE OR MORE independent sentences. Identify sentence boundaries first. Build a SEPARATE syntactic tree for each independent sentence. Never connect independent sentences into one tree.
+The selected utterance may contain ONE OR MORE sentences. Sentence segmentation is REQUIRED. You MUST return the sentences[] envelope even when there is only one sentence. Build a SEPARATE syntactic tree for each independent sentence. Never connect independent sentences into one tree.
 
 Return JSON only:
 {"sentences":[
@@ -20026,17 +20027,10 @@ Diagram rules:
 
         const task=(async()=>{
             const data=await withWorkbenchTimeout(callAIJson(prompt),15000);
-            let rawSentences=Array.isArray(data?.sentences)?data.sentences:[];
-            // Backward tolerance for a provider returning one old-style diagram.
+            const rawSentences=Array.isArray(data?.sentences)?data.sentences:[];
             if(!rawSentences.length){
-                const legacyNodes=Array.isArray(data?.nodes)
-                    ? data.nodes
-                    : Array.isArray(data?.diagram?.nodes)
-                        ? data.diagram.nodes
-                        : [];
-                if(legacyNodes.length)rawSentences=[{text:state.sentence,nodes:legacyNodes}];
+                throw new Error("AI did not return the required sentence-grouped diagrams.");
             }
-            if(!rawSentences.length)throw new Error("AI returned no sentence diagrams.");
 
             const sentences=rawSentences.map((sentence,sentenceIndex)=>{
                 const rawNodes=Array.isArray(sentence?.nodes)?sentence.nodes:[];
@@ -20189,7 +20183,7 @@ Diagram rules:
             badge.className=parsed.source==="AI" ? "analysis-full-parse-ai-badge" : "analysis-full-parse-local-badge";
             badge.textContent=parsed.source==="AI"
                 ? `✨ ${ai.providerName}`
-                : (parsed.reason==="AI_FAILED" ? "LOCAL • AI FALLBACK" : "LOCAL • NO AI KEY");
+                : (parsed.reason==="AI_FAILED" ? "AI UNAVAILABLE" : "LOCAL • NO AI KEY");
             heading.appendChild(badge);
             card.appendChild(heading);
 
@@ -20298,16 +20292,12 @@ Do not continue the conversation.`;
     <div id="language-coach-drag-handle" class="language-coach-titlebar">
         <div class="language-coach-titlecopy">
             <div id="language-coach-title" class="language-coach-title">🧭 Private Language Coach</div>
-            <div id="language-coach-subtitle" class="language-coach-subtitle">Backstage help — this does not become part of the Tutor conversation.</div>
+            <div id="language-coach-subtitle" class="language-coach-subtitle"></div>
         </div>
         <button type="button" class="language-coach-close" onclick="closeLanguageCoach()" title="Return to conversation">×</button>
     </div>
     <div class="language-coach-body">
-        <div class="language-coach-private-note">
-            <strong>Take a sidebar.</strong> Tell the Coach what you want to say. You can get a quick translation without an AI key, or ask AI for more natural/context-aware options. Nothing here is sent to the conversation Tutor automatically.
-        </div>
-
-        <textarea id="language-coach-input"
+<textarea id="language-coach-input"
             placeholder="e.g. I want to say: I don't mind where we eat, but I'd rather sit outside."></textarea>
 
         <div class="language-coach-input-tools">
@@ -20328,7 +20318,7 @@ Do not continue the conversation.`;
             </button>
         </div>
 
-        <div id="language-coach-status">Quick translation uses the app's normal translation route. Natural options use your selected AI provider.</div>
+        <div id="language-coach-status"></div>
         <div id="language-coach-results" aria-live="polite"></div>
     </div>
 </div>
@@ -21901,6 +21891,63 @@ Requirements:
 
     window.addEventListener("load",refresh,{once:true});
     window.addEventListener("resize",refresh);
+})();
+</script>
+
+
+
+<script id="workspace-v87-ai-only-parse-guard">
+(()=>{
+    "use strict";
+
+    // v8.7 final authority: Analysis Workbench Parse never renders a local fallback.
+    // This guard loads after legacy workspace scripts so an older handler cannot win.
+    const install=()=>{
+        const current=window.analysisWorkbenchFullParse;
+        if(typeof current!=="function")return;
+
+        // v8.6 implementation is already AI-only. Mark it so repeated installation
+        // does not wrap it unnecessarily.
+        if(current.__aiOnlyParseV87)return;
+
+        const source=Function.prototype.toString.call(current);
+        const looksAIOnly=
+            source.includes("Grammar analysis unavailable.") &&
+            source.includes("getWorkbenchParseData") &&
+            !source.includes("workbenchLocalResult");
+
+        if(looksAIOnly){
+            try{Object.defineProperty(current,"__aiOnlyParseV87",{value:true})}catch(e){}
+            return;
+        }
+
+        // If a legacy Parse handler somehow survived, replace it with the same
+        // AI-only behavior rather than allowing AI UNAVAILABLE.
+        const replacement=async function(button){
+            if(!window.__v87RunAIOnlyParse){
+                console.error("AI-only Parse guard could not find its runner.");
+                return;
+            }
+            return window.__v87RunAIOnlyParse(button);
+        };
+        replacement.__aiOnlyParseV87=true;
+        window.analysisWorkbenchFullParse=replacement;
+    };
+
+    // Capture the known-good v8.6/v8.7 handler as the authoritative runner.
+    if(typeof window.analysisWorkbenchFullParse==="function"){
+        const candidate=window.analysisWorkbenchFullParse;
+        const source=Function.prototype.toString.call(candidate);
+        if(source.includes("Grammar analysis unavailable.") &&
+           source.includes("getWorkbenchParseData") &&
+           !source.includes("workbenchLocalResult")){
+            window.__v87RunAIOnlyParse=candidate;
+            try{Object.defineProperty(candidate,"__aiOnlyParseV87",{value:true})}catch(e){}
+        }
+    }
+
+    install();
+    window.addEventListener("load",install,{once:true});
 })();
 </script>
 
