@@ -5646,6 +5646,42 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+<style id="workspace-v104-reliable-top-scrollbars-css">
+/* v10.4: top scroll controls are intentionally always visible while their
+   major section is visible. No overflow-detection hiding. */
+.workspace-v104-scrollbar{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    width:100%!important;
+    height:18px!important;
+    min-height:18px!important;
+    overflow-x:scroll!important;
+    overflow-y:hidden!important;
+    margin:6px 0 9px!important;
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+    scrollbar-width:auto!important;
+    scrollbar-gutter:stable!important;
+}
+.workspace-v104-scrollbar.workspace-top-scrollbar-inactive{
+    height:18px!important;
+    min-height:18px!important;
+    margin:6px 0 9px!important;
+    overflow-x:scroll!important;
+    opacity:1!important;
+}
+.workspace-v104-scrollbar>.workspace-top-scrollbar-spacer{
+    display:block!important;
+    height:1px!important;
+    min-width:calc(100% + 120px)!important;
+}
+#conversation-language-tools-section:not([open])>.workspace-v104-scrollbar{
+    display:none!important;
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -23257,7 +23293,7 @@ Do not continue the Tutor conversation. Keep output concise.`;
 </script>
 
 
-<script id="workspace-v103-top-scrollbars">
+<script id="workspace-v103-top-scrollbars-disabled" type="text/plain">
 (()=>{
     "use strict";
 
@@ -23383,6 +23419,143 @@ Do not continue the Tutor conversation. Keep output concise.`;
         requestAnimationFrame(install);
         setTimeout(install,250);
     }
+})();
+</script>
+
+
+<script id="workspace-v104-reliable-top-scrollbars">
+(()=>{
+    "use strict";
+
+    const registry=new Map();
+
+    function overflowXStyle(el){
+        if(!el || el.nodeType!==1)return "";
+        const s=getComputedStyle(el);
+        return String(s.overflowX||"");
+    }
+
+    function scoreScroller(el){
+        if(!el || el.nodeType!==1)return -1;
+        const overflow=Math.max(0,el.scrollWidth-el.clientWidth);
+        const ox=overflowXStyle(el);
+        let score=overflow;
+        if(/auto|scroll/.test(ox))score+=10000;
+        if(el.scrollWidth>el.clientWidth+1)score+=20000;
+        return score;
+    }
+
+    function realScroller(section){
+        if(!section)return null;
+        const nodes=[section,...section.querySelectorAll("*")];
+        let best=null,bestScore=-1;
+        for(const el of nodes){
+            if(el.classList?.contains("workspace-top-scrollbar"))continue;
+            const score=scoreScroller(el);
+            if(score>bestScore){
+                best=el;
+                bestScore=score;
+            }
+        }
+        return best || section;
+    }
+
+    function ensureBar(section,id,label){
+        if(!section)return null;
+        let bar=document.getElementById(id);
+        if(!bar){
+            bar=document.createElement("div");
+            bar.id=id;
+            bar.className="workspace-top-scrollbar workspace-v104-scrollbar";
+            bar.setAttribute("role","scrollbar");
+            bar.setAttribute("aria-label",label);
+
+            const spacer=document.createElement("div");
+            spacer.className="workspace-top-scrollbar-spacer";
+            bar.appendChild(spacer);
+
+            // Conversation primary has no master summary; place bar first.
+            // Language Tools has a summary; place it immediately after summary.
+            const summary=section.matches("details") ? section.querySelector(":scope > summary") : null;
+            if(summary)summary.insertAdjacentElement("afterend",bar);
+            else section.insertAdjacentElement("afterbegin",bar);
+        }
+        return bar;
+    }
+
+    function connect(section,id,label){
+        const bar=ensureBar(section,id,label);
+        if(!bar)return;
+        const target=realScroller(section);
+        if(!target)return;
+
+        let rec=registry.get(id);
+        if(!rec){
+            rec={bar,target:null,syncing:false};
+            registry.set(id,rec);
+            bar.addEventListener("scroll",()=>{
+                const r=registry.get(id);
+                if(!r?.target || r.syncing)return;
+                r.syncing=true;
+                r.target.scrollLeft=bar.scrollLeft;
+                r.syncing=false;
+            },{passive:true});
+        }
+
+        if(rec.target!==target){
+            if(rec.target && rec.target.__v104Handlers?.[id]){
+                rec.target.removeEventListener("scroll",rec.target.__v104Handlers[id]);
+            }
+            rec.target=target;
+            const handler=()=>{
+                const r=registry.get(id);
+                if(!r || r.syncing)return;
+                r.syncing=true;
+                r.bar.scrollLeft=r.target.scrollLeft;
+                r.syncing=false;
+            };
+            target.__v104Handlers=target.__v104Handlers||{};
+            target.__v104Handlers[id]=handler;
+            target.addEventListener("scroll",handler,{passive:true});
+        }
+
+        const spacer=bar.firstElementChild;
+        // Force a usable track even when layout settles a frame later.
+        const contentWidth=Math.max(target.scrollWidth,section.scrollWidth,bar.clientWidth+120);
+        spacer.style.width=contentWidth+"px";
+        bar.scrollLeft=target.scrollLeft;
+        bar.dataset.scrollTarget=target.id || target.className || target.tagName;
+    }
+
+    function install(){
+        connect(
+            document.getElementById("conversation-primary-section"),
+            "conversation-top-horizontal-scroll",
+            "Conversation horizontal scroll"
+        );
+        connect(
+            document.getElementById("conversation-language-tools-section"),
+            "language-tools-top-horizontal-scroll",
+            "Language Tools horizontal scroll"
+        );
+    }
+
+    function stagedInstall(){
+        install();
+        requestAnimationFrame(install);
+        setTimeout(install,100);
+        setTimeout(install,400);
+        setTimeout(install,1000);
+    }
+
+    window.addEventListener("resize",stagedInstall);
+    document.addEventListener("toggle",e=>{
+        if(e.target?.matches?.("details"))stagedInstall();
+    },true);
+
+    if(document.readyState==="loading"){
+        document.addEventListener("DOMContentLoaded",stagedInstall,{once:true});
+    }else stagedInstall();
 })();
 </script>
 
