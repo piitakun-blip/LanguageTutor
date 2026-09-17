@@ -3897,7 +3897,7 @@ body.conversation-first-layout #mobile-right-column{
     font-weight:800;
 }
 
-/* ---------------- Private Language Coach ---------------- */
+/* ---------------- Tutor — Coach ---------------- */
 #language-coach-window[hidden]{display:none!important}
 #language-coach-window{
     position:fixed;
@@ -5342,6 +5342,34 @@ body.conversation-first-layout #mobile-right-column{
 }
 #language-coach-status[hidden],
 #language-coach-status:empty{display:none!important}
+</style>
+
+<style id="workspace-v92-grammar-gate-window-css">
+.analysis-grammar-gate-lead{font-size:10px;color:#475569;margin:5px 0 7px}
+.analysis-grammar-gate-suggestion{padding:10px 12px;border:1px solid #c7d2fe;border-radius:10px;background:#eef2ff;color:#1e293b;font-size:13px;font-weight:800}
+.analysis-grammar-gate-explanation{margin-top:6px;color:#64748b;font-size:9px}
+.analysis-grammar-gate-actions{display:flex;gap:7px;margin-top:9px}
+.analysis-grammar-gate-actions button{min-height:32px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:9px;font-weight:800}
+.analysis-grammar-gate-actions button.primary{border-color:#a5b4fc;background:#eef2ff;color:#3730a3}
+.analysis-workbench-correction-context{margin-top:7px;padding-top:7px;border-top:1px solid #e2e8f0;color:#64748b;font-size:9px;line-height:1.45}
+.workspace-standard-window-actions{margin-left:auto;display:flex;align-items:center;gap:1px;flex:none}
+.workspace-standard-window-actions button{position:static!important;margin:0!important;transform:none!important}
+</style>
+
+<style id="workspace-v93-interactive-analysis-css">
+.analysis-parser-detail{margin-top:10px;padding:11px 12px!important;border:1px solid #dbe3ef!important;border-radius:11px!important;background:#f8fafc!important}
+.analysis-parser-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.analysis-parser-detail-heading{display:flex;align-items:center;gap:7px;color:#334155;font-size:10px}
+.analysis-parser-detail-chip{display:inline-flex;padding:4px 8px;border:1px solid #dbeafe;border-radius:7px;background:#fff;color:#2563eb;font-weight:900}
+.analysis-parser-detail-head>button{border:0;background:transparent;color:#94a3b8;font-size:16px;cursor:pointer}
+.analysis-parser-detail-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:11px}
+.analysis-parser-detail-facts>div{display:flex;flex-direction:column;gap:3px}
+.analysis-parser-detail-facts span{color:#94a3b8;font-size:7px;font-weight:900;letter-spacing:.06em}
+.analysis-parser-detail-facts strong{color:#475569;font-size:10px}
+.analysis-parser-detail-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.analysis-parser-detail-actions button{min-height:31px;padding:6px 9px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:9px;font-weight:800}
+.analysis-parser-detail-actions button.primary{border-color:#a5b4fc;background:#eef2ff;color:#3730a3}
+.analysis-parser-context-translation{margin-top:9px;padding:8px 9px;border-radius:8px;background:#fff;color:#334155;font-size:10px;font-weight:700}
 </style>
 
 </head>
@@ -19221,7 +19249,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         <div class="flex gap-2">
             <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
             <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
-            <button type="button" onclick="openLanguageCoach()">🧭 Coach</button>
+            <button type="button" onclick="openLanguageCoach()">🧭 Tutor Coach</button>
             <button type="button" onclick="dockVoiceTranscript()">↩ Return to Chat</button>
         </div>
     </div>
@@ -19257,7 +19285,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <button type="button" onclick="analysisWorkbenchListen()">🔊 Listen</button>
             <button type="button" onclick="analysisWorkbenchCopy(this)">⧉ Copy</button>
             <button type="button" onclick="analysisWorkbenchSave(this)">☆ Save</button>
-            <button type="button" onclick="analysisWorkbenchCoach()">🧭 Coach</button>
+            <button type="button" onclick="analysisWorkbenchCoach()">🧭 Tutor Coach</button>
             <button type="button" onclick="workspaceOpenTool('keyboard')">⌨ Keyboard</button>
         </div>
 
@@ -19276,7 +19304,9 @@ Current work: ${context||"No sentence has been entered yet."}`;
         localItems:null,
         grammar:null,
         diagram:null,
-        why:""
+        why:"",
+        grammarGateKey:"",
+        grammarGateChoice:""
     };
 
     function cfg(){
@@ -19325,6 +19355,9 @@ Current work: ${context||"No sentence has been entered yet."}`;
         state.grammar=null;
         state.diagram=null;
         state.why="";
+        state.grammarGateKey="";
+        state.grammarGateChoice="";
+        document.getElementById("analysis-workbench-correction-context")?.remove();
         clearResults();
     }
 
@@ -19821,20 +19854,73 @@ Rules:
                     detail.classList.remove("hidden");
                     detail.replaceChildren();
 
-                    const title=document.createElement("strong");
-                    title.textContent=phrase;
+                    const head=document.createElement("div");
+                    head.className="analysis-parser-detail-head";
+                    const heading=document.createElement("div");
+                    heading.className="analysis-parser-detail-heading";
+                    heading.innerHTML="<strong>Phrase Analysis:</strong>";
+                    const phraseChip=document.createElement("span");
+                    phraseChip.className="analysis-parser-detail-chip";
+                    phraseChip.textContent=phrase;
+                    heading.appendChild(phraseChip);
+                    const close=document.createElement("button");
+                    close.type="button"; close.textContent="×"; close.title="Close phrase analysis";
+                    close.addEventListener("click",()=>detail.classList.add("hidden"));
+                    head.append(heading,close);
 
-                    const meta=document.createElement("div");
-                    meta.className="analysis-parser-detail-meta";
-                    meta.textContent=[
-                        ch.label,
-                        ch.case,
-                        ch.gender,
-                        ch.type && ch.type!==ch.label ? ch.type.replace(/_/g," ") : "",
-                        ch.note
-                    ].filter(Boolean).join(" • ");
+                    const facts=document.createElement("div");
+                    facts.className="analysis-parser-detail-facts";
+                    const fact=(label,value)=>{
+                        if(!value)return;
+                        const cell=document.createElement("div");
+                        const lab=document.createElement("span"); lab.textContent=label;
+                        const val=document.createElement("strong"); val.textContent=value;
+                        cell.append(lab,val); facts.appendChild(cell);
+                    };
+                    fact("ROLE",ch.label||ch.type||"Word");
+                    fact("CASE",ch.case||"—");
+                    fact("GENDER",ch.gender||"—");
+                    if(ch.note)fact("NOTE",ch.note);
 
-                    detail.append(title,meta);
+                    const actions=document.createElement("div");
+                    actions.className="analysis-parser-detail-actions";
+                    const listen=document.createElement("button");
+                    listen.type="button"; listen.textContent="🔊 Listen";
+                    listen.addEventListener("click",()=>{if(typeof speakRawText==="function")speakRawText(phrase,cfg().locale);});
+
+                    const translate=document.createElement("button");
+                    translate.type="button"; translate.textContent="🌐 Translate in context";
+                    translate.addEventListener("click",async()=>{
+                        translate.disabled=true; const old=translate.textContent; translate.textContent="Translating…";
+                        try{
+                            const ai=resolveWorkbenchAIConfig();
+                            let translated="";
+                            if(ai.available){
+                                const data=await withWorkbenchTimeout(callAIJson(`Translate the selected ${cfg().name} phrase into concise natural English in the context of the full sentence. Return JSON only: {"translation":"..."}\nSentence: "${sentence.text||state.sentence}"\nSelected phrase: "${phrase}"`),WORKBENCH_PARSE_TIMEOUT_MS);
+                                translated=String(data?.translation||"").trim();
+                            }else if(typeof googleTranslateApiCall==="function"){
+                                translated=String(await googleTranslateApiCall(phrase,state.languageCode,"en")).trim();
+                            }
+                            if(translated){
+                                let result=detail.querySelector(".analysis-parser-context-translation");
+                                if(!result){result=document.createElement("div");result.className="analysis-parser-context-translation";detail.appendChild(result);}
+                                result.textContent=translated;
+                            }
+                        }catch(e){}finally{translate.disabled=false;translate.textContent=old;}
+                    });
+
+                    const tutor=document.createElement("button");
+                    tutor.type="button"; tutor.className="primary"; tutor.textContent="🧭 Ask Tutor";
+                    tutor.addEventListener("click",()=>{
+                        const seed=`Phrase: ${phrase}\nSentence: ${sentence.text||state.sentence}\n\nHelp me understand this phrase in context.`;
+                        if(typeof window.openLanguageCoach==="function"){
+                            window.openLanguageCoach(seed);
+                            if(typeof window.workspaceOpenTool==="function")window.workspaceOpenTool("coach");
+                        }
+                    });
+
+                    actions.append(listen,translate,tutor);
+                    detail.append(head,facts,actions);
                 });
                 row.appendChild(tile);
             });
@@ -19858,6 +19944,20 @@ Rules:
         };
 
         const showDiagram=async()=>{
+            const beforeKey=workbenchParseKey();
+            try{if(!(await ensureWorkbenchGrammarGate()))return;}
+            catch(e){
+                diagramHost.classList.remove("hidden");
+                diagramHost.innerHTML="<div class=\"analysis-diagram-unavailable\"><strong>Grammar check unavailable.</strong><span>AI could not verify the sentence before diagramming. Try again.</span></div>";
+                return;
+            }
+            if(beforeKey!==workbenchParseKey()){
+                window.analysisWorkbenchFullParse(
+                    [...document.querySelectorAll("#analysis-workbench-window .analysis-workbench-primary-tools button")]
+                    .find(btn=>btn.textContent.trim()==="Parse")||null
+                );
+                return;
+            }
             tiles.classList.add("hidden");
             detail.classList.add("hidden");
             diagramHost.classList.remove("hidden");
@@ -19924,8 +20024,105 @@ Rules:
         diagramViewButton.addEventListener("click",showDiagram);
     }
 
+
+    function grammarGateKey(){
+        return `${state.languageCode}::${String(state.sentence||"").trim()}`;
+    }
+    async function requestWorkbenchGrammarGate(){
+        const ai=resolveWorkbenchAIConfig();
+        if(!ai.available)throw new Error("AI is required for grammar checking.");
+        const prompt=`You are the pre-analysis grammar gate inside LanguageTutor.
+Language: ${cfg().name}
+Learner utterance: "${state.sentence}"
+Return JSON only:
+{"status":"ok|correction|possible","corrected":"corrected utterance or empty string","explanation":"one very short English explanation or empty string"}
+Rules:
+- "ok" includes grammatical conversational fragments, ellipsis, interjections, and natural informal speech.
+- "correction" means a clear learner grammar error; give the minimal correction.
+- "possible" means nonstandard/ambiguous/context-dependent; give a conservative possible correction if useful.
+- Preserve meaning, register, names, and punctuation. Do not rewrite merely for style. Do not translate. JSON only.`;
+        const data=await withWorkbenchTimeout(callAIJson(prompt),WORKBENCH_PARSE_TIMEOUT_MS);
+        const value=String(data?.status||"").toLowerCase();
+        if(!["ok","correction","possible"].includes(value))throw new Error("No reliable grammar-check status.");
+        return {status:value,corrected:String(data?.corrected||"").trim(),explanation:String(data?.explanation||"").trim()};
+    }
+    function applyWorkbenchCorrection(corrected,original){
+        const clean=String(corrected||"").trim();
+        if(!clean)return;
+        state.sentence=clean;
+        state.grammar=null;
+        state.diagram=null;
+        state.grammarGateKey=grammarGateKey();
+        state.grammarGateChoice="corrected";
+        const sentenceEl=document.getElementById("analysis-workbench-sentence");
+        if(sentenceEl)sentenceEl.textContent=clean;
+        let context=document.getElementById("analysis-workbench-correction-context");
+        if(!context){
+            context=document.createElement("div");
+            context.id="analysis-workbench-correction-context";
+            context.className="analysis-workbench-correction-context";
+            document.querySelector("#analysis-workbench-window .analysis-workbench-source")?.appendChild(context);
+        }
+        context.replaceChildren();
+        [["Original:",original],["Analyzing:",clean]].forEach(([label,value])=>{
+            const row=document.createElement("div");
+            const strong=document.createElement("strong");
+            strong.textContent=label+" ";
+            row.append(strong,document.createTextNode(value));
+            context.appendChild(row);
+        });
+    }
+    async function ensureWorkbenchGrammarGate(){
+        const key=grammarGateKey();
+        if(state.grammarGateKey===key && state.grammarGateChoice)return true;
+        const gate=await requestWorkbenchGrammarGate();
+        if(gate.status==="ok"){
+            state.grammarGateKey=key;
+            state.grammarGateChoice="original";
+            return true;
+        }
+        return new Promise(resolve=>{
+            clearResults();
+            const card=section("Check before analysis");
+            card.classList.add("analysis-grammar-gate");
+            const lead=document.createElement("div");
+            lead.className="analysis-grammar-gate-lead";
+            lead.textContent=gate.status==="correction" ? "Did you mean to say this?" : "This may be intentional. A possible correction is:";
+            const original=String(state.sentence||"").trim();
+            const suggestion=document.createElement("div");
+            suggestion.className="analysis-grammar-gate-suggestion";
+            suggestion.textContent=gate.corrected||original;
+            card.append(lead,suggestion);
+            if(gate.explanation){
+                const note=document.createElement("div");
+                note.className="analysis-grammar-gate-explanation";
+                note.textContent=gate.explanation;
+                card.appendChild(note);
+            }
+            const actions=document.createElement("div");
+            actions.className="analysis-grammar-gate-actions";
+            const mine=document.createElement("button");
+            mine.type="button"; mine.textContent="Analyze mine";
+            mine.addEventListener("click",()=>{state.grammarGateKey=key;state.grammarGateChoice="original";clearResults();resolve(true);});
+            const use=document.createElement("button");
+            use.type="button"; use.className="primary"; use.textContent="Use correction"; use.disabled=!gate.corrected;
+            use.addEventListener("click",()=>{applyWorkbenchCorrection(gate.corrected,original);clearResults();resolve(true);});
+            actions.append(mine,use); card.appendChild(actions);
+        });
+    }
+
     window.analysisWorkbenchFullParse=async function(button){
         if(!state.sentence)return;
+        try{if(!(await ensureWorkbenchGrammarGate()))return;}
+        catch(e){
+            clearResults();
+            const card=section("Check before analysis");
+            const unavailable=document.createElement("div");
+            unavailable.className="analysis-parse-unavailable";
+            unavailable.innerHTML="<strong>Grammar check unavailable.</strong><span>AI could not verify the sentence before parsing. Try again.</span>";
+            card.appendChild(unavailable);
+            return;
+        }
         clearResults();
 
         const card=section("Grammar Parser");
@@ -20333,7 +20530,7 @@ Do not continue the conversation.`;
 <div id="language-coach-window" hidden aria-label="Private language coach window">
     <div id="language-coach-drag-handle" class="language-coach-titlebar">
         <div class="language-coach-titlecopy">
-            <div id="language-coach-title" class="language-coach-title">🧭 Private Language Coach</div>
+            <div id="language-coach-title" class="language-coach-title">🧭 Tutor — Coach</div>
             <div id="language-coach-subtitle" class="language-coach-subtitle"></div>
         </div>
         <button type="button" class="language-coach-close" onclick="closeLanguageCoach()" title="Return to conversation">×</button>
@@ -20554,7 +20751,7 @@ Do not continue the conversation.`;
             if(seed)input.value=String(seed);
             setTimeout(()=>input.focus(),40);
         }
-        setCoachStatus(`Private sidebar: formulate your ${cfg.name} response here. Nothing is sent until you choose a phrase and then send it yourself.`);
+        setCoachStatus(`Tutor Coach: formulate your ${cfg.name} response here. Nothing is sent until you choose a phrase and then send it yourself.`);
     };
 
     window.closeLanguageCoach=function(){
@@ -22088,9 +22285,12 @@ Requirements:
             }catch(e){}
         });
         action("🔎 Analyze",()=>{
-            if(typeof window.analyzeTutorSentence==="function"){
-                const code=typeof currentStudyLanguage!=="undefined" ? currentStudyLanguage : cfg.code;
-                window.analyzeTutorSentence(phrase,code);
+            const code=typeof currentStudyLanguage!=="undefined" ? currentStudyLanguage : cfg.code;
+            if(typeof window.openAnalysisWorkbench==="function"){
+                window.openAnalysisWorkbench(phrase,code,{source:"tutor-coach",text:phrase});
+                if(typeof window.workspaceOpenTool==="function")window.workspaceOpenTool("analysis");
+                const analysis=document.getElementById("analysis-workbench-window");
+                if(analysis){analysis.hidden=false;analysis.classList.remove("workspace-docked");}
             }
         });
         action("☆ Save",()=>{
@@ -22266,6 +22466,67 @@ Do not continue the Tutor conversation. Keep output concise.`;
         if(typeof renderSavedTutorTranscripts==="function")renderSavedTutorTranscripts();
     };
     window.addEventListener("load",refresh,{once:true});
+})();
+</script>
+
+
+<script id="workspace-v92-standard-window-controls">
+(()=>{
+    "use strict";
+    const defs=[
+        ["analysis","analysis-workbench-window","analysis-workbench-drag-handle",".analysis-workbench-close"],
+        ["coach","language-coach-window","language-coach-drag-handle",".language-coach-close"],
+        ["keyboard","special-character-palette","special-character-drag-handle",".special-character-close, .floating-kana-close"],
+        ["keyboard","floating-kana-tool","floating-kana-drag-handle",".floating-kana-close"]
+    ];
+    const normalize=()=>{
+        defs.forEach(([name,panelId,titlebarId,closeSelector])=>{
+            const panel=document.getElementById(panelId);
+            const bar=document.getElementById(titlebarId) || panel?.querySelector('[class*="titlebar"]');
+            if(!panel||!bar)return;
+            let actions=bar.querySelector(".workspace-standard-window-actions");
+            if(!actions){
+                actions=document.createElement("div");
+                actions.className="workspace-standard-window-actions";
+                bar.appendChild(actions);
+            }
+            // Remove legacy workspace minimize controls from anywhere else in the titlebar.
+            [...bar.querySelectorAll(".workspace-title-action")].forEach(btn=>{
+                if(!actions.contains(btn))btn.remove();
+            });
+            let minimize=actions.querySelector('[data-standard-minimize]');
+            if(!minimize){
+                minimize=document.createElement("button");
+                minimize.type="button";
+                minimize.className="workspace-title-action";
+                minimize.dataset.standardMinimize="1";
+                minimize.textContent="—";
+                minimize.title="Minimize";
+                minimize.addEventListener("click",e=>{e.stopPropagation();window.workspaceMinimizeTool?.(name);});
+                actions.appendChild(minimize);
+            }
+            const close=bar.querySelector(closeSelector);
+            if(close){
+                close.title="Close";
+                actions.appendChild(close); // always last = far right
+            }
+        });
+    };
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",normalize,{once:true}); else normalize();
+    window.addEventListener("load",normalize,{once:true});
+    setTimeout(normalize,250);
+})();
+</script>
+
+
+<script id="workspace-v93-coach-analysis-routing">
+(()=>{
+    "use strict";
+    window.openTutorCoachForPhrase=function(phrase,sentence){
+        const seed=`Phrase: ${String(phrase||"").trim()}\nSentence: ${String(sentence||"").trim()}\n\nHelp me understand this phrase in context.`;
+        window.openLanguageCoach?.(seed);
+        window.workspaceOpenTool?.("coach");
+    };
 })();
 </script>
 
