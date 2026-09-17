@@ -5243,6 +5243,89 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+<style id="workspace-v85-multisentence-css">
+.analysis-parser-tiles{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.analysis-parser-sentence-group,
+.analysis-diagram-sentence-group{
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    background:#fff;
+    overflow:hidden;
+}
+.analysis-parser-sentence-heading{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+    padding:7px 9px;
+    border-bottom:1px solid #edf2f7;
+    background:#f8fafc;
+    color:#334155;
+}
+.analysis-parser-sentence-heading strong{
+    font-size:10px;
+}
+.analysis-parser-sentence-number{
+    flex:none;
+    color:#64748b;
+    font-size:8px;
+    font-weight:900;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+}
+.analysis-parser-sentence-tiles{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:7px;
+    padding:9px;
+}
+.analysis-diagram-sentence-groups{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+.analysis-diagram-sentence-group>.analysis-diagram-tree{
+    margin:10px;
+}
+</style>
+
+<style id="workspace-v86-ai-only-parse-css">
+.analysis-parse-unavailable{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+    margin-top:8px;
+    padding:14px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+    color:#475569;
+    font-size:10px;
+    line-height:1.45;
+}
+.analysis-parse-unavailable strong{
+    color:#334155;
+    font-size:11px;
+}
+.analysis-parse-unavailable button{
+    margin-top:2px;
+    min-height:30px;
+    padding:5px 10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#fff;
+    color:#334155;
+    font-size:9px;
+    font-weight:800;
+    cursor:pointer;
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -19475,6 +19558,8 @@ Current work: ${context||"No sentence has been entered yet."}`;
         return `${state.languageCode}::${String(state.sentence||"").trim()}`;
     }
 
+    // Retained for legacy/non-Workbench utilities only. The Analysis Workbench
+    // Parse and Diagram views never use this as a fallback.
     function workbenchLocalResult(){
         const localChunks=workbenchLocalChunks();
         return {
@@ -19503,41 +19588,69 @@ Current work: ${context||"No sentence has been entered yet."}`;
         // for both in one response made ordinary parsing slower and more fragile.
         const prompt=`You are the grammar parser inside LanguageTutor.
 Language: ${languageName}
-Sentence: "${state.sentence}"
+Selected utterance: "${state.sentence}"
+
+The selected utterance may contain ONE OR MORE independent sentences. Identify sentence boundaries first, then analyze each sentence independently.
 
 Return JSON only:
-{"items":[
- {"text":"exact word or pedagogically useful phrase","type":"pronoun|verb|noun_phrase|prepositional|adverb|conjunction|particle|word|punctuation","label":"short learner-facing grammar label; for German noun phrases use Nominative, Accusative, Dative, or Genitive when known","gender":"Masculine|Feminine|Neuter|Plural|","note":"very short note or empty string"}
+{"sentences":[
+ {"text":"exact complete sentence from the utterance","items":[
+  {"text":"exact word or pedagogically useful phrase","type":"pronoun|verb|noun_phrase|prepositional|adverb|conjunction|particle|expression|address|word","label":"short learner-facing grammar label; for German noun phrases use Nominative, Accusative, Dative, or Genitive when known","gender":"Masculine|Feminine|Neuter|Plural|","note":"very short note or empty string"}
+ ]}
 ]}
 
 Rules:
-- Preserve sentence order.
-- Represent every visible word once.
-- Group article + adjective + noun when pedagogically useful.
-- Resolve German case from sentence context.
+- Preserve sentence order and word order.
+- Do NOT return punctuation as items. Punctuation belongs in the sentence heading only.
+- Do NOT create grammatical relationships across independent sentences.
+- Prefer LEARNER-USEFUL PHRASE CHUNKS rather than mechanically making one tile per token.
+- Group article + adjective + noun as a noun phrase when useful.
+- Keep preposition + governed noun phrase together when that better teaches the construction, e.g. "aus Japan", "in Deutschland", "mit meiner Freundin".
+- Keep fixed/idiomatic expressions together when useful.
+- A verb, pronoun, conjunction, question word, or form of address may appropriately stand alone.
+- For German, resolve noun-phrase case from context and preserve gender metadata where relevant.
+- Do not assign case to punctuation, names used only as forms of address, or expressions that do not grammatically bear that case.
+- Analyze ellipsis as actually spoken; do not invent visible words that are absent.
 - Use language-appropriate roles for Spanish/Japanese.
-- Keep labels/notes extremely concise.
+- Keep labels/notes concise and pedagogical.
 - JSON only.`;
 
         const task=(async()=>{
             const data=await withWorkbenchTimeout(callAIJson(prompt));
-            const raw=Array.isArray(data?.items)?data.items:[];
-            if(!raw.length)throw new Error("AI returned no parse items.");
+            let rawSentences=Array.isArray(data?.sentences)?data.sentences:[];
+            // Backward tolerance for a provider that ignores the new envelope.
+            if(!rawSentences.length && Array.isArray(data?.items)){
+                rawSentences=[{text:state.sentence,items:data.items}];
+            }
+            if(!rawSentences.length)throw new Error("AI returned no parsed sentences.");
 
-            const chunks=raw.map(item=>({
-                words:String(item?.text||"").trim().split(/\s+/).filter(Boolean),
-                type:String(item?.type||item?.role||"word").toLowerCase().replace(/\s+/g,"_"),
-                label:String(item?.label||item?.case||item?.role||"Word"),
-                gender:String(item?.gender||""),
-                note:String(item?.note||"")
-            })).filter(ch=>ch.words.length);
+            const sentences=rawSentences.map((sentence,sentenceIndex)=>{
+                const rawItems=Array.isArray(sentence?.items)?sentence.items:[];
+                const items=rawItems.map(item=>({
+                    words:String(item?.text||"").trim().split(/\s+/).filter(Boolean),
+                    type:String(item?.type||item?.role||"word").toLowerCase().replace(/\s+/g,"_"),
+                    label:String(item?.label||item?.case||item?.role||"Word"),
+                    gender:String(item?.gender||""),
+                    note:String(item?.note||"")
+                })).filter(ch=>{
+                    const phrase=ch.words.join(" ").trim();
+                    return phrase && ch.type!=="punctuation" && !/^[.!?,;:…]+$/.test(phrase);
+                });
+                return {
+                    id:`s${sentenceIndex+1}`,
+                    text:String(sentence?.text||"").trim(),
+                    items
+                };
+            }).filter(sentence=>sentence.items.length);
 
-            if(!chunks.length)throw new Error("AI parse was empty.");
+            if(!sentences.length)throw new Error("AI parse was empty.");
+            const chunks=sentences.flatMap(sentence=>sentence.items);
             const result={
                 source:"AI",
                 chunks,
-                // A local diagram is enough until Diagram is explicitly requested.
-                diagram:workbenchFallbackDiagram(chunks)
+                sentences,
+                // Diagram is requested separately and is AI-only.
+                diagram:null
             };
             workbenchAIParseCache.set(key,result);
             return result;
@@ -19555,32 +19668,16 @@ Rules:
         if(ai.available && workbenchAIParseCache.has(key)){
             const cached=workbenchAIParseCache.get(key);
             state.grammar=cached;
-            state.diagram=cached.diagram;
+            state.diagram=null;
             return cached;
         }
 
-        if(!ai.available){
-            const local=workbenchLocalResult();
-            local.reason="NO_KEY";
-            state.grammar=local;
-            state.diagram=local.diagram;
-            return local;
-        }
+        if(!ai.available)throw new Error("AI is required for grammar parsing.");
 
-        try{
-            const result=await requestWorkbenchAIParse();
-            state.grammar=result;
-            state.diagram=result.diagram;
-            return result;
-        }catch(e){
-            console.warn("Workbench AI parse failed; retaining local parser.",e);
-            const local=workbenchLocalResult();
-            local.reason="AI_FAILED";
-            local.aiError=(e&&e.message)?e.message:String(e);
-            state.grammar=local;
-            state.diagram=local.diagram;
-            return local;
-        }
+        const result=await requestWorkbenchAIParse();
+        state.grammar=result;
+        state.diagram=null;
+        return result;
     }
 
     function renderWorkbenchParserTiles(card,parsed){
@@ -19636,50 +19733,72 @@ Rules:
         const detail=document.createElement("div");
         detail.className="analysis-parser-detail hidden";
 
-        parsed.chunks.forEach(ch=>{
-            const phrase=ch.words.join(" ");
-            if(ch.type==="punctuation"){
-                const punctuation=document.createElement("span");
-                punctuation.className="analysis-parser-punctuation";
-                punctuation.textContent=phrase;
-                tiles.appendChild(punctuation);
-                return;
-            }
+        const sentenceGroups=Array.isArray(parsed.sentences) && parsed.sentences.length
+            ? parsed.sentences
+            : [{id:"s1",text:state.sentence,items:parsed.chunks||[]}];
 
-            const caseClass=workbenchCaseClass(ch.label);
-            const genderClass=workbenchGenderClass(ch.gender);
-            const tile=document.createElement("button");
-            tile.type="button";
-            tile.className=`grammar-tile ${caseClass} ${genderClass}`;
+        sentenceGroups.forEach((sentence,index)=>{
+            const group=document.createElement("section");
+            group.className="analysis-parser-sentence-group";
 
-            const words=document.createElement("span");
-            words.className=`analysis-parser-phrase ${genderClass}`;
-            words.textContent=phrase;
+            const heading=document.createElement("div");
+            heading.className="analysis-parser-sentence-heading";
 
-            const label=document.createElement("span");
-            label.className="analysis-parser-label";
-            label.textContent=ch.label || ch.type || "Word";
+            const number=document.createElement("span");
+            number.className="analysis-parser-sentence-number";
+            number.textContent=sentenceGroups.length>1 ? `Sentence ${index+1}` : "Sentence";
 
-            tile.append(words,label);
-            tile.addEventListener("click",()=>{
-                detail.classList.remove("hidden");
-                detail.replaceChildren();
+            const sentenceText=document.createElement("strong");
+            sentenceText.textContent=sentence.text || "";
 
-                const title=document.createElement("strong");
-                title.textContent=phrase;
+            heading.append(number,sentenceText);
+            group.appendChild(heading);
 
-                const meta=document.createElement("div");
-                meta.className="analysis-parser-detail-meta";
-                meta.textContent=[
-                    ch.label,
-                    ch.gender,
-                    ch.type && ch.type!==ch.label ? ch.type.replace(/_/g," ") : "",
-                    ch.note
-                ].filter(Boolean).join(" • ");
+            const row=document.createElement("div");
+            row.className="analysis-parser-sentence-tiles";
 
-                detail.append(title,meta);
+            (sentence.items||[]).forEach(ch=>{
+                const phrase=ch.words.join(" ").trim();
+                if(!phrase || ch.type==="punctuation" || /^[.!?,;:…]+$/.test(phrase))return;
+
+                const caseClass=workbenchCaseClass(ch.label);
+                const genderClass=workbenchGenderClass(ch.gender);
+                const tile=document.createElement("button");
+                tile.type="button";
+                tile.className=`grammar-tile ${caseClass} ${genderClass}`;
+
+                const words=document.createElement("span");
+                words.className=`analysis-parser-phrase ${genderClass}`;
+                words.textContent=phrase;
+
+                const label=document.createElement("span");
+                label.className="analysis-parser-label";
+                label.textContent=ch.label || ch.type || "Word";
+
+                tile.append(words,label);
+                tile.addEventListener("click",()=>{
+                    detail.classList.remove("hidden");
+                    detail.replaceChildren();
+
+                    const title=document.createElement("strong");
+                    title.textContent=phrase;
+
+                    const meta=document.createElement("div");
+                    meta.className="analysis-parser-detail-meta";
+                    meta.textContent=[
+                        ch.label,
+                        ch.gender,
+                        ch.type && ch.type!==ch.label ? ch.type.replace(/_/g," ") : "",
+                        ch.note
+                    ].filter(Boolean).join(" • ");
+
+                    detail.append(title,meta);
+                });
+                row.appendChild(tile);
             });
-            tiles.appendChild(tile);
+
+            group.appendChild(row);
+            tiles.appendChild(group);
         });
 
         card.append(tiles,detail);
@@ -19724,7 +19843,7 @@ Rules:
 
             try{
                 const diagram=await getWorkbenchDiagramData(parsed);
-                const tree=buildDiagramTree(diagram);
+                const tree=buildDiagramSentenceGroups(diagram);
                 if(!tree)throw new Error("AI did not return a usable diagram.");
 
                 diagramHost.replaceChildren();
@@ -19771,61 +19890,83 @@ Rules:
         const old=button?.textContent||"Parse";
         const ai=resolveWorkbenchAIConfig();
 
-        const renderParse=(parsed,badgeText)=>{
+        const renderUnavailable=(message,allowRetry=true)=>{
             card.replaceChildren();
 
             const heading=document.createElement("div");
             heading.className="analysis-workbench-section-title";
             heading.textContent="Grammar Parser";
-
-            const badge=document.createElement("span");
-            badge.className=parsed.source==="AI"
-                ? "analysis-full-parse-ai-badge"
-                : "analysis-full-parse-local-badge";
-            badge.textContent=badgeText;
-            heading.appendChild(badge);
             card.appendChild(heading);
-            renderWorkbenchParserTiles(card,parsed);
+
+            const unavailable=document.createElement("div");
+            unavailable.className="analysis-parse-unavailable";
+
+            const title=document.createElement("strong");
+            title.textContent="Grammar analysis unavailable.";
+
+            const note=document.createElement("span");
+            note.textContent=message;
+            unavailable.append(title,note);
+
+            if(allowRetry){
+                const retry=document.createElement("button");
+                retry.type="button";
+                retry.textContent="Try again";
+                retry.addEventListener("click",()=>window.analysisWorkbenchFullParse(button));
+                unavailable.appendChild(retry);
+            }
+            card.appendChild(unavailable);
         };
 
-        // Never make the learner stare at an empty parser while the network waits.
-        const immediate=workbenchLocalResult();
-        state.grammar=immediate;
-        state.diagram=immediate.diagram;
-
         if(!ai.available){
-            immediate.reason="NO_KEY";
-            renderParse(immediate,"LOCAL");
+            renderUnavailable("AI is required for a reliable grammar analysis. Add or select an AI API key in Settings, then try again.",false);
             status("");
             return;
         }
 
-        renderParse(immediate,"LOCAL • AI ENHANCING…");
+        card.replaceChildren();
+        const heading=document.createElement("div");
+        heading.className="analysis-workbench-section-title";
+        heading.textContent="Grammar Parser";
+
+        const loadingBadge=document.createElement("span");
+        loadingBadge.className="analysis-full-parse-ai-badge";
+        loadingBadge.textContent=`✨ ${ai.providerName} • ANALYZING…`;
+        heading.appendChild(loadingBadge);
+        card.appendChild(heading);
+
+        const loading=document.createElement("div");
+        loading.className="analysis-workbench-hint";
+        loading.textContent="Identifying sentence boundaries and grammatical structure…";
+        card.appendChild(loading);
+
         if(button){
             button.disabled=true;
-            button.textContent="✨ Enhancing…";
+            button.textContent="✨ Analyzing…";
         }
-        status(`✨ ${ai.providerName} is refining the parse…`);
+        status("");
 
-        // Capture identity so a late response can never render into a different
-        // transcript turn after the learner has moved on.
         const requestedKey=workbenchParseKey();
-
         try{
             const parsed=await getWorkbenchParseData({forceAI:true});
             if(requestedKey!==workbenchParseKey())return;
 
-            if(parsed.source==="AI"){
-                renderParse(parsed,`✨ ${ai.providerName}`);
-                status("");
-            }else{
-                // Local parse is already visible, so failure is non-destructive.
-                renderParse(parsed,"LOCAL • AI FALLBACK");
-                status(parsed.aiError ? `AI enhancement failed: ${parsed.aiError}` : "AI enhancement unavailable.","error");
-            }
+            card.replaceChildren();
+            const resultHeading=document.createElement("div");
+            resultHeading.className="analysis-workbench-section-title";
+            resultHeading.textContent="Grammar Parser";
+
+            const badge=document.createElement("span");
+            badge.className="analysis-full-parse-ai-badge";
+            badge.textContent=`✨ ${ai.providerName}`;
+            resultHeading.appendChild(badge);
+            card.appendChild(resultHeading);
+            renderWorkbenchParserTiles(card,parsed);
         }catch(e){
             if(requestedKey!==workbenchParseKey())return;
-            status("AI enhancement failed: "+((e&&e.message)?e.message:String(e)),"error");
+            console.warn("Workbench AI parse unavailable.",e);
+            renderUnavailable("AI could not produce a reliable grammar analysis right now. Try again.");
+            status("");
         }finally{
             if(button){button.disabled=false;button.textContent=old;}
         }
@@ -19852,56 +19993,72 @@ Rules:
             gender:ch.gender
         }));
 
-        const prompt=`You are building a pedagogically accurate sentence diagram for a language learner.
+        const prompt=`You are building pedagogically accurate sentence diagrams for a language learner.
 Language: ${languageName}
-Sentence: "${state.sentence}"
+Selected utterance: "${state.sentence}"
 Existing parse: ${JSON.stringify(parseSummary)}
 
+The selected utterance may contain ONE OR MORE independent sentences. Identify sentence boundaries first. Build a SEPARATE syntactic tree for each independent sentence. Never connect independent sentences into one tree.
+
 Return JSON only:
-{"nodes":[
- {"id":"n1","text":"exact word or phrase","role":"short grammatical role","parent":"parent node id or empty string","relation":"short dependency label","label":"case/grammar label when useful","gender":"Masculine|Feminine|Neuter|Plural|"}
+{"sentences":[
+ {"text":"exact complete sentence","nodes":[
+  {"id":"s1n1","text":"exact word or phrase","role":"short grammatical role","parent":"parent node id or empty string","relation":"short dependency label","label":"case/grammar label when useful","gender":"Masculine|Feminine|Neuter|Plural|"}
+ ]}
 ]}
 
 Diagram rules:
-- Represent CLAUSE STRUCTURE, not merely a flat list of parser tiles.
+- Each sentence must have its own node namespace and coherent acyclic tree.
+- Represent CLAUSE STRUCTURE within that sentence, not merely a flat list of parser tiles.
+- Multiple clauses that belong to ONE sentence remain connected according to their syntax.
+- Independent sentences must NEVER be connected to each other.
 - Identify each clause and its finite verb before assigning dependencies.
 - For German subordinate clauses, do not mistake final word order for dependency structure.
 - With modal constructions such as "ausleihen durfte", identify the finite modal (durfte) and its infinitive complement (ausleihen).
 - Attach the subject to the finite verb of its clause.
 - Attach direct/indirect objects and reflexive/dative pronouns to the lexical verb they belong to when linguistically appropriate.
-- Attach subordinating conjunctions such as "dass" to the subordinate clause / finite predicate rather than treating them as ordinary dependents of an unrelated word.
-- Do not force a grammatical case onto fixed or elliptical expressions when the sentence does not license one. For example, "Vielen Dank" in "Vielen Dank, dass ..." should be labeled as an expression/main-clause phrase, not automatically Accusative.
+- Attach subordinating conjunctions such as "dass" to the subordinate clause / finite predicate rather than to an unrelated word.
+- Do not force grammatical case onto fixed/elliptical expressions or forms of address.
+- Do not invent visible words omitted in conversational ellipsis.
 - Preserve case and gender metadata from the existing parse when correct.
-- Produce one coherent acyclic tree.
 - Keep role/relation labels concise and learner-friendly.
 - JSON only.`;
 
         const task=(async()=>{
             const data=await withWorkbenchTimeout(callAIJson(prompt),15000);
-            const nodes=Array.isArray(data?.nodes)
-                ? data.nodes
-                : Array.isArray(data?.diagram?.nodes)
-                    ? data.diagram.nodes
-                    : [];
-            if(!nodes.length)throw new Error("AI returned no diagram nodes.");
+            let rawSentences=Array.isArray(data?.sentences)?data.sentences:[];
+            // Backward tolerance for a provider returning one old-style diagram.
+            if(!rawSentences.length){
+                const legacyNodes=Array.isArray(data?.nodes)
+                    ? data.nodes
+                    : Array.isArray(data?.diagram?.nodes)
+                        ? data.diagram.nodes
+                        : [];
+                if(legacyNodes.length)rawSentences=[{text:state.sentence,nodes:legacyNodes}];
+            }
+            if(!rawSentences.length)throw new Error("AI returned no sentence diagrams.");
 
-            const ids=new Set(nodes.map(n=>String(n.id||"")).filter(Boolean));
-            const normalized=nodes.map((n,i)=>({
-                id:String(n.id||`n${i}`),
-                text:String(n.text||"").trim(),
-                role:String(n.role||"").trim(),
-                parent:String(n.parent||"").trim(),
-                relation:String(n.relation||"").trim(),
-                label:String(n.label||"").trim(),
-                gender:String(n.gender||"").trim()
-            })).filter(n=>n.text);
+            const sentences=rawSentences.map((sentence,sentenceIndex)=>{
+                const rawNodes=Array.isArray(sentence?.nodes)?sentence.nodes:[];
+                const normalized=rawNodes.map((n,i)=>({
+                    id:String(n.id||`s${sentenceIndex+1}n${i+1}`),
+                    text:String(n.text||"").trim(),
+                    role:String(n.role||"").trim(),
+                    parent:String(n.parent||"").trim(),
+                    relation:String(n.relation||"").trim(),
+                    label:String(n.label||"").trim(),
+                    gender:String(n.gender||"").trim()
+                })).filter(n=>n.text);
 
-            // Broken parent references are safer as roots than invisible nodes.
-            normalized.forEach(n=>{
-                if(n.parent && !ids.has(n.parent))n.parent="";
-            });
+                const ids=new Set(normalized.map(n=>n.id));
+                normalized.forEach(n=>{
+                    if(n.parent && !ids.has(n.parent))n.parent="";
+                });
+                return {text:String(sentence?.text||"").trim(),nodes:normalized};
+            }).filter(sentence=>sentence.nodes.length);
 
-            const result={nodes:normalized};
+            if(!sentences.length)throw new Error("AI returned no usable sentence diagrams.");
+            const result={sentences};
             workbenchDiagramCache.set(key,result);
             return result;
         })();
@@ -19909,6 +20066,39 @@ Diagram rules:
         workbenchDiagramInflight.set(key,task);
         try{return await task}
         finally{workbenchDiagramInflight.delete(key)}
+    }
+
+
+    function buildDiagramSentenceGroups(diagram){
+        const sentences=Array.isArray(diagram?.sentences) && diagram.sentences.length
+            ? diagram.sentences
+            : (Array.isArray(diagram?.nodes) ? [{text:state.sentence,nodes:diagram.nodes}] : []);
+        if(!sentences.length)return null;
+
+        const wrapper=document.createElement("div");
+        wrapper.className="analysis-diagram-sentence-groups";
+
+        sentences.forEach((sentence,index)=>{
+            const group=document.createElement("section");
+            group.className="analysis-diagram-sentence-group";
+
+            const heading=document.createElement("div");
+            heading.className="analysis-parser-sentence-heading";
+            const number=document.createElement("span");
+            number.className="analysis-parser-sentence-number";
+            number.textContent=sentences.length>1 ? `Sentence ${index+1}` : "Sentence";
+            const sentenceText=document.createElement("strong");
+            sentenceText.textContent=sentence.text||"";
+            heading.append(number,sentenceText);
+
+            const tree=buildDiagramTree({nodes:sentence.nodes||[]});
+            if(tree){
+                group.append(heading,tree);
+                wrapper.appendChild(group);
+            }
+        });
+
+        return wrapper.childElementCount ? wrapper : null;
     }
 
     function buildDiagramTree(diagram){
