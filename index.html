@@ -5540,6 +5540,112 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+<style id="workspace-v101-collapsible-tools-streamlined-live-css">
+/* v10.1 — two-level collapsing for Language Tools & Study */
+.combined-language-tools-subsection{
+    padding:0!important;
+    overflow:hidden;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#fff;
+}
+.combined-language-tools-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin:0!important;
+    padding:11px 12px;
+    cursor:pointer;
+    user-select:none;
+    list-style:none;
+    color:#334155;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:.02em;
+}
+.combined-language-tools-heading::-webkit-details-marker{display:none}
+.combined-language-tools-chevron{
+    flex:none;
+    color:#94a3b8;
+    font-size:18px;
+    line-height:1;
+    transform:rotate(0deg);
+    transition:transform .15s ease;
+}
+.combined-language-tools-subsection[open]>.combined-language-tools-heading{
+    border-bottom:1px solid #eef2f7;
+    background:#f8fafc;
+}
+.combined-language-tools-subsection[open]>.combined-language-tools-heading .combined-language-tools-chevron{
+    transform:rotate(90deg);
+}
+.combined-language-tools-subsection-body{padding:11px 12px}
+.combined-language-tools-body{gap:9px!important}
+
+/* v10.1 — live transcription is feedback, not a permanent workspace.
+   Speech recognition remains intact. Interim/final recognition text can still
+   appear, but the idle placeholder no longer occupies a large panel. */
+#voice-live-transcript.voice-live-interim-status{
+    min-height:0!important;
+    max-height:82px!important;
+    overflow:auto!important;
+    margin:6px 0!important;
+    padding:7px 9px!important;
+    border:1px solid #e2e8f0!important;
+    border-radius:9px!important;
+    background:#f8fafc!important;
+    color:#64748b!important;
+    font-size:10px!important;
+    line-height:1.4!important;
+    transition:opacity .15s ease,max-height .15s ease,padding .15s ease,margin .15s ease,border-width .15s ease;
+}
+#voice-live-transcript.voice-live-interim-status.voice-live-interim-idle{
+    max-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    border-width:0!important;
+    opacity:0!important;
+    overflow:hidden!important;
+    pointer-events:none!important;
+}
+@media(max-width:640px){
+    .combined-language-tools-heading{min-height:44px;padding:10px}
+    .combined-language-tools-subsection-body{padding:9px}
+}
+</style>
+
+<style id="workspace-v103-top-scrollbars-css">
+/* v10.3 — accessible horizontal scrolling without traveling to section bottoms. */
+.workspace-top-scrollbar{
+    width:100%;
+    height:15px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    margin:5px 0 8px;
+    scrollbar-width:auto;
+    scrollbar-gutter:stable;
+    overscroll-behavior-x:contain;
+}
+.workspace-top-scrollbar-spacer{
+    height:1px;
+    min-width:100%;
+    pointer-events:none;
+}
+.workspace-top-scrollbar.workspace-top-scrollbar-inactive{
+    height:0;
+    margin:0;
+    overflow:hidden;
+}
+#conversation-primary-section,
+#conversation-language-tools-section{
+    min-width:0;
+}
+@media(max-width:640px){
+    .workspace-top-scrollbar{height:14px;margin:4px 0 6px}
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -6262,9 +6368,7 @@ body.conversation-first-layout #mobile-right-column{
                                 title="Send as a target-language reply">Send</button>
                         </div>
                         <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-                            <div id="voice-text-input-hint" class="text-[10px] text-slate-400">
-                                Type in German, or use English → German if you get stuck.
-                            </div>
+<div id="voice-text-input-hint" hidden></div>
                             <div class="flex flex-wrap items-center gap-2 ml-auto">
                                 <button type="button" id="conversation-keyboard-btn" onclick="openConversationKeyboard()"
                                     class="min-h-[36px] px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold transition"
@@ -6766,9 +6870,6 @@ body.conversation-first-layout #mobile-right-column{
 
                             <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
                                 <div class="text-sm font-bold text-slate-800">Adjective Ending Builder</div>
-                                <div class="text-[11px] text-slate-500">
-                                    Choose the grammatical situation, then enter the adjective and noun. The builder shows the determiner + adjective ending pattern.
-                                </div>
 
                                 <div class="adjective-builder-grid">
                                     <label class="case-builder-field">Case
@@ -14436,7 +14537,6 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 <div class="ml-panel space-y-4">
                   <div>
                     <div class="text-sm font-bold text-slate-800">Spanish Verb Conjugator</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Choose a tense or mood. Spanish input is assumed unless you check English.</p>
                   </div>
                   <div class="ml-helper-card space-y-3">
                     <label class="ml-field">Verb<input id="es-verb-input" class="ml-input" placeholder="e.g. hablar, tener, vivir"></label>
@@ -14520,7 +14620,6 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                   <div class="grammar-topic-divider"></div>
                   <div>
                     <div class="text-sm font-bold text-slate-800">Article Agreement Builder</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Choose definite or indefinite article plus noun gender and number.</p>
                   </div>
                   <div class="ml-helper-card space-y-3">
                     <label class="ml-field">Article type
@@ -14559,7 +14658,6 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                   <div class="grammar-topic-divider"></div>
                   <div>
                     <div class="text-sm font-bold text-slate-800">Build a Phrase</div>
-                    <p class="text-[11px] text-slate-500 mt-1">Enter a few words and choose the meaning you want. The builder selects the appropriate side of the contrast and shows the sentence pattern.</p>
                   </div>
                   <div id="es-contrast-builder-fields" class="ml-helper-card space-y-3"></div>
                   <div id="es-contrast-builder-result" class="ml-helper-result"></div>
@@ -19363,7 +19461,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     <div id="text-transcript-drag-handle" class="voice-transcript-titlebar">
         <div class="voice-transcript-titlecopy">
             <div id="text-transcript-window-title" class="voice-transcript-window-title">Text conversation transcript</div>
-            <div class="voice-transcript-window-subtitle">A movable, selectable view of your AI text conversation.</div>
+
         </div>
         <div class="voice-transcript-window-actions">
             <button type="button" id="text-transcript-collapse-btn" onclick="toggleTextTranscriptCollapse()" title="Collapse transcript">—</button>
@@ -19402,7 +19500,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
         <div class="voice-transcript-titlecopy">
             <div id="voice-transcript-window-title" class="voice-transcript-window-title">Conversation transcript</div>
-            <div class="voice-transcript-window-subtitle">Conversation first. Use Analysis beside a line only when you want to study that utterance.</div>
+
         </div>
         <div class="voice-transcript-window-actions">
             <button type="button" id="voice-transcript-collapse-btn" onclick="toggleVoiceTranscriptCollapse()" title="Collapse transcript">—</button>
@@ -19410,7 +19508,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         </div>
     </div>
     <div class="voice-transcript-toolbar">
-        <span class="voice-transcript-toolbar-note">Text is selectable. Drag or resize this window on desktop.</span>
+
         <div class="flex gap-2">
             <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
             <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
@@ -19428,7 +19526,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     <div id="analysis-workbench-drag-handle" class="analysis-workbench-titlebar">
         <div class="analysis-workbench-titlecopy">
             <div class="analysis-workbench-title">🔎 Analysis Workbench</div>
-            <div id="analysis-workbench-subtitle" class="analysis-workbench-subtitle">Selected transcript turn</div>
+            <div id="analysis-workbench-subtitle" class="analysis-workbench-subtitle" hidden></div>
         </div>
         <button type="button" class="analysis-workbench-close" onclick="closeAnalysisWorkbench()" title="Close analysis">×</button>
     </div>
@@ -21239,10 +21337,7 @@ Requirements:
             const title=document.createElement("div");
             title.className="transcript-hub-title";
             title.textContent="Conversation transcript";
-            const subtitle=document.createElement("div");
-            subtitle.className="transcript-hub-subtitle";
-            subtitle.textContent="Keep the conversation clean. Use the single Analysis button beside a turn when you want translation or grammar help.";
-            copy.append(title,subtitle);
+            copy.append(title);
 
             const actions=document.createElement("div");
             actions.className="transcript-hub-heading-actions";
@@ -21399,15 +21494,27 @@ Requirements:
         const toolsBody=document.createElement("div");
         toolsBody.className="combined-language-tools-body";
 
-        const subsection=(label,content,id)=>{
-            const section=document.createElement("section");
+        const subsection=(label,content,id,open=false)=>{
+            const section=document.createElement("details");
             section.className="combined-language-tools-subsection";
             if(id)section.id=id;
-            const heading=document.createElement("div");
+            section.open=Boolean(open);
+
+            const heading=document.createElement("summary");
             heading.className="combined-language-tools-heading";
-            heading.textContent=label;
+            const title=document.createElement("span");
+            title.textContent=label;
+            const hint=document.createElement("span");
+            hint.className="combined-language-tools-chevron";
+            hint.setAttribute("aria-hidden","true");
+            hint.textContent="›";
+            heading.append(title,hint);
             section.appendChild(heading);
-            if(content)section.appendChild(content);
+
+            const body=document.createElement("div");
+            body.className="combined-language-tools-subsection-body";
+            if(content)body.appendChild(content);
+            section.appendChild(body);
             return section;
         };
 
@@ -23109,6 +23216,173 @@ Do not continue the Tutor conversation. Keep output concise.`;
     window.clearTranscriptLineSelection=clearSelection;
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mountToolbar,{once:true});
     else mountToolbar();
+})();
+</script>
+
+
+<script id="workspace-v101-streamlined-live-transcription">
+(()=>{
+    "use strict";
+
+    function streamlineLiveTranscript(){
+        const live=document.getElementById("voice-live-transcript");
+        if(!live)return;
+        live.classList.add("voice-live-interim-status");
+        live.setAttribute("aria-live","polite");
+        live.setAttribute("aria-label","Live speech recognition status");
+
+        // Keep recognition feedback available, but remove it from the permanent
+        // document flow whenever it is only showing the old idle placeholder.
+        const update=()=>{
+            const value=String(live.textContent||"").trim();
+            const idle=!value ||
+                value==="What the microphone hears will appear here." ||
+                value==="Listening…";
+            live.classList.toggle("voice-live-interim-idle",idle);
+        };
+        update();
+
+        if(!live.__v101Observer){
+            live.__v101Observer=new MutationObserver(update);
+            live.__v101Observer.observe(live,{childList:true,subtree:true,characterData:true});
+        }
+    }
+
+    if(document.readyState==="loading"){
+        document.addEventListener("DOMContentLoaded",streamlineLiveTranscript,{once:true});
+    }else{
+        streamlineLiveTranscript();
+    }
+})();
+</script>
+
+
+<script id="workspace-v103-top-scrollbars">
+(()=>{
+    "use strict";
+
+    const pairs=new Map();
+
+    function findHorizontalScroller(section){
+        if(!section)return null;
+        const candidates=[
+            section.querySelector("#voice-chat-messages-log"),
+            section.querySelector(".conversation-fold-body"),
+            section.querySelector(".combined-language-tools-body"),
+            section
+        ].filter(Boolean);
+
+        for(const el of candidates){
+            if(el.scrollWidth>el.clientWidth+2)return el;
+        }
+
+        // Prefer a stable inner content container even before it overflows.
+        return section.querySelector(".conversation-fold-body") ||
+               section.querySelector(".combined-language-tools-body") ||
+               section;
+    }
+
+    function syncWidth(pair){
+        if(!pair?.bar || !pair?.spacer || !pair?.target)return;
+        pair.spacer.style.width=Math.max(pair.target.scrollWidth,pair.target.clientWidth)+"px";
+        const hasOverflow=pair.target.scrollWidth>pair.target.clientWidth+2;
+        pair.bar.classList.toggle("workspace-top-scrollbar-inactive",!hasOverflow);
+        pair.bar.setAttribute("aria-hidden",hasOverflow ? "false" : "true");
+        if(!pair.syncing){
+            pair.syncing=true;
+            pair.bar.scrollLeft=pair.target.scrollLeft;
+            pair.syncing=false;
+        }
+    }
+
+    function makeBar(section,id,label){
+        if(!section)return;
+        let bar=document.getElementById(id);
+        if(!bar){
+            bar=document.createElement("div");
+            bar.id=id;
+            bar.className="workspace-top-scrollbar";
+            bar.setAttribute("role","scrollbar");
+            bar.setAttribute("aria-label",label);
+
+            const spacer=document.createElement("div");
+            spacer.className="workspace-top-scrollbar-spacer";
+            bar.appendChild(spacer);
+
+            // Put the control immediately beneath the major section heading.
+            const summary=section.querySelector(":scope > summary, :scope > .conversation-fold-heading, :scope > .conversation-fold-toggle");
+            if(summary && summary.nextSibling) section.insertBefore(bar,summary.nextSibling);
+            else if(summary) section.appendChild(bar);
+            else section.prepend(bar);
+        }
+
+        const target=findHorizontalScroller(section);
+        if(!target)return;
+
+        const pair={bar,spacer:bar.firstElementChild,target,syncing:false};
+        pairs.set(id,pair);
+
+        if(!bar.__v103Bound){
+            bar.__v103Bound=true;
+            bar.addEventListener("scroll",()=>{
+                const p=pairs.get(id);
+                if(!p || p.syncing)return;
+                p.syncing=true;
+                p.target.scrollLeft=p.bar.scrollLeft;
+                p.syncing=false;
+            },{passive:true});
+        }
+
+        if(!target.__v103TopScrollBound){
+            target.__v103TopScrollBound=true;
+            target.addEventListener("scroll",()=>{
+                const p=pairs.get(id);
+                if(!p || p.syncing)return;
+                p.syncing=true;
+                p.bar.scrollLeft=p.target.scrollLeft;
+                p.syncing=false;
+            },{passive:true});
+        }
+
+        syncWidth(pair);
+    }
+
+    function install(){
+        makeBar(
+            document.getElementById("conversation-primary-section"),
+            "conversation-top-horizontal-scroll",
+            "Conversation horizontal scroll"
+        );
+        makeBar(
+            document.getElementById("conversation-language-tools-section"),
+            "language-tools-top-horizontal-scroll",
+            "Language Tools horizontal scroll"
+        );
+        for(const pair of pairs.values())syncWidth(pair);
+    }
+
+    let resizeTimer=0;
+    window.addEventListener("resize",()=>{
+        clearTimeout(resizeTimer);
+        resizeTimer=setTimeout(install,80);
+    });
+
+    // Re-evaluate when collapsible sections open/close or their contents change.
+    document.addEventListener("toggle",e=>{
+        if(e.target?.matches?.("details"))setTimeout(install,0);
+    },true);
+
+    if(document.readyState==="loading"){
+        document.addEventListener("DOMContentLoaded",()=>{
+            install();
+            requestAnimationFrame(install);
+            setTimeout(install,250);
+        },{once:true});
+    }else{
+        install();
+        requestAnimationFrame(install);
+        setTimeout(install,250);
+    }
 })();
 </script>
 
