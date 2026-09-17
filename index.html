@@ -5793,6 +5793,30 @@ body.conversation-first-layout #mobile-right-column{
     color:#334155;
     font-size:12px;
 }
+.saved-transcript-conversation-log{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    padding:10px;
+    border:1px solid #e2e8f0;
+    border-radius:12px;
+    background:#f8fafc;
+}
+.saved-transcript-conversation-log .conversation-turn-card{
+    position:relative;
+    width:min(95%,760px);
+    max-width:95%!important;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+    transition:border-color .15s ease,box-shadow .15s ease;
+}
+.saved-transcript-conversation-log .conversation-turn-card:hover{
+    border-color:#a5b4fc!important;
+    box-shadow:0 3px 10px rgba(15,23,42,.07);
+}
+.saved-transcript-conversation-log .conversation-line-with-analysis{
+    min-width:0;
+}
+
 @media(max-width:640px){
     .saved-transcript-selection-toolbar{grid-template-columns:1fr}
     .saved-transcript-selection-actions button{flex:1}
@@ -13766,11 +13790,12 @@ Keep the entire answer under about 70 words.`;
         wrap.setAttribute("aria-label","Select transcript line for Listen, Translate, or Analysis");
     }
 
-    function appendVoiceTutorBubble(entry,scroll=true){
-        const log=document.getElementById("voice-chat-messages-log");
-        if(!log)return;
-        document.getElementById("voice-tutor-empty")?.remove();
-
+    // v10.8: one shared turn-card renderer for the present/floating transcript
+    // and Saved Transcripts.  This keeps role labels, spacing, Tutor notes,
+    // translations, and future card styling from drifting between views.
+    function createConversationTurnCard(entry,languageCode=currentStudyLanguage,selectionScope="live",savedMode="voice"){
+        if(!entry)return null;
+        const cfg=LANGUAGE_MODES[languageCode] || langConfig();
         const user=entry.role==="user";
         const wrap=document.createElement("div");
         wrap.className=(user
@@ -13784,11 +13809,11 @@ Keep the entire answer under about 70 words.`;
         if(user){
             label.textContent=entry.inputMode==="english"
                 ? "You • English question"
-                : `You • ${langConfig().name} speech`;
+                : `You • ${cfg.name} speech`;
         }else{
             label.textContent=entry.replyLanguage==="en"
-                ? `${langConfig().name} Tutor • English reply`
-                : `${langConfig().name} Tutor`;
+                ? `${cfg.name} Tutor • English reply`
+                : `${cfg.name} Tutor`;
         }
         wrap.appendChild(label);
 
@@ -13801,14 +13826,34 @@ Keep the entire answer under about 70 words.`;
         else renderTutorMarkdown(text,entry.text);
 
         const actions=document.createElement("div");
-        appendTranscriptTurnActions(actions,entry,wrap,currentStudyLanguage);
+        if(selectionScope==="saved"){
+            // Preserve the saved-transcript selection rules that already work well.
+            const targetLanguageEntry=savedMode==="text" ||
+                (entry.role==="user" ? entry.inputMode!=="english" : entry.replyLanguage!=="en");
+            if(targetLanguageEntry){
+                const targetText=entry.role==="user" && entry.inputMode==="english" && entry.targetTranslation
+                    ? String(entry.targetTranslation||"").trim()
+                    : stripTutorMarkdown(entry.text);
+                if(targetText){
+                    wrap.dataset.savedTranscriptSelectable="1";
+                    wrap.dataset.savedTranscriptText=targetText;
+                    wrap.dataset.savedTranscriptLanguage=languageCode;
+                    wrap.__savedTranscriptEntry=entry;
+                    wrap.tabIndex=0;
+                    wrap.setAttribute("role","button");
+                    wrap.setAttribute("aria-label","Select saved transcript line for Listen, Translate, or Analysis");
+                }
+            }
+        }else{
+            appendTranscriptTurnActions(actions,entry,wrap,languageCode);
+        }
 
         lineRow.appendChild(text);
         if(actions.childElementCount) lineRow.appendChild(actions);
         wrap.appendChild(lineRow);
 
         if(user && entry.inputMode==="english" && entry.targetTranslation){
-            appendEnglishReplyTranslation(wrap,entry,currentStudyLanguage);
+            appendEnglishReplyTranslation(wrap,entry,languageCode);
         }
 
         if(entry.note){
@@ -13822,11 +13867,21 @@ Keep the entire answer under about 70 words.`;
             const note=document.createElement("div");
             note.className="leading-relaxed flex-1";
             note.textContent=entry.note;
-            noteRow.append(note,teacherNotePlayButton(entry,currentStudyLanguage));
+            noteRow.append(note,teacherNotePlayButton(entry,languageCode));
             details.append(summary,noteRow);
             wrap.appendChild(details);
         }
 
+        return wrap;
+    }
+
+    function appendVoiceTutorBubble(entry,scroll=true){
+        const log=document.getElementById("voice-chat-messages-log");
+        if(!log)return;
+        document.getElementById("voice-tutor-empty")?.remove();
+
+        const wrap=createConversationTurnCard(entry,currentStudyLanguage,"live","voice");
+        if(!wrap)return;
         log.appendChild(wrap);
         if(scroll){
             const scrollToLatest=()=>{ log.scrollTop=log.scrollHeight; };
@@ -15747,51 +15802,20 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             <div id="saved-transcript-selected-translation" class="saved-transcript-selection-translation" hidden></div>`;
         body.appendChild(selectionBar);
 
+        const conversationLog=document.createElement("div");
+        conversationLog.className="saved-transcript-conversation-log";
+        conversationLog.setAttribute("aria-label","Saved conversation transcript");
+
         selected.entries.forEach(entry=>{
-            const block=document.createElement("div");
-            block.className="voice-transcript-entry";
-            const speaker=document.createElement("div");
-            speaker.className="voice-transcript-speaker";
-            if(entry.role==="user"){
-                speaker.textContent=entry.inputMode==="english" ? "You • English" : "You";
-            }else{
-                speaker.textContent=`${selected.languageName||"Language"} Tutor`;
-            }
-            const content=document.createElement("div");
-            content.className="voice-transcript-text";
-            if(entry.role==="user")content.textContent=entry.text;
-            else renderTutorMarkdown(content,entry.text);
-            block.append(speaker,content);
-            if(entry.role==="user" && entry.inputMode==="english" && entry.targetTranslation){
-                appendEnglishReplyTranslation(block,entry,selected.language||currentStudyLanguage);
-            }
-            if(entry.note){
-                const note=document.createElement("div");
-                note.className="voice-transcript-note teacher-note-row";
-                const noteText=document.createElement("div");
-                noteText.className="flex-1";
-                noteText.textContent=`Tutor note: ${entry.note}`;
-                note.append(noteText,teacherNotePlayButton(entry,selected.language||currentStudyLanguage));
-                block.appendChild(note);
-            }
-            const targetLanguageEntry=selected.mode==="text" ||
-                (entry.role==="user" ? entry.inputMode!=="english" : entry.replyLanguage!=="en");
-            if(targetLanguageEntry){
-                const targetText=entry.role==="user" && entry.inputMode==="english" && entry.targetTranslation
-                    ? String(entry.targetTranslation||"").trim()
-                    : stripTutorMarkdown(entry.text);
-                if(targetText){
-                    block.dataset.savedTranscriptSelectable="1";
-                    block.dataset.savedTranscriptText=targetText;
-                    block.dataset.savedTranscriptLanguage=selected.language||currentStudyLanguage;
-                    block.__savedTranscriptEntry=entry;
-                    block.tabIndex=0;
-                    block.setAttribute("role","button");
-                    block.setAttribute("aria-label","Select saved transcript line for Listen, Translate, or Analysis");
-                }
-            }
-            body.appendChild(block);
+            const card=createConversationTurnCard(
+                entry,
+                selected.language||currentStudyLanguage,
+                "saved",
+                selected.mode||"voice"
+            );
+            if(card)conversationLog.appendChild(card);
         });
+        body.appendChild(conversationLog);
     }
 
     window.openSavedTutorTranscripts=function(){
@@ -23239,7 +23263,7 @@ Do not continue the Tutor conversation. Keep output concise.`;
 </script>
 
 
-<script id="workspace-v99-selectable-transcript-tools">
+<script id="workspace-v99-selectable-transcript-tools-disabled" type="text/plain">
 (()=>{
     "use strict";
     const state={card:null,text:"",language:"",entry:null,translation:""};
@@ -23927,6 +23951,235 @@ function init(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});
 else init();
 })();
+</script>
+
+
+
+<script id="workspace-v107-present-transcript-selection-repair">
+(()=>{
+"use strict";
+
+// v10.7: The present/live transcript now uses the same robust interaction
+// pattern as Saved Transcripts.  The older v9.9 controller is intentionally
+// disabled above so there is one owner for current-transcript selection state.
+const state={card:null,text:"",language:"de",entry:null,translation:""};
+let remountQueued=false;
+
+function currentLanguageFallback(){
+    return String(document.body?.dataset?.studyLanguage||"de").trim()||"de";
+}
+
+function toolbar(){
+    let bar=document.getElementById("transcript-selection-toolbar");
+    if(bar)return bar;
+    bar=document.createElement("div");
+    bar.id="transcript-selection-toolbar";
+    bar.className="transcript-selection-toolbar";
+    bar.innerHTML=`
+      <div class="transcript-selection-summary">
+        <span class="transcript-selection-label">Selected line</span>
+        <strong id="transcript-selected-preview">Select a transcript line</strong>
+      </div>
+      <div class="transcript-selection-actions">
+        <button type="button" id="transcript-selected-listen" disabled>🔊 Listen</button>
+        <button type="button" id="transcript-selected-translate" disabled>🌐 Translate</button>
+        <button type="button" id="transcript-selected-analysis" disabled>🔎 Analysis</button>
+      </div>
+      <div id="transcript-selected-translation" class="transcript-selected-translation" hidden></div>`;
+    return bar;
+}
+
+function mountToolbar(){
+    const log=document.getElementById("voice-chat-messages-log");
+    if(!log||!log.parentElement)return;
+    const bar=toolbar();
+    if(bar.parentElement!==log.parentElement || bar.nextElementSibling!==log){
+        log.parentElement.insertBefore(bar,log);
+    }
+}
+
+function queueMount(){
+    if(remountQueued)return;
+    remountQueued=true;
+    requestAnimationFrame(()=>{
+        remountQueued=false;
+        mountToolbar();
+        if(state.card && !state.card.isConnected)clearSelection();
+    });
+}
+
+function controls(){
+    return {
+        preview:document.getElementById("transcript-selected-preview"),
+        listen:document.getElementById("transcript-selected-listen"),
+        translate:document.getElementById("transcript-selected-translate"),
+        analysis:document.getElementById("transcript-selected-analysis"),
+        translation:document.getElementById("transcript-selected-translation")
+    };
+}
+
+function update(){
+    mountToolbar();
+    const c=controls();
+    if(c.preview)c.preview.textContent=state.text||"Select a transcript line";
+    [c.listen,c.translate,c.analysis].forEach(btn=>{if(btn)btn.disabled=!state.text;});
+    if(c.translation){
+        c.translation.hidden=!state.translation;
+        c.translation.textContent=state.translation||"";
+    }
+}
+
+function clearSelection(){
+    state.card?.classList.remove("transcript-turn-selected");
+    document.querySelectorAll("#voice-chat-messages-log .transcript-turn-selected")
+        .forEach(el=>el.classList.remove("transcript-turn-selected"));
+    state.card=null;
+    state.text="";
+    state.language=currentLanguageFallback();
+    state.entry=null;
+    state.translation="";
+    update();
+}
+
+function selectCard(card){
+    if(!card || card.dataset?.transcriptSelectable!=="1")return;
+    const text=String(card.dataset.transcriptText||"").trim();
+    if(!text)return;
+
+    // The live transcript only contains the currently displayed study language,
+    // so do not reject the tap because of a separate global-language state check.
+    // That guard could leave a card focused/highlighted while the toolbar stayed disabled.
+    state.card?.classList.remove("transcript-turn-selected");
+    document.querySelectorAll("#voice-chat-messages-log .transcript-turn-selected")
+        .forEach(el=>{if(el!==card)el.classList.remove("transcript-turn-selected");});
+
+    state.card=card;
+    state.text=text;
+    state.language=String(card.dataset.transcriptLanguage||currentLanguageFallback()).trim()||"de";
+    state.entry=card.__transcriptEntry||{text};
+    state.translation="";
+    card.classList.add("transcript-turn-selected");
+    update();
+}
+
+function listen(){
+    if(!state.text)return;
+    const code=state.language||"de";
+    const locale=(typeof LANGUAGE_CONFIG!=="undefined" && LANGUAGE_CONFIG[code]?.locale)||code;
+    if(typeof speakRawText==="function"){
+        speakRawText(state.text,locale);
+    }else if("speechSynthesis" in window){
+        const u=new SpeechSynthesisUtterance(state.text);
+        u.lang=locale;
+        speechSynthesis.speak(u);
+    }
+}
+
+async function translate(){
+    if(!state.text)return;
+    const c=controls();
+    if(c.translation){c.translation.hidden=false;c.translation.textContent="Translating…";}
+    if(c.translate)c.translate.disabled=true;
+    try{
+        let result="";
+        // Match the Saved Transcript behavior that is already working well:
+        // normal translation first, AI only as fallback.
+        if(typeof googleTranslateApiCall==="function"){
+            result=await googleTranslateApiCall(state.text,state.language||"de","en");
+        }
+        if(!result && typeof callAIJson==="function"){
+            const data=await callAIJson(`Translate this transcript line into concise natural English. Return JSON only: {"translation":"..."}\nText: "${state.text}"`);
+            result=data?.translation||"";
+        }
+        state.translation=String(result||"Translation unavailable.").trim();
+    }catch(_){
+        state.translation="Translation unavailable. Try again.";
+    }finally{
+        update();
+    }
+}
+
+function analysis(){
+    if(!state.text || typeof window.openAnalysisWorkbench!=="function")return;
+    window.openAnalysisWorkbench(state.text,state.language,state.entry||{text:state.text});
+    window.workspaceOpenTool?.("analysis");
+    const win=document.getElementById("analysis-workbench-window");
+    if(win){
+        win.hidden=false;
+        win.style.zIndex="2147483200";
+    }
+}
+
+// One delegated current-transcript selector. This continues to work when the
+// single live transcript DOM is moved into or out of the floating window.
+document.addEventListener("click",event=>{
+    const target=event.target;
+
+    if(target?.closest?.("#transcript-selected-listen")){listen();return;}
+    if(target?.closest?.("#transcript-selected-translate")){translate();return;}
+    if(target?.closest?.("#transcript-selected-analysis")){analysis();return;}
+
+    const card=target?.closest?.("#voice-chat-messages-log [data-transcript-selectable='1']");
+    if(!card)return;
+    if(target.closest?.("button,a,input,textarea,select,summary"))return;
+    if(String(window.getSelection?.()||"").trim())return;
+    selectCard(card);
+});
+
+document.addEventListener("keydown",event=>{
+    if(event.key!=="Enter" && event.key!==" ")return;
+    const card=event.target?.closest?.("#voice-chat-messages-log [data-transcript-selectable='1']");
+    if(!card)return;
+    event.preventDefault();
+    selectCard(card);
+});
+
+// The transcript DOM is physically moved between Chat and Floating Transcript.
+// Patch those final window functions here, after all earlier workspace scripts.
+const originalOpen=window.openVoiceTranscriptWindow;
+if(typeof originalOpen==="function")window.openVoiceTranscriptWindow=function(...args){
+    const result=originalOpen.apply(this,args);
+    queueMount();
+    return result;
+};
+const originalDock=window.dockVoiceTranscript;
+if(typeof originalDock==="function")window.dockVoiceTranscript=function(...args){
+    const result=originalDock.apply(this,args);
+    queueMount();
+    return result;
+};
+
+const originalSetLanguage=window.setStudyLanguage;
+if(typeof originalSetLanguage==="function")window.setStudyLanguage=function(...args){
+    clearSelection();
+    const result=originalSetLanguage.apply(this,args);
+    queueMount();
+    return result;
+};
+
+window.clearTranscriptLineSelection=clearSelection;
+window.selectPresentTranscriptLine=selectCard;
+
+function init(){
+    mountToolbar();
+    const body=document.body;
+    if(body && !body.__v107TranscriptObserver){
+        const observer=new MutationObserver(queueMount);
+        observer.observe(body,{childList:true,subtree:true});
+        body.__v107TranscriptObserver=observer;
+    }
+    setTimeout(mountToolbar,50);
+    setTimeout(mountToolbar,350);
+}
+
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});
+else init();
+window.addEventListener("load",mountToolbar,{once:true});
+})();
+</script>
+
+<script id="workspace-v108-unified-saved-transcript-format-marker">
+window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 </body>
