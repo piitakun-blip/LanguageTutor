@@ -5401,6 +5401,64 @@ body.conversation-first-layout #mobile-right-column{
     margin:0!important;transform:none!important;float:none!important;
 }
 </style>
+<style id="workspace-v95-single-titlebar-controls-css">
+#voice-transcript-drag-handle,
+#analysis-workbench-drag-handle,
+#language-coach-drag-handle,
+#special-character-drag-handle,
+#floating-kana-drag-handle{
+    display:flex!important;
+    align-items:center!important;
+}
+#voice-transcript-drag-handle>.workspace-v95-title-actions,
+#analysis-workbench-drag-handle>.workspace-v95-title-actions,
+#language-coach-drag-handle>.workspace-v95-title-actions,
+#special-character-drag-handle>.workspace-v95-title-actions,
+#floating-kana-drag-handle>.workspace-v95-title-actions{
+    margin-left:auto!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:2px!important;
+    flex:0 0 auto!important;
+    position:static!important;
+    transform:none!important;
+}
+.workspace-v95-title-actions>button{
+    position:static!important;
+    inset:auto!important;
+    left:auto!important;
+    right:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    transform:none!important;
+    margin:0!important;
+    float:none!important;
+    width:32px!important;
+    min-width:32px!important;
+    height:32px!important;
+    min-height:32px!important;
+    padding:0!important;
+    display:inline-grid!important;
+    place-items:center!important;
+    border:0!important;
+    border-radius:8px!important;
+    background:transparent!important;
+    color:#64748b!important;
+    font-size:17px!important;
+    line-height:1!important;
+    font-weight:800!important;
+}
+.workspace-v95-title-actions>button:hover{background:rgba(99,102,241,.08)!important;color:#4338ca!important}
+</style>
+
+<style id="workspace-v96-required-correction-css">
+.analysis-grammar-gate-comparison{display:flex;flex-direction:column;gap:6px;margin-top:7px}
+.analysis-grammar-gate-original{padding:8px 10px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#475569;font-size:10px}
+.analysis-grammar-gate-suggestion{margin:0!important}
+.analysis-grammar-gate-required{margin-top:8px;color:#92400e;font-size:8px;font-weight:800}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -20116,12 +20174,25 @@ Rules:
             card.classList.add("analysis-grammar-gate");
             const lead=document.createElement("div");
             lead.className="analysis-grammar-gate-lead";
-            lead.textContent=gate.status==="correction" ? "Did you mean to say this?" : "This may be intentional. A possible correction is:";
+            lead.textContent=gate.status==="correction" ? "Grammar correction before analysis" : "This may be intentional. A possible standard form is:";
             const original=String(state.sentence||"").trim();
+            const comparison=document.createElement("div");
+            comparison.className="analysis-grammar-gate-comparison";
+
+            const originalLine=document.createElement("div");
+            originalLine.className="analysis-grammar-gate-original";
+            const originalLabel=document.createElement("strong");
+            originalLabel.textContent="You wrote: ";
+            originalLine.append(originalLabel,document.createTextNode(original));
+
             const suggestion=document.createElement("div");
             suggestion.className="analysis-grammar-gate-suggestion";
-            suggestion.textContent=gate.corrected||original;
-            card.append(lead,suggestion);
+            const suggestionLabel=document.createElement("strong");
+            suggestionLabel.textContent=gate.status==="correction" ? "Correction: " : "Suggested: ";
+            suggestion.append(suggestionLabel,document.createTextNode(gate.corrected||original));
+
+            comparison.append(originalLine,suggestion);
+            card.append(lead,comparison);
             if(gate.explanation){
                 const note=document.createElement("div");
                 note.className="analysis-grammar-gate-explanation";
@@ -20130,13 +20201,41 @@ Rules:
             }
             const actions=document.createElement("div");
             actions.className="analysis-grammar-gate-actions";
-            const mine=document.createElement("button");
-            mine.type="button"; mine.textContent="Analyze mine";
-            mine.addEventListener("click",()=>{state.grammarGateKey=key;state.grammarGateChoice="original";clearResults();resolve(true);});
+
             const use=document.createElement("button");
-            use.type="button"; use.className="primary"; use.textContent="Use correction"; use.disabled=!gate.corrected;
-            use.addEventListener("click",()=>{applyWorkbenchCorrection(gate.corrected,original);clearResults();resolve(true);});
-            actions.append(mine,use); card.appendChild(actions);
+            use.type="button";
+            use.className="primary";
+            use.textContent=gate.status==="correction" ? "Use correction" : "Use suggested form";
+            use.disabled=!gate.corrected;
+            use.addEventListener("click",()=>{
+                applyWorkbenchCorrection(gate.corrected,original);
+                clearResults();
+                resolve(true);
+            });
+
+            if(gate.status==="correction"){
+                // A clear grammar error must be corrected before Parse/Diagram.
+                // Do not offer an escape hatch that knowingly diagrams malformed input.
+                const required=document.createElement("div");
+                required.className="analysis-grammar-gate-required";
+                required.textContent="Correction required before Parse or Diagram.";
+                card.appendChild(required);
+                actions.appendChild(use);
+            }else{
+                // Ambiguous, colloquial, fragmentary, or potentially intentional input:
+                // the learner decides whether to keep the original wording.
+                const originalButton=document.createElement("button");
+                originalButton.type="button";
+                originalButton.textContent="Use original";
+                originalButton.addEventListener("click",()=>{
+                    state.grammarGateKey=key;
+                    state.grammarGateChoice="original";
+                    clearResults();
+                    resolve(true);
+                });
+                actions.append(originalButton,use);
+            }
+            card.appendChild(actions);
         });
     }
 
@@ -22573,6 +22672,122 @@ Do not continue the Tutor conversation. Keep output concise.`;
         window.openLanguageCoach?.(seed);
         window.workspaceOpenTool?.("coach");
     };
+})();
+</script>
+
+
+<script id="workspace-v95-single-titlebar-controls">
+(()=>{
+    "use strict";
+
+    const specs=[
+        {
+            name:"transcript",
+            panel:"voice-transcript-window",
+            bar:"voice-transcript-drag-handle",
+            nativeMin:"#voice-transcript-collapse-btn",
+            close:'button[onclick*="closeVoiceTranscriptWindow"]'
+        },
+        {
+            name:"analysis",
+            panel:"analysis-workbench-window",
+            bar:"analysis-workbench-drag-handle",
+            nativeMin:"",
+            close:".analysis-workbench-close"
+        },
+        {
+            name:"coach",
+            panel:"language-coach-window",
+            bar:"language-coach-drag-handle",
+            nativeMin:"",
+            close:".language-coach-close"
+        },
+        {
+            name:"keyboard",
+            panel:"special-character-palette",
+            bar:"special-character-drag-handle",
+            nativeMin:"",
+            close:".special-character-close"
+        },
+        {
+            name:"keyboard",
+            panel:"floating-kana-tool",
+            bar:"floating-kana-drag-handle",
+            nativeMin:"",
+            close:".floating-kana-close,#floating-kana-close"
+        }
+    ];
+
+    function reconcile(spec){
+        const panel=document.getElementById(spec.panel);
+        const bar=document.getElementById(spec.bar);
+        if(!panel||!bar)return;
+
+        // Capture the real native controls before removing legacy wrappers.
+        let nativeMin=spec.nativeMin ? bar.querySelector(spec.nativeMin) : null;
+        let close=bar.querySelector(spec.close);
+
+        // Remove every previously injected workspace minimize button.
+        [...bar.querySelectorAll(".workspace-title-action,[data-standard-minimize]")].forEach(btn=>{
+            if(btn!==nativeMin)btn.remove();
+        });
+
+        // Create exactly one authoritative action group.
+        let actions=bar.querySelector(".workspace-v95-title-actions");
+        if(!actions){
+            actions=document.createElement("div");
+            actions.className="workspace-v95-title-actions";
+        }
+
+        // If Transcript already has its native collapse/minimize button, reuse it.
+        // Otherwise create one button wired to the workspace minimize behavior.
+        if(!nativeMin){
+            nativeMin=document.createElement("button");
+            nativeMin.type="button";
+            nativeMin.textContent="—";
+            nativeMin.title="Minimize";
+            nativeMin.dataset.v95Minimize="1";
+            nativeMin.addEventListener("click",event=>{
+                event.stopPropagation();
+                if(typeof window.workspaceMinimizeTool==="function")window.workspaceMinimizeTool(spec.name);
+            });
+        }else{
+            nativeMin.textContent="—";
+            nativeMin.title="Minimize";
+        }
+
+        if(close){
+            close.textContent="×";
+            close.title="Close";
+        }
+
+        actions.replaceChildren();
+        actions.appendChild(nativeMin);
+        if(close)actions.appendChild(close);
+        bar.appendChild(actions);
+
+        // Delete obsolete action wrappers after their useful controls have been moved.
+        [...bar.querySelectorAll(
+            ".workspace-standard-window-actions,.voice-transcript-window-actions,.special-character-window-actions,.floating-kana-window-actions"
+        )].forEach(wrapper=>{
+            if(wrapper!==actions && !wrapper.contains(actions))wrapper.remove();
+        });
+    }
+
+    function reconcileAll(){specs.forEach(reconcile);}
+
+    const boot=()=>{
+        reconcileAll();
+        // Legacy workspace initialization occurs at several points during startup.
+        // Reconcile after those synchronous/queued initializers have finished.
+        requestAnimationFrame(reconcileAll);
+        setTimeout(reconcileAll,50);
+        setTimeout(reconcileAll,350);
+    };
+
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});
+    else boot();
+    window.addEventListener("load",reconcileAll,{once:true});
 })();
 </script>
 
