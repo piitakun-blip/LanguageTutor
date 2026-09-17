@@ -5332,6 +5332,18 @@ body.conversation-first-layout #mobile-right-column{
 .language-coach-body>#language-coach-input{margin-top:0}
 </style>
 
+
+<style id="workspace-v90-coach-output-css">
+#language-coach-results:not(:empty){
+    display:flex!important;
+    visibility:visible!important;
+    opacity:1!important;
+    min-height:0!important;
+}
+#language-coach-status[hidden],
+#language-coach-status:empty{display:none!important}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -15202,6 +15214,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const items=readSavedTutorTranscripts();
         items.unshift(snapshot);
         writeSavedTutorTranscripts(items);
+        const list=document.getElementById("saved-transcript-list");
+        if(list)list.dataset.selectedId="";
         renderSavedTutorTranscripts();
 
         if(button){
@@ -15222,15 +15236,27 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const body=document.getElementById("saved-transcript-body");
         if(!list || !body)return;
 
-        const items=readSavedTutorTranscripts();
+        const allItems=readSavedTutorTranscripts();
+        const items=allItems.filter(item=>{
+            const itemLanguage=String(item?.language||"").toLowerCase();
+            return itemLanguage===String(currentStudyLanguage||"de").toLowerCase();
+        });
         list.replaceChildren();
+
+        // A selection from another language must never survive a language switch.
+        if(selectedId && !items.some(item=>item.id===selectedId))selectedId="";
+        if(list.dataset.selectedLanguage!==currentStudyLanguage){
+            list.dataset.selectedId="";
+            list.dataset.selectedLanguage=currentStudyLanguage;
+        }
 
         if(!items.length){
             const empty=document.createElement("div");
             empty.className="saved-transcript-empty";
-            empty.textContent="No saved transcripts yet.";
+            empty.textContent=`No saved ${langConfig().name} transcripts yet.`;
             list.appendChild(empty);
-            body.innerHTML='<div class="text-sm text-slate-400 italic">Save a Tutor conversation and it will appear here on this browser.</div>';
+            list.dataset.selectedId="";
+            body.replaceChildren();
             return;
         }
 
@@ -15737,6 +15763,16 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         if(typeof resetLanguageQuizCard==="function") resetLanguageQuizCard(code);
         try{ safeStorageSet("deutschlerner_study_language",code); }catch(e){}
         updateVisibleLanguageUI();
+
+        // Saved transcripts are language-scoped. Refresh immediately so a German
+        // selection can never remain visible after switching to Japanese/Spanish.
+        const savedList=document.getElementById("saved-transcript-list");
+        if(savedList){
+            savedList.dataset.selectedId="";
+            savedList.dataset.selectedLanguage=code;
+        }
+        if(typeof renderSavedTutorTranscripts==="function")renderSavedTutorTranscripts();
+
         if(typeof setStudyBoardLanguage==="function") setStudyBoardLanguage(code);
         if(typeof updateQuizLanguageUI==="function") updateQuizLanguageUI();
         currentGermanSentence="";
@@ -19367,6 +19403,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         if(win)win.hidden=true;
     };
 
+
     window.analysisWorkbenchTranslate=async function(button){
         if(!state.sentence)return;
         clearResults();
@@ -19592,7 +19629,7 @@ The selected utterance may contain ONE OR MORE sentences. Sentence segmentation 
 Return JSON only:
 {"sentences":[
  {"text":"exact complete sentence from the utterance","items":[
-  {"text":"exact word or pedagogically useful phrase","type":"pronoun|verb|noun_phrase|prepositional|adverb|conjunction|particle|expression|address|word","label":"short learner-facing grammar label; for German noun phrases use Nominative, Accusative, Dative, or Genitive when known","gender":"Masculine|Feminine|Neuter|Plural|","note":"very short note or empty string"}
+  {"text":"exact word or pedagogically useful phrase","type":"pronoun|verb|noun_phrase|prepositional|adverb|conjunction|particle|expression|address|word","label":"short learner-facing grammatical role or word class","case":"Nominative|Accusative|Dative|Genitive|Ambiguous|","gender":"Masculine|Feminine|Neuter|Plural|","note":"very short note or empty string"}
  ]}
 ]}
 
@@ -19605,7 +19642,9 @@ Rules:
 - Keep preposition + governed noun phrase together when that better teaches the construction, e.g. "aus Japan", "in Deutschland", "mit meiner Freundin".
 - Keep fixed/idiomatic expressions together when useful.
 - A verb, pronoun, conjunction, question word, or form of address may appropriately stand alone.
-- For German, resolve noun-phrase case from context and preserve gender metadata where relevant.
+- For German, put grammatical case ONLY in the separate "case" field. Resolve case from context for pronouns and noun phrases when applicable.
+- Use "label" for the learner-facing grammatical role or word class.
+- Preserve gender metadata where relevant.
 - Do not assign case to punctuation, names used only as forms of address, or expressions that do not grammatically bear that case.
 - Analyze ellipsis as actually spoken; do not invent visible words that are absent.
 - Use language-appropriate roles for Spanish/Japanese.
@@ -19628,7 +19667,8 @@ Rules:
                 const items=rawItems.map(item=>({
                     words:String(item?.text||"").trim().split(/\s+/).filter(Boolean),
                     type:String(item?.type||item?.role||"word").toLowerCase().replace(/\s+/g,"_"),
-                    label:String(item?.label||item?.case||item?.role||"Word"),
+                    label:String(item?.label||item?.role||"Word"),
+                    case:String(item?.case||""),
                     gender:String(item?.gender||""),
                     note:String(item?.note||"")
                 })).filter(ch=>{
@@ -19762,7 +19802,7 @@ Rules:
                 const phrase=ch.words.join(" ").trim();
                 if(!phrase || ch.type==="punctuation" || /^[.!?,;:…]+$/.test(phrase))return;
 
-                const caseClass=workbenchCaseClass(ch.label);
+                const caseClass=workbenchCaseClass(ch.case||ch.label);
                 const genderClass=workbenchGenderClass(ch.gender);
                 const tile=document.createElement("button");
                 tile.type="button";
@@ -19788,6 +19828,7 @@ Rules:
                     meta.className="analysis-parser-detail-meta";
                     meta.textContent=[
                         ch.label,
+                        ch.case,
                         ch.gender,
                         ch.type && ch.type!==ch.label ? ch.type.replace(/_/g," ") : "",
                         ch.note
@@ -19991,6 +20032,7 @@ Rules:
             text:ch.words.join(" "),
             type:ch.type,
             label:ch.label,
+            case:ch.case,
             gender:ch.gender
         }));
 
@@ -21948,6 +21990,282 @@ Requirements:
 
     install();
     window.addEventListener("load",install,{once:true});
+})();
+</script>
+
+
+
+
+<script id="workspace-v90-coach-output-fix">
+(()=>{
+    "use strict";
+
+    const status=(text,tone="normal")=>{
+        const el=document.getElementById("language-coach-status");
+        if(!el)return;
+        const clean=String(text||"").trim();
+        el.textContent=clean;
+        el.hidden=!clean;
+        el.style.color=tone==="error" ? "#be123c" : "#64748b";
+    };
+
+    const results=()=>document.getElementById("language-coach-results");
+    const clear=()=>{
+        const box=results();
+        if(!box)return;
+        box.replaceChildren();
+        box.hidden=false;
+        box.classList.remove("hidden");
+    };
+
+    const config=()=>{
+        const code=typeof currentStudyLanguage!=="undefined" ? currentStudyLanguage : "de";
+        if(typeof LANGUAGE_MODES!=="undefined" && LANGUAGE_MODES[code])return LANGUAGE_MODES[code];
+        if(typeof langConfig==="function")return langConfig();
+        return {code:"de",name:"German",locale:"de-DE"};
+    };
+
+    const aiConfig=()=>typeof resolveWorkbenchAIConfig==="function"
+        ? resolveWorkbenchAIConfig()
+        : {available:Boolean(typeof getActiveAIKey==="function" && getActiveAIKey()),providerName:"AI"};
+
+    const timeout=(promise,ms=20000)=>new Promise((resolve,reject)=>{
+        const timer=setTimeout(()=>reject(new Error(`Coach request timed out after ${Math.round(ms/1000)} seconds.`)),ms);
+        Promise.resolve(promise).then(
+            value=>{clearTimeout(timer);resolve(value);},
+            error=>{clearTimeout(timer);reject(error);}
+        );
+    });
+
+    const addCard=(phrase,note="",label="Suggested phrase",primary=true)=>{
+        phrase=String(phrase||"").trim();
+        if(!phrase)throw new Error("Coach returned an empty phrase.");
+        const box=results();
+        if(!box)throw new Error("Coach results area is unavailable.");
+        const cfg=config();
+
+        const card=document.createElement("div");
+        card.className="language-coach-result-card"+(primary?" primary":"");
+
+        const lab=document.createElement("div");
+        lab.className="language-coach-result-label";
+        lab.textContent=label;
+
+        const phraseEl=document.createElement("div");
+        phraseEl.className="language-coach-result-text";
+        phraseEl.textContent=phrase;
+        card.append(lab,phraseEl);
+
+        if(note){
+            const noteEl=document.createElement("div");
+            noteEl.className="language-coach-result-note";
+            noteEl.textContent=note;
+            card.appendChild(noteEl);
+        }
+
+        const actions=document.createElement("div");
+        actions.className="language-coach-result-actions";
+
+        const action=(label,fn,cls="")=>{
+            const b=document.createElement("button");
+            b.type="button";
+            b.textContent=label;
+            if(cls)b.className=cls;
+            b.addEventListener("click",fn);
+            actions.appendChild(b);
+        };
+
+        action("↩ Use in reply",()=>{
+            if(typeof window.useLanguageCoachPhrase==="function")window.useLanguageCoachPhrase(phrase);
+        },"coach-use");
+        action("🔊 Listen",()=>{
+            if(typeof speakRawText==="function")speakRawText(phrase,cfg.locale);
+        });
+        action("⧉ Copy",async()=>{
+            try{
+                if(typeof copyVoiceTutorText==="function")await copyVoiceTutorText(phrase);
+                else await navigator.clipboard.writeText(phrase);
+            }catch(e){}
+        });
+        action("🔎 Analyze",()=>{
+            if(typeof window.analyzeTutorSentence==="function"){
+                const code=typeof currentStudyLanguage!=="undefined" ? currentStudyLanguage : cfg.code;
+                window.analyzeTutorSentence(phrase,code);
+            }
+        });
+        action("☆ Save",()=>{
+            if(typeof window.saveVoiceTutorPhrase==="function"){
+                const code=typeof currentStudyLanguage!=="undefined" ? currentStudyLanguage : cfg.code;
+                window.saveVoiceTutorPhrase(phrase,code);
+            }
+        });
+
+        card.appendChild(actions);
+        box.appendChild(card);
+        box.hidden=false;
+        box.classList.remove("hidden");
+        try{box.scrollIntoView({behavior:"smooth",block:"nearest"});}catch(e){}
+    };
+
+    const context=()=>{
+        if(typeof voiceTutorHistory!=="function")return "";
+        const cfg=config();
+        return voiceTutorHistory().slice(-6).map(entry=>{
+            const raw=entry.role==="user"
+                ? String(entry.text||"").trim()
+                : (typeof stripTutorMarkdown==="function"
+                    ? stripTutorMarkdown(entry.text)
+                    : String(entry.text||"").trim());
+            return `${entry.role==="user" ? "Learner" : cfg.name+" Tutor"}: ${raw}`;
+        }).join("\n");
+    };
+
+    window.languageCoachQuickTranslate=async function(){
+        const input=document.getElementById("language-coach-input");
+        const request=String(input?.value||"").trim();
+        if(!request){status("Write what you want to say first.","error");return;}
+
+        const cfg=config();
+        const ai=aiConfig();
+        const btn=document.getElementById("language-coach-quick-btn");
+        const old=btn?.textContent||"🌐 Quick translation";
+        clear();
+        if(btn){btn.disabled=true;btn.textContent="Translating…";}
+
+        try{
+            let phrase="";
+            let note="";
+
+            // Prefer the selected AI route when available: it handles words,
+            // fragments, and full sentences consistently.
+            if(ai.available && typeof callAIJson==="function"){
+                status(`Translating to ${cfg.name}…`);
+                const prompt=`You are the quick translation tool in LanguageTutor.
+Target language: ${cfg.name}
+Learner input: "${request}"
+
+The learner may enter a single English word, a phrase, a full sentence, or text already in ${cfg.name}.
+Return JSON only:
+{"text":"the concise natural ${cfg.name} equivalent","note":"very short English note only when useful"}
+
+For German nouns entered as English vocabulary, include the normal definite article, e.g. dog -> der Hund.
+Do not continue a conversation. Do not add explanations unless useful.`;
+                const data=await timeout(callAIJson(prompt),20000);
+                phrase=String(data?.text||data?.translation||data?.primary||"").trim();
+                note=String(data?.note||"").trim();
+            }else if(typeof googleTranslateApiCall==="function"){
+                status(`Translating to ${cfg.name}…`);
+                phrase=String(await timeout(googleTranslateApiCall(request,"en",cfg.code),15000)).trim();
+            }else{
+                throw new Error("No translation service is available.");
+            }
+
+            if(!phrase)throw new Error("Translation returned no text.");
+            if(typeof normalizeTargetText==="function")phrase=normalizeTargetText(phrase,cfg.code);
+            addCard(phrase,note,`Quick ${cfg.name}`,true);
+            status("");
+        }catch(e){
+            console.error("Coach quick translation failed.",e);
+            status("Quick translation unavailable. "+((e&&e.message)?e.message:String(e)),"error");
+        }finally{
+            if(btn){btn.disabled=false;btn.textContent=old;}
+        }
+    };
+
+    window.languageCoachNaturalOptions=async function(){
+        const input=document.getElementById("language-coach-input");
+        const request=String(input?.value||"").trim();
+        if(!request){status("Write what you want to say or ask first.","error");return;}
+
+        const cfg=config();
+        const ai=aiConfig();
+        if(!ai.available || typeof callAIJson!=="function"){
+            status("Natural options require your selected AI provider.","error");
+            return;
+        }
+
+        const btn=document.getElementById("language-coach-ai-btn");
+        const old=btn?.textContent||"✨ Natural options";
+        clear();
+        if(btn){btn.disabled=true;btn.textContent="Coaching…";}
+        status("Creating natural options…");
+
+        const prompt=`You are the private language coach in LanguageTutor.
+Target language: ${cfg.name}
+Recent conversation context:
+${context() || "(none)"}
+
+Learner request:
+"${request}"
+
+The request may be a word lookup, phrase, sentence, rough target-language attempt, or an English idea.
+Return JSON only:
+{"primary":"best natural ${cfg.name} wording","primary_note":"short English note","alternatives":[{"text":"alternative wording","note":"short English distinction"}]}
+
+For German vocabulary nouns, include the article with the noun (der/die/das).
+Do not continue the Tutor conversation. Keep output concise.`;
+
+        try{
+            const data=await timeout(callAIJson(prompt),20000);
+            const primary=String(data?.primary||data?.text||data?.translation||"").trim();
+            if(!primary)throw new Error("Coach returned no primary suggestion.");
+
+            addCard(primary,String(data?.primary_note||data?.note||"").trim(),"Natural choice",true);
+            const alternatives=Array.isArray(data?.alternatives)?data.alternatives:[];
+            alternatives.slice(0,3).forEach((alt,index)=>{
+                const phrase=String(typeof alt==="string"?alt:alt?.text||"").trim();
+                if(!phrase)return;
+                addCard(phrase,String(typeof alt==="object"?alt?.note||"":"").trim(),`Alternative ${index+1}`,false);
+            });
+            status("");
+        }catch(e){
+            console.error("Coach natural options failed.",e);
+            status("Coach unavailable. "+((e&&e.message)?e.message:String(e)),"error");
+        }finally{
+            if(btn){btn.disabled=false;btn.textContent=old;}
+        }
+    };
+
+    const bind=()=>{
+        const quick=document.getElementById("language-coach-quick-btn");
+        const natural=document.getElementById("language-coach-ai-btn");
+
+        // Replace buttons with clean clones so legacy listeners cannot fire in
+        // parallel with the authoritative v9 handlers.
+        if(quick && !quick.dataset.v90Bound){
+            const clone=quick.cloneNode(true);
+            clone.dataset.v90Bound="1";
+            quick.replaceWith(clone);
+            clone.addEventListener("click",e=>{
+                e.preventDefault();
+                window.languageCoachQuickTranslate();
+            });
+        }
+        if(natural && !natural.dataset.v90Bound){
+            const clone=natural.cloneNode(true);
+            clone.dataset.v90Bound="1";
+            natural.replaceWith(clone);
+            clone.addEventListener("click",e=>{
+                e.preventDefault();
+                window.languageCoachNaturalOptions();
+            });
+        }
+    };
+
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bind,{once:true});
+    else bind();
+    window.addEventListener("load",bind,{once:true});
+})();
+</script>
+
+
+<script id="workspace-v91-language-scoped-saved-transcripts">
+(()=>{
+    "use strict";
+    const refresh=()=>{
+        if(typeof renderSavedTutorTranscripts==="function")renderSavedTutorTranscripts();
+    };
+    window.addEventListener("load",refresh,{once:true});
 })();
 </script>
 
