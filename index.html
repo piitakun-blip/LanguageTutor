@@ -25041,6 +25041,343 @@ window.addEventListener("load",reconcile,{once:true});
 window.__languageTutorWorkspaceVersion="10.13";
 </script>
 
+
+<style id="workspace-v1014-reliable-top-scrollbar-styles">
+/* Retire the v10.5 native proxy. On macOS native overlay scrollbars can stay
+   invisible, and the old script could hide itself before late layout overflow
+   appeared. v10.14 uses an always-visible custom thumb tied to the real scroller. */
+#workspace-page-top-scrollbar{
+    display:none!important;
+}
+
+#workspace-top-scroll-v1014[hidden]{
+    display:none!important;
+}
+#workspace-top-scroll-v1014{
+    position:sticky;
+    top:0;
+    z-index:214748000;
+    width:100vw;
+    max-width:100%;
+    height:15px;
+    box-sizing:border-box;
+    padding:4px 7px 3px;
+    margin:0 0 5px;
+    background:rgba(248,250,252,.97);
+    border-bottom:1px solid rgba(203,213,225,.8);
+    backdrop-filter:blur(4px);
+}
+#workspace-top-scroll-v1014-track{
+    position:relative;
+    width:100%;
+    height:7px;
+    border-radius:999px;
+    background:rgba(148,163,184,.16);
+    cursor:pointer;
+    touch-action:none;
+}
+#workspace-top-scroll-v1014-thumb{
+    position:absolute;
+    left:0;
+    top:1px;
+    height:5px;
+    min-width:30px;
+    border-radius:999px;
+    background:#9ca3af;
+    box-shadow:inset 0 0 0 1px rgba(71,85,105,.08);
+    cursor:grab;
+    touch-action:none;
+}
+#workspace-top-scroll-v1014-thumb:active{
+    cursor:grabbing;
+    background:#7c8592;
+}
+</style>
+
+<script id="workspace-v1014-reliable-top-scrollbar">
+(()=>{
+"use strict";
+
+let target=null;
+let targetScrollHandler=null;
+let refreshTimer=null;
+let dragging=null;
+
+function rootScroller(){
+    return document.scrollingElement || document.documentElement;
+}
+
+function metrics(el){
+    if(!el)return {scrollWidth:0,clientWidth:0,scrollLeft:0,max:0,root:false};
+    const root=rootScroller();
+    const isRoot=el===root || el===document.documentElement || el===document.body;
+    if(isRoot){
+        const scrollWidth=Math.max(
+            document.documentElement?.scrollWidth||0,
+            document.body?.scrollWidth||0,
+            root?.scrollWidth||0
+        );
+        const clientWidth=window.innerWidth || root?.clientWidth || 0;
+        const scrollLeft=window.scrollX ?? root?.scrollLeft ?? 0;
+        return {
+            scrollWidth,
+            clientWidth,
+            scrollLeft,
+            max:Math.max(0,scrollWidth-clientWidth),
+            root:true
+        };
+    }
+    return {
+        scrollWidth:el.scrollWidth||0,
+        clientWidth:el.clientWidth||0,
+        scrollLeft:el.scrollLeft||0,
+        max:Math.max(0,(el.scrollWidth||0)-(el.clientWidth||0)),
+        root:false
+    };
+}
+
+function elementVisible(el){
+    if(!el || !el.isConnected)return false;
+    const cs=getComputedStyle(el);
+    if(cs.display==="none" || cs.visibility==="hidden")return false;
+    const r=el.getBoundingClientRect();
+    return r.width>20 && r.height>10;
+}
+
+function findRealScroller(){
+    const root=rootScroller();
+    const rm=metrics(root);
+
+    // If the document itself owns horizontal overflow, that is the bottom
+    // page scrollbar the user is trying to mirror.
+    if(rm.max>2)return root;
+
+    // Otherwise locate a genuine, broad horizontal scroll container.
+    let best=null;
+    let bestScore=-1;
+    const viewport=Math.max(1,window.innerWidth||document.documentElement.clientWidth||1);
+
+    for(const el of document.querySelectorAll("main, section, div, article")){
+        if(
+            el.id==="workspace-top-scroll-v1014" ||
+            el.id==="workspace-page-top-scrollbar" ||
+            el.closest?.("#workspace-top-scroll-v1014")
+        )continue;
+        if(!elementVisible(el))continue;
+
+        const m=metrics(el);
+        if(m.max<=2 || m.clientWidth<viewport*.68)continue;
+
+        const ox=getComputedStyle(el).overflowX;
+        if(!/auto|scroll|overlay/i.test(ox))continue;
+
+        // Prefer viewport-wide workspaces over small floating windows.
+        const rect=el.getBoundingClientRect();
+        const coverage=Math.min(1,rect.width/viewport);
+        const score=(coverage*100000)+(m.clientWidth*10)+Math.min(m.max,10000);
+
+        if(score>bestScore){
+            best=el;
+            bestScore=score;
+        }
+    }
+    return best;
+}
+
+function ensureBar(){
+    let bar=document.getElementById("workspace-top-scroll-v1014");
+    if(bar)return bar;
+
+    bar=document.createElement("div");
+    bar.id="workspace-top-scroll-v1014";
+    bar.hidden=true;
+    bar.setAttribute("aria-label","Horizontal page scroll");
+    bar.innerHTML=`
+        <div id="workspace-top-scroll-v1014-track" role="scrollbar"
+             aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100"
+             aria-valuenow="0" tabindex="0">
+            <div id="workspace-top-scroll-v1014-thumb"></div>
+        </div>`;
+
+    const main=document.querySelector("main");
+    if(main?.parentElement)main.parentElement.insertBefore(bar,main);
+    else document.body.prepend(bar);
+
+    const track=bar.querySelector("#workspace-top-scroll-v1014-track");
+    const thumb=bar.querySelector("#workspace-top-scroll-v1014-thumb");
+
+    function setTargetScroll(value){
+        if(!target)return;
+        const m=metrics(target);
+        const next=Math.max(0,Math.min(m.max,value));
+        if(m.root)window.scrollTo({left:next,top:window.scrollY,behavior:"auto"});
+        else target.scrollLeft=next;
+        updateThumb();
+    }
+
+    track.addEventListener("pointerdown",event=>{
+        if(event.target===thumb)return;
+        if(!target)return;
+        const tm=track.getBoundingClientRect();
+        const m=metrics(target);
+        const x=Math.max(0,Math.min(tm.width,event.clientX-tm.left));
+        const ratio=tm.width ? x/tm.width : 0;
+        setTargetScroll(ratio*m.max);
+    });
+
+    thumb.addEventListener("pointerdown",event=>{
+        if(!target)return;
+        event.preventDefault();
+        event.stopPropagation();
+        const trackRect=track.getBoundingClientRect();
+        const thumbRect=thumb.getBoundingClientRect();
+        const m=metrics(target);
+        dragging={
+            pointerId:event.pointerId,
+            startX:event.clientX,
+            startScroll:m.scrollLeft,
+            travel:Math.max(1,trackRect.width-thumbRect.width),
+            max:m.max
+        };
+        thumb.setPointerCapture?.(event.pointerId);
+    });
+
+    thumb.addEventListener("pointermove",event=>{
+        if(!dragging || event.pointerId!==dragging.pointerId || !target)return;
+        const dx=event.clientX-dragging.startX;
+        const scrollDx=dx*(dragging.max/dragging.travel);
+        setTargetScroll(dragging.startScroll+scrollDx);
+    });
+
+    function endDrag(event){
+        if(!dragging)return;
+        if(event?.pointerId!=null && event.pointerId!==dragging.pointerId)return;
+        dragging=null;
+    }
+    thumb.addEventListener("pointerup",endDrag);
+    thumb.addEventListener("pointercancel",endDrag);
+
+    track.addEventListener("keydown",event=>{
+        if(!target)return;
+        const m=metrics(target);
+        let next=m.scrollLeft;
+        if(event.key==="ArrowRight")next+=Math.max(40,m.clientWidth*.12);
+        else if(event.key==="ArrowLeft")next-=Math.max(40,m.clientWidth*.12);
+        else if(event.key==="PageDown")next+=m.clientWidth*.8;
+        else if(event.key==="PageUp")next-=m.clientWidth*.8;
+        else if(event.key==="Home")next=0;
+        else if(event.key==="End")next=m.max;
+        else return;
+        event.preventDefault();
+        setTargetScroll(next);
+    });
+
+    return bar;
+}
+
+function unbindTarget(){
+    if(!target)return;
+    if(targetScrollHandler){
+        if(metrics(target).root)window.removeEventListener("scroll",targetScrollHandler);
+        else target.removeEventListener("scroll",targetScrollHandler);
+    }
+    targetScrollHandler=null;
+    target=null;
+}
+
+function bindTarget(next){
+    if(target===next)return;
+    unbindTarget();
+    target=next;
+    if(!target)return;
+    targetScrollHandler=()=>updateThumb();
+    if(metrics(target).root)window.addEventListener("scroll",targetScrollHandler,{passive:true});
+    else target.addEventListener("scroll",targetScrollHandler,{passive:true});
+}
+
+function updateThumb(){
+    const bar=document.getElementById("workspace-top-scroll-v1014");
+    const track=document.getElementById("workspace-top-scroll-v1014-track");
+    const thumb=document.getElementById("workspace-top-scroll-v1014-thumb");
+    if(!bar || !track || !thumb || !target)return;
+
+    const m=metrics(target);
+    if(m.max<=2 || m.scrollWidth<=0 || m.clientWidth<=0){
+        bar.hidden=true;
+        return;
+    }
+
+    bar.hidden=false;
+    const trackWidth=track.clientWidth;
+    if(trackWidth<=0)return;
+
+    const ratio=Math.max(0,Math.min(1,m.clientWidth/m.scrollWidth));
+    const thumbWidth=Math.max(30,Math.min(trackWidth,trackWidth*ratio));
+    const travel=Math.max(0,trackWidth-thumbWidth);
+    const left=m.max ? travel*(m.scrollLeft/m.max) : 0;
+
+    thumb.style.width=thumbWidth+"px";
+    thumb.style.transform=`translateX(${Math.max(0,Math.min(travel,left))}px)`;
+
+    track.setAttribute("aria-valuenow",String(Math.round(m.max ? (m.scrollLeft/m.max)*100 : 0)));
+}
+
+function refresh(){
+    const bar=ensureBar();
+    const next=findRealScroller();
+    bindTarget(next);
+    if(!next){
+        bar.hidden=true;
+        return;
+    }
+    updateThumb();
+}
+
+function scheduleRefresh(delay=80){
+    clearTimeout(refreshTimer);
+    refreshTimer=setTimeout(refresh,delay);
+}
+
+function stagedRefresh(){
+    refresh();
+    requestAnimationFrame(refresh);
+    setTimeout(refresh,80);
+    setTimeout(refresh,300);
+    setTimeout(refresh,900);
+    setTimeout(refresh,2200);
+}
+
+function boot(){
+    stagedRefresh();
+
+    window.addEventListener("resize",()=>scheduleRefresh(40),{passive:true});
+    window.addEventListener("load",stagedRefresh,{once:true});
+    document.addEventListener("toggle",()=>scheduleRefresh(40),true);
+    document.addEventListener("transitionend",()=>scheduleRefresh(40),true);
+
+    const mo=new MutationObserver(()=>scheduleRefresh(100));
+    mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["class","style","hidden","open"]});
+
+    if("ResizeObserver" in window){
+        const ro=new ResizeObserver(()=>scheduleRefresh(40));
+        ro.observe(document.documentElement);
+        ro.observe(document.body);
+        const main=document.querySelector("main");
+        if(main)ro.observe(main);
+        window.__workspaceTopScrollResizeObserver=ro;
+    }
+    window.__workspaceTopScrollMutationObserver=mo;
+}
+
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});
+else boot();
+})();
+</script>
+
+<script id="workspace-v1014-version-marker">
+window.__languageTutorWorkspaceVersion="10.14";
+</script>
+
 </body>
 </html>
 
