@@ -5095,6 +5095,44 @@ body.conversation-first-layout #mobile-right-column{
 #language-coach-results:not(:empty){display:flex!important;visibility:visible!important;opacity:1!important}
 </style>
 
+<style id="parser-diagram-toggle-v79">
+.analysis-parser-view-switch{
+    display:inline-flex;
+    gap:2px;
+    padding:2px;
+    margin:0 8px 8px 0;
+    border:1px solid #cbd5e1;
+    border-radius:9px;
+    background:#f8fafc;
+}
+.analysis-parser-view-switch button{
+    min-height:28px;
+    padding:4px 9px;
+    border:0;
+    border-radius:7px;
+    background:transparent;
+    color:#64748b;
+    font-size:9px;
+    font-weight:800;
+    cursor:pointer;
+}
+.analysis-parser-view-switch button.active{
+    background:#fff;
+    color:#1e293b;
+    box-shadow:0 1px 2px rgba(15,23,42,.08);
+}
+.analysis-parser-diagram-host{
+    width:100%;
+    overflow:auto;
+    padding:4px 0 8px;
+}
+.analysis-parser-diagram-host.hidden,
+.analysis-parser-tiles.hidden{display:none!important}
+@media(max-width:640px){
+    .analysis-parser-view-switch button{min-height:36px}
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -18954,7 +18992,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         <div class="analysis-workbench-primary-tools">
             <button type="button" onclick="analysisWorkbenchTranslate(this)">Translation</button>
             <button type="button" class="ai" onclick="analysisWorkbenchFullParse(this)">Parse</button>
-            <button type="button" class="ai" onclick="analysisWorkbenchDiagram(this)">Diagram</button>
+
             <button type="button" class="ai" onclick="analysisWorkbenchWhy(this)">Why?</button>
         </div>
 
@@ -19445,7 +19483,20 @@ Rules:
             legend.classList.toggle("hidden",!opening);
             legendToggle.textContent=opening ? "Hide color key" : "Show color key";
         });
-        card.append(legendToggle,legend);
+        const viewSwitch=document.createElement("div");
+        viewSwitch.className="analysis-parser-view-switch";
+
+        const tilesViewButton=document.createElement("button");
+        tilesViewButton.type="button";
+        tilesViewButton.className="active";
+        tilesViewButton.textContent="Tiles";
+
+        const diagramViewButton=document.createElement("button");
+        diagramViewButton.type="button";
+        diagramViewButton.textContent="Diagram";
+
+        viewSwitch.append(tilesViewButton,diagramViewButton);
+        card.append(viewSwitch,legendToggle,legend);
 
         const tiles=document.createElement("div");
         tiles.className="analysis-parser-tiles";
@@ -19500,6 +19551,51 @@ Rules:
         });
 
         card.append(tiles,detail);
+
+        const diagramHost=document.createElement("div");
+        diagramHost.className="analysis-parser-diagram-host hidden";
+        card.appendChild(diagramHost);
+
+        const showTiles=()=>{
+            tiles.classList.remove("hidden");
+            detail.classList.add("hidden");
+            diagramHost.classList.add("hidden");
+            tilesViewButton.classList.add("active");
+            diagramViewButton.classList.remove("active");
+        };
+
+        const showDiagram=async()=>{
+            tiles.classList.add("hidden");
+            detail.classList.add("hidden");
+            diagramHost.classList.remove("hidden");
+            tilesViewButton.classList.remove("active");
+            diagramViewButton.classList.add("active");
+
+            if(diagramHost.dataset.loaded==="1")return;
+            diagramHost.innerHTML='<div class="analysis-workbench-hint">Building sentence diagram…</div>';
+            try{
+                const diagram=await getWorkbenchDiagramData(parsed);
+                diagramHost.replaceChildren();
+                const tree=buildDiagramTree(diagram);
+                if(tree)diagramHost.appendChild(tree);
+                else{
+                    const empty=document.createElement("div");
+                    empty.className="analysis-workbench-hint";
+                    empty.textContent="A usable sentence diagram could not be built.";
+                    diagramHost.appendChild(empty);
+                }
+                diagramHost.dataset.loaded="1";
+            }catch(e){
+                diagramHost.replaceChildren();
+                const error=document.createElement("div");
+                error.className="analysis-workbench-hint";
+                error.textContent="Diagram unavailable: "+((e&&e.message)?e.message:String(e));
+                diagramHost.appendChild(error);
+            }
+        };
+
+        tilesViewButton.addEventListener("click",showTiles);
+        diagramViewButton.addEventListener("click",showDiagram);
     }
 
     window.analysisWorkbenchFullParse=async function(button){
@@ -19569,6 +19665,86 @@ Rules:
             if(button){button.disabled=false;button.textContent=old;}
         }
     };
+
+    const workbenchDiagramCache=new Map();
+    const workbenchDiagramInflight=new Map();
+
+    async function getWorkbenchDiagramData(parsed){
+        const key=workbenchParseKey();
+        if(workbenchDiagramCache.has(key))return workbenchDiagramCache.get(key);
+        if(workbenchDiagramInflight.has(key))return workbenchDiagramInflight.get(key);
+
+        const ai=resolveWorkbenchAIConfig();
+        if(!ai.available){
+            return parsed?.diagram || workbenchFallbackDiagram(parsed?.chunks||[]);
+        }
+
+        const languageName=cfg().name;
+        const parseSummary=(parsed?.chunks||[]).map(ch=>({
+            text:ch.words.join(" "),
+            type:ch.type,
+            label:ch.label,
+            gender:ch.gender
+        }));
+
+        const prompt=`You are building a pedagogically accurate sentence diagram for a language learner.
+Language: ${languageName}
+Sentence: "${state.sentence}"
+Existing parse: ${JSON.stringify(parseSummary)}
+
+Return JSON only:
+{"nodes":[
+ {"id":"n1","text":"exact word or phrase","role":"short grammatical role","parent":"parent node id or empty string","relation":"short dependency label","label":"case/grammar label when useful","gender":"Masculine|Feminine|Neuter|Plural|"}
+]}
+
+Diagram rules:
+- Represent CLAUSE STRUCTURE, not merely a flat list of parser tiles.
+- Identify each clause and its finite verb before assigning dependencies.
+- For German subordinate clauses, do not mistake final word order for dependency structure.
+- With modal constructions such as "ausleihen durfte", identify the finite modal (durfte) and its infinitive complement (ausleihen).
+- Attach the subject to the finite verb of its clause.
+- Attach direct/indirect objects and reflexive/dative pronouns to the lexical verb they belong to when linguistically appropriate.
+- Attach subordinating conjunctions such as "dass" to the subordinate clause / finite predicate rather than treating them as ordinary dependents of an unrelated word.
+- Do not force a grammatical case onto fixed or elliptical expressions when the sentence does not license one. For example, "Vielen Dank" in "Vielen Dank, dass ..." should be labeled as an expression/main-clause phrase, not automatically Accusative.
+- Preserve case and gender metadata from the existing parse when correct.
+- Produce one coherent acyclic tree.
+- Keep role/relation labels concise and learner-friendly.
+- JSON only.`;
+
+        const task=(async()=>{
+            const data=await withWorkbenchTimeout(callAIJson(prompt),15000);
+            const nodes=Array.isArray(data?.nodes)
+                ? data.nodes
+                : Array.isArray(data?.diagram?.nodes)
+                    ? data.diagram.nodes
+                    : [];
+            if(!nodes.length)throw new Error("AI returned no diagram nodes.");
+
+            const ids=new Set(nodes.map(n=>String(n.id||"")).filter(Boolean));
+            const normalized=nodes.map((n,i)=>({
+                id:String(n.id||`n${i}`),
+                text:String(n.text||"").trim(),
+                role:String(n.role||"").trim(),
+                parent:String(n.parent||"").trim(),
+                relation:String(n.relation||"").trim(),
+                label:String(n.label||"").trim(),
+                gender:String(n.gender||"").trim()
+            })).filter(n=>n.text);
+
+            // Broken parent references are safer as roots than invisible nodes.
+            normalized.forEach(n=>{
+                if(n.parent && !ids.has(n.parent))n.parent="";
+            });
+
+            const result={nodes:normalized};
+            workbenchDiagramCache.set(key,result);
+            return result;
+        })();
+
+        workbenchDiagramInflight.set(key,task);
+        try{return await task}
+        finally{workbenchDiagramInflight.delete(key)}
+    }
 
     function buildDiagramTree(diagram){
         const nodes=Array.isArray(diagram?.nodes)?diagram.nodes:[];
