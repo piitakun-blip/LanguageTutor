@@ -6180,54 +6180,6 @@ body.conversation-first-layout #mobile-right-column{
 </style>
 
 
-<style id="workspace-v1303-floating-home-collapse-css">
-/* v13.0.3
-   When Conversation is moved into the floating workspace, collapse the
-   page-side Conversation card to its small status banner. The older desktop
-   layout imposed min-height:690px!important, which was leaving the large gap. */
-body.conversation-first-layout
-#conversation-primary-section
-#socratic-chat-container.v12-conversation-floating{
-    height:auto!important;
-    min-height:0!important;
-    max-height:none!important;
-    padding:10px!important;
-    overflow:visible!important;
-}
-
-body.conversation-first-layout
-#conversation-primary-section.v1303-conversation-is-floating{
-    min-height:0!important;
-    height:auto!important;
-}
-
-body.conversation-first-layout
-#conversation-primary-section.v1303-conversation-is-floating
-#socratic-chat-container.v12-conversation-floating
-#chat-voice-mode{
-    min-height:0!important;
-    height:auto!important;
-    flex:0 0 auto!important;
-    overflow:visible!important;
-}
-
-/* Keep only the useful "Conversation is open..." status card page-side. */
-body.conversation-first-layout
-#conversation-primary-section.v1303-conversation-is-floating
-#socratic-chat-container.v12-conversation-floating{
-    margin-bottom:0!important;
-}
-
-/* Avoid an invisible locked overlay retaining layout/interaction space while
-   the actual Conversation controls have been moved to the floating window. */
-body.conversation-first-layout
-#conversation-primary-section.v1303-conversation-is-floating
-#chat-locked-overlay{
-    display:none!important;
-}
-</style>
-
-
 <style id="workspace-v1305-grammar-action-consistency-css">
 /* v13.0.5 — Grammar Tool actions use the same compact control rhythm
    as Conversation / Ask Tutor instead of oversized 42–46px desktop buttons. */
@@ -6413,6 +6365,178 @@ body.conversation-first-layout
         flex:0 0 auto;
         min-height:36px;
         font-size:10px;
+    }
+}
+</style>
+
+
+<style id="workspace-v1310-shared-conversation-view-css">
+/* v13.1 — One Conversation view. The exact same header, toolbar, selected-line
+   tools, and transcript either live on the page or move into the floating shell. */
+#socratic-chat-container{
+    height:auto!important;
+    min-height:0!important;
+}
+
+.conversation-shared-view{
+    display:flex;
+    flex-direction:column;
+    min-height:300px;
+    height:360px;
+    border:1px solid #dbe3ee;
+    border-radius:13px;
+    background:#fff;
+    overflow:hidden;
+}
+
+.conversation-shared-view .conversation-shared-titlebar{
+    flex:0 0 auto;
+}
+
+.conversation-shared-view:not(.is-floating) .conversation-floating-only-actions{
+    display:none!important;
+}
+
+.conversation-shared-view:not(.is-floating) #voice-transcript-drag-handle{
+    cursor:default!important;
+}
+
+.conversation-shared-view .conversation-workspace-toolbar{
+    flex:0 0 auto;
+}
+
+.conversation-shared-body{
+    flex:1 1 auto;
+    min-height:0;
+    height:auto!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column;
+    padding:10px 12px!important;
+}
+
+.conversation-shared-body > .transcript-selection-toolbar{
+    flex:0 0 auto;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:6px!important;
+}
+.conversation-shared-body > .transcript-selection-toolbar .transcript-selection-summary{
+    width:100%;
+}
+.conversation-shared-body > .transcript-selection-toolbar .transcript-selection-actions{
+    width:100%;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    justify-content:flex-start!important;
+    gap:6px!important;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding-bottom:2px;
+}
+.conversation-shared-body > .transcript-selection-toolbar .transcript-selection-actions button{
+    flex:0 0 auto!important;
+    min-height:32px!important;
+    padding:5px 8px!important;
+}
+.conversation-shared-body > .transcript-selection-toolbar .transcript-selected-translation{
+    position:relative!important;
+    z-index:0!important;
+    width:100%;
+    box-sizing:border-box;
+    margin:0;
+    padding:8px 9px;
+    border:1px solid #e2e8f0;
+    border-radius:8px;
+    background:#f8fafc;
+    line-height:1.45;
+    white-space:normal;
+    overflow-wrap:anywhere;
+}
+
+.conversation-shared-body > #voice-chat-messages-log{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    height:auto!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+}
+
+/* Floating shell hosts the same view without adding another visual layer. */
+#voice-transcript-window-body.voice-transcript-body{
+    padding:0!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column;
+}
+#voice-transcript-window #conversation-view{
+    flex:1 1 auto;
+    width:100%;
+    height:100%;
+    min-height:0;
+    border:0;
+    border-radius:inherit;
+}
+
+/* Existing collapse CSS used to hide the whole host body. Keep the shared
+   titlebar visible and collapse only the Conversation content beneath it. */
+#voice-transcript-window.collapsed #voice-transcript-window-body{
+    display:flex!important;
+}
+#voice-transcript-window.collapsed #conversation-view{
+    height:48px!important;
+    min-height:48px!important;
+}
+#voice-transcript-window.collapsed #conversation-view .voice-transcript-toolbar,
+#voice-transcript-window.collapsed #conversation-view .conversation-shared-body{
+    display:none!important;
+}
+
+/* Controls/status/composer explicitly remain page-side while the transcript view floats. */
+#conversation-primary-section #chat-voice-mode > .shrink-0{
+    visibility:visible;
+}
+
+.saved-transcript-detail-actions{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    gap:6px;
+}
+.saved-transcript-continue-btn{
+    padding:6px 9px;
+    border:1px solid #86efac;
+    border-radius:8px;
+    background:#f0fdf4;
+    color:#15803d;
+    font-size:10px;
+    font-weight:800;
+    white-space:nowrap;
+}
+.saved-transcript-continue-btn:hover{background:#dcfce7}
+.saved-transcript-delete-btn{
+    padding:6px 9px;
+    border:1px solid #fecaca;
+    border-radius:8px;
+    background:#fff1f2;
+    color:#be123c;
+    font-size:10px;
+    font-weight:800;
+}
+
+@media(max-width:640px){
+    .conversation-shared-view{
+        min-height:280px;
+        height:340px;
+    }
+    #voice-transcript-window #conversation-view{
+        height:100%;
+    }
+    .saved-transcript-detail-actions{
+        width:100%;
+        justify-content:flex-start;
     }
 }
 </style>
@@ -7118,6 +7242,38 @@ body.conversation-first-layout
                         </details>
                     </div>
 
+                    <div id="conversation-view-home-anchor" hidden></div>
+                    <section id="conversation-view" class="conversation-shared-view" aria-label="Tutor Conversation">
+                        <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar conversation-shared-titlebar">
+                            <div class="voice-transcript-titlecopy">
+                                <div id="voice-transcript-window-title" class="voice-transcript-window-title">German Conversation</div>
+                                <div class="voice-transcript-window-subtitle">Select a line to make it Ask Tutor context automatically.</div>
+                            </div>
+                            <div class="voice-transcript-window-actions conversation-floating-only-actions">
+                                <button type="button" id="voice-transcript-collapse-btn" onclick="toggleVoiceTranscriptCollapse()" title="Minimize">—</button>
+                                <button type="button" onclick="dockVoiceTranscript()" title="Return Conversation to page">×</button>
+                            </div>
+                        </div>
+
+                        <div class="voice-transcript-toolbar conversation-workspace-toolbar">
+                            <div class="voice-transcript-toolbar-note">Conversation</div>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
+                                <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
+                                <button type="button" onclick="openAskTutorFromConversation()">❓ Ask Tutor</button>
+                                <button type="button" id="conversation-window-toggle" onclick="toggleVoiceTranscriptWindow()">↗ Open Conversation</button>
+                            </div>
+                        </div>
+
+                        <div class="voice-transcript-body conversation-shared-body">
+                            <div id="voice-chat-messages-log" class="transcript-hub-log flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-2 overscroll-contain" aria-live="polite">
+                                <div id="voice-tutor-empty" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400">
+                                    Start a conversation or open Saved Transcripts. Select any target-language turn for study or Ask Tutor.
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     <div class="shrink-0 flex flex-wrap items-center gap-2">
                         <button type="button" id="voice-start-btn" onclick="toggleTutorLiveVoice('chat')" title="Listening pauses automatically after 10 seconds of silence" class="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">
                             🎙 Start Conversation
@@ -7184,24 +7340,7 @@ body.conversation-first-layout
                             </div>
                         </div>
                     </div>
-
-                    <div class="shrink-0 flex flex-wrap gap-2 justify-end">
-                        <button type="button" id="voice-open-transcript-btn" onclick="openVoiceTranscriptWindow()"
-                            class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition"
-                            title="Open Conversation in a movable window">↗ Open Conversation</button>
-                        <button type="button" onclick="saveCurrentTutorTranscript('voice',this)"
-                            class="min-h-[36px] px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
-                        <button type="button" onclick="openSavedTutorTranscripts()"
-                            class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition">🗂 Saved</button>
-                    </div>
-
-                    <div id="voice-chat-messages-log" class="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 pb-2 overscroll-contain" aria-live="polite">
-                        <div id="voice-tutor-empty" class="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-center text-[10px] text-slate-400">
-                            Start a conversation in the selected language. Tap “Reply in English” for one English question; after the tutor answers, listening automatically returns to the selected language.
-                        </div>
-                    </div>
-
-                </div>
+</div>
             </div>
 
             <!-- Always-visible interactive grammar tools -->
@@ -13717,51 +13856,82 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     }
 
     function ensureVoiceTranscriptHomeAnchor(){
-        const log=document.getElementById("voice-chat-messages-log");
-        if(!log)return null;
+        const view=document.getElementById("conversation-view");
+        if(!view)return null;
 
-        let anchor=document.getElementById("voice-transcript-home-anchor");
+        let anchor=document.getElementById("conversation-view-home-anchor");
         if(!anchor){
             anchor=document.createElement("div");
-            anchor.id="voice-transcript-home-anchor";
+            anchor.id="conversation-view-home-anchor";
             anchor.hidden=true;
-            log.parentElement?.insertBefore(anchor,log);
+            view.parentElement?.insertBefore(anchor,view);
         }
         return anchor;
     }
 
-    function renderVoiceTranscriptWindow(){
-        // v7 has ONE live transcript DOM element. This function only keeps
-        // the floating shell title current; it no longer creates a second copy.
+    function conversationViewIsFloating(){
+        const win=document.getElementById("voice-transcript-window");
+        const body=document.getElementById("voice-transcript-window-body");
+        const view=document.getElementById("conversation-view");
+        return Boolean(win && body && view && !win.hidden && view.parentElement===body);
+    }
+
+    function updateConversationViewState(){
+        const floating=conversationViewIsFloating();
+        const view=document.getElementById("conversation-view");
+        const toggle=document.getElementById("conversation-window-toggle");
         const title=document.getElementById("voice-transcript-window-title");
+
+        view?.classList.toggle("is-floating",floating);
         if(title)title.textContent=`${langConfig().name} Conversation`;
+
+        if(toggle){
+            toggle.textContent=floating ? "↙ Return Conversation" : "↗ Open Conversation";
+            toggle.title=floating
+                ? "Return Conversation to the page"
+                : "Open Conversation in a movable window";
+        }
+    }
+
+    function renderVoiceTranscriptWindow(){
+        updateConversationViewState();
     }
 
     window.openVoiceTranscriptWindow=function(){
         const win=document.getElementById("voice-transcript-window");
         const body=document.getElementById("voice-transcript-window-body");
-        const log=document.getElementById("voice-chat-messages-log");
-        if(!win || !body || !log)return;
+        const view=document.getElementById("conversation-view");
+        if(!win || !body || !view)return;
 
         ensureVoiceTranscriptHomeAnchor();
-        body.replaceChildren(log);
-        renderVoiceTranscriptWindow();
+        body.replaceChildren(view);
         win.hidden=false;
         win.classList.remove("collapsed");
+
         const btn=document.getElementById("voice-transcript-collapse-btn");
         if(btn)btn.textContent="—";
+
+        updateConversationViewState();
         if(typeof window.workspaceMarkOpen==="function")window.workspaceMarkOpen("transcript",true);
     };
 
     window.dockVoiceTranscript=function(){
-        const log=document.getElementById("voice-chat-messages-log");
+        const view=document.getElementById("conversation-view");
         const anchor=ensureVoiceTranscriptHomeAnchor();
         const win=document.getElementById("voice-transcript-window");
-        if(log && anchor?.parentElement){
-            anchor.parentElement.insertBefore(log,anchor.nextSibling);
+
+        if(view && anchor?.parentElement){
+            anchor.parentElement.insertBefore(view,anchor.nextSibling);
         }
         if(win)win.hidden=true;
+
+        updateConversationViewState();
         if(typeof window.workspaceMarkOpen==="function")window.workspaceMarkOpen("transcript",false);
+    };
+
+    window.toggleVoiceTranscriptWindow=function(){
+        if(conversationViewIsFloating())window.dockVoiceTranscript();
+        else window.openVoiceTranscriptWindow();
     };
 
     window.closeVoiceTranscriptWindow=function(){
@@ -13770,7 +13940,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
     window.toggleVoiceTranscriptCollapse=function(){
         const win=document.getElementById("voice-transcript-window");
-        if(!win)return;
+        if(!win || win.hidden)return;
         const collapsed=win.classList.toggle("collapsed");
         const btn=document.getElementById("voice-transcript-collapse-btn");
         if(btn)btn.textContent=collapsed ? "□" : "—";
@@ -13791,6 +13961,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         let offsetY=0;
 
         handle.addEventListener("pointerdown",ev=>{
+            if(win.hidden)return;
             if(window.matchMedia("(max-width:640px)").matches)return;
             if(ev.target.closest("button"))return;
             dragging=true;
@@ -16166,11 +16337,24 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         head.className="saved-transcript-detail-head";
         const title=document.createElement("div");
         title.innerHTML=`<strong>${escapeML(selected.languageName||selected.language||"Language")} ${selected.mode==="voice"?"Voice":"Text"} Tutor</strong><br><span>${escapeML(savedTranscriptLabel(selected))}</span>`;
+        const actions=document.createElement("div");
+        actions.className="saved-transcript-detail-actions";
+
+        const resume=document.createElement("button");
+        resume.type="button";
+        resume.className="saved-transcript-continue-btn";
+        resume.textContent="↩ Continue Conversation";
+        resume.title="Restore this saved transcript as the live Conversation and continue from its last turn";
+        resume.addEventListener("click",()=>window.resumeSavedTutorConversation(selected.id));
+
         const del=document.createElement("button");
         del.type="button";
+        del.className="saved-transcript-delete-btn";
         del.textContent="Delete";
         del.addEventListener("click",()=>window.deleteSavedTutorTranscript(selected.id));
-        head.append(title,del);
+
+        actions.append(resume,del);
+        head.append(title,actions);
         body.appendChild(head);
 
         const selectionBar=document.createElement("div");
@@ -16204,6 +16388,101 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         });
         body.appendChild(conversationLog);
     }
+
+
+    function normalizedSavedConversationEntries(entries){
+        return (Array.isArray(entries)?entries:[])
+            .map(entry=>({
+                role:entry?.role==="user" ? "user" : "assistant",
+                text:String(entry?.text||"").trim(),
+                note:String(entry?.note||"").trim(),
+                correctionAudio:String(entry?.correctionAudio||"").trim(),
+                targetTranslation:String(entry?.targetTranslation||"").trim(),
+                inputMode:String(entry?.inputMode||""),
+                replyLanguage:String(entry?.replyLanguage||"")
+            }))
+            .filter(entry=>entry.text);
+    }
+
+    function savedConversationSignature(entries){
+        return JSON.stringify(
+            normalizedSavedConversationEntries(entries).map(entry=>[entry.role,entry.text])
+        );
+    }
+
+    window.resumeSavedTutorConversation=async function(id){
+        const selected=readSavedTutorTranscripts().find(item=>item.id===id);
+        if(!selected)return;
+
+        const language=LANGUAGE_MODES[selected.language]
+            ? selected.language
+            : currentStudyLanguage;
+        const restored=normalizedSavedConversationEntries(selected.entries);
+        if(!restored.length)return;
+
+        const current=voiceTutorHistories[language]||[];
+        const currentHasTurns=current.some(entry=>String(entry?.text||"").trim());
+        const sameConversation=savedConversationSignature(current)===savedConversationSignature(restored);
+
+        if(currentHasTurns && !sameConversation){
+            const proceed=window.confirm(
+                "Continue this saved conversation?\n\n" +
+                "It will replace the current live Conversation history. " +
+                "Save the current conversation first if you want to keep it."
+            );
+            if(!proceed)return;
+        }
+
+        try{await window.stopTutorLiveVoice?.()}catch(_){}
+        try{window.stopVoiceConversation?.(true)}catch(_){}
+        try{window.stopAskTutorVoice?.(true)}catch(_){}
+
+        if(language!==currentStudyLanguage && typeof window.setStudyLanguage==="function"){
+            window.setStudyLanguage(language);
+        }
+
+        voiceTutorHistories[language]=restored.slice(-200);
+
+        voiceTutorState.active=false;
+        voiceTutorState.micSession=false;
+        voiceTutorState.recognition=null;
+        voiceTutorState.phase="idle";
+        voiceTutorState.language=language;
+        voiceTutorState.speaking=false;
+        voiceTutorState.manualRestart=false;
+        voiceTutorState.inputMode="target";
+        voiceTutorState.liveUserText="";
+        voiceTutorState.liveUserTargetTranslation="";
+        voiceTutorState.liveTutorText="";
+        voiceTutorState.resumeMicAfterTurn=false;
+
+        renderVoiceTutorTranscript();
+        renderVoiceLiveTurn();
+        updateVoiceRestateButton();
+        updateUnifiedTutorTextUI();
+
+        window.closeSavedTutorTranscripts?.();
+
+        // Resume on the page by default. If the learner wants the movable
+        // version, Open Conversation moves this exact same restored view.
+        window.dockVoiceTranscript?.();
+
+        voiceTutorStatus(
+            "Saved Conversation restored. Continue with your next reply.",
+            "normal"
+        );
+
+        requestAnimationFrame(()=>{
+            document.getElementById("conversation-view")?.scrollIntoView?.({
+                behavior:"smooth",
+                block:"nearest"
+            });
+            const input=document.getElementById("voice-text-input");
+            input?.focus?.({preventScroll:true});
+            const log=document.getElementById("voice-chat-messages-log");
+            if(log)log.scrollTop=log.scrollHeight;
+        });
+    };
 
     window.openSavedTutorTranscripts=function(){
         const win=document.getElementById("saved-transcripts-window");
@@ -20081,29 +20360,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
 </div>
 
 <div id="voice-transcript-window" hidden aria-label="Tutor conversation workspace">
-    <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
-        <div class="voice-transcript-titlecopy">
-            <div id="voice-transcript-window-title" class="voice-transcript-window-title">German Conversation</div>
-            <div class="voice-transcript-window-subtitle">Select a line to make it Ask Tutor context automatically.</div>
-        </div>
-        <div class="voice-transcript-window-actions">
-            <button type="button" id="voice-transcript-collapse-btn" onclick="toggleVoiceTranscriptCollapse()" title="Minimize">—</button>
-            <button type="button" onclick="closeVoiceTranscriptWindow()" title="Return Conversation to page">×</button>
-        </div>
-    </div>
-    <div class="voice-transcript-toolbar conversation-workspace-toolbar">
-        <div class="voice-transcript-toolbar-note">Conversation</div>
-        <div class="flex flex-wrap gap-2">
-            <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
-            <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
-            <button type="button" onclick="openAskTutorFromConversation()">❓ Ask Tutor</button>
-            <button type="button" onclick="dockVoiceTranscript()">↙ Return Conversation</button>
-        </div>
-    </div>
-    <div id="conversation-activity-slot" class="conversation-activity-slot"></div>
     <div id="voice-transcript-window-body" class="voice-transcript-body"></div>
-    <div id="conversation-controls-slot" class="conversation-controls-slot"></div>
-    <div id="conversation-composer-slot" class="conversation-composer-slot"></div>
 </div>
 
 
@@ -23864,8 +24121,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1306-reply-options-verb-confirmation-marker">
-window.__languageTutorWorkspaceVersion="13.0.6-reply-options-verb-confirmation";
+<script id="workspace-v1310-shared-conversation-view-marker">
+window.__languageTutorWorkspaceVersion="13.1.0-shared-conversation-view-resume";
 </script>
 
 
@@ -24892,7 +25149,7 @@ Return JSON only:
 
 function runShortcut(kind){
     if(!askState.context){
-        setStatus("Select a conversation line first, or type a question below.","error");
+        setStatus("Select a conversation line first, or type a question above.","error");
         document.getElementById("language-coach-input")?.focus();
         return;
     }
@@ -24902,91 +25159,6 @@ function runShortcut(kind){
     }
     const item=shortcutPrompt(kind);
     window.askTutorQuestion(item.prompt,{displayText:item.display});
-}
-
-function ensureAnchor(id,node){
-    if(!node)return null;
-    let anchor=document.getElementById(id);
-    if(!anchor){
-        anchor=document.createElement("span");
-        anchor.id=id;
-        anchor.hidden=true;
-        node.parentElement?.insertBefore(anchor,node);
-    }
-    return anchor;
-}
-
-function parts(){
-    const controls=document.getElementById("voice-start-btn")?.parentElement;
-    const status=document.getElementById("voice-tutor-status");
-    const activity=status?.parentElement?.parentElement;
-    const composer=document.getElementById("unified-text-entry");
-    return {
-        controls,activity,composer,
-        controlsAnchor:ensureAnchor("v12-controls-home-anchor",controls),
-        activityAnchor:ensureAnchor("v12-activity-home-anchor",activity),
-        composerAnchor:ensureAnchor("v12-composer-home-anchor",composer)
-    };
-}
-
-function moveToConversation(){
-    const p=parts();
-    const activitySlot=document.getElementById("conversation-activity-slot");
-    const controlsSlot=document.getElementById("conversation-controls-slot");
-    const composerSlot=document.getElementById("conversation-composer-slot");
-
-    if(p.activity&&activitySlot){
-        p.activity.classList.add("v12-activity-card");
-        activitySlot.replaceChildren(p.activity);
-    }
-    if(p.controls&&controlsSlot){
-        p.controls.classList.add("v12-voice-controls");
-        controlsSlot.replaceChildren(p.controls);
-    }
-    if(p.composer&&composerSlot)composerSlot.replaceChildren(p.composer);
-
-    document.getElementById("socratic-chat-container")?.classList.add("v12-conversation-floating");
-    document.getElementById("conversation-primary-section")?.classList.add("v1303-conversation-is-floating");
-}
-
-function restoreToPage(){
-    const p=parts();
-    const restore=(node,anchor)=>{
-        if(node&&anchor?.parentElement)anchor.parentElement.insertBefore(node,anchor.nextSibling);
-    };
-    restore(p.controls,p.controlsAnchor);
-    restore(p.activity,p.activityAnchor);
-    restore(p.composer,p.composerAnchor);
-    p.controls?.classList.remove("v12-voice-controls");
-    p.activity?.classList.remove("v12-activity-card");
-    document.getElementById("socratic-chat-container")?.classList.remove("v12-conversation-floating");
-    document.getElementById("conversation-primary-section")?.classList.remove("v1303-conversation-is-floating");
-}
-
-const oldOpen=window.openVoiceTranscriptWindow;
-if(typeof oldOpen==="function"){
-    window.openVoiceTranscriptWindow=function(...args){
-        const result=oldOpen.apply(this,args);
-        moveToConversation();
-        return result;
-    };
-}
-
-const oldDock=window.dockVoiceTranscript;
-if(typeof oldDock==="function"){
-    window.dockVoiceTranscript=function(...args){
-        restoreToPage();
-        return oldDock.apply(this,args);
-    };
-}
-
-const oldStart=window.startVoiceConversation;
-if(typeof oldStart==="function"){
-    window.startVoiceConversation=function(...args){
-        const result=oldStart.apply(this,args);
-        setTimeout(()=>window.openVoiceTranscriptWindow?.(),120);
-        return result;
-    };
 }
 
 const oldSetLanguage=window.setStudyLanguage;
@@ -25149,6 +25321,19 @@ function chatSettingsSummary(){
     };
 }
 
+function liveConversationHistoryContext(){
+    try{
+        const history=window.getVoiceTutorHistory?.()||[];
+        return history.slice(-12).map(entry=>{
+            const role=entry?.role==="user" ? "Learner" : "Tutor";
+            const text=String(entry?.text||"").trim();
+            return text ? `${role}: ${text}` : "";
+        }).filter(Boolean).join("\n");
+    }catch(_){
+        return "";
+    }
+}
+
 function liveInstructions(mode){
     const lang=languageInfo();
 
@@ -25167,6 +25352,7 @@ Do not pretend to be the live role-play conversation partner.`;
     }
 
     const settings=chatSettingsSummary();
+    const prior=liveConversationHistoryContext();
     return `You are the ${lang.name} conversation Tutor in LanguageTutor.
 Have a natural spoken conversation primarily in ${lang.name}.
 Adapt to the learner's level, keep turns reasonably short, and ask natural follow-up questions.
@@ -25174,6 +25360,11 @@ Correct only important errors unless the learner asks for more correction.
 If the learner temporarily uses English, understand the intent and help them continue in ${lang.name}.
 Conversation mode: ${settings.mode}.
 Scenario/topic: ${settings.scenario}.
+
+Conversation history to continue from:
+${prior || "(no prior turns)"}
+
+Continue naturally from that history. Do not restart the introduction or scenario unless the history calls for it.
 This is live voice practice: sound natural and allow interruptions.`;
 }
 
@@ -25519,7 +25710,6 @@ window.toggleTutorLiveVoice=async function(mode="chat"){
 
     try{
         await createLiveSession(requested);
-        if(requested==="chat")window.openVoiceTranscriptWindow?.();
     }catch(e){
         console.error("GPT-Live startup failed",e);
         cleanupLive(true);
