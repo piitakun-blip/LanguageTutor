@@ -6227,6 +6227,89 @@ body.conversation-first-layout
 }
 </style>
 
+
+<style id="workspace-v1305-grammar-action-consistency-css">
+/* v13.0.5 — Grammar Tool actions use the same compact control rhythm
+   as Conversation / Ask Tutor instead of oversized 42–46px desktop buttons. */
+.grammar-primary-action,
+.grammar-section-ai-btn,
+.ml-action,
+.ml-ai-action{
+    min-height:34px!important;
+    padding:6px 9px!important;
+    border-radius:9px!important;
+    font-size:10px!important;
+    font-weight:800!important;
+    line-height:1.15!important;
+    width:auto;
+}
+
+.grammar-primary-action,
+.ml-action{
+    border:1px solid #4f46e5!important;
+    background:#4f46e5!important;
+    color:#fff!important;
+}
+.grammar-primary-action:hover,
+.ml-action:hover{
+    background:#4338ca!important;
+    border-color:#4338ca!important;
+}
+
+.grammar-section-ai-btn,
+.ml-ai-action{
+    border:1px solid #c7d2fe!important;
+    background:#eef2ff!important;
+    color:#4338ca!important;
+}
+.grammar-section-ai-btn:hover,
+.ml-ai-action:hover{
+    background:#e0e7ff!important;
+}
+
+/* Keep the single Conjugate action compact even though older verb CSS
+   previously expected a pair of large controls. */
+.verb-tool-actions{
+    gap:6px!important;
+}
+.verb-tool-actions > button{
+    min-height:34px!important;
+    padding:6px 10px!important;
+    font-size:10px!important;
+}
+
+/* Other common Grammar Tool action buttons use the same compact sizing,
+   without enlarging tiny Change links or square Listen controls. */
+.grammar-main-panel button.mt-3.px-3.py-2,
+.grammar-main-panel .grammar-action{
+    min-height:34px!important;
+    padding:6px 9px!important;
+    font-size:10px!important;
+    border-radius:9px!important;
+}
+
+.grammar-section-ai{
+    padding:8px 0 2px!important;
+}
+
+@media(max-width:640px){
+    /* Slightly larger touch target on phones, while keeping the same visual scale. */
+    .grammar-primary-action,
+    .grammar-section-ai-btn,
+    .ml-action,
+    .ml-ai-action,
+    .verb-tool-actions > button{
+        min-height:40px!important;
+        padding:7px 10px!important;
+        font-size:11px!important;
+    }
+    .grammar-section-ai-btn,
+    .ml-ai-action{
+        width:auto!important;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -7063,7 +7146,7 @@ body.conversation-first-layout
                         <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
                             <div>
                                 <div class="text-sm font-bold text-slate-800">Verb Conjugator</div>
-                                <div class="text-[11px] text-slate-500 mt-0.5">German is assumed by default for immediate conjugation. If you enter an English verb such as <em>walk</em> or <em>drive</em>, check “Verb entered in English” first.</div>
+                                <div class="text-[11px] text-slate-500 mt-0.5">Enter a German infinitive or conjugated form, an English verb, or a close misspelling. Tutor will identify the intended German verb and conjugate it.</div>
                             </div>
                             <div class="space-y-3">
                                 <label class="block">
@@ -7072,13 +7155,8 @@ body.conversation-first-layout
                                         class="verb-tool-input w-full min-w-0 rounded-xl border-2 border-indigo-200 bg-white px-4 py-4 text-lg text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
                                         placeholder="e.g. haben, fährt, walk">
                                 </label>
-                                <label class="case-builder-language-check">
-                                    <input id="verb-tool-english" type="checkbox">
-                                    <span>Verb entered in English</span>
-                                </label>
                                 <div class="verb-tool-actions">
-                                    <button type="button" onclick="runLocalVerbConjugator()" class="min-h-[46px] px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm">Conjugate</button>
-                                    <button id="verb-ai-btn" type="button" onclick="runAiVerbConjugator()" class="min-h-[46px] px-4 py-2 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-sm">✨ Verify conjugation with AI</button>
+                                    <button id="verb-ai-btn" type="button" onclick="runAiVerbConjugator()" class="grammar-primary-action">Conjugate</button>
                                 </div>
                             </div>
                             <div id="verb-tool-status" class="hidden text-[10px] font-semibold"></div>
@@ -7102,7 +7180,7 @@ body.conversation-first-layout
 
 </section>
 <div class="grammar-section-ai">
-                            <button type="button" onclick="askGrammarSectionAI('verb', this)" class="grammar-section-ai-btn">✨ Ask AI about this verb</button>
+                            <button type="button" onclick="askGrammarSectionAI('verb', this)" class="grammar-section-ai-btn">❓ Ask Tutor about this verb</button>
                             <div id="grammar-ai-verb" class="grammar-section-ai-result hidden"></div>
                         </div>
 
@@ -7215,7 +7293,7 @@ body.conversation-first-layout
                         </div>
 
 <div class="grammar-section-ai">
-                            <button type="button" onclick="askGrammarSectionAI('builder', this)" class="grammar-section-ai-btn">✨ Ask AI about this phrase</button>
+                            <button type="button" onclick="askGrammarSectionAI('builder', this)" class="grammar-section-ai-btn">❓ Ask Tutor about this phrase</button>
                             <div id="grammar-ai-builder" class="grammar-section-ai-result hidden"></div>
                         </div>
 </section>
@@ -7238,7 +7316,7 @@ body.conversation-first-layout
 
 </section>
 <div class="grammar-section-ai">
-                            <button type="button" onclick="askGrammarSectionAI('prep', this)" class="grammar-section-ai-btn">✨ Ask AI about this preposition</button>
+                            <button type="button" onclick="askGrammarSectionAI('prep', this)" class="grammar-section-ai-btn">❓ Ask Tutor about this preposition</button>
                             <div id="grammar-ai-prep" class="grammar-section-ai-result hidden"></div>
                         </div>
 
@@ -7330,7 +7408,7 @@ body.conversation-first-layout
                         </div>
 
                         <div class="grammar-section-ai">
-                            <button type="button" onclick="askArticleFinderAI(this)" class="grammar-section-ai-btn">✨ Ask AI about this article choice</button>
+                            <button type="button" onclick="askArticleFinderAI(this)" class="grammar-section-ai-btn">❓ Ask Tutor about this article choice</button>
                             <div id="article-tool-ai-result" class="grammar-section-ai-result hidden"></div>
                         </div>
 
@@ -7543,7 +7621,7 @@ body.conversation-first-layout
                             <div id="adjective-tool-warning" class="hidden mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800"></div>
 
                             <div class="grammar-section-ai">
-                                <button type="button" onclick="askGrammarSectionAI('adjective', this)" class="grammar-section-ai-btn">✨ Ask AI about this adjective ending</button>
+                                <button type="button" onclick="askGrammarSectionAI('adjective', this)" class="grammar-section-ai-btn">❓ Ask Tutor about this adjective ending</button>
                                 <div id="grammar-ai-adjective" class="grammar-section-ai-result hidden"></div>
                             </div>
 
@@ -8377,7 +8455,7 @@ body.conversation-first-layout
 
             try {
                 // Normal translation never spends AI tokens.
-                // AI is reserved for explicit Tutor / Ask AI actions.
+                // Tutor requests are used only for explicit Tutor actions.
                 let germanSentence = await googleTranslateApiCall(sourceText, "en", "de");
                 germanSentence = normalizeSentencePresentation(germanSentence, "de");
 
@@ -9088,7 +9166,7 @@ body.conversation-first-layout
             const key=getActiveAIKey();
 
             if(!key){
-                alert("Add an AI API key in Settings first.");
+                alert("Add a provider key in Settings first.");
                 return;
             }
 
@@ -9265,7 +9343,7 @@ Rules:
                 const aiButton = document.createElement("button");
                 aiButton.type = "button";
                 aiButton.className = "phrase-ai-explain-btn mt-2 w-full sm:w-auto px-3 py-2.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-bold transition";
-                aiButton.textContent = "✨ Ask AI about this phrase";
+                aiButton.textContent = "❓ Ask Tutor about this phrase";
 
                 aiButton.addEventListener("click", async (event) => {
                     event.preventDefault();
@@ -9322,7 +9400,7 @@ Before returning, verify that the explanation itself is English.`;
                             aiText.className = "bg-amber-50 text-amber-950 border border-amber-100 p-3 rounded-lg font-medium leading-relaxed";
                             const cleanedExplanation = cleanAiExplanation(aiExplanation);
                             aiText.textContent = looksMostlyGerman(cleanedExplanation)
-                                ? "The AI returned the explanation in German instead of English. Tap Ask AI again to retry."
+                                ? "The AI returned the explanation in German instead of English. Tap Ask Tutor again to retry."
                                 : cleanedExplanation;
 
                             aiResult.append(aiLabel, aiText);
@@ -9366,7 +9444,7 @@ Before returning, verify that the explanation itself is English.`;
                         dExplanation.appendChild(errorNote);
                     } finally {
                         aiButton.disabled = false;
-                        aiButton.textContent = "✨ Ask AI again";
+                        aiButton.textContent = "❓ Ask Tutor again";
                     }
                 });
 
@@ -11583,160 +11661,7 @@ Plain text only.`;
         }
 
         // --- Interactive Reference Tools ---
-        const verbPresentForms = {
-            "sein": ["bin","bist","ist","sind","seid","sind"],
-            "haben": ["habe","hast","hat","haben","habt","haben"],
-            "werden": ["werde","wirst","wird","werden","werdet","werden"],
-            "können": ["kann","kannst","kann","können","könnt","können"],
-            "müssen": ["muss","musst","muss","müssen","müsst","müssen"],
-            "dürfen": ["darf","darfst","darf","dürfen","dürft","dürfen"],
-            "sollen": ["soll","sollst","soll","sollen","sollt","sollen"],
-            "wollen": ["will","willst","will","wollen","wollt","wollen"],
-            "mögen": ["mag","magst","mag","mögen","mögt","mögen"],
-            "möchten": ["möchte","möchtest","möchte","möchten","möchtet","möchten"],
-            "wissen": ["weiß","weißt","weiß","wissen","wisst","wissen"],
-            "gehen": ["gehe","gehst","geht","gehen","geht","gehen"],
-            "kommen": ["komme","kommst","kommt","kommen","kommt","kommen"],
-            "fahren": ["fahre","fährst","fährt","fahren","fahrt","fahren"],
-            "geben": ["gebe","gibst","gibt","geben","gebt","geben"],
-            "nehmen": ["nehme","nimmst","nimmt","nehmen","nehmt","nehmen"],
-            "sehen": ["sehe","siehst","sieht","sehen","seht","sehen"],
-            "sprechen": ["spreche","sprichst","spricht","sprechen","sprecht","sprechen"],
-            "essen": ["esse","isst","isst","essen","esst","essen"],
-            "lesen": ["lese","liest","liest","lesen","lest","lesen"],
-            "schlafen": ["schlafe","schläfst","schläft","schlafen","schlaft","schlafen"],
-            "laufen": ["laufe","läufst","läuft","laufen","lauft","laufen"],
-            "tragen": ["trage","trägst","trägt","tragen","tragt","tragen"],
-            "helfen": ["helfe","hilfst","hilft","helfen","helft","helfen"],
-            "treffen": ["treffe","triffst","trifft","treffen","trefft","treffen"],
-            "vergessen": ["vergesse","vergisst","vergisst","vergessen","vergesst","vergessen"],
-            "bringen": ["bringe","bringst","bringt","bringen","bringt","bringen"],
-            "denken": ["denke","denkst","denkt","denken","denkt","denken"],
-            "kennen": ["kenne","kennst","kennt","kennen","kennt","kennen"],
-            "tun": ["tue","tust","tut","tun","tut","tun"],
-            "stehen": ["stehe","stehst","steht","stehen","steht","stehen"],
-            "finden": ["finde","findest","findet","finden","findet","finden"],
-            "bleiben": ["bleibe","bleibst","bleibt","bleiben","bleibt","bleiben"],
-            "schreiben": ["schreibe","schreibst","schreibt","schreiben","schreibt","schreiben"],
-            "arbeiten": ["arbeite","arbeitest","arbeitet","arbeiten","arbeitet","arbeiten"],
-            "lernen": ["lerne","lernst","lernt","lernen","lernt","lernen"],
-            "machen": ["mache","machst","macht","machen","macht","machen"],
-            "kaufen": ["kaufe","kaufst","kauft","kaufen","kauft","kaufen"],
-            "fragen": ["frage","fragst","fragt","fragen","fragt","fragen"],
-            "wohnen": ["wohne","wohnst","wohnt","wohnen","wohnt","wohnen"],
-            "sagen": ["sage","sagst","sagt","sagen","sagt","sagen"],
-            "mitbringen": ["bringe mit","bringst mit","bringt mit","bringen mit","bringt mit","bringen mit"],
-            "anrufen": ["rufe an","rufst an","ruft an","rufen an","ruft an","rufen an"],
-            "aufstehen": ["stehe auf","stehst auf","steht auf","stehen auf","steht auf","stehen auf"],
-            "einkaufen": ["kaufe ein","kaufst ein","kauft ein","kaufen ein","kauft ein","kaufen ein"],
-            "anfangen": ["fange an","fängst an","fängt an","fangen an","fangt an","fangen an"],
-            "mitkommen": ["komme mit","kommst mit","kommt mit","kommen mit","kommt mit","kommen mit"],
-            "ausgehen": ["gehe aus","gehst aus","geht aus","gehen aus","geht aus","gehen aus"],
-            "zurückkommen": ["komme zurück","kommst zurück","kommt zurück","kommen zurück","kommt zurück","kommen zurück"]
-        };
-
-        const verbInfo = {
-            "sein": {meaning:"to be", irregular:true},
-            "haben": {meaning:"to have", irregular:true},
-            "werden": {meaning:"to become / will", irregular:true},
-            "fahren": {meaning:"to drive / travel", irregular:true},
-            "geben": {meaning:"to give", irregular:true},
-            "nehmen": {meaning:"to take", irregular:true},
-            "sehen": {meaning:"to see", irregular:true},
-            "sprechen": {meaning:"to speak", irregular:true},
-            "essen": {meaning:"to eat", irregular:true},
-            "lesen": {meaning:"to read", irregular:true},
-            "helfen": {meaning:"to help", irregular:true},
-            "mitbringen": {meaning:"to bring along", separable:true},
-            "anrufen": {meaning:"to call", separable:true},
-            "aufstehen": {meaning:"to get up", separable:true},
-            "einkaufen": {meaning:"to shop", separable:true},
-            "anfangen": {meaning:"to begin", separable:true},
-            "mitkommen": {meaning:"to come along", separable:true},
-            "ausgehen": {meaning:"to go out", separable:true},
-            "zurückkommen": {meaning:"to come back", separable:true}
-        };
-
         const verbPronouns = ["ich","du","er / sie / es","wir","ihr","sie / Sie"];
-
-        function buildVerbFormLookup() {
-            const lookup = {};
-            Object.entries(verbPresentForms).forEach(([inf, forms]) => {
-                lookup[inf] = inf;
-                forms.forEach(form => {
-                    lookup[String(form).toLowerCase()] = inf;
-                    lookup[String(form).toLowerCase().replace(/\s+/g," ")] = inf;
-                });
-            });
-            return lookup;
-        }
-        const verbFormLookup = buildVerbFormLookup();
-
-        function inferRegularInfinitive(raw) {
-            const w = String(raw || "").toLowerCase().trim();
-            if (!w) return "";
-            if (/^[a-zäöüß]+(en|eln|ern)$/.test(w)) return w;
-            if (w.endsWith("est")) return w.slice(0,-3) + "en";
-            if (w.endsWith("st")) return w.slice(0,-2) + "en";
-            if (w.endsWith("et")) return w.slice(0,-2) + "en";
-            if (w.endsWith("t")) return w.slice(0,-1) + "en";
-            if (w.endsWith("e")) return w.slice(0,-1) + "en";
-            return "";
-        }
-
-        function regularPresentForms(infinitive) {
-            const inf = infinitive.toLowerCase();
-            let stem = inf;
-            let special = "";
-            if (inf.endsWith("eln")) {
-                stem = inf.slice(0,-3);
-                return [stem+"le", stem+"elst", stem+"elt", inf, stem+"elt", inf];
-            }
-            if (inf.endsWith("ern")) stem = inf.slice(0,-3) + "er";
-            else if (inf.endsWith("en")) stem = inf.slice(0,-2);
-
-            const needsE = /(?:d|t|chn|ffn|gn|tm)$/.test(stem);
-            return [
-                stem+"e",
-                stem+(needsE ? "est" : "st"),
-                stem+(needsE ? "et" : "t"),
-                inf,
-                stem+(needsE ? "et" : "t"),
-                inf
-            ];
-        }
-
-        function identifyVerbLocally(raw) {
-            const normalized = String(raw || "").trim().toLowerCase().replace(/\s+/g," ");
-            if (!normalized) return null;
-            if (verbFormLookup[normalized]) {
-                const infinitive = verbFormLookup[normalized];
-                return {infinitive, forms:verbPresentForms[infinitive], confidence:"Known verb", info:verbInfo[infinitive] || {}};
-            }
-            const inferred = inferRegularInfinitive(normalized);
-            if (inferred) {
-                return {infinitive:inferred, forms:regularPresentForms(inferred), confidence:"Locally inferred", info:{}};
-            }
-            return null;
-        }
-
-        function looksLikeEnglishEntry(raw) {
-            const text = String(raw || "").trim().toLowerCase();
-            if (!text) return false;
-            if (/^to\s+[a-z][a-z\s-]*$/.test(text)) return true;
-            if (/^[a-z][a-z\s-]*$/.test(text) && !/[äöüß]/.test(text)) {
-                const commonGerman = new Set([
-                    "sein","haben","werden","gehen","kommen","fahren","geben","nehmen","sehen","sprechen",
-                    "essen","lesen","schlafen","laufen","tragen","helfen","treffen","vergessen","bringen",
-                    "denken","kennen","tun","stehen","finden","bleiben","schreiben","arbeiten","lernen",
-                    "machen","kaufen","fragen","wohnen","sagen","mitbringen","anrufen","aufstehen","einkaufen",
-                    "anfangen","mitkommen","ausgehen","zurückkommen","mann","frau","kind","buch","hotel",
-                    "haus","zimmer","auto","arzt","bahnhof","park","urlaub","schule","stadt","arbeit","tasche"
-                ]);
-                return !commonGerman.has(text);
-            }
-            return false;
-        }
 
         async function detectAndTranslateWordToGerman(raw) {
             const text = String(raw || "").trim();
@@ -11860,102 +11785,6 @@ Plain text only.`;
             resultBox.classList.remove("hidden");
         }
 
-        const VERB_TRANSLATION_CACHE_KEY = "deutschlerner_verb_translation_cache_v1";
-        const verbTranslationCache = new Map();
-
-        function loadVerbTranslationCache() {
-            try {
-                const raw = safeStorageGet(VERB_TRANSLATION_CACHE_KEY);
-                if (!raw) return;
-                const saved = JSON.parse(raw);
-                if (!saved || typeof saved !== "object") return;
-                Object.entries(saved).forEach(([key, value]) => {
-                    if (typeof value === "string" && value.trim()) {
-                        verbTranslationCache.set(key, value.trim());
-                    }
-                });
-            } catch (e) {
-                console.warn("Could not load verb translation cache:", e);
-            }
-        }
-
-        function saveVerbTranslationCache() {
-            try {
-                safeStorageSet(
-                    VERB_TRANSLATION_CACHE_KEY,
-                    JSON.stringify(Object.fromEntries(Array.from(verbTranslationCache.entries()).slice(-300)))
-                );
-            } catch (e) {
-                console.warn("Could not save verb translation cache:", e);
-            }
-        }
-
-        loadVerbTranslationCache();
-
-        async function runLocalVerbConjugator() {
-            const input = document.getElementById("verb-tool-input");
-            const status = document.getElementById("verb-tool-status");
-            const raw = input.value.trim();
-            if (!raw) return;
-
-            let lookup = raw;
-            let translatedFromEnglish = false;
-            const englishChecked = Boolean(document.getElementById("verb-tool-english")?.checked);
-
-            if (englishChecked) {
-                status.textContent = "Translating verb…";
-                status.className = "text-[10px] font-semibold text-slate-500";
-                status.classList.remove("hidden");
-
-                const cacheKey = raw.toLowerCase().replace(/^to\s+/i, "").trim();
-                let translated = verbTranslationCache.get(cacheKey) || "";
-
-                if (!translated) {
-                    try {
-                        translated = await googleTranslateApiCall(cacheKey, "en", "de");
-                        translated = String(translated || "").trim().toLowerCase();
-                        if (translated) {
-                            verbTranslationCache.set(cacheKey, translated);
-                            saveVerbTranslationCache();
-                        }
-                    } catch (e) {
-                        console.warn("English verb translation failed:", e);
-                    }
-                }
-
-                if (!translated) {
-                    status.textContent = "I could not translate that English verb. Try Verify conjugation with AI.";
-                    status.className = "text-[10px] font-semibold text-amber-700";
-                    return;
-                }
-
-                lookup = translated;
-                translatedFromEnglish = true;
-            }
-            // If English is NOT checked, assume the learner entered German.
-            // Do not perform language detection. This makes German conjugation immediate.
-
-            const result = identifyVerbLocally(lookup);
-            if (!result) {
-                status.textContent = translatedFromEnglish
-                    ? `Translated as "${lookup}", but I could not confidently conjugate it locally. Try the AI check.`
-                    : "I could not confidently identify that German form. If you entered English, check “Verb entered in English”; otherwise try Verify conjugation with AI.";
-                status.className = "text-[10px] font-semibold text-amber-700";
-                status.classList.remove("hidden");
-                document.getElementById("verb-tool-result").classList.add("hidden");
-                return;
-            }
-
-            if (translatedFromEnglish) {
-                result.info = result.info || {};
-                if (!result.info.meaning) result.info.meaning = raw.replace(/^to\s+/i, "");
-                result.extra = `English input → ${lookup}`;
-            }
-
-            status.classList.add("hidden");
-            renderVerbConjugation(result, translatedFromEnglish ? "Translated" : "Local");
-        }
-
         async function runAiVerbConjugator() {
             const input = document.getElementById("verb-tool-input");
             const btn = document.getElementById("verb-ai-btn");
@@ -11964,7 +11793,7 @@ Plain text only.`;
             if (!raw) return;
 
             if (!getActiveAIKey()) {
-                status.textContent = "Add an AI key in Settings to use AI verification.";
+                status.textContent = "Add a provider key in Settings to use Tutor conjugation.";
                 status.className = "text-[10px] font-semibold text-rose-600";
                 status.classList.remove("hidden");
                 return;
@@ -11972,12 +11801,19 @@ Plain text only.`;
 
             const previous = btn.textContent;
             btn.disabled = true;
-            btn.textContent = "Checking…";
+            btn.textContent = "Conjugating…";
             try {
-                const prompt = `You are a German verb conjugation tool for an English-speaking learner.
-The user entered this verb in German or English: "${raw}". If it is English, translate it to the natural German infinitive first.
+                const prompt = `You are the Verb Conjugator inside LanguageTutor for an English-speaking learner.
+The learner entered: "${raw}".
 
-Identify the infinitive and give PRESENT-TENSE forms only.
+The entry may be:
+- a German infinitive,
+- a conjugated German form,
+- an English verb (with or without "to"),
+- or a close misspelling of an obvious German/English verb.
+
+Infer the intended verb when reasonably clear. If the input is English, translate it to the natural German infinitive first.
+Identify the German infinitive and give PRESENT-TENSE forms only.
 Return ONLY valid JSON:
 {
   "infinitive":"",
@@ -11993,16 +11829,16 @@ Do not include pronouns inside the form strings.`;
                 renderVerbConjugation({
                     infinitive:String(data.infinitive),
                     forms:data.forms.map(String),
-                    confidence:"AI verified",
+                    confidence:"Tutor",
                     info:{
                         meaning:String(data.meaning || ""),
                         separable:Boolean(data.separable),
                         irregular:Boolean(data.irregular)
                     }
-                }, "AI");
+                }, "Tutor");
                 status.classList.add("hidden");
             } catch (e) {
-                status.textContent = "AI verb check failed: " + ((e && e.message) ? e.message : String(e));
+                status.textContent = "Tutor conjugation failed: " + ((e && e.message) ? e.message : String(e));
                 status.className = "text-[10px] font-semibold text-rose-600";
                 status.classList.remove("hidden");
             } finally {
@@ -12453,7 +12289,7 @@ Rules:
             if (!gender) {
                 resultEl.textContent = "— " + noun;
                 applyGrammarColorScheme(resultEl.parentElement, "None", "");
-                ruleEl.textContent = "The translation service could not determine this noun’s article automatically. Tap Change to select gender/number manually, or use Ask AI about this article choice.";
+                ruleEl.textContent = "The translation service could not determine this noun’s article automatically. Tap Change to select gender/number manually, or use Ask Tutor about this article choice.";
                 return;
             }
 
@@ -12484,7 +12320,7 @@ Rules:
         async function askArticleFinderAI(button) {
             const resultEl = document.getElementById("article-tool-ai-result");
             if (!getActiveAIKey()) {
-                resultEl.textContent = "Add an AI API key in Settings first.";
+                resultEl.textContent = "Add a provider key in Settings first.";
                 resultEl.classList.remove("hidden");
                 return;
             }
@@ -12495,8 +12331,8 @@ Rules:
 
             const previous = button.textContent;
             button.disabled = true;
-            button.textContent = "Asking AI…";
-            resultEl.textContent = "AI Tutor is thinking…";
+            button.textContent = "Asking Tutor…";
+            resultEl.textContent = "Tutor is thinking…";
             resultEl.classList.remove("hidden");
 
             try {
@@ -12513,7 +12349,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
                 resultEl.textContent = cleanAiExplanation(await callAI(prompt));
             } catch (e) {
-                resultEl.textContent = "AI question failed: " + ((e && e.message) ? e.message : String(e));
+                resultEl.textContent = "Tutor question failed: " + ((e && e.message) ? e.message : String(e));
             } finally {
                 button.disabled = false;
                 button.textContent = previous;
@@ -12580,7 +12416,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             const resultEl = document.getElementById("grammar-ai-" + kind);
             if (!getActiveAIKey()) {
                 if (resultEl) {
-                    resultEl.textContent = "Add an AI API key in Settings first.";
+                    resultEl.textContent = "Add a provider key in Settings first.";
                     resultEl.classList.remove("hidden");
                 }
                 return;
@@ -12591,10 +12427,10 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
             if (button) {
                 button.disabled = true;
-                button.textContent = "Asking AI…";
+                button.textContent = "Asking Tutor…";
             }
             if (resultEl) {
-                resultEl.textContent = "AI Tutor is thinking…";
+                resultEl.textContent = "Tutor is thinking…";
                 resultEl.classList.remove("hidden");
             }
 
@@ -12614,7 +12450,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                 const response = cleanAiExplanation(await callAI(prompt));
                 if (resultEl) resultEl.textContent = response;
             } catch (e) {
-                if (resultEl) resultEl.textContent = "AI question failed: " + ((e && e.message) ? e.message : String(e));
+                if (resultEl) resultEl.textContent = "Tutor question failed: " + ((e && e.message) ? e.message : String(e));
             } finally {
                 if (button) {
                     button.disabled = false;
@@ -12658,7 +12494,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
                 verbInput.addEventListener("keydown", e => {
                     if (e.key === "Enter") {
                         e.preventDefault();
-                        runLocalVerbConjugator();
+                        runAiVerbConjugator();
                     }
                 });
             }
@@ -12965,7 +12801,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             if (!gender) {
                 resultEl.textContent = `${prep} … ${noun}`;
                 applyGrammarColorScheme(resultEl.parentElement, "None", "");
-                ruleEl.textContent = "The translation service could not determine this noun’s article automatically. Tap Change to select gender/number manually, or use Ask AI about this phrase.";
+                ruleEl.textContent = "The translation service could not determine this noun’s article automatically. Tap Change to select gender/number manually, or use Ask Tutor about this phrase.";
                 return;
             }
 
@@ -13543,7 +13379,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             return;
         }
         if(!getActiveAIKey()){
-            alert("Add an AI API key in Settings first.");
+            alert("Add a provider key in Settings first.");
             return;
         }
 
@@ -14580,7 +14416,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     window.replyToVoiceTutorInEnglish=function(){
         if(voiceTutorState.phase==="processing" || voiceTutorState.speaking)return;
         if(!getActiveAIKey()){
-            alert("Add an AI API key in Settings first.");
+            alert("Add a provider key in Settings first.");
             return;
         }
         if(!voiceRecognitionConstructor()){
@@ -14759,7 +14595,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
     window.startVoiceConversation=function(){
         if(!getActiveAIKey()){
-            alert("Add an AI API key in Settings first.");
+            alert("Add a provider key in Settings first.");
             return;
         }
         if(!voiceRecognitionConstructor()){
@@ -15074,7 +14910,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     <div id="es-verb-status" class="text-[11px] text-slate-500"></div>
                   </div>
                   <div id="es-verb-result" class="hidden ml-helper-result"></div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish verb tense and mood','es-verb-result',this)">✨ Ask AI about this verb</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish verb tense and mood','es-verb-result',this)">❓ Ask Tutor about this verb</button>
                   <div id="ai-es-verb-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
                 pronouns:`
@@ -15118,7 +14954,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     </label>
                   </div>
                   <div id="es-reflexive-result" class="ml-helper-result"></div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish object and reflexive pronouns','es-pronoun-result',this)">✨ Ask AI about pronouns</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish object and reflexive pronouns','es-pronoun-result',this)">❓ Ask Tutor about pronouns</button>
                   <div id="ai-es-pronoun-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
                 agreement:`
@@ -15152,7 +14988,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     </div>
                   </div>
                   <div id="es-article-result" class="ml-helper-result"></div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish agreement','es-adj-result',this)">✨ Ask AI about agreement</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish agreement','es-adj-result',this)">❓ Ask Tutor about agreement</button>
                   <div id="ai-es-adj-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
                 contrasts:`
@@ -15184,10 +15020,10 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     <button type="button" class="px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="translateGrammarOutput('es-contrast-builder-result','es',this)">Translate built phrase to English</button>
                   </div>
                   <div id="es-contrast-builder-result-translation" class="hidden grammar-section-ai-result"></div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish contrast phrase builder','es-contrast-builder-result',this)">✨ Ask AI about my phrase</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish contrast phrase builder','es-contrast-builder-result',this)">❓ Ask Tutor about my phrase</button>
                   <div id="ai-es-contrast-builder-result" class="grammar-section-ai-result hidden"></div>
 
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish usage contrast','es-contrast-result',this)">✨ Ask AI about this contrast</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Spanish usage contrast','es-contrast-result',this)">❓ Ask Tutor about this contrast</button>
                   <div id="ai-es-contrast-result" class="grammar-section-ai-result hidden"></div>
                 </div>`
             }
@@ -15248,7 +15084,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     </div>
                   </details>
 
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese verb and adjective forms','ja-verb-result',this)">✨ Ask AI about these forms</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese verb and adjective forms','ja-verb-result',this)">❓ Ask Tutor about these forms</button>
                   <div id="ai-ja-verb-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
                 particles:`
@@ -15368,7 +15204,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
                   <div class="flex flex-wrap gap-2">
                     <button type="button" class="px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-bold text-xs" onclick="translateGrammarOutput('ja-particle-swap-result','ja',this)">Translate selected example</button>
-                    <button type="button" class="ml-ai-action !mt-0" onclick="askLanguageHelperAI('Japanese particle choice in context','ja-particle-swap-result',this)">✨ Ask AI about this choice</button>
+                    <button type="button" class="ml-ai-action !mt-0" onclick="askLanguageHelperAI('Japanese particle choice in context','ja-particle-swap-result',this)">❓ Ask Tutor about this choice</button>
                   </div>
                   <div id="ja-particle-swap-result-translation" class="hidden grammar-section-ai-result"></div>
                   <div id="ai-ja-particle-swap-result" class="grammar-section-ai-result hidden"></div>
@@ -15389,7 +15225,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     </select>
                   </div>
                   <div id="ja-particle-contrast-result" class="ml-helper-result"></div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese particles and particle contrasts','ja-particle-result',this)">✨ Ask AI about particles</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese particles and particle contrasts','ja-particle-result',this)">❓ Ask Tutor about particles</button>
                   <div id="ai-ja-particle-result" class="grammar-section-ai-result hidden"></div>
                 </div>`,
                 builder:`
@@ -15573,7 +15409,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     <div class="text-sm font-bold text-slate-800">Counter pronunciation</div>
                     <p class="text-[11px] text-slate-600 mt-2">Counter readings often change sound through contraction or consonant doubling, so the helper shows kanji, hiragana, and romaji together.</p>
                   </div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese counters and readings','ja-counter-result',this)">✨ Ask AI about this counter</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese counters and readings','ja-counter-result',this)">❓ Ask Tutor about this counter</button>
                   <div id="ai-ja-counter-result" class="grammar-section-ai-result hidden"></div>
   </div>
 </details>
@@ -15605,7 +15441,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                     </div>
                     <p class="text-[11px] text-slate-500 mt-3">Plain speech is not automatically rude; appropriateness depends on relationship and setting.</p>
                   </div>
-                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese politeness and register','ja-register-result',this)">✨ Ask AI about register</button>
+                  <button class="ml-ai-action" onclick="askLanguageHelperAI('Japanese politeness and register','ja-register-result',this)">❓ Ask Tutor about register</button>
                   <div id="ai-ja-register-result" class="grammar-section-ai-result hidden"></div>
   </div>
 </details>
@@ -17551,7 +17387,7 @@ Requirements:
         if(currentStudyLanguage==="de") return originalGermanParseAI();
 
         const btn=document.getElementById("ai-parse-btn");
-        if(!getActiveAIKey()){ alert("Add an AI API key in Settings first."); return; }
+        if(!getActiveAIKey()){ alert("Add a provider key in Settings first."); return; }
 
         const cfg=langConfig();
         const lang=currentStudyLanguage;
@@ -18014,7 +17850,7 @@ Requirements:
             const v=resolved.text.replace(/[。.!?]$/,"").split(/[、,]/)[0].trim();
             const f=japaneseVerbForms(v);
             if(!f){
-                if(status)status.textContent=`I interpreted “${raw}” as “${v}”, but could not classify that verb locally. Try Ask AI for an irregular or ambiguous verb.`;
+                if(status)status.textContent=`I interpreted “${raw}” as “${v}”, but could not classify that verb locally. Try Ask Tutor for an irregular or ambiguous verb.`;
                 out.classList.add("hidden");
                 return;
             }
@@ -18370,7 +18206,7 @@ Requirements:
             const v=resolved.text.replace(/[。.!?]$/,"").trim();
             const f=japaneseVerbForms(v);
             if(!f){
-                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">I interpreted “${escapeML(raw)}” as “${escapeML(v)}”, but could not classify this verb locally. Use Ask AI for irregular or ambiguous forms.</p>`;
+                out.innerHTML=`<p class="text-[11px] text-rose-600 font-semibold">I interpreted “${escapeML(raw)}” as “${escapeML(v)}”, but could not classify this verb locally. Use Ask Tutor for irregular or ambiguous forms.</p>`;
                 return;
             }
 
@@ -18964,7 +18800,7 @@ Requirements:
 
         if(!getActiveAIKey()){
             out.classList.remove("hidden");
-            out.textContent="Add an AI API key in Settings first.";
+            out.textContent="Add a provider key in Settings first.";
             return;
         }
 
@@ -19048,13 +18884,13 @@ Use the sentence context to resolve ambiguous kanji readings. Do not guess from 
         const resultEl=document.getElementById(resultId);
         const aiEl=document.getElementById("ai-"+resultId);
         if(!getActiveAIKey()){
-            if(aiEl){aiEl.textContent="Add an AI API key in Settings first.";aiEl.classList.remove("hidden");}
+            if(aiEl){aiEl.textContent="Add a provider key in Settings first.";aiEl.classList.remove("hidden");}
             return;
         }
         const text=resultEl?.innerText.trim()||"No result has been generated yet.";
         const old=button?.textContent||"";
-        if(button){button.disabled=true;button.textContent="Asking AI…";}
-        if(aiEl){aiEl.textContent="AI Tutor is thinking…";aiEl.classList.remove("hidden");}
+        if(button){button.disabled=true;button.textContent="Asking Tutor…";}
+        if(aiEl){aiEl.textContent="Tutor is thinking…";aiEl.classList.remove("hidden");}
         try{
             const cfg=langConfig();
             const prompt=`You are an expert ${cfg.name} tutor for an English-speaking learner.
@@ -19066,7 +18902,7 @@ Use English, no more than 4 short sentences, plain text only.`;
             const response=cleanAiExplanation(await callAI(prompt));
             if(aiEl) aiEl.textContent=response;
         }catch(e){
-            if(aiEl) aiEl.textContent="AI question failed: "+((e&&e.message)?e.message:String(e));
+            if(aiEl) aiEl.textContent="Tutor question failed: "+((e&&e.message)?e.message:String(e));
         }finally{
             if(button){button.disabled=false;button.textContent=old;}
         }
@@ -21230,7 +21066,7 @@ Diagram rules:
         const ai=resolveWorkbenchAIConfig();
         if(button){
             button.disabled=true;
-            button.textContent=ai.available ? "✨ Asking AI…" : "Building locally…";
+            button.textContent=ai.available ? "✨ Asking Tutor…" : "Building locally…";
         }
         status(ai.available
             ? `✨ ${ai.providerName} is refining the analysis for the diagram…`
@@ -23791,8 +23627,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1304-conversation-naming-marker">
-window.__languageTutorWorkspaceVersion="13.0.4-conversation-naming-consistency";
+<script id="workspace-v1305-grammar-actions-marker">
+window.__languageTutorWorkspaceVersion="13.0.5-grammar-button-tutor-cleanup";
 </script>
 
 
