@@ -7260,6 +7260,102 @@ body.conversation-first-layout main.conversation-first-main{
 }
 </style>
 
+
+<style id="workspace-v1420-top-level-tutor-controls-css">
+/* v14.2 — Chat with Tutor is a top-level header.
+   Tutor Controls is now its own sibling workspace, not a child. */
+
+#conversation-primary-section{
+    padding:0!important;
+    background:transparent!important;
+}
+
+/* Keep only the Chat with Tutor bar in the old primary section. */
+#conversation-primary-section #socratic-chat-container.tutor-controls-detached{
+    display:none!important;
+}
+#conversation-primary-section #conversation-tutor-toggle{
+    margin:0!important;
+}
+
+/* Chat with Tutor is now a section label, not a disclosure parent. */
+#conversation-tutor-toggle{
+    cursor:default!important;
+}
+#conversation-tutor-toggle .chat-header-marker{
+    display:none!important;
+}
+
+/* Tutor Controls gets its own top-level blue workspace card. */
+#tutor-controls-section{
+    width:100%;
+    min-width:0;
+    padding:10px;
+    border:1px solid #c9d8ff;
+    border-radius:16px;
+    background:#f4f8ff;
+    box-sizing:border-box;
+}
+#tutor-controls-section > #tutor-controls-home-anchor{
+    display:none!important;
+}
+#tutor-controls-section #tutor-controls-view{
+    width:100%;
+}
+#tutor-controls-section #tutor-controls-placeholder{
+    margin:0!important;
+}
+
+/* While Tutor Controls floats, leave only the compact return strip. */
+#tutor-controls-section:has(#tutor-controls-placeholder.is-active)
+    #tutor-controls-view{
+    display:none!important;
+}
+
+/* Keep the Open Tutor Controls bar visible immediately on first load. */
+#tutor-controls-view:not(.is-floating) .primary-workspace-docked-bar{
+    display:flex!important;
+}
+
+/* Main hierarchy spacing: header → Tutor Controls → Transcript → Tools. */
+body.conversation-first-layout main.conversation-first-main{
+    gap:10px!important;
+}
+</style>
+
+
+<style id="workspace-v1430-unified-css">
+:root{--ws-pad:10px;--ws-gap:10px;--ws-bar:44px;--ws-title:13px}
+#tutor-controls-section,#conversation-transcript-section,#ask-tutor-section,#language-tools-view{
+ width:100%!important;box-sizing:border-box!important;border-radius:16px!important;padding:var(--ws-pad)!important;margin:0!important}
+#tutor-controls-section{background:#f4f8ff!important;border:1px solid #c9d8ff!important}
+#conversation-transcript-section{background:#f1fbf5!important;border:1px solid #c7e7d3!important}
+#ask-tutor-section{background:#fff6f7!important;border:1px solid #f1d1d7!important}
+#language-tools-view{background:#f8f5ff!important;border:1px solid #ddd2ff!important}
+#tutor-controls-section .primary-workspace-docked-bar,#conversation-transcript-docked-bar,
+#ask-tutor-section .unified-workspace-bar,#language-tools-view .primary-workspace-docked-bar{
+ width:100%!important;height:var(--ws-bar)!important;min-height:var(--ws-bar)!important;box-sizing:border-box!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;
+ padding:0 12px!important;margin:0 0 8px!important;border-radius:10px!important}
+#tutor-controls-section .primary-workspace-docked-title,#conversation-transcript-docked-bar .primary-workspace-docked-title,
+#ask-tutor-section .unified-workspace-title,#language-tools-view .primary-workspace-docked-title{
+ font-size:var(--ws-title)!important;line-height:1.2!important;font-weight:700!important;letter-spacing:0!important;margin:0!important}
+#ask-tutor-section .unified-workspace-bar{background:#fff0f2!important;border:1px solid #efc8cf!important}
+#ask-tutor-section .unified-workspace-title{color:#8a3f50!important}
+#ask-tutor-section .ask-workspace-placeholder{display:none}
+#ask-tutor-section .ask-workspace-placeholder.is-active{display:flex!important;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:8px 10px;box-sizing:border-box;border-radius:10px;background:#ffffffb8}
+#tutor-controls-section{display:block!important;visibility:visible!important}
+#conversation-transcript-section{display:flex!important;flex-direction:column!important}
+#conversation-transcript-section>#conversation-transcript-docked-bar{order:0!important}
+#conversation-transcript-section>#conversation-view{order:1!important}
+#conversation-transcript-section>#conversation-transcript-placeholder{order:2!important}
+body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!important}
+#tutor-controls-section .primary-workspace-open-btn,#conversation-transcript-section .primary-workspace-open-btn,
+#ask-tutor-section .primary-workspace-open-btn,#language-tools-view .primary-workspace-open-btn,.primary-workspace-return-btn{
+ min-height:32px!important;padding:0 11px!important;font-size:11px!important;line-height:1!important;font-weight:700!important;white-space:nowrap!important}
+@media(max-width:640px){:root{--ws-pad:8px;--ws-bar:42px;--ws-title:12px}}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -7837,14 +7933,14 @@ body.conversation-first-layout main.conversation-first-main{
             </section>
 
             <!-- Toggle Button for AI Socratic Chat -->
-            <button id="conversation-tutor-toggle" onclick="toggleSocraticChat()" class="w-full py-3.5 px-5 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between font-bold text-slate-700 text-sm transition duration-150 group">
+            <button id="conversation-tutor-toggle" class="w-full py-3.5 px-5 bg-white hover:bg-slate-50 border border-slate-100 rounded-2xl shadow-sm flex items-center justify-between font-bold text-slate-700 text-sm transition duration-150 group">
                 <span class="flex items-center gap-2">
                     <svg class="w-5 h-5 text-amber-500 transition group-hover:scale-110 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.418-4.03 8-9 8a9.863 9.75 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                     Chat with Tutor
                 </span>
                 <div class="flex items-center gap-3">
                     <span id="chat-status-pill" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Free Mode (Locked)</span>
-                    <span id="socratic-chat-arrow" class="workspace-section-chevron text-slate-400" aria-hidden="true">⌄</span>
+                    <span id="socratic-chat-arrow" class="chat-header-marker text-slate-400" aria-hidden="true">⌄</span>
                 </div>
             </button>
 
@@ -14710,7 +14806,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(typeof renderVoiceTutorTranscript==="function")renderVoiceTutorTranscript();
 
         updateConversationViewState();
-        setTranscriptPlaceholderOpen(true);
+        window.setTranscriptPlaceholderOpen?.(true);
         win.dataset.userPositioned="0";
         positionFloatingConversationBelowSettings(true);
 
@@ -14752,7 +14848,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(typeof renderVoiceTutorTranscript==="function")renderVoiceTutorTranscript();
 
         updateConversationViewState();
-        setTranscriptPlaceholderOpen(false);
+        window.setTranscriptPlaceholderOpen?.(false);
 
         requestAnimationFrame(()=>{
             try{window.refreshVoiceTranscriptWindow?.()}catch(_){}
@@ -24845,8 +24941,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1416-transcript-bar-return-state-marker">
-window.__languageTutorWorkspaceVersion="14.1.6-transcript-bar-return-state";
+<script id="workspace-v1430-unified-workspaces-marker">
+window.__languageTutorWorkspaceVersion="14.3.0-unified-workspaces-ask-tutor";
 </script>
 
 
@@ -26789,7 +26885,14 @@ function ensureTranscriptSection(){
     openTranscript.type="button";
     openTranscript.className="primary-workspace-open-btn";
     openTranscript.textContent="↗ Open Transcript";
-    openTranscript.addEventListener("click",()=>window.openVoiceTranscriptWindow?.());
+    openTranscript.addEventListener("click",()=>{
+        const section=document.getElementById("conversation-transcript-section");
+        if(section?.classList.contains("transcript-is-floating")){
+            window.returnTranscriptWorkspace?.();
+        }else{
+            window.openVoiceTranscriptWindow?.();
+        }
+    });
 
     dockedBar.append(dockedTitle,openTranscript);
 
@@ -26828,21 +26931,25 @@ function setTranscriptPlaceholderOpen(open){
 
     if(stateButton){
         stateButton.textContent=active ? "↙ Return Transcript" : "↗ Open Transcript";
-        stateButton.onclick=()=>{
-            if(active)window.returnTranscriptWorkspace?.();
-            else window.openVoiceTranscriptWindow?.();
-        };
+        stateButton.title=active
+            ? "Return Transcript to the page"
+            : "Open Transcript in a movable window";
     }
 
     const section=document.getElementById("conversation-transcript-section");
     section?.classList.toggle("transcript-is-floating",active);
 }
 
+// Expose this because the established Transcript open/dock implementation
+// lives in an older script scope.
+window.setTranscriptPlaceholderOpen=setTranscriptPlaceholderOpen;
+
 window.returnTranscriptWorkspace=function(){
     if(typeof window.dockVoiceTranscript==="function"){
         window.dockVoiceTranscript();
+    }else{
+        window.setTranscriptPlaceholderOpen?.(false);
     }
-    setTranscriptPlaceholderOpen(false);
 };
 
 function ensureTutorControlsView(){
@@ -26851,19 +26958,24 @@ function ensureTutorControlsView(){
 
     const mode=document.getElementById("chat-voice-mode");
     const conversation=document.getElementById("conversation-view");
-    const conversationAnchor=document.getElementById("conversation-view-home-anchor");
-    if(!mode || !conversation)return null;
+    const primary=document.getElementById("conversation-primary-section");
+    const main=primary?.parentElement;
+    if(!mode || !conversation || !primary || !main)return null;
 
-    // v14.1: Transcript is a separate primary page workspace.
+    // Transcript is already a separate top-level workspace.
     ensureTranscriptSection();
+
+    // Create a NEW top-level Tutor Controls section instead of nesting it
+    // under Chat with Tutor / #socratic-chat-container.
+    const section=document.createElement("section");
+    section.id="tutor-controls-section";
+    section.className="conversation-first-section tutor-controls-primary-section";
 
     const anchor=document.createElement("div");
     anchor.id="tutor-controls-home-anchor";
     anchor.hidden=true;
-    mode.insertBefore(anchor,mode.firstChild);
 
     const placeholder=createPlaceholder("tutor");
-    mode.insertBefore(placeholder,anchor.nextSibling);
 
     view=document.createElement("section");
     view.id="tutor-controls-view";
@@ -26873,26 +26985,30 @@ function ensureTutorControlsView(){
     const content=document.createElement("div");
     content.id="tutor-controls-content";
 
-    // Tutor Controls are everything in Chat with Tutor except the Conversation
-    // view itself. Grouping them creates one coherent settings/input workspace.
+    // Move the actual Tutor controls out of the old Chat container.
     [...mode.children].forEach(child=>{
         if(
-            child===anchor ||
-            child===placeholder ||
             child===conversation ||
-            child===conversationAnchor ||
-            child===view
+            child.id==="conversation-view-home-anchor"
         )return;
         content.appendChild(child);
     });
 
     view.append(bar,content);
+    section.append(anchor,placeholder,view);
 
-    // v14.1.2: Transcript is already in its own top-level section, so the
-    // old conversation anchor is no longer a child of #chat-voice-mode.
-    // Append Tutor Controls to its actual remaining page host instead of
-    // trying to insert before a detached Transcript anchor.
-    mode.appendChild(view);
+    // Put Tutor Controls immediately after the Chat with Tutor bar section,
+    // before Transcript / Language Tools.
+    const next=primary.nextSibling;
+    if(next)main.insertBefore(section,next);
+    else main.appendChild(section);
+
+    // Chat with Tutor remains as the persistent top-level heading only.
+    const chat=document.getElementById("socratic-chat-container");
+    if(chat){
+        chat.classList.add("tutor-controls-detached");
+        chat.setAttribute("aria-hidden","true");
+    }
 
     return view;
 }
@@ -26958,10 +27074,6 @@ function openPrimaryWorkspace(name){
     shell.classList.remove("is-minimized");
     placeholder?.classList.add("is-active");
 
-    if(name==="tutor"){
-        document.getElementById("socratic-chat-container")?.classList.add("tutor-controls-is-floating");
-    }
-
     applyDefaultRect(name,shell);
     fitPrimaryWorkspaceToContent(name,shell);
 }
@@ -26989,9 +27101,6 @@ function returnPrimaryWorkspace(name){
 
     placeholder?.classList.remove("is-active");
 
-    if(name==="tutor"){
-        document.getElementById("socratic-chat-container")?.classList.remove("tutor-controls-is-floating");
-    }
 }
 
 function togglePrimaryWorkspaceMinimize(name){
@@ -27080,6 +27189,119 @@ if(document.readyState==="loading"){
 }else{
     boot();
 }
+})();
+</script>
+
+
+<script id="workspace-v1430-unified-runtime">
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const main=()=>document.querySelector("main.conversation-first-main")||document.querySelector("main")||document.body;
+
+function putAfter(node,ref){
+  if(node&&ref?.parentNode)ref.parentNode.insertBefore(node,ref.nextSibling);
+}
+function transcriptFloating(){
+  return !!($("conversation-view")?.classList.contains("is-floating") ||
+            $("conversation-transcript-section")?.classList.contains("transcript-is-floating"));
+}
+function syncTranscript(){
+  const s=$("conversation-transcript-section"), b=$("conversation-transcript-docked-bar"), v=$("conversation-view");
+  if(!s||!b)return;
+  // permanent invariant: bar is first visible child; docked content follows it.
+  if(s.firstElementChild!==b)s.prepend(b);
+  if(v?.parentElement===s && b.nextElementSibling!==v)putAfter(v,b);
+  const floating=transcriptFloating();
+  s.classList.toggle("transcript-is-floating",floating);
+  const btn=b.querySelector(".primary-workspace-open-btn");
+  if(btn){
+    btn.textContent=floating?"↙ Return Transcript":"↗ Open Transcript";
+    btn.title=floating?"Return Transcript to the page":"Open Transcript in a movable window";
+    btn.onclick=e=>{
+      e.preventDefault(); e.stopPropagation();
+      floating ? window.returnTranscriptWorkspace?.() : window.openVoiceTranscriptWindow?.();
+    };
+  }
+}
+function decoupleTutor(){
+  const m=main(), chat=$("conversation-primary-section"), tutor=$("tutor-controls-section");
+  if(!tutor)return;
+  if(tutor.parentElement!==m){
+    chat?.nextSibling ? m.insertBefore(tutor,chat.nextSibling) : m.appendChild(tutor);
+  }
+  tutor.hidden=false; tutor.removeAttribute("aria-hidden");
+}
+function askVisible(){
+  const w=$("language-coach-window");
+  return !!(w && !w.hidden && getComputedStyle(w).display!=="none");
+}
+function ensureAskSection(){
+  let s=$("ask-tutor-section");
+  if(s)return s;
+  s=document.createElement("section");
+  s.id="ask-tutor-section";
+  s.className="unified-workspace-section unified-workspace-ask";
+  s.innerHTML='<div class="unified-workspace-bar"><div class="unified-workspace-title">Ask Tutor</div><button type="button" class="primary-workspace-open-btn ask-workspace-state">↗ Open Ask Tutor</button></div><div class="primary-workspace-placeholder ask-workspace-placeholder"></div>';
+  s.querySelector(".ask-workspace-state").addEventListener("click",()=>{
+    if(askVisible()) window.returnAskTutorWorkspace?.();
+    else window.openAskTutorWorkspace?.();
+  });
+  const t=$("conversation-transcript-section"), m=main();
+  t?.parentElement===m ? putAfter(s,t) : m.appendChild(s);
+  return s;
+}
+function syncAsk(){
+  const s=$("ask-tutor-section"); if(!s)return;
+  const active=askVisible(), btn=s.querySelector(".ask-workspace-state"), p=s.querySelector(".ask-workspace-placeholder");
+  if(btn){
+    btn.textContent=active?"↙ Return Ask Tutor":"↗ Open Ask Tutor";
+    btn.title=active?"Return Ask Tutor":"Open Ask Tutor in a movable window";
+  }
+  p.classList.toggle("is-active",active);
+  p.innerHTML=active?'<span>Ask Tutor is open in a movable window.</span><button type="button" class="primary-workspace-return-btn">↙ Return Ask Tutor</button>':"";
+  p.querySelector("button")?.addEventListener("click",()=>window.returnAskTutorWorkspace?.());
+}
+window.openAskTutorWorkspace=function(){
+  // Existing general launcher is authoritative and preserves the existing thread.
+  if(typeof window.openAskTutorFromConversation==="function")window.openAskTutorFromConversation();
+  else if(typeof window.openLanguageCoach==="function")window.openLanguageCoach();
+  requestAnimationFrame(syncAsk);
+};
+window.returnAskTutorWorkspace=function(){
+  if(typeof window.closeLanguageCoach==="function")window.closeLanguageCoach();
+  else { const w=$("language-coach-window"); if(w)w.hidden=true; }
+  requestAnimationFrame(syncAsk);
+};
+function order(){
+  const m=main(), chat=$("conversation-primary-section");
+  let ref=chat;
+  ["tutor-controls-section","conversation-transcript-section","ask-tutor-section","language-tools-view"].forEach(id=>{
+    const n=$(id); if(!n)return;
+    if(n.parentElement!==m || n.previousElementSibling!==ref){
+      ref?.nextSibling ? m.insertBefore(n,ref.nextSibling) : m.appendChild(n);
+    }
+    ref=n;
+  });
+}
+function observeAsk(){
+  const w=$("language-coach-window"); if(!w||w.dataset.v143Observed)return;
+  w.dataset.v143Observed="1";
+  new MutationObserver(syncAsk).observe(w,{attributes:true,attributeFilter:["hidden","style","class"]});
+}
+function normalize(){
+  decoupleTutor(); ensureAskSection(); order(); syncTranscript(); syncAsk(); observeAsk();
+}
+window.normalizeLanguageTutorWorkspaces=normalize;
+
+// Reconcile after old routines move Transcript.
+["openVoiceTranscriptWindow","dockVoiceTranscript","returnTranscriptWorkspace"].forEach(name=>{
+ const old=window[name]; if(typeof old!=="function"||old.__v143)return;
+ const wrap=function(...a){const r=old.apply(this,a);requestAnimationFrame(()=>{order();syncTranscript()});return r};
+ wrap.__v143=true; window[name]=wrap;
+});
+document.readyState==="loading"?document.addEventListener("DOMContentLoaded",()=>requestAnimationFrame(normalize),{once:true}):requestAnimationFrame(normalize);
+setTimeout(normalize,300); setTimeout(normalize,1000);
 })();
 </script>
 
