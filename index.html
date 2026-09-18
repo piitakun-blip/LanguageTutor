@@ -7240,9 +7240,6 @@ body.conversation-first-layout main.conversation-first-main{
 #conversation-transcript-docked-bar .primary-workspace-docked-title{
     color:#356b50!important;
 }
-#conversation-transcript-docked-bar.is-hidden{
-    display:none!important;
-}
 
 /* The toolbar no longer carries a second Open/Return control. */
 #conversation-window-toggle{
@@ -24848,8 +24845,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1415-consistent-workspace-open-return-marker">
-window.__languageTutorWorkspaceVersion="14.1.5-consistent-workspace-open-return";
+<script id="workspace-v1416-transcript-bar-return-state-marker">
+window.__languageTutorWorkspaceVersion="14.1.6-transcript-bar-return-state";
 </script>
 
 
@@ -26824,8 +26821,19 @@ function setTranscriptPlaceholderOpen(open){
     const active=Boolean(open);
     const placeholder=document.getElementById("conversation-transcript-placeholder");
     const dockedBar=document.getElementById("conversation-transcript-docked-bar");
+    const stateButton=dockedBar?.querySelector(".primary-workspace-open-btn");
+
     placeholder?.classList.toggle("is-active",active);
-    dockedBar?.classList.toggle("is-hidden",active);
+    dockedBar?.classList.remove("is-hidden");
+
+    if(stateButton){
+        stateButton.textContent=active ? "↙ Return Transcript" : "↗ Open Transcript";
+        stateButton.onclick=()=>{
+            if(active)window.returnTranscriptWorkspace?.();
+            else window.openVoiceTranscriptWindow?.();
+        };
+    }
+
     const section=document.getElementById("conversation-transcript-section");
     section?.classList.toggle("transcript-is-floating",active);
 }
