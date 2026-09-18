@@ -5771,7 +5771,7 @@ body.conversation-first-layout #mobile-right-column{
 }
 #socratic-chat-container.v12-conversation-floating #chat-voice-mode > *{display:none!important}
 #socratic-chat-container.v12-conversation-floating #chat-voice-mode::before{
-    content:"Conversation is open in the movable workspace.";
+    content:"Conversation is open in a movable window.";
     display:block;
     padding:12px;
     border:1px solid #c7d2fe;
@@ -6176,6 +6176,54 @@ body.conversation-first-layout #mobile-right-column{
     color:#15803d;
     font-size:10px;
     font-weight:800;
+}
+</style>
+
+
+<style id="workspace-v1303-floating-home-collapse-css">
+/* v13.0.3
+   When Conversation is moved into the floating workspace, collapse the
+   page-side Conversation card to its small status banner. The older desktop
+   layout imposed min-height:690px!important, which was leaving the large gap. */
+body.conversation-first-layout
+#conversation-primary-section
+#socratic-chat-container.v12-conversation-floating{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    padding:10px!important;
+    overflow:visible!important;
+}
+
+body.conversation-first-layout
+#conversation-primary-section.v1303-conversation-is-floating{
+    min-height:0!important;
+    height:auto!important;
+}
+
+body.conversation-first-layout
+#conversation-primary-section.v1303-conversation-is-floating
+#socratic-chat-container.v12-conversation-floating
+#chat-voice-mode{
+    min-height:0!important;
+    height:auto!important;
+    flex:0 0 auto!important;
+    overflow:visible!important;
+}
+
+/* Keep only the useful "Conversation is open..." status card page-side. */
+body.conversation-first-layout
+#conversation-primary-section.v1303-conversation-is-floating
+#socratic-chat-container.v12-conversation-floating{
+    margin-bottom:0!important;
+}
+
+/* Avoid an invisible locked overlay retaining layout/interaction space while
+   the actual Conversation controls have been moved to the floating window. */
+body.conversation-first-layout
+#conversation-primary-section.v1303-conversation-is-floating
+#chat-locked-overlay{
+    display:none!important;
 }
 </style>
 
@@ -6950,7 +6998,7 @@ body.conversation-first-layout #mobile-right-column{
                     <div class="shrink-0 flex flex-wrap gap-2 justify-end">
                         <button type="button" id="voice-open-transcript-btn" onclick="openVoiceTranscriptWindow()"
                             class="min-h-[36px] px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 text-[10px] font-bold hover:bg-slate-50 transition"
-                            title="Open the movable Conversation workspace">↗ Open Conversation</button>
+                            title="Open Conversation in a movable window">↗ Open Conversation</button>
                         <button type="button" onclick="saveCurrentTutorTranscript('voice',this)"
                             class="min-h-[36px] px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold hover:bg-indigo-100 transition">💾 Save</button>
                         <button type="button" onclick="openSavedTutorTranscripts()"
@@ -19971,12 +20019,12 @@ Current work: ${context||"No sentence has been entered yet."}`;
         </div>
     </div>
     <div class="voice-transcript-toolbar conversation-workspace-toolbar">
-        <div class="voice-transcript-toolbar-note">Conversation workspace</div>
+        <div class="voice-transcript-toolbar-note">Conversation</div>
         <div class="flex flex-wrap gap-2">
             <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
             <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
             <button type="button" onclick="openAskTutorFromConversation()">❓ Ask Tutor</button>
-            <button type="button" onclick="dockVoiceTranscript()">↙ Return to page</button>
+            <button type="button" onclick="dockVoiceTranscript()">↙ Return Conversation</button>
         </div>
     </div>
     <div id="conversation-activity-slot" class="conversation-activity-slot"></div>
@@ -21788,7 +21836,7 @@ Requirements:
             const copy=document.createElement("div");
             const title=document.createElement("div");
             title.className="transcript-hub-title";
-            title.textContent="Conversation transcript";
+            title.textContent="Conversation";
             copy.append(title);
 
             const actions=document.createElement("div");
@@ -21796,8 +21844,8 @@ Requirements:
 
             const floating=document.createElement("button");
             floating.type="button";
-            floating.textContent="↗ Floating transcript";
-            floating.title="Open this conversation in a movable/resizable window";
+            floating.textContent="↗ Open Conversation";
+            floating.title="Open Conversation in a movable/resizable window";
             floating.addEventListener("click",()=>window.openVoiceTranscriptWindow());
 
             actions.append(floating);
@@ -23743,8 +23791,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1302-english-bridge-analyze-marker">
-window.__languageTutorWorkspaceVersion="13.0.2-english-bridge-analyze-routing";
+<script id="workspace-v1304-conversation-naming-marker">
+window.__languageTutorWorkspaceVersion="13.0.4-conversation-naming-consistency";
 </script>
 
 
@@ -24603,6 +24651,7 @@ function moveToConversation(){
     if(p.composer&&composerSlot)composerSlot.replaceChildren(p.composer);
 
     document.getElementById("socratic-chat-container")?.classList.add("v12-conversation-floating");
+    document.getElementById("conversation-primary-section")?.classList.add("v1303-conversation-is-floating");
 }
 
 function restoreToPage(){
@@ -24616,6 +24665,7 @@ function restoreToPage(){
     p.controls?.classList.remove("v12-voice-controls");
     p.activity?.classList.remove("v12-activity-card");
     document.getElementById("socratic-chat-container")?.classList.remove("v12-conversation-floating");
+    document.getElementById("conversation-primary-section")?.classList.remove("v1303-conversation-is-floating");
 }
 
 const oldOpen=window.openVoiceTranscriptWindow;
