@@ -6824,6 +6824,246 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+
+<style id="workspace-v1401-docked-conversation-controls-fix-css">
+/* v14.0.1
+   Conversation's minimize / close controls are WINDOW controls.
+   They only make sense while Conversation is actually floating. */
+#conversation-view:not(.is-floating) #voice-transcript-drag-handle > .workspace-v95-title-actions,
+#conversation-view:not(.is-floating) #voice-transcript-drag-handle > .workspace-standard-window-actions,
+#conversation-view:not(.is-floating) #voice-transcript-drag-handle > .voice-transcript-window-actions,
+#conversation-view:not(.is-floating) #voice-transcript-collapse-btn{
+    display:none!important;
+}
+
+/* When floating, restore the normal titlebar controls. */
+#conversation-view.is-floating #voice-transcript-drag-handle > .workspace-v95-title-actions,
+#conversation-view.is-floating #voice-transcript-drag-handle > .workspace-standard-window-actions,
+#conversation-view.is-floating #voice-transcript-drag-handle > .voice-transcript-window-actions{
+    display:flex!important;
+}
+
+/* Docked Conversation titlebar is informational, not draggable. */
+#conversation-view:not(.is-floating) #voice-transcript-drag-handle{
+    cursor:default!important;
+    touch-action:auto!important;
+}
+
+/* The Open Conversation button is the only window-state control needed
+   while Conversation is on the page. */
+#conversation-view:not(.is-floating) #conversation-window-toggle{
+    display:inline-flex!important;
+}
+</style>
+
+
+<style id="workspace-v1410-separate-transcript-workspace-css">
+/* v14.1 — Chat with Tutor, Conversation Transcript, and Language Tools
+   are now three separate primary page workspaces. */
+
+#conversation-transcript-section{
+    width:100%;
+    min-width:0;
+}
+
+#conversation-transcript-section > #conversation-view-home-anchor{
+    display:none!important;
+}
+
+#conversation-transcript-section > #conversation-transcript-placeholder{
+    margin:0;
+}
+
+/* When Transcript is floating, leave only the same compact status strip
+   used by Tutor Controls and Language Tools. */
+#conversation-transcript-section.transcript-is-floating{
+    padding:0!important;
+    min-height:0!important;
+}
+#conversation-transcript-section.transcript-is-floating #conversation-view{
+    display:none!important;
+}
+
+/* Tutor Controls used to live inside a fixed 560px chat card.
+   Once its actual controls move into a window, shrink that card to the
+   placeholder instead of preserving hundreds of pixels of empty space. */
+#socratic-chat-container.tutor-controls-is-floating{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    padding:12px!important;
+    overflow:visible!important;
+}
+#socratic-chat-container.tutor-controls-is-floating #chat-voice-mode{
+    min-height:0!important;
+    overflow:visible!important;
+}
+#socratic-chat-container.tutor-controls-is-floating #chat-voice-mode > *:not(#tutor-controls-placeholder):not(#tutor-controls-home-anchor){
+    display:none!important;
+}
+#socratic-chat-container.tutor-controls-is-floating #tutor-controls-placeholder.is-active{
+    display:flex!important;
+}
+
+/* All three top-level sections now keep the same compact vertical rhythm. */
+body.conversation-first-layout main.conversation-first-main{
+    gap:14px!important;
+}
+
+/* Transcript owns its own card; it is no longer visually nested inside
+   Chat with Tutor. */
+#conversation-transcript-section #conversation-view{
+    width:100%;
+    margin:0;
+}
+
+/* Slightly more explicit top-level identity without adding another large header. */
+#conversation-transcript-section::before{
+    content:"Conversation Transcript";
+    display:block;
+    margin:0 0 6px 2px;
+    color:#475569;
+    font-size:11px;
+    font-weight:900;
+}
+#conversation-transcript-section.transcript-is-floating::before{
+    display:none;
+}
+
+@media(max-width:640px){
+    body.conversation-first-layout main.conversation-first-main{
+        gap:10px!important;
+    }
+}
+</style>
+
+
+<style id="workspace-v1411-distinct-workspace-colors-css">
+/* v14.1.1 — distinct but soft visual identity for the three primary workspaces.
+   Keep contrast restrained so the interface remains calm and readable. */
+
+/* 1) Tutor Controls — soft blue */
+#conversation-primary-section{
+    border-radius:16px;
+    background:#f4f8ff;
+}
+#conversation-primary-section > #conversation-tutor-toggle{
+    background:#eef4ff!important;
+    border-color:#bfd2ff!important;
+}
+#conversation-primary-section #socratic-chat-container{
+    background:#f8fbff!important;
+    border-color:#d7e4ff!important;
+}
+#tutor-controls-view .primary-workspace-docked-bar{
+    background:#eef4ff!important;
+    border-color:#c9d8ff!important;
+}
+#tutor-controls-placeholder{
+    background:#eef4ff!important;
+    border-color:#bfd2ff!important;
+    color:#3157a4!important;
+}
+
+/* 2) Conversation Transcript — soft green */
+#conversation-transcript-section{
+    padding:10px;
+    border:1px solid #cfe7da;
+    border-radius:16px;
+    background:#f4fbf7;
+}
+#conversation-transcript-section::before{
+    color:#356b50!important;
+}
+#conversation-transcript-section #conversation-view{
+    border-color:#cfe7da!important;
+    background:#fbfefc!important;
+}
+#conversation-transcript-section #voice-transcript-drag-handle{
+    background:#edf8f2!important;
+    border-bottom-color:#d5eadf!important;
+}
+#conversation-transcript-section .voice-transcript-toolbar{
+    background:#f7fcf9!important;
+    border-bottom-color:#dcefe4!important;
+}
+#conversation-transcript-placeholder{
+    background:#edf8f2!important;
+    border-color:#bfe0cf!important;
+    color:#2f6c4d!important;
+}
+
+/* 3) Language Tools & Study — soft warm lavender */
+#language-tools-view{
+    padding:10px;
+    border:1px solid #ddd4f6;
+    border-radius:16px;
+    background:#f8f6fd;
+}
+#conversation-language-tools-section{
+    border-color:#ddd4f6!important;
+    background:#fcfbff!important;
+}
+#language-tools-view .primary-workspace-docked-bar{
+    background:#f2effb!important;
+    border-color:#d8cff2!important;
+}
+#language-tools-placeholder{
+    background:#f2effb!important;
+    border-color:#d5caf0!important;
+    color:#5a468c!important;
+}
+
+/* Floating versions keep their workspace identity too. */
+#tutor-controls-window .primary-workspace-titlebar{
+    background:#eef4ff!important;
+    border-bottom-color:#d7e4ff!important;
+}
+#tutor-controls-window .primary-workspace-window-body{
+    background:#f8fbff!important;
+}
+
+#voice-transcript-window #voice-transcript-drag-handle{
+    background:#edf8f2!important;
+    border-bottom-color:#d5eadf!important;
+}
+
+#language-tools-window .primary-workspace-titlebar{
+    background:#f2effb!important;
+    border-bottom-color:#ddd4f6!important;
+}
+#language-tools-window .primary-workspace-window-body{
+    background:#f8f6fd!important;
+}
+
+/* Preserve white content cards inside each tinted workspace. */
+#conversation-primary-section .voice-settings-panel,
+#conversation-primary-section #unified-text-entry,
+#conversation-primary-section .rounded-xl.bg-white,
+#conversation-transcript-section .conversation-turn-card,
+#language-tools-view .combined-language-tools-subsection,
+#language-tools-view .grammar-main-panel,
+#language-tools-view .grammar-topic-subsection{
+    background:#fff!important;
+}
+
+/* Compact floating placeholders should retain distinct identity without
+   creating large blocks of color. */
+#conversation-primary-section .primary-workspace-placeholder,
+#conversation-transcript-section .primary-workspace-placeholder,
+#language-tools-view .primary-workspace-placeholder{
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+
+@media(max-width:640px){
+    #conversation-transcript-section,
+    #language-tools-view{
+        padding:7px;
+        border-radius:13px;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -7534,7 +7774,7 @@ body.conversation-first-layout #mobile-right-column{
                             </div>
                             <div class="voice-transcript-window-actions conversation-floating-only-actions">
                                 <button type="button" id="voice-transcript-collapse-btn" onclick="toggleVoiceTranscriptCollapse()" title="Minimize">—</button>
-                                <button type="button" onclick="closeVoiceTranscriptWindow()" title="Return Conversation to page">×</button>
+                                <button type="button" onclick="closeVoiceTranscriptWindow()" title="Return Transcript to page">×</button>
                             </div>
                         </div>
 
@@ -7544,7 +7784,7 @@ body.conversation-first-layout #mobile-right-column{
                                 <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
                                 <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
                                 <button type="button" onclick="openAskTutorFromConversation()">❓ Ask Tutor</button>
-                                <button type="button" id="conversation-window-toggle" onclick="toggleVoiceTranscriptWindow()">↗ Open Conversation</button>
+                                <button type="button" id="conversation-window-toggle" onclick="toggleVoiceTranscriptWindow()">↗ Open Transcript</button>
                             </div>
                         </div>
 
@@ -14243,10 +14483,10 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(title)title.textContent=`${langConfig().name} Conversation`;
 
         if(toggle){
-            toggle.textContent=floating ? "↙ Return Conversation" : "↗ Open Conversation";
+            toggle.textContent=floating ? "↙ Return Transcript" : "↗ Open Transcript";
             toggle.title=floating
-                ? "Return Conversation to the page"
-                : "Open Conversation in a movable window";
+                ? "Return Transcript to the page"
+                : "Open Transcript in a movable window";
         }
     }
 
@@ -14290,6 +14530,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(typeof renderVoiceTutorTranscript==="function")renderVoiceTutorTranscript();
 
         updateConversationViewState();
+        setTranscriptPlaceholderOpen(true);
         win.dataset.userPositioned="0";
         positionFloatingConversationBelowSettings(true);
 
@@ -14331,6 +14572,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(typeof renderVoiceTutorTranscript==="function")renderVoiceTutorTranscript();
 
         updateConversationViewState();
+        setTranscriptPlaceholderOpen(false);
 
         requestAnimationFrame(()=>{
             try{window.refreshVoiceTranscriptWindow?.()}catch(_){}
@@ -24421,8 +24663,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1400-unified-primary-workspaces-marker">
-window.__languageTutorWorkspaceVersion="14.0.0-unified-movable-workspaces";
+<script id="workspace-v1411-distinct-workspace-colors-marker">
+window.__languageTutorWorkspaceVersion="14.1.1-distinct-workspace-colors";
 </script>
 
 
@@ -26307,6 +26549,55 @@ function createPlaceholder(name){
     return placeholder;
 }
 
+
+function ensureTranscriptSection(){
+    let section=document.getElementById("conversation-transcript-section");
+    if(section)return section;
+
+    const primary=document.getElementById("conversation-primary-section");
+    const toolsView=document.getElementById("language-tools-view");
+    const toolsSection=document.getElementById("conversation-language-tools-section");
+    const main=primary?.parentElement;
+    const conversation=document.getElementById("conversation-view");
+    const anchor=document.getElementById("conversation-view-home-anchor");
+
+    if(!main || !conversation || !anchor)return null;
+
+    section=document.createElement("section");
+    section.id="conversation-transcript-section";
+    section.className="conversation-first-section transcript-primary-section";
+
+    const placeholder=document.createElement("div");
+    placeholder.id="conversation-transcript-placeholder";
+    placeholder.className="primary-workspace-placeholder";
+
+    const text=document.createElement("span");
+    text.textContent="Conversation Transcript is open in a movable window.";
+
+    const ret=document.createElement("button");
+    ret.type="button";
+    ret.className="primary-workspace-return-btn";
+    ret.textContent="↙ Return Transcript";
+    ret.addEventListener("click",()=>window.dockVoiceTranscript?.());
+
+    placeholder.append(text,ret);
+
+    section.append(anchor,placeholder,conversation);
+
+    const before=toolsView || toolsSection;
+    if(before && before.parentElement===main)main.insertBefore(section,before);
+    else main.appendChild(section);
+
+    return section;
+}
+
+function setTranscriptPlaceholderOpen(open){
+    const placeholder=document.getElementById("conversation-transcript-placeholder");
+    placeholder?.classList.toggle("is-active",Boolean(open));
+    const section=document.getElementById("conversation-transcript-section");
+    section?.classList.toggle("transcript-is-floating",Boolean(open));
+}
+
 function ensureTutorControlsView(){
     let view=document.getElementById("tutor-controls-view");
     if(view)return view;
@@ -26315,6 +26606,9 @@ function ensureTutorControlsView(){
     const conversation=document.getElementById("conversation-view");
     const conversationAnchor=document.getElementById("conversation-view-home-anchor");
     if(!mode || !conversation)return null;
+
+    // v14.1: Transcript is a separate primary page workspace.
+    ensureTranscriptSection();
 
     const anchor=document.createElement("div");
     anchor.id="tutor-controls-home-anchor";
@@ -26412,6 +26706,10 @@ function openPrimaryWorkspace(name){
     shell.classList.remove("is-minimized");
     placeholder?.classList.add("is-active");
 
+    if(name==="tutor"){
+        document.getElementById("socratic-chat-container")?.classList.add("tutor-controls-is-floating");
+    }
+
     applyDefaultRect(name,shell);
 }
 
@@ -26437,6 +26735,10 @@ function returnPrimaryWorkspace(name){
     }
 
     placeholder?.classList.remove("is-active");
+
+    if(name==="tutor"){
+        document.getElementById("socratic-chat-container")?.classList.remove("tutor-controls-is-floating");
+    }
 }
 
 function togglePrimaryWorkspaceMinimize(name){
@@ -26496,6 +26798,7 @@ window.returnLanguageToolsWorkspace=()=>returnPrimaryWorkspace("tools");
 window.togglePrimaryWorkspaceMinimize=togglePrimaryWorkspaceMinimize;
 
 function init(){
+    ensureTranscriptSection();
     ensureTutorControlsView();
     ensureLanguageToolsView();
     ensureShell("tutor");
