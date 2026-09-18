@@ -5091,47 +5091,6 @@ body.conversation-first-layout #mobile-right-column{
 </style>
 
 
-<style id="workspace-v81-slideable-chat-css">
-@media (min-width:641px){
-    .chat-horizontal-slide-panel{
-        will-change:transform;
-        transition:transform .12s ease-out;
-    }
-    .chat-horizontal-slide-panel.chat-horizontal-dragging{
-        transition:none;
-    }
-    .chat-horizontal-drag-handle{
-        height:18px;
-        width:100%;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        cursor:ew-resize;
-        touch-action:none;
-        user-select:none;
-        -webkit-user-select:none;
-        border-top:1px solid rgba(148,163,184,.28);
-        margin-top:6px;
-        border-radius:0 0 12px 12px;
-    }
-    .chat-horizontal-drag-handle:hover,
-    .chat-horizontal-drag-handle:focus-visible{
-        background:rgba(148,163,184,.10);
-        outline:none;
-    }
-    .chat-horizontal-drag-grip{
-        width:52px;
-        height:4px;
-        border-radius:999px;
-        background:rgba(100,116,139,.45);
-    }
-}
-@media (max-width:640px){
-    .chat-horizontal-drag-handle{display:none!important}
-    .chat-horizontal-slide-panel{transform:none!important}
-}
-</style>
-
 <style id="workspace-v82-analysis-fixes-css">
 .analysis-diagram-refining-badge{
     display:inline-flex;
@@ -6620,6 +6579,24 @@ body.conversation-first-layout #mobile-right-column{
 #conversation-view.is-floating .workspace-v95-title-actions,
 #conversation-view.is-floating .conversation-floating-only-actions{
     display:flex!important;
+}
+</style>
+
+
+<style id="workspace-v1314-floating-settings-clearance-css">
+@media(min-width:641px){
+    /* v13.1.4: JS now positions the floating Conversation below Settings.
+       Remove the visual remnants of the old horizontal page slider. */
+    .chat-horizontal-drag-handle{
+        display:none!important;
+    }
+    .chat-horizontal-slide-panel{
+        transform:none!important;
+    }
+
+    #voice-transcript-window:not([hidden]){
+        max-height:calc(100vh - 70px)!important;
+    }
 }
 </style>
 
@@ -13971,6 +13948,44 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         document.getElementById("transcript-hub-heading")?.remove();
     }
 
+    function positionFloatingConversationBelowSettings(force=false){
+        const win=document.getElementById("voice-transcript-window");
+        const settings=document.getElementById("voice-settings-panel");
+        if(!win || win.hidden || window.innerWidth<=640)return;
+
+        // Respect manual dragging after the learner has moved the window.
+        if(win.dataset.userPositioned==="1" && !force)return;
+
+        const margin=12;
+        const settingsRect=settings?.getBoundingClientRect?.();
+        const preferredTop=settingsRect
+            ? Math.max(58,Math.ceil(settingsRect.bottom)+margin)
+            : 82;
+
+        const availableHeight=Math.max(
+            280,
+            window.innerHeight-preferredTop-margin
+        );
+
+        win.style.top=`${preferredTop}px`;
+        win.style.bottom="auto";
+        win.style.height=`${Math.min(680,availableHeight)}px`;
+
+        // Keep the window centered horizontally while leaving the settings
+        // panel fully visible above it.
+        const width=Math.min(
+            900,
+            Math.max(480,window.innerWidth-96)
+        );
+        const left=Math.max(
+            margin,
+            Math.round((window.innerWidth-width)/2)
+        );
+        win.style.width=`${width}px`;
+        win.style.left=`${left}px`;
+        win.style.right="auto";
+    }
+
     function conversationViewIsFloating(){
         const win=document.getElementById("voice-transcript-window");
         const body=document.getElementById("voice-transcript-window-body");
@@ -14035,6 +14050,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(typeof renderVoiceTutorTranscript==="function")renderVoiceTutorTranscript();
 
         updateConversationViewState();
+        win.dataset.userPositioned="0";
+        positionFloatingConversationBelowSettings(true);
 
         // Re-mount the shared selected-line toolbar after the move.
         requestAnimationFrame(()=>{
@@ -14101,7 +14118,31 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         renderVoiceTranscriptWindow();
     };
 
+    function initFloatingConversationSettingsClearance(){
+        const settings=document.getElementById("voice-settings-panel");
+        if(!settings || settings.dataset.floatingClearanceReady==="1")return;
+        settings.dataset.floatingClearanceReady="1";
+
+        settings.addEventListener("toggle",()=>{
+            const win=document.getElementById("voice-transcript-window");
+            if(!win || win.hidden)return;
+
+            // If the learner has not manually moved the floating Conversation,
+            // keep it automatically clear of the Settings panel.
+            requestAnimationFrame(()=>{
+                positionFloatingConversationBelowSettings(false);
+            });
+        });
+
+        window.addEventListener("resize",()=>{
+            const win=document.getElementById("voice-transcript-window");
+            if(!win || win.hidden)return;
+            positionFloatingConversationBelowSettings(false);
+        });
+    }
+
     function initVoiceTranscriptDragging(){
+        initFloatingConversationSettingsClearance();
         const win=document.getElementById("voice-transcript-window");
         const handle=document.getElementById("voice-transcript-drag-handle");
         if(!win || !handle || handle.dataset.dragReady==="1")return;
@@ -14116,6 +14157,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             if(window.matchMedia("(max-width:640px)").matches)return;
             if(ev.target.closest("button"))return;
             dragging=true;
+            win.dataset.userPositioned="1";
             const rect=win.getBoundingClientRect();
             offsetX=ev.clientX-rect.left;
             offsetY=ev.clientY-rect.top;
@@ -23394,163 +23436,6 @@ Requirements:
 </script>
 
 
-<script id="workspace-v81-slideable-chat">
-(()=>{
-    const STORAGE_KEY="languagetutor_chat_horizontal_offset_v81";
-    const MOBILE_QUERY="(max-width: 640px)";
-    let drag=null;
-
-    function isMobile(){
-        return window.matchMedia && window.matchMedia(MOBILE_QUERY).matches;
-    }
-
-    function findChatPanel(){
-        const log=document.getElementById("voice-chat-messages-log");
-        if(!log)return null;
-
-        // Prefer the existing conversation/tutor card rather than moving only
-        // the message log. Walk upward to the first substantial workspace panel.
-        let node=log;
-        while(node && node!==document.body){
-            if(
-                node.id==="voice-tutor-panel" ||
-                node.id==="voice-chat-panel" ||
-                node.classList?.contains("voice-tutor-panel") ||
-                node.classList?.contains("conversation-card") ||
-                node.classList?.contains("voice-chat-card")
-            ) return node;
-            node=node.parentElement;
-        }
-
-        // Stable fallback: the closest sizeable parent containing the log and
-        // conversation controls.
-        node=log.parentElement;
-        for(let i=0;i<3 && node?.parentElement;i++)node=node.parentElement;
-        return node && node!==document.body ? node : log.parentElement;
-    }
-
-    function savedOffset(){
-        const n=Number(localStorage.getItem(STORAGE_KEY)||0);
-        return Number.isFinite(n)?n:0;
-    }
-
-    function clampOffset(panel,offset){
-        if(!panel)return 0;
-        const rect=panel.getBoundingClientRect();
-        // Work from the panel's current unshifted position.
-        const current=Number(panel.dataset.chatOffset||0);
-        const baseLeft=rect.left-current;
-        const baseRight=rect.right-current;
-        const margin=12;
-        const min=margin-baseLeft;
-        const max=window.innerWidth-margin-baseRight;
-        return Math.max(min,Math.min(max,offset));
-    }
-
-    function applyOffset(panel,offset,persist=true){
-        if(!panel)return;
-        if(isMobile()){
-            panel.style.removeProperty("--chat-horizontal-offset");
-            panel.style.transform="";
-            panel.dataset.chatOffset="0";
-            return;
-        }
-        const safe=clampOffset(panel,offset);
-        panel.dataset.chatOffset=String(safe);
-        panel.style.setProperty("--chat-horizontal-offset",safe+"px");
-        panel.style.transform=`translateX(${safe}px)`;
-        if(persist)localStorage.setItem(STORAGE_KEY,String(safe));
-    }
-
-    function recenter(panel){
-        applyOffset(panel,0,true);
-    }
-
-    function ensureHandle(){
-        const panel=findChatPanel();
-        if(!panel)return;
-        if(panel.querySelector(":scope > .chat-horizontal-drag-handle"))return;
-
-        panel.classList.add("chat-horizontal-slide-panel");
-
-        const handle=document.createElement("div");
-        handle.className="chat-horizontal-drag-handle";
-        handle.setAttribute("role","separator");
-        handle.setAttribute("aria-label","Drag left or right to move the conversation panel. Double-click to recenter.");
-        handle.title="Drag left or right to move Chat • Double-click to recenter";
-        handle.innerHTML='<span class="chat-horizontal-drag-grip" aria-hidden="true"></span>';
-
-        handle.addEventListener("pointerdown",event=>{
-            if(isMobile())return;
-            event.preventDefault();
-            handle.setPointerCapture?.(event.pointerId);
-            drag={
-                panel,
-                pointerId:event.pointerId,
-                startX:event.clientX,
-                startOffset:Number(panel.dataset.chatOffset||0)
-            };
-            panel.classList.add("chat-horizontal-dragging");
-        });
-
-        handle.addEventListener("pointermove",event=>{
-            if(!drag || drag.pointerId!==event.pointerId)return;
-            applyOffset(drag.panel,drag.startOffset+(event.clientX-drag.startX),false);
-        });
-
-        const finish=event=>{
-            if(!drag || drag.pointerId!==event.pointerId)return;
-            const panel=drag.panel;
-            localStorage.setItem(STORAGE_KEY,String(Number(panel.dataset.chatOffset||0)));
-            panel.classList.remove("chat-horizontal-dragging");
-            drag=null;
-        };
-        handle.addEventListener("pointerup",finish);
-        handle.addEventListener("pointercancel",finish);
-        handle.addEventListener("dblclick",()=>recenter(panel));
-
-        // Keyboard accessibility: arrows nudge, Home recenters.
-        handle.tabIndex=0;
-        handle.addEventListener("keydown",event=>{
-            if(isMobile())return;
-            const current=Number(panel.dataset.chatOffset||0);
-            const step=event.shiftKey?50:20;
-            if(event.key==="ArrowLeft"){
-                event.preventDefault(); applyOffset(panel,current-step,true);
-            }else if(event.key==="ArrowRight"){
-                event.preventDefault(); applyOffset(panel,current+step,true);
-            }else if(event.key==="Home"){
-                event.preventDefault(); recenter(panel);
-            }
-        });
-
-        panel.appendChild(handle);
-        applyOffset(panel,savedOffset(),false);
-    }
-
-    function refresh(){
-        ensureHandle();
-        const panel=findChatPanel();
-        if(!panel)return;
-        if(isMobile()){
-            panel.style.transform="";
-            panel.dataset.chatOffset="0";
-        }else{
-            applyOffset(panel,savedOffset(),false);
-        }
-    }
-
-    if(document.readyState==="loading"){
-        document.addEventListener("DOMContentLoaded",refresh,{once:true});
-    }else refresh();
-
-    window.addEventListener("load",refresh,{once:true});
-    window.addEventListener("resize",refresh);
-})();
-</script>
-
-
-
 <script id="workspace-v93-coach-analysis-routing">
 (()=>{
     "use strict";
@@ -24256,8 +24141,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1313-single-conversation-layout-marker">
-window.__languageTutorWorkspaceVersion="13.1.3-single-conversation-layout-fix";
+<script id="workspace-v1314-floating-settings-clearance-marker">
+window.__languageTutorWorkspaceVersion="13.1.4-floating-settings-clearance";
 </script>
 
 
