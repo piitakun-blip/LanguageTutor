@@ -6310,6 +6310,113 @@ body.conversation-first-layout
 }
 </style>
 
+
+<style id="workspace-v1306-reply-option-verb-gate-css">
+/* Ask Tutor reply choices: selectable target-language lines with the same
+   study actions used elsewhere in LanguageTutor. */
+.ask-tutor-turn.reply-options-turn{
+    width:100%!important;
+    max-width:none!important;
+    background:#fff!important;
+    border-color:#c7d2fe!important;
+}
+.ask-tutor-reply-options-intro{
+    margin-bottom:7px;
+    color:#64748b;
+    font-size:10px;
+}
+.ask-tutor-reply-options-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+.ask-tutor-reply-option-card{
+    padding:9px 10px;
+    border:1px solid #dbe3ee;
+    border-radius:11px;
+    background:#f8fafc;
+}
+.ask-tutor-reply-option-card:first-child{
+    border-color:#a5b4fc;
+    background:#eef2ff;
+}
+.ask-tutor-reply-option-label{
+    margin-bottom:3px;
+    color:#64748b;
+    font-size:8px;
+    font-weight:900;
+    letter-spacing:.07em;
+    text-transform:uppercase;
+}
+.ask-tutor-reply-option-text{
+    display:block;
+    width:100%;
+    padding:2px 0;
+    border:0;
+    background:transparent;
+    color:#1e293b;
+    text-align:left;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.4;
+    cursor:pointer;
+}
+.ask-tutor-reply-option-text:hover{
+    color:#4338ca;
+    text-decoration:underline;
+}
+.ask-tutor-reply-option-note{
+    margin-top:3px;
+    color:#64748b;
+    font-size:10px;
+    line-height:1.4;
+}
+.ask-tutor-reply-option-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:5px;
+    margin-top:7px;
+}
+.ask-tutor-reply-option-actions button{
+    min-height:31px;
+    padding:5px 8px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#fff;
+    color:#475569;
+    font-size:9px;
+    font-weight:800;
+}
+.ask-tutor-reply-option-actions button.primary{
+    border-color:#86efac;
+    background:#f0fdf4;
+    color:#15803d;
+}
+
+/* Verb interpretation uses the same visual grammar as the parser's
+   pre-analysis correction gate. */
+#verb-tool-confirmation.analysis-grammar-gate-card{
+    margin-top:8px;
+}
+.verb-interpretation-gate .analysis-grammar-gate-actions{
+    margin-top:8px;
+}
+
+@media(max-width:640px){
+    .ask-tutor-reply-option-text{font-size:15px}
+    .ask-tutor-reply-option-actions{
+        overflow-x:auto;
+        flex-wrap:nowrap;
+        padding-bottom:2px;
+    }
+    .ask-tutor-reply-option-actions button{
+        flex:0 0 auto;
+        min-height:36px;
+        font-size:10px;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -7160,6 +7267,7 @@ body.conversation-first-layout
                                 </div>
                             </div>
                             <div id="verb-tool-status" class="hidden text-[10px] font-semibold"></div>
+                            <div id="verb-tool-confirmation" class="hidden"></div>
                         </div>
 
                         <div id="verb-tool-result" class="hidden rounded-xl border border-slate-200 overflow-hidden">
@@ -11785,11 +11893,110 @@ Plain text only.`;
             resultBox.classList.remove("hidden");
         }
 
-        async function runAiVerbConjugator() {
+        let pendingVerbTutorResult = null;
+
+        function verbTutorResultObject(data) {
+            return {
+                infinitive:String(data?.infinitive||"").trim(),
+                forms:Array.isArray(data?.forms) ? data.forms.map(String) : [],
+                confidence:"Tutor",
+                info:{
+                    meaning:String(data?.meaning||"").trim(),
+                    separable:Boolean(data?.separable),
+                    irregular:Boolean(data?.irregular)
+                }
+            };
+        }
+
+        function clearVerbInterpretationGate(){
+            pendingVerbTutorResult=null;
+            const gate=document.getElementById("verb-tool-confirmation");
+            if(gate){
+                gate.replaceChildren();
+                gate.classList.add("hidden");
+            }
+        }
+
+        function renderVerbTutorResult(data){
+            const status=document.getElementById("verb-tool-status");
+            clearVerbInterpretationGate();
+            renderVerbConjugation(verbTutorResultObject(data),"Tutor");
+            status?.classList.add("hidden");
+        }
+
+        function showVerbInterpretationGate(raw,data){
+            const gate=document.getElementById("verb-tool-confirmation");
+            if(!gate)return;
+            pendingVerbTutorResult={raw:String(raw||"").trim(),data};
+
+            gate.replaceChildren();
+            gate.className="analysis-grammar-gate-card verb-interpretation-gate";
+
+            const lead=document.createElement("div");
+            lead.className="analysis-grammar-gate-lead";
+            lead.textContent="Did you mean to conjugate this verb?";
+
+            const comparison=document.createElement("div");
+            comparison.className="analysis-grammar-gate-comparison";
+
+            const originalLine=document.createElement("div");
+            originalLine.className="analysis-grammar-gate-original";
+            const originalLabel=document.createElement("strong");
+            originalLabel.textContent="You entered: ";
+            originalLine.append(originalLabel,document.createTextNode(String(raw||"").trim()));
+
+            const suggestion=document.createElement("div");
+            suggestion.className="analysis-grammar-gate-suggestion";
+            const suggestionLabel=document.createElement("strong");
+            suggestionLabel.textContent="Did you mean: ";
+            suggestion.append(
+                suggestionLabel,
+                document.createTextNode(
+                    String(data?.infinitive||"").trim() +
+                    (data?.meaning ? ` — ${String(data.meaning).trim()}` : "")
+                )
+            );
+
+            comparison.append(originalLine,suggestion);
+            gate.append(lead,comparison);
+
+            if(data?.interpretation_reason){
+                const note=document.createElement("div");
+                note.className="analysis-grammar-gate-explanation";
+                note.textContent=String(data.interpretation_reason);
+                gate.appendChild(note);
+            }
+
+            const actions=document.createElement("div");
+            actions.className="analysis-grammar-gate-actions";
+
+            const original=document.createElement("button");
+            original.type="button";
+            original.textContent="Use my entry";
+            original.addEventListener("click",()=>{
+                clearVerbInterpretationGate();
+                runAiVerbConjugator({strict:true});
+            });
+
+            const use=document.createElement("button");
+            use.type="button";
+            use.className="primary";
+            use.textContent=`Use ${String(data?.infinitive||"suggestion").trim()}`;
+            use.addEventListener("click",()=>{
+                const pending=pendingVerbTutorResult?.data;
+                if(pending)renderVerbTutorResult(pending);
+            });
+
+            actions.append(original,use);
+            gate.appendChild(actions);
+            gate.classList.remove("hidden");
+        }
+
+        async function runAiVerbConjugator(options={}) {
             const input = document.getElementById("verb-tool-input");
             const btn = document.getElementById("verb-ai-btn");
             const status = document.getElementById("verb-tool-status");
-            const raw = input.value.trim();
+            const raw = String(input?.value||"").trim();
             if (!raw) return;
 
             if (!getActiveAIKey()) {
@@ -11799,10 +12006,13 @@ Plain text only.`;
                 return;
             }
 
+            clearVerbInterpretationGate();
             const previous = btn.textContent;
             btn.disabled = true;
             btn.textContent = "Conjugating…";
+
             try {
+                const strict=Boolean(options?.strict);
                 const prompt = `You are the Verb Conjugator inside LanguageTutor for an English-speaking learner.
 The learner entered: "${raw}".
 
@@ -11812,31 +12022,58 @@ The entry may be:
 - an English verb (with or without "to"),
 - or a close misspelling of an obvious German/English verb.
 
-Infer the intended verb when reasonably clear. If the input is English, translate it to the natural German infinitive first.
+${strict
+? `The learner chose "Use my entry" after seeing an interpretation suggestion.
+Preserve the lexical verb they typed as closely as possible.
+If it is English, translate that exact meaning into German.
+If it is a conjugated German form, identify its infinitive.
+Do NOT silently replace it with a different likely word merely because spelling is unusual.`
+: `Infer the intended verb when reasonably clear.
+If it is English, translate it to the natural German infinitive.
+If it appears misspelled or genuinely ambiguous, do NOT silently correct it: set needs_confirmation to true and provide your best suggested infinitive.`}
+
 Identify the German infinitive and give PRESENT-TENSE forms only.
+
 Return ONLY valid JSON:
 {
+  "valid":true,
   "infinitive":"",
   "meaning":"",
   "separable":false,
   "irregular":false,
-  "forms":["ich form","du form","er/sie/es form","wir form","ihr form","sie/Sie form"]
+  "forms":["ich form","du form","er/sie/es form","wir form","ihr form","sie/Sie form"],
+  "interpretation":"exact|conjugated|english|correction|ambiguous",
+  "needs_confirmation":false,
+  "interpretation_reason":"very short English explanation or empty string"
 }
-For separable verbs, include the separated prefix in each conjugated form, e.g. "rufe an".
-Do not include pronouns inside the form strings.`;
+
+Rules:
+- exact German infinitive: needs_confirmation=false.
+- clearly recognized conjugated German form: needs_confirmation=false.
+- clear English verb with one natural German equivalent: needs_confirmation=false.
+- close misspelling that changes what was typed: needs_confirmation=true.
+- genuinely ambiguous English/German input with materially different possible verbs: needs_confirmation=true.
+- If strict mode is active and the entry cannot reasonably be treated as a verb, return valid=false with interpretation_reason.
+- For separable verbs, include the separated prefix in each conjugated form, e.g. "rufe an".
+- Do not include pronouns inside the form strings.`;
+
                 const data = await callAIJson(prompt);
-                if (!data?.infinitive || !Array.isArray(data?.forms) || data.forms.length < 6) throw new Error("Incomplete conjugation returned.");
-                renderVerbConjugation({
-                    infinitive:String(data.infinitive),
-                    forms:data.forms.map(String),
-                    confidence:"Tutor",
-                    info:{
-                        meaning:String(data.meaning || ""),
-                        separable:Boolean(data.separable),
-                        irregular:Boolean(data.irregular)
-                    }
-                }, "Tutor");
-                status.classList.add("hidden");
+
+                if(data?.valid===false){
+                    throw new Error(String(data?.interpretation_reason||"I could not identify that entry as a verb."));
+                }
+                if (!data?.infinitive || !Array.isArray(data?.forms) || data.forms.length < 6) {
+                    throw new Error("Incomplete conjugation returned.");
+                }
+
+                if(Boolean(data.needs_confirmation) && !strict){
+                    showVerbInterpretationGate(raw,data);
+                    status.classList.add("hidden");
+                    document.getElementById("verb-tool-result")?.classList.add("hidden");
+                    return;
+                }
+
+                renderVerbTutorResult(data);
             } catch (e) {
                 status.textContent = "Tutor conjugation failed: " + ((e && e.message) ? e.message : String(e));
                 status.className = "text-[10px] font-semibold text-rose-600";
@@ -23627,8 +23864,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1305-grammar-actions-marker">
-window.__languageTutorWorkspaceVersion="13.0.5-grammar-button-tutor-cleanup";
+<script id="workspace-v1306-reply-options-verb-confirmation-marker">
+window.__languageTutorWorkspaceVersion="13.0.6-reply-options-verb-confirmation";
 </script>
 
 
@@ -23739,6 +23976,83 @@ function renderSafeMarkdown(container,value){
     });
 }
 
+function renderAskReplyOptionCard(option,index){
+    const c=currentCfg();
+    const phrase=String(option?.text||"").trim();
+    if(!phrase)return null;
+
+    const card=document.createElement("div");
+    card.className="ask-tutor-reply-option-card";
+
+    const top=document.createElement("div");
+    top.className="ask-tutor-reply-option-top";
+
+    const label=document.createElement("div");
+    label.className="ask-tutor-reply-option-label";
+    label.textContent=index===0 ? "Suggested reply" : `Alternative ${index}`;
+
+    const phraseButton=document.createElement("button");
+    phraseButton.type="button";
+    phraseButton.className="ask-tutor-reply-option-text";
+    phraseButton.textContent=phrase;
+    phraseButton.title="Use this as your Conversation reply";
+    phraseButton.addEventListener("click",()=>window.useLanguageCoachPhrase?.(phrase));
+
+    top.append(label,phraseButton);
+    card.appendChild(top);
+
+    if(option?.note){
+        const note=document.createElement("div");
+        note.className="ask-tutor-reply-option-note";
+        note.textContent=String(option.note);
+        card.appendChild(note);
+    }
+
+    const actions=document.createElement("div");
+    actions.className="ask-tutor-reply-option-actions";
+
+    const use=document.createElement("button");
+    use.type="button";
+    use.className="primary";
+    use.textContent="↩ Use in reply";
+    use.addEventListener("click",()=>window.useLanguageCoachPhrase?.(phrase));
+
+    const listen=document.createElement("button");
+    listen.type="button";
+    listen.textContent="🔊 Listen";
+    listen.addEventListener("click",()=>{
+        if(typeof speakRawText==="function")speakRawText(phrase,c.locale);
+    });
+
+    const analyze=document.createElement("button");
+    analyze.type="button";
+    analyze.textContent="🔎 Analyze";
+    analyze.addEventListener("click",()=>window.analyzeAskTutorReplyOption?.(phrase));
+
+    const copy=document.createElement("button");
+    copy.type="button";
+    copy.textContent="⧉ Copy";
+    copy.addEventListener("click",async()=>{
+        try{
+            await navigator.clipboard.writeText(phrase);
+            const old=copy.textContent;
+            copy.textContent="✓ Copied";
+            setTimeout(()=>{copy.textContent=old;},900);
+        }catch(_){}
+    });
+
+    const save=document.createElement("button");
+    save.type="button";
+    save.textContent="☆ Save";
+    save.addEventListener("click",()=>{
+        window.saveVoiceTutorPhrase?.(phrase,currentStudyLanguage,save);
+    });
+
+    actions.append(use,listen,analyze,copy,save);
+    card.appendChild(actions);
+    return card;
+}
+
 function renderAskThread(){
     const host=document.getElementById("ask-tutor-thread");
     if(!host)return;
@@ -23747,7 +24061,7 @@ function renderAskThread(){
 
     askState.thread.forEach(turn=>{
         const card=document.createElement("div");
-        card.className=`ask-tutor-turn ${turn.role}`;
+        card.className=`ask-tutor-turn ${turn.role}${turn.kind==="reply-options" ? " reply-options-turn" : ""}`;
 
         const label=document.createElement("div");
         label.className="ask-tutor-turn-label";
@@ -23755,8 +24069,26 @@ function renderAskThread(){
 
         const body=document.createElement("div");
         body.className="ask-tutor-turn-body";
-        if(turn.role==="tutor")renderSafeMarkdown(body,turn.text);
-        else body.textContent=turn.displayText||turn.text;
+
+        if(turn.kind==="reply-options" && Array.isArray(turn.options)){
+            if(turn.intro){
+                const intro=document.createElement("div");
+                intro.className="ask-tutor-reply-options-intro";
+                intro.textContent=String(turn.intro);
+                body.appendChild(intro);
+            }
+            const list=document.createElement("div");
+            list.className="ask-tutor-reply-options-list";
+            turn.options.forEach((option,index)=>{
+                const optionCard=renderAskReplyOptionCard(option,index);
+                if(optionCard)list.appendChild(optionCard);
+            });
+            body.appendChild(list);
+        }else if(turn.role==="tutor"){
+            renderSafeMarkdown(body,turn.text);
+        }else{
+            body.textContent=turn.displayText||turn.text;
+        }
 
         card.append(label,body);
         host.appendChild(card);
@@ -23983,6 +24315,42 @@ window.toggleAskTutorAnalysis=async function(){
     });
 };
 
+
+
+window.analyzeAskTutorReplyOption=function(text){
+    const clean=String(text||"").trim();
+    const host=document.getElementById("ask-tutor-analysis-host");
+    const win=document.getElementById("analysis-workbench-window");
+    const button=document.getElementById("ask-tutor-analyze-btn");
+    if(!clean || !host || !win || !button)return;
+
+    ensureAnalysisHomeAnchor();
+
+    window.openAnalysisWorkbench?.(
+        clean,
+        currentCfg().code || currentCfg().locale || "de",
+        {source:"ask-tutor-reply-option",text:clean}
+    );
+
+    clearAnalysisFloatingGeometry(win);
+    win.classList.add("ask-tutor-embedded-analysis");
+    host.replaceChildren(win);
+    host.hidden=false;
+    win.hidden=false;
+    button.setAttribute("aria-expanded","true");
+    button.textContent="🔎 Hide analysis";
+
+    requestAnimationFrame(()=>{
+        clearAnalysisFloatingGeometry(win);
+        win.classList.add("ask-tutor-embedded-analysis");
+        const parseButton=[...win.querySelectorAll(".analysis-workbench-primary-tools button")]
+            .find(b=>/parse/i.test(b.textContent||""));
+        const results=document.getElementById("analysis-workbench-results");
+        if(typeof window.analysisWorkbenchFullParse==="function" && !results?.children?.length){
+            window.analysisWorkbenchFullParse(parseButton||null);
+        }
+    });
+};
 
 const originalCloseAnalysisWorkbench=window.closeAnalysisWorkbench;
 if(typeof originalCloseAnalysisWorkbench==="function"){
@@ -24435,10 +24803,101 @@ Return JSON only:
     }
 };
 
+
+async function generateAskTutorReplyOptions(){
+    if(!askState.context){
+        setStatus("Select a conversation line first so the Tutor knows what you are replying to.","error");
+        return;
+    }
+
+    const ai=typeof resolveWorkbenchAIConfig==="function"
+        ? resolveWorkbenchAIConfig()
+        : {available:Boolean(typeof getActiveAIKey==="function"&&getActiveAIKey())};
+
+    if(!ai.available || typeof callAIJson!=="function"){
+        setStatus("Ask Tutor requires your selected provider.","error");
+        return;
+    }
+
+    const c=currentCfg();
+    const context=String(askState.context||"").trim();
+    const priorThread=privateThreadText();
+
+    askState.thread.push({
+        role:"user",
+        text:"Help me reply.",
+        displayText:"Help me reply."
+    });
+    renderAskThread();
+    setStatus("Tutor is thinking…");
+
+    try{
+        const data=await callAIJson(`You are the private Ask Tutor reply helper in LanguageTutor.
+Target language: ${c.name}
+
+Conversation line the learner wants to answer:
+${context}
+
+Recent live conversation:
+${recentConversation() || "(none)"}
+
+Private Ask Tutor conversation so far:
+${priorThread || "(none)"}
+
+Create 3 useful reply choices for the learner.
+Requirements:
+- Each option must be a complete, natural ${c.name} reply the learner could actually send/say next.
+- Option 1 should be the simplest/natural default.
+- Option 2 should express the same basic intent in another natural way.
+- Option 3 may add a little personality or move the conversation forward.
+- Keep them reasonably short and appropriate for the learner.
+- Notes must be brief English guidance, not another reply.
+- Do not wrap phrases in quotation marks.
+
+Return JSON only:
+{
+  "intro":"one very short English sentence or empty string",
+  "options":[
+    {"text":"target-language reply","note":"brief English note"},
+    {"text":"target-language reply","note":"brief English note"},
+    {"text":"target-language reply","note":"brief English note"}
+  ]
+}`);
+
+        const options=Array.isArray(data?.options)
+            ? data.options
+                .map(item=>({
+                    text:String(item?.text||"").trim(),
+                    note:String(item?.note||"").trim()
+                }))
+                .filter(item=>item.text)
+                .slice(0,4)
+            : [];
+
+        if(!options.length)throw new Error("Tutor returned no usable reply choices.");
+
+        askState.thread.push({
+            role:"tutor",
+            kind:"reply-options",
+            text:options.map(o=>o.text).join(" | "),
+            intro:String(data?.intro||"").trim(),
+            options
+        });
+        renderAskThread();
+        setStatus("");
+    }catch(e){
+        setStatus("Tutor reply suggestions unavailable. "+(e?.message||String(e)),"error");
+    }
+}
+
 function runShortcut(kind){
     if(!askState.context){
         setStatus("Select a conversation line first, or type a question below.","error");
         document.getElementById("language-coach-input")?.focus();
+        return;
+    }
+    if(kind==="reply"){
+        generateAskTutorReplyOptions();
         return;
     }
     const item=shortcutPrompt(kind);
