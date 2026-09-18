@@ -13830,8 +13830,10 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const analyze=document.createElement("button");
         analyze.type="button";
         analyze.textContent="🔍";
-        analyze.title=`Analyze the ${cfg.name} version`;
-        analyze.addEventListener("click",()=>window.analyzeTutorSentence(translation,languageCode));
+        analyze.title=`Open this ${cfg.name} version under Analyze in Ask Tutor`;
+        analyze.addEventListener("click",()=>{
+            window.openAskTutorAnalysisForText?.(translation,languageCode);
+        });
 
         actions.append(play,analyze);
         row.append(text,actions);
@@ -19961,7 +19963,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     <div id="voice-transcript-drag-handle" class="voice-transcript-titlebar">
         <div class="voice-transcript-titlecopy">
             <div id="voice-transcript-window-title" class="voice-transcript-window-title">German Conversation</div>
-            <div class="voice-transcript-window-subtitle">Talk, review, select a line, and ask the Tutor for help.</div>
+            <div class="voice-transcript-window-subtitle">Select a line to make it Ask Tutor context automatically.</div>
         </div>
         <div class="voice-transcript-window-actions">
             <button type="button" id="voice-transcript-collapse-btn" onclick="toggleVoiceTranscriptCollapse()" title="Minimize">—</button>
@@ -19973,7 +19975,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         <div class="flex flex-wrap gap-2">
             <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
             <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
-            <button type="button" onclick="openLanguageCoach()">❓ Ask Tutor</button>
+            <button type="button" onclick="openAskTutorFromConversation()">❓ Ask Tutor</button>
             <button type="button" onclick="dockVoiceTranscript()">↙ Return to page</button>
         </div>
     </div>
@@ -21792,36 +21794,19 @@ Requirements:
             const actions=document.createElement("div");
             actions.className="transcript-hub-heading-actions";
 
-            const coach=document.createElement("button");
-            coach.type="button";
-            coach.textContent="❓ Ask Tutor";
-            coach.title="Take a private sidebar to figure out how you want to respond";
-            coach.addEventListener("click",()=>window.openLanguageCoach());
-
             const floating=document.createElement("button");
             floating.type="button";
             floating.textContent="↗ Floating transcript";
             floating.title="Open this conversation in a movable/resizable window";
             floating.addEventListener("click",()=>window.openVoiceTranscriptWindow());
 
-            actions.append(coach,floating);
+            actions.append(floating);
             heading.append(copy,actions);
             parent.insertBefore(heading,log);
         }
 
-        // Add a Coach launch beside the existing keyboard / English bridge controls.
-        const english=document.getElementById("voice-text-english-btn");
-        const tools=english?.parentElement;
-        if(tools && !document.getElementById("language-coach-open-btn")){
-            const coach=document.createElement("button");
-            coach.type="button";
-            coach.id="language-coach-open-btn";
-            coach.className="min-h-[36px] px-3 py-1.5 rounded-lg border text-[10px] font-bold transition";
-            coach.textContent="❓ Ask Tutor";
-            coach.title="Privately ask how to formulate your response without sending anything to the Tutor";
-            coach.addEventListener("click",()=>window.openLanguageCoach());
-            tools.insertBefore(coach,english);
-        }
+        // v13.0.1: duplicate generic Ask Tutor launcher removed.
+        // The Conversation toolbar is the single general entry point.
     }
 
     function init(){
@@ -23377,6 +23362,10 @@ function select(card){
     state.entry=card?.__savedTranscriptEntry||{text:state.text};
     state.translation="";
     card?.classList.add("saved-transcript-turn-selected");
+
+    // Keep Ask Tutor context behavior consistent with the live transcript.
+    window.setAskTutorContext?.(state.text);
+
     update();
 }
 function listen(){
@@ -23440,14 +23429,13 @@ function save(button){
 }
 function coach(){
     if(!state.text)return;
-    if(typeof window.openTutorCoachForPhrase==="function"){
-        window.openTutorCoachForPhrase(state.text,state.text);
+    window.setAskTutorContext?.(state.text);
+    if(typeof window.openAskTutorFromConversation==="function"){
+        window.openAskTutorFromConversation();
         return;
     }
-    if(typeof window.openLanguageCoach==="function"){
-        window.openLanguageCoach(`Phrase: ${state.text}\nSentence: ${state.text}\n\nHelp me understand this phrase in context.`);
-        window.workspaceOpenTool?.("coach");
-    }
+    window.openLanguageCoach?.("");
+    window.workspaceOpenTool?.("coach");
 }
 document.addEventListener("click",e=>{
     if(e.target.closest("#saved-transcript-selection-toolbar"))return;
@@ -23596,6 +23584,12 @@ function selectCard(card){
     state.entry=card.__transcriptEntry||{text};
     state.translation="";
     card.classList.add("transcript-turn-selected");
+
+    // v13.0.1: selecting a transcript line automatically makes it the
+    // current Ask Tutor context. If Ask Tutor is already open, its
+    // Selected context display updates immediately.
+    window.setAskTutorContext?.(text);
+
     update();
 }
 
@@ -23749,8 +23743,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v130-gpt-live-marker">
-window.__languageTutorWorkspaceVersion="13.0-beta-gpt-live-cloudflare";
+<script id="workspace-v1302-english-bridge-analyze-marker">
+window.__languageTutorWorkspaceVersion="13.0.2-english-bridge-analyze-routing";
 </script>
 
 
@@ -23957,6 +23951,51 @@ window.clearAskTutorContext=function(){
     setHeard("");
 };
 
+
+
+window.openAskTutorFromConversation=function(){
+    // One general launcher for the Conversation workspace:
+    // current selected line -> open with that context
+    // no selected line      -> open Ask Tutor blank
+    const selected=document.querySelector(
+        "#voice-chat-messages-log [data-transcript-selectable='1'].transcript-turn-selected"
+    );
+    const text=String(selected?.dataset?.transcriptText||"").trim();
+
+    if(text)window.setAskTutorContext?.(text);
+    else window.clearAskTutorContext?.();
+
+    window.openLanguageCoach?.("");
+    window.workspaceOpenTool?.("coach");
+};
+
+window.openAskTutorAnalysisForText=function(text,languageCode){
+    const clean=String(text||"").trim();
+    if(!clean)return;
+
+    // Make the target-language phrase the current Ask Tutor context.
+    // setAskTutorContext() also closes any stale embedded analysis when
+    // the context changes, so the parser will reopen with the new phrase.
+    window.setAskTutorContext?.(clean);
+
+    // Open the same private Tutor surface used from transcript selections.
+    window.openLanguageCoach?.("");
+    window.workspaceOpenTool?.("coach");
+
+    // Open the ORIGINAL Analysis Workbench inside Ask Tutor.
+    // Two RAFs let the floating window finish opening/mounting first.
+    requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+            const button=document.getElementById("ask-tutor-analyze-btn");
+            if(button?.getAttribute("aria-expanded")==="true"){
+                // If it is somehow already open, close and reopen to ensure
+                // the current English-bridge translation is what gets parsed.
+                window.closeAskTutorEmbeddedAnalysis?.();
+            }
+            window.toggleAskTutorAnalysis?.();
+        });
+    });
+};
 
 let analysisHomeAnchor=null;
 
