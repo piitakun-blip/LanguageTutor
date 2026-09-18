@@ -7064,6 +7064,60 @@ body.conversation-first-layout main.conversation-first-main{
 }
 </style>
 
+
+<style id="workspace-v1412-runtime-arrow-fix-css">
+/* v14.1.2 — one visual language for top-level section disclosure arrows. */
+.workspace-section-chevron{
+    display:inline-grid;
+    place-items:center;
+    width:24px;
+    height:24px;
+    flex:0 0 auto;
+    color:#94a3b8;
+    font-size:17px;
+    font-weight:800;
+    line-height:1;
+    transform:rotate(0deg);
+    transition:transform .18s ease;
+}
+
+/* Open Chat with Tutor = chevron points up. */
+#conversation-tutor-toggle[aria-expanded="true"] #socratic-chat-arrow{
+    transform:rotate(180deg);
+}
+
+/* Open details sections use the same rotation behavior. */
+.conversation-fold[open] > summary .workspace-section-chevron{
+    transform:rotate(180deg);
+}
+
+/* Avoid older fold-chevron transform rules fighting the shared rule. */
+.conversation-fold > summary .fold-chevron.workspace-section-chevron{
+    transform:rotate(0deg);
+}
+.conversation-fold[open] > summary .fold-chevron.workspace-section-chevron{
+    transform:rotate(180deg);
+}
+
+/* Ensure restored Tutor Controls are actually visible after v14.1's
+   detached-anchor regression. */
+#tutor-controls-view:not(.is-floating){
+    display:flex!important;
+    flex-direction:column;
+}
+#tutor-controls-view:not(.is-floating) #tutor-controls-content{
+    display:flex!important;
+    flex-direction:column;
+    gap:8px;
+}
+
+/* Keep primary Open buttons visibly interactive. */
+.primary-workspace-open-btn{
+    pointer-events:auto!important;
+    cursor:pointer!important;
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -7648,11 +7702,7 @@ body.conversation-first-layout main.conversation-first-main{
                 </span>
                 <div class="flex items-center gap-3">
                     <span id="chat-status-pill" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Free Mode (Locked)</span>
-                    <span id="socratic-chat-arrow" class="text-slate-400">
-                        <svg class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"></path>
-                        </svg>
-                    </span>
+                    <span id="socratic-chat-arrow" class="workspace-section-chevron text-slate-400" aria-hidden="true">⌄</span>
                 </div>
             </button>
 
@@ -12419,15 +12469,12 @@ Plain text only.`;
         // Toggle AI Socratic Chat visibility
         function toggleSocraticChat() {
             const container = document.getElementById("socratic-chat-container");
-            const arrow = document.getElementById("socratic-chat-arrow");
+            const toggle = document.getElementById("conversation-tutor-toggle");
+            if(!container)return;
 
-            if (container.classList.contains("hidden")) {
-                container.classList.remove("hidden");
-                arrow.innerHTML = `<svg class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"></path></svg>`;
-            } else {
-                container.classList.add("hidden");
-                arrow.innerHTML = `<svg class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>`;
-            }
+            const opening=container.classList.contains("hidden");
+            container.classList.toggle("hidden",!opening);
+            if(toggle)toggle.setAttribute("aria-expanded",opening ? "true" : "false");
         }
 
         // --- Interactive Reference Tools ---
@@ -22957,7 +23004,7 @@ Requirements:
         const title=document.createElement("span");
         title.textContent=label;
         const chevron=document.createElement("span");
-        chevron.className="fold-chevron";
+        chevron.className="fold-chevron workspace-section-chevron";
         chevron.textContent="⌄";
         summary.append(title,chevron);
 
@@ -24663,8 +24710,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1411-distinct-workspace-colors-marker">
-window.__languageTutorWorkspaceVersion="14.1.1-distinct-workspace-colors";
+<script id="workspace-v1412-workspace-runtime-fix-marker">
+window.__languageTutorWorkspaceVersion="14.1.2-workspace-runtime-fix";
 </script>
 
 
@@ -26640,7 +26687,12 @@ function ensureTutorControlsView(){
     });
 
     view.append(bar,content);
-    mode.insertBefore(view,conversationAnchor||conversation);
+
+    // v14.1.2: Transcript is already in its own top-level section, so the
+    // old conversation anchor is no longer a child of #chat-voice-mode.
+    // Append Tutor Controls to its actual remaining page host instead of
+    // trying to insert before a detached Transcript anchor.
+    mode.appendChild(view);
 
     return view;
 }
@@ -26798,11 +26850,19 @@ window.returnLanguageToolsWorkspace=()=>returnPrimaryWorkspace("tools");
 window.togglePrimaryWorkspaceMinimize=togglePrimaryWorkspaceMinimize;
 
 function init(){
-    ensureTranscriptSection();
-    ensureTutorControlsView();
-    ensureLanguageToolsView();
-    ensureShell("tutor");
-    ensureShell("tools");
+    const safely=(label,fn)=>{
+        try{return fn()}
+        catch(error){
+            console.error(`LanguageTutor workspace init failed: ${label}`,error);
+            return null;
+        }
+    };
+
+    safely("Transcript",ensureTranscriptSection);
+    safely("Tutor Controls",ensureTutorControlsView);
+    safely("Language Tools",ensureLanguageToolsView);
+    safely("Tutor Controls window",()=>ensureShell("tutor"));
+    safely("Language Tools window",()=>ensureShell("tools"));
 
     // v14 supersedes the old automatic split-layout workaround. Conversation
     // still floats normally; Tutor Controls can now float independently too.
