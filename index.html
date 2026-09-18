@@ -6849,11 +6849,6 @@ body.conversation-first-layout #mobile-right-column{
     touch-action:auto!important;
 }
 
-/* The Open Conversation button is the only window-state control needed
-   while Conversation is on the page. */
-#conversation-view:not(.is-floating) #conversation-window-toggle{
-    display:inline-flex!important;
-}
 </style>
 
 
@@ -7115,6 +7110,156 @@ body.conversation-first-layout main.conversation-first-main{
 .primary-workspace-open-btn{
     pointer-events:auto!important;
     cursor:pointer!important;
+}
+</style>
+
+
+<style id="workspace-v1413-compact-start-layout-css">
+/* v14.1.3 — compact starting page.
+   Now that Transcript is a separate workspace, Chat with Tutor no longer
+   needs the old fixed 560px vertical reservation. */
+
+#conversation-primary-section #socratic-chat-container{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+}
+
+#conversation-primary-section #chat-voice-mode{
+    overflow:visible!important;
+    min-height:0!important;
+}
+
+/* Tutor Controls should size to their actual content. */
+#tutor-controls-view:not(.is-floating){
+    min-height:0!important;
+}
+#tutor-controls-content{
+    min-height:0!important;
+}
+
+/* Transcript gets a useful study area when populated, but stays compact
+   on the starting page before any turns exist. */
+#conversation-view:not(.is-floating){
+    height:280px!important;
+    min-height:220px!important;
+}
+#conversation-view:not(.is-floating).conversation-is-empty{
+    height:190px!important;
+    min-height:170px!important;
+}
+
+/* Empty transcript text should not force extra vertical room. */
+#conversation-view.conversation-is-empty #voice-chat-messages-log{
+    min-height:70px!important;
+    max-height:90px!important;
+}
+
+/* Reduce outer section padding slightly so the three workspaces read as
+   compact modules rather than large empty rows. */
+#conversation-primary-section{
+    padding-bottom:10px;
+}
+#conversation-transcript-section,
+#language-tools-view{
+    padding-top:8px!important;
+    padding-bottom:8px!important;
+}
+
+/* Keep spacing between top-level workspaces crisp. */
+body.conversation-first-layout main.conversation-first-main{
+    gap:10px!important;
+}
+
+@media(max-width:640px){
+    #conversation-view:not(.is-floating){
+        height:250px!important;
+        min-height:210px!important;
+    }
+    #conversation-view:not(.is-floating).conversation-is-empty{
+        height:180px!important;
+        min-height:160px!important;
+    }
+}
+</style>
+
+
+<style id="workspace-v1414-compact-floating-transcript-return-css">
+/* v14.1.4 — floating workspaces should open compact, not at near-page size. */
+@media(min-width:641px){
+    #tutor-controls-window.primary-workspace-window:not(.is-minimized){
+        max-height:min(560px,calc(100vh - 32px))!important;
+    }
+    #language-tools-window.primary-workspace-window:not(.is-minimized){
+        max-height:min(640px,calc(100vh - 32px))!important;
+    }
+}
+
+/* Transcript gets the same unmistakable page-return affordance as the
+   other primary workspaces. */
+#conversation-transcript-section.transcript-is-floating
+    > #conversation-transcript-placeholder.transcript-workspace-placeholder{
+    display:flex!important;
+    width:100%!important;
+    box-sizing:border-box;
+}
+
+#conversation-transcript-section.transcript-is-floating
+    > #conversation-transcript-placeholder
+    .primary-workspace-return-btn{
+    display:inline-flex!important;
+    align-items:center;
+    justify-content:center;
+}
+
+/* Do not preserve the old Transcript card's height once it has moved out. */
+#conversation-transcript-section.transcript-is-floating{
+    min-height:0!important;
+    height:auto!important;
+}
+#conversation-transcript-section.transcript-is-floating #conversation-view{
+    display:none!important;
+}
+</style>
+
+
+<style id="workspace-v1415-consistent-workspace-open-return-css">
+/* v14.1.5 — one consistent Open / Return pattern:
+   docked section bar = Open, floating window = X, page placeholder = Return. */
+
+#conversation-transcript-section::before{
+    content:none!important;
+    display:none!important;
+}
+
+#conversation-transcript-docked-bar{
+    margin:0 0 8px;
+    background:#edf8f2!important;
+    border-color:#cfe7da!important;
+}
+#conversation-transcript-docked-bar .primary-workspace-docked-title{
+    color:#356b50!important;
+}
+#conversation-transcript-docked-bar.is-hidden{
+    display:none!important;
+}
+
+/* The toolbar no longer carries a second Open/Return control. */
+#conversation-window-toggle{
+    display:none!important;
+}
+
+/* Match all three docked bars. */
+#tutor-controls-view .primary-workspace-docked-bar,
+#conversation-transcript-docked-bar,
+#language-tools-view .primary-workspace-docked-bar{
+    min-height:44px;
+    box-sizing:border-box;
+}
+
+/* Transcript's page return strip mirrors the other workspaces. */
+#conversation-transcript-placeholder{
+    margin:0!important;
 }
 </style>
 
@@ -7834,7 +7979,6 @@ body.conversation-first-layout main.conversation-first-main{
                                 <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
                                 <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
                                 <button type="button" onclick="openAskTutorFromConversation()">❓ Ask Tutor</button>
-                                <button type="button" id="conversation-window-toggle" onclick="toggleVoiceTranscriptWindow()">↗ Open Transcript</button>
                             </div>
                         </div>
 
@@ -14523,18 +14667,10 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     function updateConversationViewState(){
         const floating=conversationViewIsFloating();
         const view=document.getElementById("conversation-view");
-        const toggle=document.getElementById("conversation-window-toggle");
         const title=document.getElementById("voice-transcript-window-title");
 
         view?.classList.toggle("is-floating",floating);
         if(title)title.textContent=`${langConfig().name} Conversation`;
-
-        if(toggle){
-            toggle.textContent=floating ? "↙ Return Transcript" : "↗ Open Transcript";
-            toggle.title=floating
-                ? "Return Transcript to the page"
-                : "Open Transcript in a movable window";
-        }
     }
 
     function renderVoiceTranscriptWindow(){
@@ -14716,6 +14852,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(!log)return;
         log.innerHTML="";
         const history=voiceTutorHistory();
+        const view=document.getElementById("conversation-view");
+        view?.classList.toggle("conversation-is-empty",!history.length);
         if(!history.length){
             const empty=document.createElement("div");
             empty.id="voice-tutor-empty";
@@ -24710,8 +24848,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1412-workspace-runtime-fix-marker">
-window.__languageTutorWorkspaceVersion="14.1.2-workspace-runtime-fix";
+<script id="workspace-v1415-consistent-workspace-open-return-marker">
+window.__languageTutorWorkspaceVersion="14.1.5-consistent-workspace-open-return";
 </script>
 
 
@@ -26411,7 +26549,7 @@ else init();
 (()=>{
 "use strict";
 
-const STORAGE_KEY="languagetutor_primary_workspace_rects_v14";
+const STORAGE_KEY="languagetutor_primary_workspace_rects_v1414";
 
 const registry={
     tutor:{
@@ -26458,8 +26596,10 @@ function applyDefaultRect(name,shell){
     const saved=loadRects()[name];
     const margin=12;
 
-    let width=name==="tutor" ? 540 : 720;
-    let height=name==="tutor" ? 720 : 760;
+    let width=name==="tutor" ? 520 : 680;
+    let height=name==="tutor"
+        ? Math.min(560,Math.max(360,window.innerHeight*0.62))
+        : Math.min(640,Math.max(420,window.innerHeight*0.70));
     let left=name==="tutor" ? 24 : Math.max(300,window.innerWidth-width-28);
     let top=68;
 
@@ -26481,6 +26621,32 @@ function applyDefaultRect(name,shell){
     shell.style.bottom="auto";
     shell.style.width=`${width}px`;
     shell.style.height=`${height}px`;
+}
+
+function fitPrimaryWorkspaceToContent(name,shell){
+    if(!shell || shell.hidden || window.innerWidth<=640)return;
+
+    const body=shell.querySelector(".primary-workspace-window-body");
+    if(!body)return;
+
+    requestAnimationFrame(()=>{
+        const titleHeight=shell.querySelector(".primary-workspace-titlebar")?.offsetHeight||48;
+        const desired=Math.min(
+            name==="tutor" ? 560 : 640,
+            Math.max(
+                name==="tutor" ? 340 : 400,
+                body.scrollHeight + titleHeight + 4
+            ),
+            window.innerHeight-32
+        );
+
+        shell.style.height=`${desired}px`;
+
+        const rect=shell.getBoundingClientRect();
+        if(rect.bottom>window.innerHeight-8){
+            shell.style.top=`${Math.max(8,window.innerHeight-desired-8)}px`;
+        }
+    });
 }
 
 function ensureShell(name){
@@ -26614,9 +26780,25 @@ function ensureTranscriptSection(){
     section.id="conversation-transcript-section";
     section.className="conversation-first-section transcript-primary-section";
 
+    const dockedBar=document.createElement("div");
+    dockedBar.id="conversation-transcript-docked-bar";
+    dockedBar.className="primary-workspace-docked-bar transcript-workspace-docked-bar";
+
+    const dockedTitle=document.createElement("div");
+    dockedTitle.className="primary-workspace-docked-title";
+    dockedTitle.textContent="Conversation Transcript";
+
+    const openTranscript=document.createElement("button");
+    openTranscript.type="button";
+    openTranscript.className="primary-workspace-open-btn";
+    openTranscript.textContent="↗ Open Transcript";
+    openTranscript.addEventListener("click",()=>window.openVoiceTranscriptWindow?.());
+
+    dockedBar.append(dockedTitle,openTranscript);
+
     const placeholder=document.createElement("div");
     placeholder.id="conversation-transcript-placeholder";
-    placeholder.className="primary-workspace-placeholder";
+    placeholder.className="primary-workspace-placeholder transcript-workspace-placeholder";
 
     const text=document.createElement("span");
     text.textContent="Conversation Transcript is open in a movable window.";
@@ -26625,11 +26807,11 @@ function ensureTranscriptSection(){
     ret.type="button";
     ret.className="primary-workspace-return-btn";
     ret.textContent="↙ Return Transcript";
-    ret.addEventListener("click",()=>window.dockVoiceTranscript?.());
+    ret.addEventListener("click",()=>window.returnTranscriptWorkspace?.());
 
     placeholder.append(text,ret);
 
-    section.append(anchor,placeholder,conversation);
+    section.append(anchor,dockedBar,placeholder,conversation);
 
     const before=toolsView || toolsSection;
     if(before && before.parentElement===main)main.insertBefore(section,before);
@@ -26639,11 +26821,21 @@ function ensureTranscriptSection(){
 }
 
 function setTranscriptPlaceholderOpen(open){
+    const active=Boolean(open);
     const placeholder=document.getElementById("conversation-transcript-placeholder");
-    placeholder?.classList.toggle("is-active",Boolean(open));
+    const dockedBar=document.getElementById("conversation-transcript-docked-bar");
+    placeholder?.classList.toggle("is-active",active);
+    dockedBar?.classList.toggle("is-hidden",active);
     const section=document.getElementById("conversation-transcript-section");
-    section?.classList.toggle("transcript-is-floating",Boolean(open));
+    section?.classList.toggle("transcript-is-floating",active);
 }
+
+window.returnTranscriptWorkspace=function(){
+    if(typeof window.dockVoiceTranscript==="function"){
+        window.dockVoiceTranscript();
+    }
+    setTranscriptPlaceholderOpen(false);
+};
 
 function ensureTutorControlsView(){
     let view=document.getElementById("tutor-controls-view");
@@ -26763,6 +26955,7 @@ function openPrimaryWorkspace(name){
     }
 
     applyDefaultRect(name,shell);
+    fitPrimaryWorkspaceToContent(name,shell);
 }
 
 function returnPrimaryWorkspace(name){
