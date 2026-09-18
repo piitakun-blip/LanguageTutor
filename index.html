@@ -6600,6 +6600,230 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+
+<style id="workspace-v14-unified-primary-workspaces-css">
+/* =========================================================
+   v14 — Unified primary workspace model
+   Conversation • Tutor Controls • Language Tools
+   ========================================================= */
+
+.primary-workspace-view{
+    min-width:0;
+}
+.primary-workspace-docked-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:8px 10px;
+    margin-bottom:8px;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    background:#f8fafc;
+}
+.primary-workspace-docked-title{
+    color:#475569;
+    font-size:10px;
+    font-weight:900;
+}
+.primary-workspace-open-btn,
+.primary-workspace-return-btn{
+    min-height:32px;
+    padding:5px 9px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    background:#fff;
+    color:#475569;
+    font-size:9px;
+    font-weight:800;
+    cursor:pointer;
+}
+.primary-workspace-open-btn:hover,
+.primary-workspace-return-btn:hover{
+    border-color:#a5b4fc;
+    background:#eef2ff;
+    color:#4338ca;
+}
+
+.primary-workspace-placeholder{
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:11px 12px;
+    border:1px solid #c7d2fe;
+    border-radius:12px;
+    background:#eef2ff;
+    color:#4338ca;
+    font-size:10px;
+    font-weight:800;
+}
+.primary-workspace-placeholder.is-active{
+    display:flex;
+}
+
+.primary-workspace-window[hidden]{
+    display:none!important;
+}
+.primary-workspace-window{
+    position:fixed;
+    z-index:20500;
+    display:flex;
+    flex-direction:column;
+    min-width:380px;
+    min-height:260px;
+    max-width:calc(100vw - 16px);
+    max-height:calc(100vh - 16px);
+    border:1px solid #cbd5e1;
+    border-radius:15px;
+    background:#fff;
+    box-shadow:0 20px 55px rgba(15,23,42,.22);
+    overflow:hidden;
+    resize:both;
+}
+.primary-workspace-titlebar{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-height:48px;
+    padding:7px 8px 7px 13px;
+    border-bottom:1px solid #e2e8f0;
+    background:#f8fafc;
+    cursor:move;
+    user-select:none;
+    touch-action:none;
+}
+.primary-workspace-titlecopy{
+    flex:1 1 auto;
+    min-width:0;
+}
+.primary-workspace-window-title{
+    color:#334155;
+    font-size:12px;
+    font-weight:900;
+}
+.primary-workspace-window-subtitle{
+    margin-top:1px;
+    color:#94a3b8;
+    font-size:9px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+.primary-workspace-title-actions{
+    flex:0 0 auto;
+    display:flex;
+    gap:2px;
+}
+.primary-workspace-title-actions button{
+    width:32px;
+    min-width:32px;
+    height:32px;
+    min-height:32px;
+    padding:0;
+    border:0;
+    border-radius:8px;
+    background:transparent;
+    color:#64748b;
+    font-size:17px;
+    font-weight:800;
+}
+.primary-workspace-title-actions button:hover{
+    background:rgba(99,102,241,.08);
+    color:#4338ca;
+}
+.primary-workspace-window-body{
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    padding:12px;
+    background:#fff;
+}
+.primary-workspace-window.is-minimized{
+    height:48px!important;
+    min-height:48px!important;
+    resize:none!important;
+}
+.primary-workspace-window.is-minimized .primary-workspace-window-body{
+    display:none!important;
+}
+
+#tutor-controls-view.is-floating,
+#language-tools-view.is-floating{
+    height:100%;
+}
+#tutor-controls-view.is-floating .primary-workspace-docked-bar,
+#language-tools-view.is-floating .primary-workspace-docked-bar{
+    display:none!important;
+}
+
+/* The Tutor Controls wrapper should size naturally on-page. */
+#tutor-controls-view{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+#tutor-controls-content{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    min-height:0;
+}
+
+/* Language Tools stays visually identical whether docked or floating. */
+#language-tools-view{
+    min-width:0;
+}
+#language-tools-view > #conversation-language-tools-section{
+    width:100%;
+}
+#language-tools-view.is-floating > #conversation-language-tools-section{
+    height:100%;
+    overflow:auto;
+}
+#language-tools-view.is-floating > #conversation-language-tools-section[open]{
+    display:block;
+}
+
+/* Rename is neutral, not destructive. */
+.saved-transcript-rename-btn{
+    padding:6px 9px!important;
+    border:1px solid #cbd5e1!important;
+    border-radius:8px!important;
+    background:#fff!important;
+    color:#475569!important;
+    font-size:10px!important;
+    font-weight:800!important;
+}
+.saved-transcript-rename-btn:hover{
+    border-color:#a5b4fc!important;
+    background:#eef2ff!important;
+    color:#4338ca!important;
+}
+
+@media(max-width:640px){
+    .primary-workspace-window{
+        left:6px!important;
+        top:58px!important;
+        right:auto!important;
+        bottom:6px!important;
+        width:calc(100vw - 12px)!important;
+        height:calc(100dvh - 70px)!important;
+        min-width:0!important;
+        min-height:0!important;
+        max-width:none!important;
+        max-height:none!important;
+        resize:none!important;
+        border-radius:13px!important;
+    }
+    .primary-workspace-titlebar{
+        cursor:default;
+        touch-action:auto;
+    }
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -13971,19 +14195,35 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         win.style.bottom="auto";
         win.style.height=`${Math.min(680,availableHeight)}px`;
 
-        // Keep the window centered horizontally while leaving the settings
-        // panel fully visible above it.
-        const width=Math.min(
-            900,
-            Math.max(480,window.innerWidth-96)
+        // Wide desktop: use a true side-by-side workspace.
+        // Chat with Tutor controls stay visible on the LEFT; the floating
+        // Conversation occupies the RIGHT instead of covering Settings,
+        // Live transcription, or the German reply composer.
+        const gap=14;
+        const rightMargin=12;
+        const chat=document.getElementById("conversation-primary-section");
+        const chatRect=chat?.getBoundingClientRect?.();
+
+        const preferredLeft=Math.max(
+            Math.round(window.innerWidth*0.52),
+            chatRect ? Math.round(chatRect.left + Math.min(chatRect.width*0.50,520)) : 620
         );
-        const left=Math.max(
-            margin,
-            Math.round((window.innerWidth-width)/2)
+
+        const left=Math.min(
+            Math.max(preferredLeft,480),
+            Math.max(480,window.innerWidth-420-rightMargin)
         );
+
+        const width=Math.max(
+            400,
+            window.innerWidth-left-rightMargin
+        );
+
         win.style.width=`${width}px`;
         win.style.left=`${left}px`;
         win.style.right="auto";
+
+        // v14: primary workspaces float independently; no forced split layout.
     }
 
     function conversationViewIsFloating(){
@@ -14081,6 +14321,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             win.hidden=true;
             win.setAttribute("hidden","");
         }
+
+        // v14: no split-layout state to remove.
 
         repairSharedConversationLayout();
 
@@ -16443,6 +16685,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             language,
             languageName:cfg.name,
             mode:mode==="voice" ? "voice" : "text",
+            name:"",
             entries
         };
     }
@@ -16457,6 +16700,14 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             }
             return;
         }
+
+        const suggested=`${snapshot.languageName||"Language"} conversation`;
+        const chosen=window.prompt(
+            "Name this saved conversation (optional):",
+            suggested
+        );
+        if(chosen===null)return;
+        snapshot.name=String(chosen||"").trim();
 
         const items=readSavedTutorTranscripts();
         items.unshift(snapshot);
@@ -16475,6 +16726,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     function savedTranscriptLabel(item){
         const dt=new Date(item.savedAt);
         const when=Number.isNaN(dt.getTime()) ? "Saved transcript" : dt.toLocaleString();
+        const custom=String(item?.name||"").trim();
+        if(custom)return `${custom} • ${item.languageName||item.language||"Language"} • ${when}`;
         return `${item.languageName||item.language||"Language"} • Tutor • ${when}`;
     }
 
@@ -16529,7 +16782,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const head=document.createElement("div");
         head.className="saved-transcript-detail-head";
         const title=document.createElement("div");
-        title.innerHTML=`<strong>${escapeML(selected.languageName||selected.language||"Language")} ${selected.mode==="voice"?"Voice":"Text"} Tutor</strong><br><span>${escapeML(savedTranscriptLabel(selected))}</span>`;
+        const displayName=String(selected.name||"").trim();
+        title.innerHTML=`<strong>${escapeML(displayName || ((selected.languageName||selected.language||"Language")+" "+(selected.mode==="voice"?"Voice":"Text")+" Tutor"))}</strong><br><span>${escapeML(savedTranscriptLabel(selected))}</span>`;
         const actions=document.createElement("div");
         actions.className="saved-transcript-detail-actions";
 
@@ -16540,13 +16794,19 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         resume.title="Restore this saved transcript as the live Conversation and continue from its last turn";
         resume.addEventListener("click",()=>window.resumeSavedTutorConversation(selected.id));
 
+        const rename=document.createElement("button");
+        rename.type="button";
+        rename.className="saved-transcript-rename-btn";
+        rename.textContent="✎ Rename";
+        rename.addEventListener("click",()=>window.renameSavedTutorConversation(selected.id));
+
         const del=document.createElement("button");
         del.type="button";
         del.className="saved-transcript-delete-btn";
         del.textContent="Delete";
         del.addEventListener("click",()=>window.deleteSavedTutorTranscript(selected.id));
 
-        actions.append(resume,del);
+        actions.append(resume,rename,del);
         head.append(title,actions);
         body.appendChild(head);
 
@@ -16700,6 +16960,26 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const collapsed=win.classList.toggle("collapsed");
         const btn=document.getElementById("saved-transcripts-collapse-btn");
         if(btn)btn.textContent=collapsed ? "□" : "—";
+    };
+
+    window.renameSavedTutorConversation=function(id){
+        const items=readSavedTutorTranscripts();
+        const item=items.find(entry=>entry.id===id);
+        if(!item)return;
+
+        const current=String(item.name||"").trim();
+        const next=window.prompt(
+            "Rename this saved conversation:",
+            current || `${item.languageName||"Language"} conversation`
+        );
+        if(next===null)return;
+
+        item.name=String(next||"").trim();
+        writeSavedTutorTranscripts(items);
+
+        const list=document.getElementById("saved-transcript-list");
+        if(list)list.dataset.selectedId=id;
+        renderSavedTutorTranscripts(id);
     };
 
     window.deleteSavedTutorTranscript=function(id){
@@ -24141,8 +24421,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1314-floating-settings-clearance-marker">
-window.__languageTutorWorkspaceVersion="13.1.4-floating-settings-clearance";
+<script id="workspace-v1400-unified-primary-workspaces-marker">
+window.__languageTutorWorkspaceVersion="14.0.0-unified-movable-workspaces";
 </script>
 
 
@@ -25834,6 +26114,408 @@ function init(){
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init,{once:true});
 else init();
+})();
+</script>
+
+
+<script id="workspace-v14-unified-primary-workspaces">
+(()=>{
+"use strict";
+
+const STORAGE_KEY="languagetutor_primary_workspace_rects_v14";
+
+const registry={
+    tutor:{
+        label:"Tutor Controls",
+        subtitle:"Settings, voice controls, live status, and reply composer",
+        viewId:"tutor-controls-view",
+        shellId:"tutor-controls-window",
+        bodyId:"tutor-controls-window-body",
+        anchorId:"tutor-controls-home-anchor",
+        placeholderId:"tutor-controls-placeholder"
+    },
+    tools:{
+        label:"Language Tools",
+        subtitle:"Grammar Tools, Study & Review, Translation & Manual Input",
+        viewId:"language-tools-view",
+        shellId:"language-tools-window",
+        bodyId:"language-tools-window-body",
+        anchorId:"language-tools-home-anchor",
+        placeholderId:"language-tools-placeholder"
+    }
+};
+
+function loadRects(){
+    try{
+        const parsed=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");
+        return parsed && typeof parsed==="object" ? parsed : {};
+    }catch(_){return {}}
+}
+function saveRect(name,shell){
+    if(!shell || shell.hidden)return;
+    const r=shell.getBoundingClientRect();
+    const all=loadRects();
+    all[name]={
+        left:r.left,top:r.top,width:r.width,height:r.height
+    };
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify(all))}catch(_){}
+}
+function clamp(n,min,max){
+    return Math.max(min,Math.min(max,n));
+}
+function applyDefaultRect(name,shell){
+    if(!shell || window.innerWidth<=640)return;
+
+    const saved=loadRects()[name];
+    const margin=12;
+
+    let width=name==="tutor" ? 540 : 720;
+    let height=name==="tutor" ? 720 : 760;
+    let left=name==="tutor" ? 24 : Math.max(300,window.innerWidth-width-28);
+    let top=68;
+
+    if(saved){
+        width=Number(saved.width)||width;
+        height=Number(saved.height)||height;
+        left=Number(saved.left)||left;
+        top=Number(saved.top)||top;
+    }
+
+    width=clamp(width,380,window.innerWidth-margin*2);
+    height=clamp(height,260,window.innerHeight-margin*2);
+    left=clamp(left,margin,Math.max(margin,window.innerWidth-width-margin));
+    top=clamp(top,margin,Math.max(margin,window.innerHeight-height-margin));
+
+    shell.style.left=`${left}px`;
+    shell.style.top=`${top}px`;
+    shell.style.right="auto";
+    shell.style.bottom="auto";
+    shell.style.width=`${width}px`;
+    shell.style.height=`${height}px`;
+}
+
+function ensureShell(name){
+    const spec=registry[name];
+    if(!spec)return null;
+
+    let shell=document.getElementById(spec.shellId);
+    if(shell)return shell;
+
+    shell=document.createElement("section");
+    shell.id=spec.shellId;
+    shell.className="primary-workspace-window";
+    shell.hidden=true;
+    shell.setAttribute("aria-label",spec.label);
+
+    const titlebar=document.createElement("div");
+    titlebar.className="primary-workspace-titlebar";
+    titlebar.dataset.primaryWorkspaceTitlebar=name;
+
+    const copy=document.createElement("div");
+    copy.className="primary-workspace-titlecopy";
+
+    const title=document.createElement("div");
+    title.className="primary-workspace-window-title";
+    title.textContent=spec.label;
+
+    const subtitle=document.createElement("div");
+    subtitle.className="primary-workspace-window-subtitle";
+    subtitle.textContent=spec.subtitle;
+
+    copy.append(title,subtitle);
+
+    const actions=document.createElement("div");
+    actions.className="primary-workspace-title-actions";
+
+    const min=document.createElement("button");
+    min.type="button";
+    min.textContent="—";
+    min.title=`Minimize ${spec.label}`;
+    min.addEventListener("click",event=>{
+        event.stopPropagation();
+        togglePrimaryWorkspaceMinimize(name);
+    });
+
+    const close=document.createElement("button");
+    close.type="button";
+    close.textContent="×";
+    close.title=`Return ${spec.label} to page`;
+    close.addEventListener("click",event=>{
+        event.stopPropagation();
+        returnPrimaryWorkspace(name);
+    });
+
+    actions.append(min,close);
+    titlebar.append(copy,actions);
+
+    const body=document.createElement("div");
+    body.id=spec.bodyId;
+    body.className="primary-workspace-window-body";
+
+    shell.append(titlebar,body);
+    document.body.appendChild(shell);
+
+    bindShellDrag(name,shell,titlebar);
+
+    if("ResizeObserver" in window){
+        const ro=new ResizeObserver(()=>{
+            if(!shell.hidden && !shell.classList.contains("is-minimized")){
+                saveRect(name,shell);
+            }
+        });
+        ro.observe(shell);
+    }
+
+    return shell;
+}
+
+function createDockedBar(name){
+    const spec=registry[name];
+    const bar=document.createElement("div");
+    bar.className="primary-workspace-docked-bar";
+
+    const title=document.createElement("div");
+    title.className="primary-workspace-docked-title";
+    title.textContent=spec.label;
+
+    const open=document.createElement("button");
+    open.type="button";
+    open.className="primary-workspace-open-btn";
+    open.textContent=`↗ Open ${spec.label}`;
+    open.addEventListener("click",()=>openPrimaryWorkspace(name));
+
+    bar.append(title,open);
+    return bar;
+}
+
+function createPlaceholder(name){
+    const spec=registry[name];
+    const placeholder=document.createElement("div");
+    placeholder.id=spec.placeholderId;
+    placeholder.className="primary-workspace-placeholder";
+
+    const text=document.createElement("span");
+    text.textContent=`${spec.label} are open in a movable window.`;
+
+    const ret=document.createElement("button");
+    ret.type="button";
+    ret.className="primary-workspace-return-btn";
+    ret.textContent=`↙ Return ${spec.label}`;
+    ret.addEventListener("click",()=>returnPrimaryWorkspace(name));
+
+    placeholder.append(text,ret);
+    return placeholder;
+}
+
+function ensureTutorControlsView(){
+    let view=document.getElementById("tutor-controls-view");
+    if(view)return view;
+
+    const mode=document.getElementById("chat-voice-mode");
+    const conversation=document.getElementById("conversation-view");
+    const conversationAnchor=document.getElementById("conversation-view-home-anchor");
+    if(!mode || !conversation)return null;
+
+    const anchor=document.createElement("div");
+    anchor.id="tutor-controls-home-anchor";
+    anchor.hidden=true;
+    mode.insertBefore(anchor,mode.firstChild);
+
+    const placeholder=createPlaceholder("tutor");
+    mode.insertBefore(placeholder,anchor.nextSibling);
+
+    view=document.createElement("section");
+    view.id="tutor-controls-view";
+    view.className="primary-workspace-view";
+
+    const bar=createDockedBar("tutor");
+    const content=document.createElement("div");
+    content.id="tutor-controls-content";
+
+    // Tutor Controls are everything in Chat with Tutor except the Conversation
+    // view itself. Grouping them creates one coherent settings/input workspace.
+    [...mode.children].forEach(child=>{
+        if(
+            child===anchor ||
+            child===placeholder ||
+            child===conversation ||
+            child===conversationAnchor ||
+            child===view
+        )return;
+        content.appendChild(child);
+    });
+
+    view.append(bar,content);
+    mode.insertBefore(view,conversationAnchor||conversation);
+
+    return view;
+}
+
+function ensureLanguageToolsView(){
+    let view=document.getElementById("language-tools-view");
+    if(view)return view;
+
+    const tools=document.getElementById("conversation-language-tools-section");
+    if(!tools || !tools.parentElement)return null;
+
+    const parent=tools.parentElement;
+    const anchor=document.createElement("div");
+    anchor.id="language-tools-home-anchor";
+    anchor.hidden=true;
+    parent.insertBefore(anchor,tools);
+
+    const placeholder=createPlaceholder("tools");
+    parent.insertBefore(placeholder,tools);
+
+    view=document.createElement("section");
+    view.id="language-tools-view";
+    view.className="primary-workspace-view";
+
+    const bar=createDockedBar("tools");
+    view.append(bar,tools);
+    parent.insertBefore(view,placeholder);
+
+    return view;
+}
+
+function isFloating(name){
+    const spec=registry[name];
+    const view=document.getElementById(spec.viewId);
+    const body=document.getElementById(spec.bodyId);
+    const shell=document.getElementById(spec.shellId);
+    return Boolean(view && body && shell && !shell.hidden && view.parentElement===body);
+}
+
+function openPrimaryWorkspace(name){
+    const spec=registry[name];
+    if(!spec)return;
+
+    const view=name==="tutor"
+        ? ensureTutorControlsView()
+        : ensureLanguageToolsView();
+    const shell=ensureShell(name);
+    const body=document.getElementById(spec.bodyId);
+    const placeholder=document.getElementById(spec.placeholderId);
+
+    if(!view || !shell || !body)return;
+
+    body.replaceChildren(view);
+    view.classList.add("is-floating");
+
+    if(name==="tools"){
+        const tools=document.getElementById("conversation-language-tools-section");
+        if(tools?.tagName==="DETAILS")tools.open=true;
+    }
+
+    shell.hidden=false;
+    shell.removeAttribute("hidden");
+    shell.classList.remove("is-minimized");
+    placeholder?.classList.add("is-active");
+
+    applyDefaultRect(name,shell);
+}
+
+function returnPrimaryWorkspace(name){
+    const spec=registry[name];
+    if(!spec)return;
+
+    const view=document.getElementById(spec.viewId);
+    const anchor=document.getElementById(spec.anchorId);
+    const shell=document.getElementById(spec.shellId);
+    const placeholder=document.getElementById(spec.placeholderId);
+
+    if(view && anchor?.parentElement){
+        anchor.parentElement.insertBefore(view,anchor.nextSibling);
+        view.classList.remove("is-floating");
+    }
+
+    if(shell){
+        saveRect(name,shell);
+        shell.hidden=true;
+        shell.setAttribute("hidden","");
+        shell.classList.remove("is-minimized");
+    }
+
+    placeholder?.classList.remove("is-active");
+}
+
+function togglePrimaryWorkspaceMinimize(name){
+    const spec=registry[name];
+    const shell=document.getElementById(spec.shellId);
+    if(!shell || shell.hidden)return;
+    const minimized=shell.classList.toggle("is-minimized");
+    const button=shell.querySelector(".primary-workspace-title-actions button");
+    if(button)button.textContent=minimized ? "□" : "—";
+    if(!minimized)applyDefaultRect(name,shell);
+}
+
+function bindShellDrag(name,shell,titlebar){
+    if(titlebar.dataset.dragReady==="1")return;
+    titlebar.dataset.dragReady="1";
+
+    let drag=null;
+
+    titlebar.addEventListener("pointerdown",event=>{
+        if(window.innerWidth<=640)return;
+        if(event.target.closest("button"))return;
+
+        const rect=shell.getBoundingClientRect();
+        drag={
+            pointerId:event.pointerId,
+            offsetX:event.clientX-rect.left,
+            offsetY:event.clientY-rect.top
+        };
+        try{titlebar.setPointerCapture(event.pointerId)}catch(_){}
+    });
+
+    titlebar.addEventListener("pointermove",event=>{
+        if(!drag || drag.pointerId!==event.pointerId)return;
+
+        const maxLeft=Math.max(8,window.innerWidth-shell.offsetWidth-8);
+        const maxTop=Math.max(8,window.innerHeight-shell.offsetHeight-8);
+
+        shell.style.left=`${clamp(event.clientX-drag.offsetX,8,maxLeft)}px`;
+        shell.style.top=`${clamp(event.clientY-drag.offsetY,8,maxTop)}px`;
+        shell.style.right="auto";
+        shell.style.bottom="auto";
+    });
+
+    const end=event=>{
+        if(!drag || drag.pointerId!==event.pointerId)return;
+        drag=null;
+        saveRect(name,shell);
+    };
+    titlebar.addEventListener("pointerup",end);
+    titlebar.addEventListener("pointercancel",end);
+}
+
+window.openTutorControlsWorkspace=()=>openPrimaryWorkspace("tutor");
+window.returnTutorControlsWorkspace=()=>returnPrimaryWorkspace("tutor");
+window.openLanguageToolsWorkspace=()=>openPrimaryWorkspace("tools");
+window.returnLanguageToolsWorkspace=()=>returnPrimaryWorkspace("tools");
+window.togglePrimaryWorkspaceMinimize=togglePrimaryWorkspaceMinimize;
+
+function init(){
+    ensureTutorControlsView();
+    ensureLanguageToolsView();
+    ensureShell("tutor");
+    ensureShell("tools");
+
+    // v14 supersedes the old automatic split-layout workaround. Conversation
+    // still floats normally; Tutor Controls can now float independently too.
+    document.body.classList.remove("conversation-split-open");
+}
+
+function boot(){
+    // conversation-first-layout-init also runs at DOMContentLoaded. A queued
+    // init ensures its Language Tools section exists before v14 wraps it.
+    setTimeout(init,0);
+}
+if(document.readyState==="loading"){
+    document.addEventListener("DOMContentLoaded",boot,{once:true});
+}else{
+    boot();
+}
 })();
 </script>
 
