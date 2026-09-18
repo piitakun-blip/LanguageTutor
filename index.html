@@ -6563,6 +6563,31 @@ body.conversation-first-layout #mobile-right-column{
 }
 </style>
 
+
+<style id="workspace-v1312-open-conversation-fix-css">
+/* v13.1.2 — defensive visibility/size rules for the shared Conversation view. */
+#voice-transcript-window:not([hidden]){
+    display:flex!important;
+    flex-direction:column!important;
+}
+#voice-transcript-window:not([hidden]) > #voice-transcript-window-body{
+    display:flex!important;
+    flex:1 1 auto!important;
+    min-height:0!important;
+    width:100%!important;
+    height:auto!important;
+}
+#voice-transcript-window:not([hidden]) #conversation-view{
+    display:flex!important;
+    flex:1 1 auto!important;
+    min-height:0!important;
+    width:100%!important;
+    height:100%!important;
+    visibility:visible!important;
+    opacity:1!important;
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -13926,14 +13951,44 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         if(!win || !body || !view)return;
 
         ensureVoiceTranscriptHomeAnchor();
-        body.replaceChildren(view);
-        win.hidden=false;
+
+        // v13.1.2: make the floating shell authoritative before moving the
+        // shared Conversation view. This avoids a blank shell when older
+        // workspace state/CSS left the panel hidden or detached.
+        if(win.parentElement!==document.body)document.body.appendChild(win);
+
         win.classList.remove("collapsed");
+        win.hidden=false;
+        win.removeAttribute("hidden");
+        win.style.removeProperty("display");
+
+        body.hidden=false;
+        body.removeAttribute("hidden");
+        body.replaceChildren(view);
+
+        view.hidden=false;
+        view.removeAttribute("hidden");
+        view.classList.add("is-floating");
 
         const btn=document.getElementById("voice-transcript-collapse-btn");
         if(btn)btn.textContent="—";
 
+        // Re-render from the authoritative live history after the DOM move.
+        // This is especially important after Continue Conversation restored
+        // a saved transcript.
+        if(typeof renderVoiceTutorTranscript==="function")renderVoiceTutorTranscript();
+
         updateConversationViewState();
+
+        // Re-mount the shared selected-line toolbar after the move.
+        requestAnimationFrame(()=>{
+            try{window.refreshVoiceTranscriptWindow?.()}catch(_){}
+            try{
+                const log=document.getElementById("voice-chat-messages-log");
+                if(log)log.scrollTop=log.scrollHeight;
+            }catch(_){}
+        });
+
         if(typeof window.workspaceMarkOpen==="function")window.workspaceMarkOpen("transcript",true);
     };
 
@@ -13944,10 +13999,26 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
 
         if(view && anchor?.parentElement){
             anchor.parentElement.insertBefore(view,anchor.nextSibling);
+            view.hidden=false;
+            view.removeAttribute("hidden");
+            view.classList.remove("is-floating");
         }
-        if(win)win.hidden=true;
+
+        if(win){
+            win.hidden=true;
+            win.setAttribute("hidden","");
+        }
+
+        // Re-render in the page location too, so Open/Return never depends
+        // on stale DOM from the previous host.
+        if(typeof renderVoiceTutorTranscript==="function")renderVoiceTutorTranscript();
 
         updateConversationViewState();
+
+        requestAnimationFrame(()=>{
+            try{window.refreshVoiceTranscriptWindow?.()}catch(_){}
+        });
+
         if(typeof window.workspaceMarkOpen==="function")window.workspaceMarkOpen("transcript",false);
     };
 
@@ -24143,8 +24214,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1311-reply-card-translate-marker">
-window.__languageTutorWorkspaceVersion="13.1.1-reply-card-translate";
+<script id="workspace-v1312-open-conversation-fix-marker">
+window.__languageTutorWorkspaceVersion="13.1.2-open-conversation-fix";
 </script>
 
 
