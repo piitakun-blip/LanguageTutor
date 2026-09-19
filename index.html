@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script id="workspace-v1431-startup-guard">
+document.documentElement.classList.add("language-tutor-booting");
+window.__languageTutorBootFailsafe=setTimeout(()=>document.documentElement.classList.remove("language-tutor-booting"),3000);
+</script>
+<style id="workspace-v1431-startup-guard-css">
+html.language-tutor-booting body{visibility:hidden!important}
+html.language-tutor-booting{background:#f8fafc!important}
+</style>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="application-name" content="LanguageTutor">
@@ -7356,6 +7365,58 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
 @media(max-width:640px){:root{--ws-pad:8px;--ws-bar:42px;--ws-title:12px}}
 </style>
 
+
+<style id="workspace-v1431-polish-css">
+/* v14.3.1: one floating-state strip, shared typography, no legacy flash. */
+:root{--lt-ui-font-size:13px;--lt-ui-small:11px;--lt-ui-title-weight:700}
+
+/* Transcript: while floating, show only its status/return strip. */
+#conversation-transcript-section.transcript-is-floating > #conversation-transcript-docked-bar{display:none!important}
+#conversation-transcript-section.transcript-is-floating > #conversation-transcript-placeholder{
+ display:flex!important;order:0!important;margin:0!important;min-height:44px!important;align-items:center!important;justify-content:space-between!important;gap:12px!important
+}
+/* Ask Tutor: while its placeholder is active, hide the normal Open/Return bar. */
+#ask-tutor-section:has(.ask-workspace-placeholder.is-active) > .unified-workspace-bar{display:none!important}
+#ask-tutor-section .ask-workspace-placeholder.is-active{margin:0!important}
+
+/* One typography system for docked workspace bars and floating title bars. */
+#tutor-controls-section .primary-workspace-docked-title,
+#conversation-transcript-section .primary-workspace-docked-title,
+#ask-tutor-section .unified-workspace-title,
+#language-tools-view .primary-workspace-docked-title,
+.primary-workspace-window-title,
+#conversation-view.conversation-floating .conversation-window-title,
+#language-coach-window .language-coach-title{
+ font-family:inherit!important;font-size:var(--lt-ui-font-size)!important;line-height:1.2!important;font-weight:var(--lt-ui-title-weight)!important;letter-spacing:0!important
+}
+.primary-workspace-window-subtitle,
+#conversation-view.conversation-floating .conversation-window-subtitle,
+#language-coach-window .language-coach-subtitle,
+.primary-workspace-placeholder,
+.ask-workspace-placeholder{
+ font-family:inherit!important;font-size:var(--lt-ui-small)!important;line-height:1.35!important;font-weight:500!important;letter-spacing:0!important
+}
+.primary-workspace-titlebar,
+#conversation-view.conversation-floating .conversation-window-header,
+#language-coach-window .language-coach-header{font-family:inherit!important}
+.primary-workspace-open-btn,.primary-workspace-return-btn,.ask-workspace-state{
+ font-family:inherit!important;font-size:11px!important;font-weight:700!important
+}
+</style>
+<style id="workspace-v1432-transcript-first-start-css">
+#conversation-transcript-section:not(.transcript-is-floating) > #conversation-view{
+    display:flex!important;
+    visibility:visible!important;
+    opacity:1!important;
+}
+#conversation-transcript-section:not(.transcript-is-floating) #voice-chat-messages-log{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    min-height:70px!important;
+}
+</style>
+
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -8729,9 +8790,6 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
     </main>
 
     <!-- Page Footer -->
-    <footer class="bg-slate-800 text-slate-400 py-6 border-t border-slate-700 text-center text-xs">
-        <p>&copy; 2026 LanguageTutor App. Built for seamless browser-only execution without API keys.</p>
-    </footer>
 
     <!-- Interactive Javascript Logic -->
     <script>
@@ -14941,6 +14999,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
     }
 
     function renderVoiceTutorTranscript(){
+        repairSharedConversationLayout();
         const log=document.getElementById("voice-chat-messages-log");
         if(!log)return;
         log.innerHTML="";
@@ -15568,6 +15627,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         voiceTutorState.phase="speaking";
         voiceTutorStatus("Tutor is speaking…","speaking");
         setVoiceMicIndicator(false);
+        const interruptBtn=document.getElementById("voice-listen-now-btn");
+        if(interruptBtn){
+            interruptBtn.classList.remove("hidden");
+            interruptBtn.textContent="🎙 Speak now";
+            interruptBtn.onclick=()=>window.interruptVoiceTutorAndListen("target");
+        }
         window.speechSynthesis.cancel();
 
         const utterance=new SpeechSynthesisUtterance(clean);
@@ -15590,13 +15655,48 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         if(matched)utterance.voice=matched;
 
         return new Promise((resolve,reject)=>{
-            utterance.onend=()=>{
+            let finished=false;
+            let began=false;
+            let quietTicks=0;
+            const hardLimitMs=Math.min(45000,Math.max(10000,3500+(clean.length*75)));
+
+            const finish=(error)=>{
+                if(finished)return;
+                finished=true;
+                clearTimeout(watchdog);
+                clearInterval(stateProbe);
                 voiceTutorState.speaking=false;
-                resolve();
+                if(error)reject(error);
+                else resolve();
             };
+
+            // Do not rely only on onend/onerror. Safari/Chrome can occasionally
+            // lose those events. Once speech has actually begun, two consecutive
+            // probes reporting neither speaking nor pending means the turn ended.
+            const stateProbe=setInterval(()=>{
+                if(finished)return;
+                const synth=window.speechSynthesis;
+                if(synth.speaking || synth.pending){
+                    began=true;
+                    quietTicks=0;
+                    return;
+                }
+                if(began && ++quietTicks>=2)finish();
+            },350);
+
+            const watchdog=setTimeout(()=>{
+                if(finished)return;
+                try{window.speechSynthesis.cancel()}catch(_){}
+                console.warn("Tutor speech watchdog released a stalled speech-synthesis turn.");
+                finish();
+            },hardLimitMs);
+
+            utterance.onstart=()=>{began=true;quietTicks=0;};
+            utterance.onend=()=>finish();
             utterance.onerror=event=>{
-                voiceTutorState.speaking=false;
-                reject(new Error(event?.error||"Speech playback failed."));
+                const code=String(event?.error||"");
+                if(code==="canceled" || code==="interrupted")finish();
+                else finish(new Error(code||"Speech playback failed."));
             };
             window.speechSynthesis.speak(utterance);
         });
@@ -15728,7 +15828,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         // Tutor speech completion / recognition onend from silently restarting
         // the live conversation microphone behind Coach dictation.
         const coachWindow=document.getElementById("language-coach-window");
-        if(coachWindow && !coachWindow.hidden){
+        const coachActuallyListening=Boolean(
+            coachWindow && !coachWindow.hidden &&
+            typeof askState!=="undefined" &&
+            askState?.voice?.active
+        );
+        if(coachActuallyListening){
             voiceTutorState.coachMicPaused=true;
             return;
         }
@@ -15738,10 +15843,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const requestedMode=inputMode==="english" ? "english" : "target";
         const requestedLocale=requestedMode==="english" ? "en-US" : langConfig().locale;
 
-        let rec=voiceTutorState.recognition;
-        if(!rec || voiceTutorState.inputMode!==requestedMode || rec.lang!==requestedLocale){
-            rec=createVoiceRecognition(requestedMode);
-        }
+        // v14.3.4: SpeechRecognition instances are one-turn resources here.
+        // After rec.stop() captures a learner turn, some browsers will not
+        // reliably restart that same object. Always create a fresh recognizer
+        // for the next learner turn instead of reusing the stopped instance.
+        destroyVoiceRecognition();
+        const rec=createVoiceRecognition(requestedMode);
         if(!rec)return;
 
         voiceTutorState.manualRestart=manual;
@@ -15806,6 +15913,22 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         setTimeout(()=>resumeVoiceRecognition(true,"english"),120);
     };
     window.askVoiceTutorInEnglish=window.replyToVoiceTutorInEnglish;
+
+    // v14.3.3: learner can take the microphone back immediately if browser TTS
+    // is stuck or if they simply want to interrupt the Tutor.
+    window.interruptVoiceTutorAndListen=function(inputMode="target"){
+        if(!voiceTutorState.active)return;
+        try{window.speechSynthesis?.cancel();}catch(e){}
+        voiceTutorState.speaking=false;
+        voiceTutorState.phase="idle";
+        clearVoiceSilenceTimer();
+        destroyVoiceRecognition();
+        setVoiceMicIndicator(false);
+        voiceTutorState.resumeMicAfterTurn=true;
+        voiceTutorState.micSession=true;
+        voiceTutorStatus(inputMode==="english" ? "Listening for your English question…" : `Listening in ${langConfig().name}…`,"listening");
+        setTimeout(()=>resumeVoiceRecognition(true,inputMode==="english" ? "english" : "target"),100);
+    };
 
     function englishTutorIntent(text){
         const raw=String(text||"").trim();
@@ -15878,11 +16001,19 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             renderVoiceLiveTurn();
             await speakVoiceTutorText(result.reply,result.replyLanguage);
 
+            const listenBtn=document.getElementById("voice-listen-now-btn");
+            if(listenBtn){
+                listenBtn.textContent="🎙 Listen now";
+                listenBtn.onclick=()=>resumeVoiceRecognition(true,"target");
+                listenBtn.classList.add("hidden");
+            }
+
             if(voiceTutorState.active){
                 clearVoiceSilenceTimer();
                 if(voiceTutorState.resumeMicAfterTurn && voiceTutorState.micSession){
-                    voiceTutorState.phase="listening";
-                    setTimeout(()=>resumeVoiceRecognition(false,"target"),250);
+                    voiceTutorState.phase="idle";
+                    voiceTutorStatus(`Your turn — listening in ${langConfig().name}…`,"listening");
+                    setTimeout(()=>resumeVoiceRecognition(true,"target"),180);
                 }else{
                     voiceTutorState.phase="idle";
                     document.getElementById("voice-start-btn")?.classList.remove("hidden");
@@ -15972,6 +16103,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
 
         saveVoiceTutorSettings();
+
+        // v14.3.2: make the docked Transcript usable on the very first start.
+        repairSharedConversationLayout();
+        renderVoiceTutorTranscript();
+        window.normalizeLanguageTutorWorkspaces?.();
+
         voiceTutorState.active=true;
         voiceTutorState.micSession=true;
         voiceTutorState.resumeMicAfterTurn=true;
@@ -24941,8 +25078,8 @@ window.__languageTutorWorkspaceVersion="10.8";
 </script>
 
 
-<script id="workspace-v1430-unified-workspaces-marker">
-window.__languageTutorWorkspaceVersion="14.3.0-unified-workspaces-ask-tutor";
+<script id="workspace-v1434-fresh-mic-every-turn-marker">
+window.__languageTutorWorkspaceVersion="14.3.4-fresh-mic-every-turn";
 </script>
 
 
@@ -25660,7 +25797,14 @@ function speakAskTutorAnswer(answer){
         if(exact||english)utterance.voice=exact||english;
     }catch(_){}
 
+    let finished=false;
+    const spokenText=String(answer||"");
+    let watchdog=null;
+
     const finish=()=>{
+        if(finished)return;
+        finished=true;
+        if(watchdog)clearTimeout(watchdog);
         askState.voice.speaking=false;
         if(askState.voice.active){
             setStatus(askState.voice.mode==="target" ? `Listening in ${currentCfg().name}…` : `Listening for your mixed-language question…`);
@@ -25669,6 +25813,14 @@ function speakAskTutorAnswer(answer){
             setStatus("");
         }
     };
+
+    watchdog=setTimeout(()=>{
+        if(finished)return;
+        try{window.speechSynthesis.cancel()}catch(_){}
+        console.warn("Ask Tutor speech watchdog released a stalled speech-synthesis turn.");
+        finish();
+    },Math.min(90000,Math.max(15000,7000+(spokenText.length*95))));
+
     utterance.onend=finish;
     utterance.onerror=finish;
     window.speechSynthesis.speak(utterance);
@@ -27289,8 +27441,13 @@ function observeAsk(){
   w.dataset.v143Observed="1";
   new MutationObserver(syncAsk).observe(w,{attributes:true,attributeFilter:["hidden","style","class"]});
 }
+function revealModernUI(){
+  document.documentElement.classList.remove("language-tutor-booting");
+  if(window.__languageTutorBootFailsafe){clearTimeout(window.__languageTutorBootFailsafe);window.__languageTutorBootFailsafe=null;}
+}
 function normalize(){
   decoupleTutor(); ensureAskSection(); order(); syncTranscript(); syncAsk(); observeAsk();
+  revealModernUI();
 }
 window.normalizeLanguageTutorWorkspaces=normalize;
 
