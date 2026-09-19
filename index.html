@@ -4684,63 +4684,6 @@ body.conversation-first-layout #mobile-right-column{
 .analysis-parser-detail strong{font-size:12px;color:#1e293b}
 .analysis-parser-detail-meta{margin-top:3px;font-size:9px;color:#64748b;line-height:1.45}
 
-/* ---------- Sentence diagram ---------- */
-.analysis-diagram-tree,
-.analysis-diagram-tree ul{
-    position:relative;
-    display:flex;
-    justify-content:center;
-    gap:12px;
-    padding-top:16px;
-    padding-left:0;
-    margin:0;
-    list-style:none;
-}
-.analysis-diagram-tree{padding-top:4px;overflow:auto;justify-content:flex-start}
-.analysis-diagram-tree li{
-    position:relative;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    min-width:max-content;
-}
-.analysis-diagram-tree li::before{
-    content:"";
-    position:absolute;
-    top:0;
-    left:50%;
-    width:1px;
-    height:16px;
-    background:#cbd5e1;
-}
-.analysis-diagram-tree>li::before{display:none}
-.analysis-diagram-tree ul::before{
-    content:"";
-    position:absolute;
-    top:8px;
-    left:12%;
-    right:12%;
-    height:1px;
-    background:#cbd5e1;
-}
-.analysis-diagram-node{
-    min-width:105px;
-    max-width:190px;
-    padding:8px 9px;
-    border:1px solid #cbd5e1;
-    border-radius:10px;
-    background:#fff;
-    text-align:center;
-    box-shadow:0 1px 2px rgba(15,23,42,.05);
-}
-.analysis-diagram-node.case-nom{background:#dbeafe;border-color:#bfdbfe}
-.analysis-diagram-node.case-acc{background:#c7f5d8;border-color:#9ee8bb}
-.analysis-diagram-node.case-dat{background:#fef9c3;border-color:#fef08a}
-.analysis-diagram-node.case-gen{background:#f3e8ff;border-color:#e9d5ff}
-.analysis-diagram-node.case-multi{background:#ffedd5;border-color:#fed7aa}
-.analysis-diagram-node strong{display:block;font-size:11px;color:#1e293b}
-.analysis-diagram-node span{display:block;margin-top:3px;font-size:8px;line-height:1.25;color:#64748b}
-
 /* ---------- Coach speech controls ---------- */
 .language-coach-input-tools{
     display:grid;
@@ -5001,35 +4944,22 @@ body.conversation-first-layout #mobile-right-column{
 }
 
 /* Case remains the fill/background cue. */
-.analysis-parser-tiles .grammar-tile.case-nom,
-.analysis-diagram-node.case-nom{background:#dbeafe!important;border-color:#bfdbfe!important}
-.analysis-parser-tiles .grammar-tile.case-acc,
-.analysis-diagram-node.case-acc{background:#c7f5d8!important;border-color:#9ee8bb!important}
-.analysis-parser-tiles .grammar-tile.case-dat,
-.analysis-diagram-node.case-dat{background:#fef9c3!important;border-color:#fef08a!important}
-.analysis-parser-tiles .grammar-tile.case-gen,
-.analysis-diagram-node.case-gen{background:#f3e8ff!important;border-color:#e9d5ff!important}
-.analysis-parser-tiles .grammar-tile.case-multi,
-.analysis-diagram-node.case-multi{background:#ffedd5!important;border-color:#fed7aa!important}
-.analysis-parser-tiles .grammar-tile.case-none,
-.analysis-diagram-node.case-none{background:#f3f4f6!important;border-color:#e5e7eb!important}
+.analysis-parser-tiles .grammar-tile.case-nom{background:#dbeafe!important;border-color:#bfdbfe!important}
+.analysis-parser-tiles .grammar-tile.case-acc{background:#c7f5d8!important;border-color:#9ee8bb!important}
+.analysis-parser-tiles .grammar-tile.case-dat{background:#fef9c3!important;border-color:#fef08a!important}
+.analysis-parser-tiles .grammar-tile.case-gen{background:#f3e8ff!important;border-color:#e9d5ff!important}
+.analysis-parser-tiles .grammar-tile.case-multi{background:#ffedd5!important;border-color:#fed7aa!important}
+.analysis-parser-tiles .grammar-tile.case-none{background:#f3f4f6!important;border-color:#e5e7eb!important}
 
-/* Gender remains the text cue — both Parser and Diagram use exactly the same classes. */
+/* Gender remains the text cue. */
 .analysis-parser-phrase.gender-masc,
-.analysis-diagram-node strong.gender-masc,
 .analysis-parser-key-group .gender-masc{color:#2563eb!important}
 .analysis-parser-phrase.gender-fem,
-.analysis-diagram-node strong.gender-fem,
 .analysis-parser-key-group .gender-fem{color:#db2777!important}
 .analysis-parser-phrase.gender-neut,
-.analysis-diagram-node strong.gender-neut,
 .analysis-parser-key-group .gender-neut{color:#0f9f8f!important}
 .analysis-parser-phrase.gender-plural,
-.analysis-diagram-node strong.gender-plural,
 .analysis-parser-key-group .gender-plural{color:#7c3aed!important}
-
-/* Don't let the older generic diagram phrase rule overwrite gender. */
-.analysis-diagram-node strong.gender-none{color:#1e293b}
 
 @media(max-width:640px){
     .analysis-parser-legend-toggle{min-height:36px}
@@ -5041,45 +4971,6 @@ body.conversation-first-layout #mobile-right-column{
 #language-coach-status:not([hidden]){display:block!important;min-height:18px}
 #language-coach-results:not(:empty){display:flex!important;visibility:visible!important;opacity:1!important}
 </style>
-
-<style id="parser-diagram-toggle-v79">
-.analysis-parser-view-switch{
-    display:inline-flex;
-    gap:2px;
-    padding:2px;
-    margin:0 8px 8px 0;
-    border:1px solid #cbd5e1;
-    border-radius:9px;
-    background:#f8fafc;
-}
-.analysis-parser-view-switch button{
-    min-height:28px;
-    padding:4px 9px;
-    border:0;
-    border-radius:7px;
-    background:transparent;
-    color:#64748b;
-    font-size:9px;
-    font-weight:800;
-    cursor:pointer;
-}
-.analysis-parser-view-switch button.active{
-    background:#fff;
-    color:#1e293b;
-    box-shadow:0 1px 2px rgba(15,23,42,.08);
-}
-.analysis-parser-diagram-host{
-    width:100%;
-    overflow:auto;
-    padding:4px 0 8px;
-}
-.analysis-parser-diagram-host.hidden,
-.analysis-parser-tiles.hidden{display:none!important}
-@media(max-width:640px){
-    .analysis-parser-view-switch button{min-height:36px}
-}
-</style>
-
 
 <style id="workspace-v8-simplified-window-model-css">
 @media (min-width:641px){
@@ -5100,55 +4991,6 @@ body.conversation-first-layout #mobile-right-column{
 </style>
 
 
-<style id="workspace-v82-analysis-fixes-css">
-.analysis-diagram-refining-badge{
-    display:inline-flex;
-    align-items:center;
-    min-height:20px;
-    margin:0 0 7px 0;
-    padding:2px 7px;
-    border:1px solid #e2e8f0;
-    border-radius:999px;
-    background:#f8fafc;
-    color:#64748b;
-    font-size:8px;
-    font-weight:800;
-    letter-spacing:.04em;
-}
-</style>
-
-<style id="workspace-v84-ai-only-diagram-css">
-.analysis-diagram-unavailable{
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-    gap:6px;
-    padding:14px;
-    border:1px solid #e2e8f0;
-    border-radius:12px;
-    background:#f8fafc;
-    color:#475569;
-    font-size:10px;
-    line-height:1.45;
-}
-.analysis-diagram-unavailable strong{
-    color:#334155;
-    font-size:11px;
-}
-.analysis-diagram-unavailable button{
-    margin-top:2px;
-    min-height:30px;
-    padding:5px 10px;
-    border:1px solid #cbd5e1;
-    border-radius:8px;
-    background:#fff;
-    color:#334155;
-    font-size:9px;
-    font-weight:800;
-    cursor:pointer;
-}
-</style>
-
 <style id="workspace-v85-multisentence-css">
 .analysis-parser-tiles{
     display:flex;
@@ -5156,12 +4998,7 @@ body.conversation-first-layout #mobile-right-column{
     gap:10px;
 }
 .analysis-parser-sentence-group,
-.analysis-diagram-sentence-group{
-    border:1px solid #e2e8f0;
-    border-radius:10px;
-    background:#fff;
-    overflow:hidden;
-}
+
 .analysis-parser-sentence-heading{
     display:flex;
     align-items:baseline;
@@ -5189,14 +5026,8 @@ body.conversation-first-layout #mobile-right-column{
     gap:7px;
     padding:9px;
 }
-.analysis-diagram-sentence-groups{
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-}
-.analysis-diagram-sentence-group>.analysis-diagram-tree{
-    margin:10px;
-}
+
+
 </style>
 
 <style id="workspace-v86-ai-only-parse-css">
@@ -5366,7 +5197,7 @@ body.conversation-first-layout #mobile-right-column{
 </style>
 
 <style id="workspace-v97-universal-dependency-css">
-.analysis-universal-dependency-diagram{padding:12px 10px 10px;overflow-x:auto}
+
 .analysis-dependency-core,
 .analysis-dependency-core ul{list-style:none;margin:0;padding:0}
 .analysis-dependency-core{display:flex;justify-content:center;min-width:max-content}
@@ -5378,12 +5209,12 @@ body.conversation-first-layout #mobile-right-column{
 .analysis-dependency-children>.analysis-dependency-item:last-child:before{right:50%}
 .analysis-dependency-children>.analysis-dependency-item:only-child:before{left:50%;right:50%}
 .analysis-dependency-children>.analysis-dependency-item:after{content:"";position:absolute;top:-12px;left:50%;height:12px;border-left:1.5px solid #94a3b8}
-.analysis-diagram-node{position:relative;z-index:1}
-.analysis-diagram-discourse{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-top:16px;padding:9px 10px;border-top:1px dashed #cbd5e1;background:#f8fafc;border-radius:8px}
-.analysis-diagram-discourse-label{color:#94a3b8;font-size:7px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
-.analysis-diagram-discourse-node{background:#fff!important;border-style:dashed!important}
+
+
+
+
 @media(max-width:640px){
- .analysis-universal-dependency-diagram{padding-left:4px;padding-right:4px}
+ 
  .analysis-dependency-item{padding-left:4px;padding-right:4px}
 }
 </style>
@@ -9385,11 +9216,6 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
             "schwarz","weiß","warm","kalt","lieb","toll","schlecht","einfach","schwierig"
         ];
 
-        function looksLikeAdjective(word) {
-            const w = word.toLowerCase();
-            if (commonAdjectiveStems.some(stem => w === stem || w.startsWith(stem))) return true;
-            return /^[a-zäöüß]{3,}(e|en|er|es|em)$/i.test(w);
-        }
 
         // Common German Prepositions to bundle into Prepositional Phrases
         const germanPrepositions = ["mit", "zu", "von", "nach", "bei", "aus", "seit", "für", "durch", "gegen", "ohne", "um", "an", "auf", "in", "über", "unter", "vor", "hinter", "neben", "zwischen"];
@@ -9499,28 +9325,6 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
         // Clean outputs on view change
         let currentSelectedPhrase = ""; // Track phrase being viewed in details panel
 
-        function clearOutputs() {
-            document.getElementById("tiles-container").innerHTML = `<span class="text-slate-400 text-sm italic">Tiles will be generated here once you translate or enter a phrase above...</span>`;
-            document.getElementById("back-translation-output").innerHTML = "Re-translation check will be calculated here...";
-            document.getElementById("verify-now-btn").classList.add("hidden");
-
-            // Clear both input consoles' output fields
-            document.getElementById("target-text").value = "";
-            document.getElementById("german-english-translation").value = "";
-            document.getElementById("target-text").value = "";
-
-            // Hide AI Coach card
-            const coachBox = document.getElementById("ai-coach-box");
-            if (coachBox) {
-                coachBox.classList.add("hidden");
-                document.getElementById("ai-coach-note").innerText = "";
-            }
-
-            currentGermanSentence = "";
-            currentSelectedPhrase = "";
-            document.getElementById("save-vocab-btn").classList.add("hidden");
-            closeDetailCard();
-        }
 
         // English to German Router
         function normalizeSentencePresentation(text, lang = "en") {
@@ -9841,12 +9645,6 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
             return helpingVerbForms.has(word.toLowerCase());
         }
 
-        function looksLikeVerb(word) {
-            const w = word.toLowerCase();
-            if (knownVerbForms.has(w) || isHelpingVerb(w)) return true;
-            if (/^[a-zäöüß]{3,}(en|eln|ern)$/i.test(w)) return true; // likely infinitive
-            return false;
-        }
 
         const possessiveDeterminerPattern = /^(mein|dein|sein|ihr|unser|euer)(e|en|em|er|es)?$/i;
 
@@ -9858,54 +9656,6 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
             return "";
         }
 
-        function resolvedPhraseEntry(words, baseEntry) {
-            if (!words || !words.length) return baseEntry;
-
-            const det = words[0].toLowerCase();
-            const noun = phraseLastNoun(words);
-            const nounGender = germanNounGender[noun] || "";
-            const hasAdjEn = words.slice(1, -1).some(w => /en$/i.test(w));
-
-            // Determiners with unambiguous endings.
-            if (/^(dies|mein|dein|sein|ihr|unser|euer).*em$/i.test(det)) {
-                return {
-                    case: "Dative",
-                    gender: nounGender || "Masculine / Neuter",
-                    explanation: "The determiner ending -em marks Dative masculine or neuter. The noun determines the gender."
-                };
-            }
-            if (/^(dies|mein|dein|sein|ihr|unser|euer).*en$/i.test(det)) {
-                if (nounGender === "Plural") {
-                    return { case: "Dative", gender: "Plural", explanation: "The -en determiner form with a plural noun marks Dative plural." };
-                }
-                if (nounGender === "Masculine") {
-                    return { case: "Accusative", gender: "Masculine", explanation: "The -en determiner form before a masculine singular noun marks Accusative masculine." };
-                }
-            }
-            if (/^(dies|mein|dein|sein|ihr|unser|euer).*er$/i.test(det) && nounGender === "Feminine" && hasAdjEn) {
-                return {
-                    case: "Dative",
-                    gender: "Feminine",
-                    explanation: "This noun phrase is Dative feminine. The determiner form and adjective ending -en support the Dative reading."
-                };
-            }
-
-            // ein-word / possessive zero-ending forms: use noun gender, then syntax may resolve case.
-            if (/^(ein|mein|dein|sein|ihr|unser|euer)$/i.test(det)) {
-                if (nounGender === "Neuter") {
-                    return { case: "Nominative | Accusative", gender: "Neuter", explanation: "This zero-ending determiner with a neuter noun can be Nominative or Accusative; sentence role resolves the case." };
-                }
-                if (nounGender === "Masculine") {
-                    return { case: "Nominative", gender: "Masculine", explanation: "This zero-ending determiner with a masculine noun marks Nominative masculine." };
-                }
-            }
-
-            if (/^(eine|meine|deine|seine|ihre|unsere|eure|diese)$/i.test(det) && nounGender === "Feminine") {
-                return { case: "Nominative | Accusative", gender: "Feminine", explanation: "This feminine determiner form can be Nominative or Accusative; sentence role resolves the case." };
-            }
-
-            return baseEntry;
-        }
 
         // Parses and intelligently groups German words into horizontal phrase cards
         // Grammar parser v2 — boundary-first and regression-tested.
@@ -10565,27 +10315,6 @@ Before returning, verify that the explanation itself is English.`;
         }
 
         // Render standard offline fallback explanatory text
-        function renderStaticExplanation(keyWord, entry, container) {
-            if (entry) {
-                container.innerHTML = `
-                    <div class="space-y-1">
-                        <span class="block font-bold text-indigo-700 text-[10px] uppercase flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5 shrink-0 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.967 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
-                            Case-Signaling Core: "${keyWord}"
-                        </span>
-                        <p class="bg-indigo-50 text-indigo-900 border border-indigo-100 p-2.5 rounded-lg font-medium leading-relaxed">${entry.explanation}</p>
-                    </div>`;
-            } else {
-                container.innerHTML = `
-                    <div class="space-y-1">
-                        <span class="block font-bold text-slate-500 text-[10px] uppercase flex items-center gap-1">
-                            <svg class="w-3.5 h-3.5 shrink-0 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.967 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
-                            General Structure
-                        </span>
-                        <p class="bg-slate-50 text-slate-600 border border-slate-200 p-2.5 rounded-lg font-medium leading-relaxed">This phrase contains general German vocabulary words (nouns, verbs, or adjectives). The nouns remain grammatically stable in form, though masculine/neuter singular elements receive Genitive (-s) endings, and plurals receive Dative (-n) changes.</p>
-                    </div>`;
-            }
-        }
 
         // Comprehensive offline dictionary of exact simple translations for core words and prepositions
         const offlineWordTranslations = {
@@ -12716,9 +12445,6 @@ Plain text only.`;
         }
 
         // Compatibility with any older inline handler that may remain cached.
-        function checkCaseGuess(choice){
-            checkLanguageQuizChoice(choice);
-        }
 
         function quizNext(isGotIt){
             if(isGotIt) quizScore++;
@@ -12830,10 +12556,6 @@ Plain text only.`;
             };
         }
 
-        async function translateSingleWordToGerman(raw) {
-            const result = await detectAndTranslateWordToGerman(raw);
-            return result.text;
-        }
 
         function renderVerbConjugation(result, source="Local") {
             const resultBox = document.getElementById("verb-tool-result");
@@ -13686,21 +13408,6 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             }
         }
 
-        function toggleGrammarAccordion(id, button) {
-            const body = document.getElementById(id);
-            if (!body) return;
-            const opening = body.classList.contains("hidden");
-            body.classList.toggle("hidden", !opening);
-            if (button) {
-                button.setAttribute("aria-expanded", opening ? "true" : "false");
-                const arrow = button.querySelector(".grammar-accordion-arrow");
-                if (arrow) arrow.textContent = opening ? "⌃" : "⌄";
-            }
-            if (opening) {
-                if (id === "grammar-prep-section") renderPrepositionExplorer();
-                if (id === "grammar-case-builder-section") updateCaseBuilder();
-            }
-        }
 
         function initGrammarTools() {
             const builderPrep = document.getElementById("builder-prep");
@@ -13727,13 +13434,6 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             }
         }
 
-        function setCheatTool(name) {
-            document.querySelectorAll(".cheat-tool-panel").forEach(el => el.classList.add("hidden"));
-            document.querySelectorAll(".cheat-tool-tab").forEach(el => el.classList.toggle("active", el.dataset.cheatTool === name));
-            document.getElementById("cheat-tool-"+name)?.classList.remove("hidden");
-            if (name === "prep") renderPrepositionExplorer();
-            if (name === "builder") updateCaseBuilder();
-        }
 
         function articleSummary(caseName) {
             const d = caseArticles.definite[caseName];
@@ -13861,62 +13561,6 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             genderTarget.classList.add(grammarGenderClass(gender));
         }
 
-        function inferBuilderGender(nounText) {
-            const raw = String(nounText || "").trim();
-            if (!raw) return {gender:"", confidence:"none"};
-
-            const clean = raw
-                .toLowerCase()
-                .replace(/^[^a-zäöüß]+|[^a-zäöüß]+$/g, "");
-
-            // Reuse the app's existing noun-gender lexicon first.
-            if (germanNounGender[clean]) {
-                return {gender:germanNounGender[clean].toLowerCase(), confidence:"known"};
-            }
-
-            // A few useful plural forms / high-frequency nouns not always present in the parser lexicon.
-            const builderGenderFallback = {
-                "hotel":"neuter",
-                "restaurant":"neuter",
-                "haus":"neuter",
-                "zimmer":"neuter",
-                "auto":"neuter",
-                "kind":"neuter",
-                "buch":"neuter",
-                "mann":"masculine",
-                "freund":"masculine",
-                "arzt":"masculine",
-                "bahnhof":"masculine",
-                "park":"masculine",
-                "urlaub":"masculine",
-                "frau":"feminine",
-                "freundin":"feminine",
-                "schule":"feminine",
-                "stadt":"feminine",
-                "arbeit":"feminine",
-                "tasche":"feminine"
-            };
-            if (builderGenderFallback[clean]) {
-                return {gender:builderGenderFallback[clean], confidence:"known"};
-            }
-
-                    const knownPlural = new Set([
-                "kinder","männer","frauen","freunde","freundinnen","eltern","häuser",
-                "bücher","autos","hunde","katzen","lehrer","lehrerinnen","schüler","schülerinnen",
-                "hausaufgaben"
-            ]);
-            if (knownPlural.has(clean)) return {gender:"plural", confidence:"known"};
-
-            // High-confidence noun-ending hints. These are aids, not guarantees.
-            if (/(ung|heit|keit|schaft|ion|tät|ik|ur|ei)$/.test(clean)) {
-                return {gender:"feminine", confidence:"pattern"};
-            }
-            if (/(chen|lein|ment|um)$/.test(clean)) {
-                return {gender:"neuter", confidence:"pattern"};
-            }
-
-            return {gender:"", confidence:"unknown"};
-        }
 
         function toggleBuilderGenderOverride() {
             const wrap = document.getElementById("builder-gender-override-wrap");
@@ -13943,30 +13587,6 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
             articleFinderInputTimer = setTimeout(() => updateArticleFinder(), 700);
         }
 
-        async function resolveGermanNounInput(raw) {
-            const text = String(raw || "").trim();
-            if (!text) return {noun:"", translated:false, detectedLanguage:""};
-
-            try {
-                const result = await detectAndTranslateWordToGerman(text);
-                const translatedText = String(result.text || text).trim();
-
-                // Keep the first translation candidate and format it as a German noun.
-                const first = translatedText.split(/[;,/]/)[0].trim();
-                const noun = first
-                    ? first.charAt(0).toUpperCase() + first.slice(1)
-                    : text;
-
-                return {
-                    noun,
-                    translated:Boolean(result.translated),
-                    detectedLanguage:result.detectedLanguage || ""
-                };
-            } catch (e) {
-                console.warn("Noun detection/translation failed:", e);
-                return {noun:text, translated:false, detectedLanguage:""};
-            }
-        }
 
         async function updateCaseBuilder() {
 
@@ -14138,12 +13758,6 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         }
 
         // Handle chat input keypress (Enter triggers send)
-        function handleChatKeyPress(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendChatMessage();
-            }
-        }
 
         // Send a message and fetch response from Gemini Socratic Tutor
         async function sendChatMessage() {
@@ -18329,12 +17943,6 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         return items;
     }
 
-    function setDetailField(labelId,valueId,label,value){
-        const labelEl=document.getElementById(labelId);
-        const valueEl=document.getElementById(valueId);
-        if(labelEl) labelEl.textContent=label;
-        if(valueEl) valueEl.textContent=value || "—";
-    }
 
     function japaneseLocalFunction(item){
         const particle=String(item?.text||"");
@@ -18615,20 +18223,6 @@ Plain text only.`;
         return items;
     }
 
-    function spanishRoleVisualClass(item){
-        if(currentStudyLanguage!=="es") return "";
-        const role=String(item?.role||"").toLowerCase();
-        const label=String(item?.label||item?.function||item?.syntacticFunction||"").toLowerCase();
-
-        // Prefer explicit syntactic function when the parser provides it.
-        if(/\bsubject\b/.test(label)) return "es-role-subject";
-        if(/direct[- ]object|\bdirect object\b|\bdo\b/.test(label)) return "es-role-direct-object";
-        if(/indirect[- ]object|\bindirect object\b|\bio\b/.test(label)) return "es-role-indirect-object";
-
-        // Fall back to part-of-speech roles.
-        if(role==="verb" || role==="auxiliary") return "es-role-verb";
-        return "";
-    }
 
     function spanishGenderVisualClass(item){
         if(currentStudyLanguage!=="es") return "";
@@ -19983,10 +19577,6 @@ Requirements:
             .trim();
     }
 
-    async function translateJapaneseBuilderFragment(text){
-        if(!String(text||"").trim())return "";
-        return cleanJapaneseTranslationFragment(await googleTranslateApiCall(String(text).trim(),"en","ja"));
-    }
 
     window.buildJapaneseSentence=async function(button){
         const out=document.getElementById("ja-builder-result");
@@ -21449,7 +21039,6 @@ Current work: ${context||"No sentence has been entered yet."}`;
         translation:"",
         localItems:null,
         grammar:null,
-        diagram:null,
         why:"",
         grammarGateKey:"",
         grammarGateChoice:""
@@ -21499,7 +21088,6 @@ Current work: ${context||"No sentence has been entered yet."}`;
         state.translation="";
         state.localItems=null;
         state.grammar=null;
-        state.diagram=null;
         state.why="";
         state.grammarGateKey="";
         state.grammarGateChoice="";
@@ -21631,52 +21219,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         return "gender-none";
     }
 
-    function workbenchLocalChunks(){
-        if(state.languageCode==="de" && typeof parseGermanPhrases==="function"){
-            return parseGermanPhrases(state.sentence).map(ch=>({
-                words:Array.isArray(ch.words)?ch.words.map(String):String(ch.text||"").split(/\s+/).filter(Boolean),
-                type:String(ch.type||"word"),
-                label:String(ch.label||"Word"),
-                gender:String(ch.gender||""),
-                note:""
-            }));
-        }
 
-        if(typeof localParseForLanguage==="function"){
-            return localParseForLanguage(state.languageCode,state.sentence).map(item=>({
-                words:[String(item.text||"")],
-                type:String(item.role||item.type||"word"),
-                label:String(item.label||item.role||"Word"),
-                gender:String(item.gender||""),
-                note:[
-                    item.reading ? `Reading: ${item.reading}` : "",
-                    item.romaji ? `Romaji: ${item.romaji}` : "",
-                    item.grammar ? String(item.grammar) : "",
-                    item.meaning ? String(item.meaning) : ""
-                ].filter(Boolean).join(" • ")
-            })).filter(x=>x.words[0]);
-        }
-        return [];
-    }
-
-    function workbenchFallbackDiagram(chunks){
-        const usable=chunks.filter(ch=>ch.type!=="punctuation" && ch.words?.length);
-        if(!usable.length)return {nodes:[]};
-
-        let rootIndex=usable.findIndex(ch=>/verb|modal|auxiliary|predicate/i.test(`${ch.type} ${ch.label}`));
-        if(rootIndex<0)rootIndex=0;
-
-        const nodes=usable.map((ch,index)=>({
-            id:`n${index}`,
-            text:ch.words.join(" "),
-            role:String(ch.label||ch.type||""),
-            parent:index===rootIndex ? "" : `n${rootIndex}`,
-            relation:index===rootIndex ? "root" : String(ch.type||"dependent"),
-            label:String(ch.label||""),
-            gender:String(ch.gender||"")
-        }));
-        return {nodes};
-    }
 
     function resolveWorkbenchAIConfig(){
         // Use the same provider/key storage as the rest of LanguageTutor.
@@ -21733,16 +21276,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
     }
 
     // Retained for legacy/non-Workbench utilities only. The Analysis Workbench
-    // Parse and Diagram views never use this as a fallback.
-    function workbenchLocalResult(){
-        const localChunks=workbenchLocalChunks();
-        return {
-            source:"LOCAL",
-            reason:"AI_PENDING",
-            chunks:localChunks,
-            diagram:workbenchFallbackDiagram(localChunks)
-        };
-    }
+    // Parse never uses a local fallback.
 
     function withWorkbenchTimeout(promise,ms=WORKBENCH_AI_TIMEOUT_MS){
         let timer;
@@ -21758,8 +21292,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         if(workbenchAIParseInflight.has(key))return workbenchAIParseInflight.get(key);
 
         const languageName=cfg().name;
-        // Keep Parse deliberately small. Diagram data is NOT requested here; asking
-        // for both in one response made ordinary parsing slower and more fragile.
+        // Keep Parse deliberately focused on learner-facing grammatical analysis.
         const prompt=`You are the grammar parser inside LanguageTutor.
 Language: ${languageName}
 Selected utterance: "${state.sentence}"
@@ -21830,8 +21363,6 @@ Rules:
                 source:"AI",
                 chunks,
                 sentences,
-                // Diagram is requested separately and is AI-only.
-                diagram:null
             };
             workbenchAIParseCache.set(key,result);
             return result;
@@ -21849,15 +21380,13 @@ Rules:
         if(ai.available && workbenchAIParseCache.has(key)){
             const cached=workbenchAIParseCache.get(key);
             state.grammar=cached;
-            state.diagram=null;
-            return cached;
+                return cached;
         }
 
         if(!ai.available)throw new Error("AI is required for grammar parsing.");
 
         const result=await requestWorkbenchAIParse();
         state.grammar=result;
-        state.diagram=null;
         return result;
     }
 
@@ -21893,20 +21422,7 @@ Rules:
             legend.classList.toggle("hidden",!opening);
             legendToggle.textContent=opening ? "Hide color key" : "Show color key";
         });
-        const viewSwitch=document.createElement("div");
-        viewSwitch.className="analysis-parser-view-switch";
-
-        const tilesViewButton=document.createElement("button");
-        tilesViewButton.type="button";
-        tilesViewButton.className="active";
-        tilesViewButton.textContent="Tiles";
-
-        const diagramViewButton=document.createElement("button");
-        diagramViewButton.type="button";
-        diagramViewButton.textContent="Diagram";
-
-        viewSwitch.append(tilesViewButton,diagramViewButton);
-        card.append(viewSwitch,legendToggle,legend);
+        card.append(legendToggle,legend);
 
         const tiles=document.createElement("div");
         tiles.className="analysis-parser-tiles";
@@ -22038,97 +21554,6 @@ Rules:
 
         card.append(tiles,detail);
 
-        const diagramHost=document.createElement("div");
-        diagramHost.className="analysis-parser-diagram-host hidden";
-        card.appendChild(diagramHost);
-
-        const showTiles=()=>{
-            tiles.classList.remove("hidden");
-            detail.classList.add("hidden");
-            diagramHost.classList.add("hidden");
-            tilesViewButton.classList.add("active");
-            diagramViewButton.classList.remove("active");
-        };
-
-        const showDiagram=async()=>{
-            const beforeKey=workbenchParseKey();
-            try{if(!(await ensureWorkbenchGrammarGate()))return;}
-            catch(e){
-                diagramHost.classList.remove("hidden");
-                diagramHost.innerHTML="<div class=\"analysis-diagram-unavailable\"><strong>Grammar check unavailable.</strong><span>AI could not verify the sentence before diagramming. Try again.</span></div>";
-                return;
-            }
-            if(beforeKey!==workbenchParseKey()){
-                window.analysisWorkbenchFullParse(
-                    [...document.querySelectorAll("#analysis-workbench-window .analysis-workbench-primary-tools button")]
-                    .find(btn=>btn.textContent.trim()==="Parse")||null
-                );
-                return;
-            }
-            tiles.classList.add("hidden");
-            detail.classList.add("hidden");
-            diagramHost.classList.remove("hidden");
-            tilesViewButton.classList.remove("active");
-            diagramViewButton.classList.add("active");
-
-            if(diagramHost.dataset.loaded==="1")return;
-
-            const ai=resolveWorkbenchAIConfig();
-            diagramHost.replaceChildren();
-
-            if(!ai.available){
-                const unavailable=document.createElement("div");
-                unavailable.className="analysis-diagram-unavailable";
-                unavailable.innerHTML="<strong>Sentence diagram unavailable.</strong><span>AI is required for a reliable diagram. Add or select an AI API key in Settings, then try again.</span>";
-                diagramHost.appendChild(unavailable);
-                diagramHost.dataset.loaded="1";
-                return;
-            }
-
-            const loading=document.createElement("div");
-            loading.className="analysis-diagram-refining-badge";
-            loading.textContent=`✨ ${ai.providerName||"AI"} • BUILDING DIAGRAM…`;
-            diagramHost.appendChild(loading);
-
-            try{
-                const diagram=await getWorkbenchDiagramData(parsed);
-                const tree=buildDiagramSentenceGroups(diagram);
-                if(!tree)throw new Error("AI did not return a usable diagram.");
-
-                diagramHost.replaceChildren();
-                const done=document.createElement("div");
-                done.className="analysis-diagram-refining-badge";
-                done.textContent=`✨ ${ai.providerName||"AI"}`;
-                diagramHost.append(done,tree);
-                diagramHost.dataset.loaded="1";
-            }catch(e){
-                diagramHost.replaceChildren();
-                const unavailable=document.createElement("div");
-                unavailable.className="analysis-diagram-unavailable";
-
-                const title=document.createElement("strong");
-                title.textContent="Sentence diagram unavailable.";
-
-                const note=document.createElement("span");
-                note.textContent="AI could not produce a reliable diagram right now. Try Diagram again.";
-
-                const retry=document.createElement("button");
-                retry.type="button";
-                retry.textContent="Try again";
-                retry.addEventListener("click",()=>{
-                    diagramHost.dataset.loaded="";
-                    showDiagram();
-                });
-
-                unavailable.append(title,note,retry);
-                diagramHost.appendChild(unavailable);
-                // Deliberately do not cache failure, so retry can make a fresh request.
-                diagramHost.dataset.loaded="";
-            }
-        };
-
-        tilesViewButton.addEventListener("click",showTiles);
-        diagramViewButton.addEventListener("click",showDiagram);
     }
 
 
@@ -22158,7 +21583,6 @@ Rules:
         if(!clean)return;
         state.sentence=clean;
         state.grammar=null;
-        state.diagram=null;
         state.grammarGateKey=grammarGateKey();
         state.grammarGateChoice="corrected";
         const sentenceEl=document.getElementById("analysis-workbench-sentence");
@@ -22234,11 +21658,11 @@ Rules:
             });
 
             if(gate.status==="correction"){
-                // A clear grammar error must be corrected before Parse/Diagram.
-                // Do not offer an escape hatch that knowingly diagrams malformed input.
+                // A clear grammar error must be corrected before Parse.
+                // Do not offer an escape hatch that knowingly parses malformed input.
                 const required=document.createElement("div");
                 required.className="analysis-grammar-gate-required";
-                required.textContent="Correction required before Parse or Diagram.";
+                required.textContent="Correction required before Parse.";
                 card.appendChild(required);
                 actions.appendChild(use);
             }else{
@@ -22354,285 +21778,6 @@ Rules:
             console.warn("Workbench AI parse unavailable.",e);
             renderUnavailable("AI could not produce a reliable grammar analysis right now. Try again.");
             status("");
-        }finally{
-            if(button){button.disabled=false;button.textContent=old;}
-        }
-    };
-
-    const workbenchDiagramCache=new Map();
-    const workbenchDiagramInflight=new Map();
-
-    async function getWorkbenchDiagramData(parsed){
-        const key=workbenchParseKey();
-        if(workbenchDiagramCache.has(key))return workbenchDiagramCache.get(key);
-        if(workbenchDiagramInflight.has(key))return workbenchDiagramInflight.get(key);
-
-        const ai=resolveWorkbenchAIConfig();
-        if(!ai.available){
-            throw new Error("AI is required for sentence diagrams.");
-        }
-
-        const languageName=cfg().name;
-        const parseSummary=(parsed?.chunks||[]).map(ch=>({
-            text:ch.words.join(" "),
-            type:ch.type,
-            label:ch.label,
-            case:ch.case,
-            gender:ch.gender
-        }));
-
-        const prompt=`You are building pedagogically accurate sentence diagrams for a language learner.
-Language: ${languageName}
-Selected utterance: "${state.sentence}"
-Existing parse: ${JSON.stringify(parseSummary)}
-
-The selected utterance may contain ONE OR MORE sentences. Sentence segmentation is REQUIRED. You MUST return the sentences[] envelope even when there is only one sentence. Build a SEPARATE syntactic tree for each independent sentence. Never connect independent sentences into one tree.
-
-Return JSON only:
-{"sentences":[
- {"text":"exact complete sentence","nodes":[
-  {"id":"s1n1","text":"exact word or phrase","role":"short learner-friendly grammatical role","parent":"parent node id or empty string","relation":"subject|object|indirect_object|complement|modifier|clause|conjunction|particle|discourse|other","case":"Nominative|Accusative|Dative|Genitive|Ambiguous|","gender":"Masculine|Feminine|Neuter|Plural|","feature":"language-specific feature when useful"}
- ]}
-]}
-
-Diagram rules:
-- Each sentence must have its own node namespace and coherent acyclic tree.
-- Represent CLAUSE STRUCTURE within that sentence, not merely a flat list of parser tiles.
-- Multiple clauses that belong to ONE sentence remain connected according to their syntax.
-- Independent sentences must NEVER be connected to each other.
-- Identify each clause and its finite verb before assigning dependencies.
-- For German subordinate clauses, do not mistake final word order for dependency structure.
-- With modal constructions such as "ausleihen durfte", identify the finite modal (durfte) and its infinitive complement (ausleihen).
-- Attach the subject to the finite verb of its clause.
-- Attach direct/indirect objects and reflexive/dative pronouns to the lexical verb they belong to when linguistically appropriate.
-- Attach subordinating conjunctions such as "dass" to the subordinate clause / finite predicate rather than to an unrelated word.
-- Do not force grammatical case onto fixed/elliptical expressions or forms of address.
-- Do not invent visible words omitted in conversational ellipsis.
-- Preserve case and gender metadata from the existing parse when correct.
-- The parent field is the actual syntactic/dependency parent. Never use visual word order as a substitute for dependency.
-- relation must describe the dependency to the parent using the controlled relation vocabulary in the schema.
-- Mark greetings, interjections, vocatives, parentheticals, and conversational add-ons such as German "danke" as relation "discourse" when they are outside the core clause.
-- Use feature for useful language-specific information that is not well represented by case/gender:
-  German: separable/modal/subordinate-clause information when useful.
-  Spanish: clitic/person/number/agreement information when useful.
-  Japanese: particle/topic/subject/object/direction/location information when useful.
-- For Japanese, particles may remain attached to the phrase they mark; describe the particle/function in feature rather than forcing a European case label.
-- Do not invent case or gender categories for languages/forms where they are not appropriate.
-- Keep role labels concise and learner-friendly.
-- JSON only.`;
-
-        const task=(async()=>{
-            const data=await withWorkbenchTimeout(callAIJson(prompt),15000);
-            const rawSentences=Array.isArray(data?.sentences)?data.sentences:[];
-            if(!rawSentences.length){
-                throw new Error("AI did not return the required sentence-grouped diagrams.");
-            }
-
-            const sentences=rawSentences.map((sentence,sentenceIndex)=>{
-                const rawNodes=Array.isArray(sentence?.nodes)?sentence.nodes:[];
-                const normalized=rawNodes.map((n,i)=>({
-                    id:String(n.id||`s${sentenceIndex+1}n${i+1}`),
-                    text:String(n.text||"").trim(),
-                    role:String(n.role||"").trim(),
-                    parent:String(n.parent||"").trim(),
-                    relation:String(n.relation||"other").trim().toLowerCase(),
-                    case:String(n.case||n.label||"").trim(),
-                    gender:String(n.gender||"").trim(),
-                    feature:String(n.feature||"").trim()
-                })).filter(n=>n.text);
-
-                const ids=new Set(normalized.map(n=>n.id));
-                normalized.forEach(n=>{
-                    if(n.parent && !ids.has(n.parent))n.parent="";
-                });
-                return {text:String(sentence?.text||"").trim(),nodes:normalized};
-            }).filter(sentence=>sentence.nodes.length);
-
-            if(!sentences.length)throw new Error("AI returned no usable sentence diagrams.");
-            const result={sentences};
-            workbenchDiagramCache.set(key,result);
-            return result;
-        })();
-
-        workbenchDiagramInflight.set(key,task);
-        try{return await task}
-        finally{workbenchDiagramInflight.delete(key)}
-    }
-
-
-    function buildDiagramSentenceGroups(diagram){
-        const sentences=Array.isArray(diagram?.sentences) && diagram.sentences.length
-            ? diagram.sentences
-            : (Array.isArray(diagram?.nodes) ? [{text:state.sentence,nodes:diagram.nodes}] : []);
-        if(!sentences.length)return null;
-
-        const wrapper=document.createElement("div");
-        wrapper.className="analysis-diagram-sentence-groups";
-
-        sentences.forEach((sentence,index)=>{
-            const group=document.createElement("section");
-            group.className="analysis-diagram-sentence-group";
-
-            const heading=document.createElement("div");
-            heading.className="analysis-parser-sentence-heading";
-            const number=document.createElement("span");
-            number.className="analysis-parser-sentence-number";
-            number.textContent=sentences.length>1 ? `Sentence ${index+1}` : "Sentence";
-            const sentenceText=document.createElement("strong");
-            sentenceText.textContent=sentence.text||"";
-            heading.append(number,sentenceText);
-
-            const tree=buildDiagramTree({nodes:sentence.nodes||[]});
-            if(tree){
-                group.append(heading,tree);
-                wrapper.appendChild(group);
-            }
-        });
-
-        return wrapper.childElementCount ? wrapper : null;
-    }
-
-    function buildDiagramTree(diagram){
-        const nodes=Array.isArray(diagram?.nodes)?diagram.nodes:[];
-        if(!nodes.length)return null;
-
-        const map=new Map();
-        nodes.forEach((node,index)=>{
-            const id=String(node?.id||`n${index}`);
-            map.set(id,{
-                ...node,
-                id,
-                relation:String(node?.relation||"other").toLowerCase(),
-                case:String(node?.case||node?.label||""),
-                feature:String(node?.feature||""),
-                children:[]
-            });
-        });
-
-        const coreRoots=[];
-        const discourse=[];
-        map.forEach(node=>{
-            if(node.relation==="discourse"){
-                discourse.push(node);
-                return;
-            }
-            const parentId=String(node.parent||"");
-            if(parentId && parentId!==node.id && map.has(parentId) && map.get(parentId).relation!=="discourse"){
-                map.get(parentId).children.push(node);
-            }else{
-                coreRoots.push(node);
-            }
-        });
-
-        const renderNode=(node,seen=new Set())=>{
-            if(seen.has(node.id))return null;
-            const nextSeen=new Set(seen); nextSeen.add(node.id);
-
-            const li=document.createElement("li");
-            li.className="analysis-dependency-item";
-            li.dataset.relation=node.relation||"other";
-
-            const box=document.createElement("div");
-            box.className=`analysis-diagram-node ${workbenchCaseClass(node.case)} ${workbenchGenderClass(node.gender)}`;
-
-            const phrase=document.createElement("strong");
-            phrase.className=workbenchGenderClass(node.gender);
-            phrase.textContent=String(node.text||"");
-
-            const meta=document.createElement("span");
-            meta.textContent=[node.role,node.relation,node.case,node.feature].filter(Boolean).join(" • ");
-            box.append(phrase,meta);
-            li.appendChild(box);
-
-            const children=node.children.map(child=>renderNode(child,nextSeen)).filter(Boolean);
-            if(children.length){
-                const ul=document.createElement("ul");
-                ul.className="analysis-dependency-children";
-                children.forEach(child=>ul.appendChild(child));
-                li.appendChild(ul);
-            }
-            return li;
-        };
-
-        const shell=document.createElement("div");
-        shell.className="analysis-universal-dependency-diagram";
-
-        if(coreRoots.length){
-            const tree=document.createElement("ul");
-            tree.className="analysis-diagram-tree analysis-dependency-core";
-            coreRoots.forEach(root=>{
-                const rendered=renderNode(root);
-                if(rendered)tree.appendChild(rendered);
-            });
-            shell.appendChild(tree);
-        }
-
-        if(discourse.length){
-            const rail=document.createElement("div");
-            rail.className="analysis-diagram-discourse";
-            const label=document.createElement("span");
-            label.className="analysis-diagram-discourse-label";
-            label.textContent="Conversation / discourse";
-            rail.appendChild(label);
-            discourse.forEach(node=>{
-                const box=document.createElement("div");
-                box.className="analysis-diagram-node analysis-diagram-discourse-node";
-                const phrase=document.createElement("strong");
-                phrase.textContent=String(node.text||"");
-                const meta=document.createElement("span");
-                meta.textContent=[node.role,node.feature||node.relation].filter(Boolean).join(" • ");
-                box.append(phrase,meta);
-                rail.appendChild(box);
-            });
-            shell.appendChild(rail);
-        }
-
-        return shell.childElementCount ? shell : null;
-    }
-
-    window.analysisWorkbenchDiagram=async function(button){
-        if(!state.sentence)return;
-        clearResults();
-
-        const card=section("Sentence Diagram");
-        const old=button?.textContent||"Diagram";
-        const ai=resolveWorkbenchAIConfig();
-        if(button){
-            button.disabled=true;
-            button.textContent=ai.available ? "✨ Asking Tutor…" : "Building locally…";
-        }
-        status(ai.available
-            ? `✨ ${ai.providerName} is refining the analysis for the diagram…`
-            : "No AI key is currently loaded — building a local phrase/dependency diagram.");
-
-        try{
-            const parsed=await getWorkbenchParseData({forceAI:ai.available});
-            const tree=buildDiagramTree(parsed.diagram || workbenchFallbackDiagram(parsed.chunks));
-            card.replaceChildren();
-
-            const heading=document.createElement("div");
-            heading.className="analysis-workbench-section-title";
-            heading.textContent="Sentence Diagram";
-
-            const badge=document.createElement("span");
-            badge.className=parsed.source==="AI" ? "analysis-full-parse-ai-badge" : "analysis-full-parse-local-badge";
-            badge.textContent=parsed.source==="AI"
-                ? `✨ ${ai.providerName}`
-                : (parsed.reason==="AI_FAILED" ? "AI UNAVAILABLE" : "LOCAL • NO AI KEY");
-            heading.appendChild(badge);
-            card.appendChild(heading);
-
-            if(tree)card.appendChild(tree);
-            else{
-                const empty=document.createElement("div");
-                empty.className="analysis-workbench-hint";
-                empty.textContent="A diagram could not be built for this sentence.";
-                card.appendChild(empty);
-            }
-
-        }catch(e){
-            card.textContent="Diagram failed: "+((e&&e.message)?e.message:String(e));
-            status("Diagram failed.","error");
         }finally{
             if(button){button.disabled=false;button.textContent=old;}
         }
@@ -23719,27 +22864,6 @@ Requirements:
         return panel?.firstElementChild||null;
     }
 
-    function ensureWorkspaceDock(){
-        let dock=document.getElementById("conversation-workspace-dock");
-        if(dock)return dock;
-
-        const primary=document.getElementById("conversation-primary-section");
-        if(!primary)return null;
-
-        dock=document.createElement("div");
-        dock.id="conversation-workspace-dock";
-
-        ["analysis","coach","keyboard"].forEach(name=>{
-            const slot=document.createElement("div");
-            slot.id=`workspace-dock-${name}`;
-            slot.className="workspace-dock-slot";
-            slot.dataset.workspaceSlot=name;
-            dock.appendChild(slot);
-        });
-
-        primary.appendChild(dock);
-        return dock;
-    }
 
     function ensureTray(){
         let tray=document.getElementById("workspace-minimized-tray");
@@ -23966,13 +23090,6 @@ Requirements:
             .forEach(el=>el.remove());
     }
 
-    function currentOpenTool(){
-        for(const name of ["transcript","analysis","coach","keyboard"]){
-            const panel=panelFor(name);
-            if(panel && !panel.hidden && !panel.classList.contains("workspace-docked"))return name;
-        }
-        return "conversation";
-    }
 
     // ---------------- Mobile top tabs ----------------
     function ensureMobileTabs(){
@@ -24986,7 +24103,7 @@ window.__languageTutorWorkspaceVersion="10.8";
 
 
 <script id="workspace-v1431-workspace-polish-marker">
-window.__languageTutorWorkspaceVersion="14.3.1-workspace-polish-startup";
+window.__languageTutorWorkspaceVersion="14.3.2-cleanup-diagram-removed";
 </script>
 
 
@@ -27084,13 +26201,6 @@ function ensureLanguageToolsView(){
     return view;
 }
 
-function isFloating(name){
-    const spec=registry[name];
-    const view=document.getElementById(spec.viewId);
-    const body=document.getElementById(spec.bodyId);
-    const shell=document.getElementById(spec.shellId);
-    return Boolean(view && body && shell && !shell.hidden && view.parentElement===body);
-}
 
 function openPrimaryWorkspace(name){
     const spec=registry[name];
