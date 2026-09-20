@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.30
-  Build: Language Tools Section Buttons
+  Version: 14.3.28
+  Build: Ask Tutor Single Workspace Lifecycle
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.30";
-window.LANGUAGETUTOR_BUILD="Language Tools Section Buttons";
+window.LANGUAGETUTOR_VERSION="14.3.28";
+window.LANGUAGETUTOR_BUILD="Ask Tutor Single Workspace Lifecycle";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7787,61 +7787,6 @@ body > #language-coach-window.ask-tutor-detached{
 }
 body > #language-coach-window.ask-tutor-detached > .language-coach-titlebar{
   display:flex!important;
-}
-</style>
-
-<style id="workspace-v14329-transcript-follow-latest-css">
-/* Enough bottom clearance that the final card can sit fully above the viewport edge. */
-#conversation-view:not(.is-floating) #voice-chat-messages-log{
-  padding-bottom:48px !important;
-  scroll-padding-bottom:48px !important;
-}
-#conversation-view:not(.is-floating) #voice-chat-messages-log::after{
-  content:"";
-  display:block;
-  height:28px;
-}
-</style>
-
-<style id="workspace-v14330-language-section-buttons-css">
-#language-tools-section-strip{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  padding:10px 12px;
-  margin:0 10px 10px;
-  border:1px solid #ddd2ff;
-  border-radius:12px;
-  background:#fbf9ff;
-}
-#language-tools-section-strip .language-tools-section-button{
-  appearance:none;
-  border:1px solid #d8dfea;
-  background:#fff;
-  border-radius:12px;
-  min-height:42px;
-  padding:9px 14px;
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  color:#34435a;
-  font:700 13px/1.2 inherit;
-  cursor:pointer;
-  box-shadow:none;
-}
-#language-tools-section-strip .language-tools-section-button:hover{
-  border-color:#b9a7ff;
-  background:#f8f5ff;
-}
-#language-tools-section-strip .language-tools-section-button:focus-visible{
-  outline:3px solid rgba(99,102,241,.24);
-  outline-offset:2px;
-}
-@media (max-width:720px){
-  #language-tools-section-strip .language-tools-section-button{
-    flex:1 1 100%;
-    justify-content:flex-start;
-  }
 }
 </style>
 </head>
@@ -27721,7 +27666,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.30";
+   el.textContent="LanguageTutor v14.3.28";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -28300,175 +28245,6 @@ function install(){
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
 else install();
-})();
-</script>
-
-<script id="workspace-v14329-transcript-follow-latest">
-(()=>{
-"use strict";
-const log=()=>document.getElementById("voice-chat-messages-log");
-let userReviewing=false;
-let programmatic=false;
-let lastTop=0;
-
-function atBottom(el){
-  return (el.scrollHeight-el.scrollTop-el.clientHeight)<=28;
-}
-function scrollLatest(){
-  const el=log();
-  if(!el)return;
-  programmatic=true;
-  requestAnimationFrame(()=>{
-    el.scrollTop=el.scrollHeight;
-    lastTop=el.scrollTop;
-    requestAnimationFrame(()=>{programmatic=false;});
-  });
-}
-function install(){
-  const el=log();
-  if(!el)return;
-
-  // Default behavior: transcript follows the conversation.
-  scrollLatest();
-
-  // If the learner deliberately scrolls upward, preserve that review position.
-  el.addEventListener("scroll",()=>{
-    if(programmatic)return;
-    const now=el.scrollTop;
-    if(now < lastTop-4 && !atBottom(el)) userReviewing=true;
-    if(atBottom(el)) userReviewing=false;
-    lastTop=now;
-  },{passive:true});
-
-  // New transcript cards should reveal the newest output unless the learner is
-  // intentionally reviewing older transcript lines.
-  const mo=new MutationObserver(mutations=>{
-    const changed=mutations.some(m=>m.type==="childList" && (m.addedNodes.length||m.removedNodes.length));
-    if(changed && !userReviewing)scrollLatest();
-  });
-  mo.observe(el,{childList:true,subtree:true});
-
-  document.addEventListener("languagetutor:transcript-rendered",()=>{
-    if(!userReviewing)scrollLatest();
-  });
-
-  // Conversation live output can precede the committed transcript DOM by a tick.
-  const live=document.getElementById("voice-live-transcript");
-  if(live){
-    let timer=0;
-    const liveObserver=new MutationObserver(()=>{
-      if(userReviewing)return;
-      clearTimeout(timer);
-      timer=setTimeout(scrollLatest,80);
-    });
-    liveObserver.observe(live,{childList:true,subtree:true,characterData:true});
-  }
-}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
-else install();
-})();
-</script>
-
-<script id="workspace-v14330-language-section-buttons">
-(()=>{
-"use strict";
-const $=id=>document.getElementById(id);
-
-function root(){
-  return $("conversation-language-tools-section") ||
-         document.querySelector(".language-tools-flat-root") ||
-         $("language-tools-view");
-}
-function summaries(){
-  const r=root();
-  if(!r)return [];
-  return [...r.querySelectorAll("summary")].filter(s=>{
-    const t=(s.textContent||"").replace(/\s+/g," ").trim();
-    return /^(Grammar Tools|Study & Review|Translation & Manual Input)$/i.test(t);
-  });
-}
-function findSummary(label){
-  return summaries().find(s=>(s.textContent||"").replace(/\s+/g," ").trim().toLowerCase()===label.toLowerCase());
-}
-function openSection(label){
-  const summary=findSummary(label);
-  if(!summary)return false;
-  const details=summary.closest("details");
-  if(details)details.open=true;
-
-  // Close the other sibling study accordions so the selected section is unambiguous.
-  summaries().forEach(other=>{
-    if(other===summary)return;
-    const d=other.closest("details");
-    if(d && d!==details)d.open=false;
-  });
-
-  requestAnimationFrame(()=>{
-    summary.scrollIntoView({behavior:"smooth",block:"nearest"});
-    const focusable=details?.querySelector("button,input,select,textarea,[tabindex]:not([tabindex='-1'])");
-    if(focusable && typeof focusable.focus==="function"){
-      try{focusable.focus({preventScroll:true});}catch(_){}
-    }
-  });
-  return true;
-}
-function ensureStrip(){
-  const view=$("language-tools-view");
-  if(!view)return;
-  let strip=$("language-tools-section-strip");
-  if(!strip){
-    strip=document.createElement("div");
-    strip.id="language-tools-section-strip";
-    strip.className="language-tools-section-strip";
-    const labels=[
-      ["Grammar Tools","🧰"],
-      ["Study & Review","📚"],
-      ["Translation & Manual Input","🌐"]
-    ];
-    labels.forEach(([label,icon])=>{
-      const b=document.createElement("button");
-      b.type="button";
-      b.className="language-tools-section-button";
-      b.dataset.section=label;
-      b.innerHTML=`<span aria-hidden="true">${icon}</span><span>${label}</span>`;
-      b.addEventListener("click",()=>openSection(label));
-      strip.appendChild(b);
-    });
-
-    // Put navigation immediately below the workspace title/open bar.
-    const first=view.firstElementChild;
-    if(first)first.insertAdjacentElement("afterend",strip);
-    else view.prepend(strip);
-  }
-}
-function removeOldQuickStrip(){
-  // Retire the old Verbs / Prepositions & Cases / Articles & Endings / Adjectives strip.
-  // The tools themselves remain inside Grammar Tools.
-  const view=$("language-tools-view");
-  if(!view)return;
-  [...view.querySelectorAll("button")].forEach(b=>{
-    const t=(b.textContent||"").replace(/\s+/g," ").trim();
-    if(/^(Verbs|Prepositions & Cases|Articles & Endings|Adjectives)$/i.test(t)){
-      const parent=b.parentElement;
-      b.remove();
-      if(parent && !parent.querySelector("button") && !parent.textContent.trim())parent.remove();
-    }
-  });
-}
-function install(){
-  removeOldQuickStrip();
-  ensureStrip();
-
-  const mo=new MutationObserver(()=>{
-    removeOldQuickStrip();
-    ensureStrip();
-  });
-  mo.observe(document.body,{childList:true,subtree:true});
-}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
-else install();
-
-window.openLanguageToolsSection=openSection;
 })();
 </script>
 </body>
