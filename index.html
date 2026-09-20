@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.24
-  Build: Docked Ask Actions + Flat Language Tools
+  Version: 14.3.25
+  Build: Embedded Ask Tutor Workspace
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.24";
-window.LANGUAGETUTOR_BUILD="Docked Ask Actions + Flat Language Tools";
+window.LANGUAGETUTOR_VERSION="14.3.25";
+window.LANGUAGETUTOR_BUILD="Embedded Ask Tutor Workspace";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7634,6 +7634,46 @@ body > #ask-tutor-page-preview{display:none !important}
 #conversation-language-tools-section.language-tools-flat-root > .section-content,
 #conversation-language-tools-section.language-tools-flat-root > .conversation-tools-content{
   padding-top:0 !important;
+}
+</style>
+
+<style id="workspace-v14325-embedded-ask-tutor-css">
+/* The old preview is retired. There is now only one real Ask Tutor UI. */
+#ask-tutor-page-preview{display:none !important}
+
+#ask-tutor-embedded-host{
+  margin:8px 10px 10px;
+  min-height:0;
+}
+#ask-tutor-embedded-host > #language-coach-window.ask-tutor-embedded{
+  display:block !important;
+  position:static !important;
+  inset:auto !important;
+  transform:none !important;
+  width:100% !important;
+  max-width:none !important;
+  height:auto !important;
+  max-height:none !important;
+  min-height:0 !important;
+  box-shadow:none !important;
+  border:0 !important;
+  border-radius:12px !important;
+  margin:0 !important;
+  resize:none !important;
+  overflow:visible !important;
+  background:transparent !important;
+}
+/* The outer pink section already supplies the workspace title and Open button. */
+#ask-tutor-embedded-host > #language-coach-window.ask-tutor-embedded > .floating-window-header,
+#ask-tutor-embedded-host > #language-coach-window.ask-tutor-embedded > .window-header,
+#ask-tutor-embedded-host > #language-coach-window.ask-tutor-embedded > .tool-window-header{
+  display:none !important;
+}
+/* Keep the actual Ask Tutor controls/content comfortably visible while docked. */
+#ask-tutor-embedded-host #language-coach-window .language-coach-content,
+#ask-tutor-embedded-host #language-coach-window .floating-window-body{
+  max-height:none !important;
+  overflow:visible !important;
 }
 </style>
 </head>
@@ -27511,7 +27551,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.24";
+   el.textContent="LanguageTutor v14.3.25";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -27693,6 +27733,161 @@ function install(){
   const observer=new MutationObserver(sync);
   observer.observe(document.body,{childList:true,subtree:true});
 }
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
+else install();
+})();
+</script>
+
+<script id="workspace-v14325-embedded-ask-tutor">
+(()=>{
+"use strict";
+
+const $=id=>document.getElementById(id);
+let floating=false;
+
+function askSection(){ return $("ask-tutor-section"); }
+function askWindow(){ return $("language-coach-window"); }
+function askPreview(){ return $("ask-tutor-page-preview"); }
+
+function dockHost(){
+  const section=askSection();
+  if(!section)return null;
+  let host=$("ask-tutor-embedded-host");
+  if(!host){
+    host=document.createElement("div");
+    host.id="ask-tutor-embedded-host";
+    host.className="ask-tutor-embedded-host";
+    section.appendChild(host);
+  }
+  return host;
+}
+
+function hideLegacyPreview(){
+  const p=askPreview();
+  if(p)p.hidden=true;
+}
+
+function setFloatingChrome(win,on){
+  if(!win)return;
+  win.classList.toggle("ask-tutor-embedded",!on);
+  win.classList.toggle("ask-tutor-detached",on);
+  // Existing header/open-close behavior remains authoritative; CSS below only suppresses
+  // the redundant floating chrome while embedded.
+}
+
+function dockAskTutor(){
+  const win=askWindow();
+  const host=dockHost();
+  if(!win || !host)return false;
+
+  // Release Ask Tutor mic ownership before docking through the normal close path when
+  // available, but never destroy the actual workspace.
+  if(floating && typeof window.languageTutorMicCoordinator?.release==="function"){
+    try{window.languageTutorMicCoordinator.release("askTutor");}catch(_){}
+  }
+
+  host.appendChild(win);
+  win.style.display="";
+  win.hidden=false;
+  floating=false;
+  setFloatingChrome(win,false);
+  hideLegacyPreview();
+
+  const state=sectionState();
+  state?.classList.remove("is-floating");
+  return true;
+}
+
+function floatAskTutor(){
+  const win=askWindow();
+  if(!win)return false;
+
+  // Put the same real workspace back on the page layer used by movable windows.
+  document.body.appendChild(win);
+  win.style.display="";
+  win.hidden=false;
+  floating=true;
+  setFloatingChrome(win,true);
+
+  const state=sectionState();
+  state?.classList.add("is-floating");
+
+  // Let the established floating workspace implementation restore drag/resize geometry.
+  if(typeof window.openLanguageCoach==="function"){
+    try{window.openLanguageCoach();}catch(_){}
+  }
+  return true;
+}
+
+function sectionState(){ return askSection(); }
+
+function installButtons(){
+  const section=askSection();
+  if(!section)return;
+
+  const open=section.querySelector(".ask-workspace-state");
+  if(open && !open.dataset.v14325Bound){
+    open.dataset.v14325Bound="1";
+    open.addEventListener("click",e=>{
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      floatAskTutor();
+    },true);
+  }
+
+  const win=askWindow();
+  if(win){
+    const close=[...win.querySelectorAll("button")].find(b=>{
+      const a=(b.getAttribute("aria-label")||"").toLowerCase();
+      const t=(b.textContent||"").trim();
+      return a.includes("close") || t==="×" || t==="✕";
+    });
+    if(close && !close.dataset.v14325Bound){
+      close.dataset.v14325Bound="1";
+      close.addEventListener("click",e=>{
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        dockAskTutor();
+      },true);
+    }
+  }
+}
+
+function sync(){
+  hideLegacyPreview();
+  dockHost();
+  installButtons();
+
+  const win=askWindow();
+  if(!win)return;
+
+  // Initial/default state is embedded. Once explicitly detached, leave it floating until
+  // its close button returns it.
+  if(!floating && win.parentElement!==dockHost()){
+    dockAskTutor();
+  }
+}
+
+function install(){
+  sync();
+  const observer=new MutationObserver(()=>{
+    // Avoid reparenting during our own move; just repair missing controls/host.
+    hideLegacyPreview();
+    installButtons();
+    if(!floating){
+      const win=askWindow(), host=dockHost();
+      if(win && host && win.parentElement!==host)host.appendChild(win);
+      setFloatingChrome(win,false);
+    }
+  });
+  observer.observe(document.body,{childList:true,subtree:true});
+
+  // Public lifecycle hooks used by the rest of the app.
+  window.openAskTutorWorkspace=floatAskTutor;
+  window.returnAskTutorWorkspace=dockAskTutor;
+  window.dockAskTutorWorkspace=dockAskTutor;
+}
+
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
 else install();
 })();
