@@ -1,3 +1,9 @@
+<!--
+  LanguageTutor
+  Version: 14.3.13
+  Build: Transcript-Only Docked Conversation
+  Based on: 14.3.11
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7411,6 +7417,43 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 #transcript-share-native{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
 .transcript-share-status{min-height:18px;margin-top:9px;font-size:10px;font-weight:750;color:#64748b}
 @media(max-width:480px){.transcript-share-actions{grid-template-columns:1fr}}
+</style>
+
+<style id="workspace-v14312-scrollable-preview-css">
+/* Docked Conversation is a review pane: keep the section compact but let the
+   learner scroll through the complete current transcript. */
+#conversation-page-preview-turns{
+  max-height:280px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-gutter:stable;
+  padding-right:4px;
+}
+#conversation-page-preview-turns::-webkit-scrollbar{width:10px}
+#conversation-page-preview-turns::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
+#conversation-page-preview-turns::-webkit-scrollbar-track{background:transparent}
+</style>
+
+<script id="languagetutor-build-info">
+window.LANGUAGETUTOR_VERSION="14.3.13";
+window.LANGUAGETUTOR_BUILD="Transcript-Only Docked Conversation";
+</script>
+
+<style id="workspace-v14313-transcript-only-css">
+#conversation-page-preview-turns .v1437-preview-turn.user{
+  border-left-color:#60a5fa !important;
+  background:#eff6ff !important;
+  color:#1e40af !important;
+}
+#conversation-page-preview-turns .v1437-preview-turn.user .role{color:#1d4ed8 !important}
+#conversation-page-preview-turns .v1437-preview-turn.tutor{
+  border-left-color:#a78bfa !important;
+  background:#f5f3ff !important;
+  color:#5b21b6 !important;
+}
+#conversation-page-preview-turns .v1437-preview-turn.tutor .role{color:#6d28d9 !important}
 </style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
@@ -26911,9 +26954,9 @@ function historyTurns(){
   try{
     const h=typeof window.getVoiceTutorHistory==="function" ? window.getVoiceTutorHistory() : [];
     return Array.isArray(h) ? h.map(x=>({
-      role:x?.role==="user"?"user":"tutor",
+      role:x?.role==="user" ? "user" : (x?.role==="assistant" ? "tutor" : ""),
       text:String(x?.text||"").trim()
-    })).filter(x=>x.text) : [];
+    })).filter(x=>x.role && x.text) : [];
   }catch(e){ return []; }
 }
 function renderedTurns(){
@@ -26948,16 +26991,11 @@ function normalized(text){
   return String(text||"").replace(/\s+/g," ").trim();
 }
 function mergedRecentTurns(){
-  // Prefer what the learner can actually see. History remains the fallback.
-  const base=renderedTurns();
-  const source=base.length ? base : historyTurns();
-  const merged=[...source];
-  liveTurns().forEach(turn=>{
-    const key=turn.role+"|"+normalized(turn.text);
-    const already=merged.some(x=>x.role+"|"+normalized(x.text)===key);
-    if(!already)merged.push(turn);
-  });
-  return merged.filter(x=>x.text).slice(-4);
+  // The docked Conversation section is a transcript view, not a duplicate of the
+  // Chat Controls live panel. Use the authoritative committed history so You/Tutor
+  // labels exactly match the real transcript. Live microphone/status text belongs
+  // only in Chat Controls and is intentionally excluded here.
+  return historyTurns();
 }
 function currentContext(){
   const selected=selectedContext();
@@ -26996,6 +27034,8 @@ function renderConversation(){
   const host=$("conversation-page-preview-turns");
   if(!host)return;
   const turns=mergedRecentTurns();
+  const wasNearBottom=(host.scrollHeight-host.scrollTop-host.clientHeight)<36;
+  const previousScrollTop=host.scrollTop;
   host.replaceChildren();
   if(!turns.length){
     const empty=document.createElement("div");
@@ -27015,7 +27055,13 @@ function renderConversation(){
     row.append(role,text);
     host.appendChild(row);
   });
-  host.scrollTop=host.scrollHeight;
+  // Follow new turns only when the learner was already at the bottom.
+  // If they scrolled upward to review earlier turns, do not yank them back down.
+  if(wasNearBottom || previousScrollTop===0 && host.scrollHeight<=host.clientHeight){
+    host.scrollTop=host.scrollHeight;
+  }else{
+    host.scrollTop=previousScrollTop;
+  }
 }
 function renderAsk(){
   const label=$("ask-tutor-preview-context");
@@ -27076,7 +27122,7 @@ function refresh(){
 }
 function install(){
   place();bind();refresh();
-  const targets=[$("voice-chat-messages-log"),$("voice-live-transcript")].filter(Boolean);
+  const targets=[$("voice-chat-messages-log")].filter(Boolean);
   targets.forEach(target=>{
     const obs=new MutationObserver(refresh);
     obs.observe(target,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["class","data-transcript-text"]});
@@ -27208,6 +27254,22 @@ function install(){
   $("transcript-share-download")?.addEventListener("click",download);
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});else install();
+})();
+</script>
+
+<script id="workspace-v14312-visible-version">
+(()=>{
+ const add=()=>{
+   if(document.getElementById("languagetutor-version-label"))return;
+   const el=document.createElement("div");
+   el.id="languagetutor-version-label";
+   el.textContent="LanguageTutor v14.3.13";
+   el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
+   const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
+   if(host)host.appendChild(el);
+   else document.body.appendChild(el);
+ };
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",add,{once:true});else add();
 })();
 </script>
 </body>
