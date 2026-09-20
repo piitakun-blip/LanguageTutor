@@ -7397,6 +7397,21 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
   .v1437-ask-actions button:last-child{grid-column:1/-1}
 }
 </style>
+
+<style id="workspace-v14311-share-transcript-css">
+.transcript-share-panel{position:fixed;inset:0;z-index:2147483500;display:grid;place-items:center;padding:18px;background:rgba(15,23,42,.32);backdrop-filter:blur(3px)}
+.transcript-share-panel[hidden]{display:none!important}
+.transcript-share-card{width:min(520px,calc(100vw - 28px));padding:15px;border:1px solid #cbd5e1;border-radius:15px;background:#fff;box-shadow:0 24px 70px rgba(15,23,42,.24);color:#334155}
+.transcript-share-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.transcript-share-head strong{font-size:14px;font-weight:900}
+#transcript-share-close{width:34px;height:34px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;color:#64748b;font-size:20px;line-height:1}
+.transcript-share-card p{margin:8px 0 12px;font-size:11px;line-height:1.45;color:#64748b}
+.transcript-share-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.transcript-share-actions button{min-height:42px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#475569;font-size:11px;font-weight:850}
+#transcript-share-native{border-color:#bfdbfe;background:#eff6ff;color:#1d4ed8}
+.transcript-share-status{min-height:18px;margin-top:9px;font-size:10px;font-weight:750;color:#64748b}
+@media(max-width:480px){.transcript-share-actions{grid-template-columns:1fr}}
+</style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -26864,6 +26879,7 @@ setTimeout(normalize,300); setTimeout(normalize,1000);
     <div class="v1437-preview-actions">
       <button type="button" id="conversation-preview-start">🎙 Start / Resume</button>
       <button type="button" id="conversation-preview-ask">💬 Ask Tutor</button>
+      <button type="button" id="conversation-preview-share">↗ Share Transcript</button>
       <button type="button" id="conversation-preview-open">↗ Open Conversation</button>
     </div>
   </section>
@@ -27081,6 +27097,117 @@ function install(){
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
 else install();
+})();
+</script>
+
+<div id="transcript-share-panel" class="transcript-share-panel" hidden role="dialog" aria-modal="true" aria-labelledby="transcript-share-title">
+  <div class="transcript-share-card">
+    <div class="transcript-share-head">
+      <strong id="transcript-share-title">Share Conversation Transcript</strong>
+      <button type="button" id="transcript-share-close" aria-label="Close">×</button>
+    </div>
+    <p>Share a clean Tutor/You transcript. On supported devices, Share… can send it to Mail, Messages, Google Drive, and other installed apps.</p>
+    <div class="transcript-share-actions">
+      <button type="button" id="transcript-share-native">↗ Share…</button>
+      <button type="button" id="transcript-share-email">✉ Email</button>
+      <button type="button" id="transcript-share-copy">⧉ Copy</button>
+      <button type="button" id="transcript-share-download">↓ Download .txt</button>
+    </div>
+    <div id="transcript-share-status" class="transcript-share-status" aria-live="polite"></div>
+  </div>
+</div>
+
+<script id="workspace-v14311-share-transcript">
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id);
+
+function history(){
+  try{
+    const h=typeof window.getVoiceTutorHistory==="function" ? window.getVoiceTutorHistory() : [];
+    return Array.isArray(h)?h:[];
+  }catch(e){return [];}
+}
+function clean(text){return String(text||"").replace(/\s+/g," ").trim();}
+function transcriptText(){
+  const h=history();
+  const language=(typeof langConfig==="function" ? langConfig()?.name : "") || "Language";
+  const now=new Date();
+  const heading=`${language} Conversation — ${now.toLocaleDateString()}`;
+  const lines=h.map(entry=>{
+    const role=entry?.role==="user"?"You":"Tutor";
+    return `${role}: ${clean(entry?.text)}`;
+  }).filter(line=>!/: $/.test(line));
+  return [heading,"",...lines].join("\n");
+}
+function filename(){
+  const stamp=new Date().toISOString().slice(0,10);
+  return `LanguageTutor-Conversation-${stamp}.txt`;
+}
+function status(msg){const el=$("transcript-share-status");if(el)el.textContent=msg||"";}
+function openPanel(){
+  status("");
+  $("transcript-share-panel")?.removeAttribute("hidden");
+}
+function closePanel(){$("transcript-share-panel")?.setAttribute("hidden","");}
+async function nativeShare(){
+  const text=transcriptText();
+  if(!history().length){status("There is no conversation to share yet.");return;}
+  const file=new File([text],filename(),{type:"text/plain"});
+  try{
+    if(navigator.share){
+      const data={title:"LanguageTutor Conversation",text};
+      if(navigator.canShare?.({files:[file]}))data.files=[file];
+      await navigator.share(data);
+      status("Shared.");
+    }else{
+      status("Native sharing is not available here. Use Email, Copy, or Download.");
+    }
+  }catch(e){
+    if(e?.name!=="AbortError")status("Sharing was not completed. Try Email, Copy, or Download.");
+  }
+}
+function email(){
+  const text=transcriptText();
+  if(!history().length){status("There is no conversation to email yet.");return;}
+  const subject=encodeURIComponent("LanguageTutor Conversation Transcript");
+  const body=encodeURIComponent(text);
+  window.location.href=`mailto:?subject=${subject}&body=${body}`;
+}
+async function copy(){
+  const text=transcriptText();
+  if(!history().length){status("There is no conversation to copy yet.");return;}
+  try{
+    await navigator.clipboard.writeText(text);
+    status("Transcript copied.");
+  }catch(e){
+    const ta=document.createElement("textarea");
+    ta.value=text;ta.style.position="fixed";ta.style.opacity="0";
+    document.body.appendChild(ta);ta.select();
+    document.execCommand("copy");ta.remove();
+    status("Transcript copied.");
+  }
+}
+function download(){
+  const text=transcriptText();
+  if(!history().length){status("There is no conversation to download yet.");return;}
+  const blob=new Blob([text],{type:"text/plain;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download=filename();
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  status("Transcript downloaded.");
+}
+function install(){
+  $("conversation-preview-share")?.addEventListener("click",openPanel);
+  $("transcript-share-close")?.addEventListener("click",closePanel);
+  $("transcript-share-panel")?.addEventListener("click",e=>{if(e.target===$("transcript-share-panel"))closePanel();});
+  $("transcript-share-native")?.addEventListener("click",nativeShare);
+  $("transcript-share-email")?.addEventListener("click",email);
+  $("transcript-share-copy")?.addEventListener("click",copy);
+  $("transcript-share-download")?.addEventListener("click",download);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});else install();
 })();
 </script>
 </body>
