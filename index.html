@@ -7362,6 +7362,41 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
     padding:0!important;
 }
 </style>
+
+<style id="workspace-v1437-page-preview-css">
+.v1437-page-preview{
+  margin:8px 10px 10px;
+  padding:10px 12px;
+  border:1px solid #dbe4ef;
+  border-radius:12px;
+  background:rgba(255,255,255,.78);
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+}
+.v1437-preview-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px;color:#475569}
+.v1437-preview-heading strong{font-size:12px;font-weight:900}
+.v1437-preview-heading span{font-size:10px;color:#94a3b8;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v1437-preview-turns{display:flex;flex-direction:column;gap:5px;max-height:170px;overflow:auto}
+.v1437-preview-turn{display:grid;grid-template-columns:54px minmax(0,1fr);gap:7px;padding:6px 8px;border-radius:8px;font-size:12px;line-height:1.4}
+.v1437-preview-turn .role{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+.v1437-preview-turn.user{background:#eff6ff;color:#1d4ed8;border-left:3px solid #60a5fa}
+.v1437-preview-turn.tutor{background:#f5f3ff;color:#5b21b6;border-left:3px solid #a78bfa}
+.v1437-preview-empty{padding:8px;color:#94a3b8;font-size:11px;font-weight:650}
+.v1437-preview-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.v1437-preview-actions button{min-height:34px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#475569;font-size:10px;font-weight:850}
+.v1437-preview-actions button:hover{border-color:#a5b4fc;color:#4338ca;background:#f8faff}
+.v1437-preview-actions button:disabled{opacity:.42;cursor:not-allowed}
+.v1437-ask-preview{border-color:#f1d1d7;background:#fffafb}
+.v1437-ask-actions button:last-child{border-color:#f1d1d7;background:#fff6f7;color:#9f1239}
+@media(max-width:640px){
+  .v1437-page-preview{margin:7px 8px 9px;padding:9px}
+  .v1437-preview-heading{align-items:flex-start;flex-direction:column;gap:2px}
+  .v1437-preview-heading span{white-space:normal}
+  .v1437-preview-turns{max-height:145px}
+  .v1437-preview-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .v1437-preview-actions button{min-height:40px}
+  .v1437-ask-actions button:last-child{grid-column:1/-1}
+}
+</style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -26764,6 +26799,178 @@ setTimeout(normalize,300); setTimeout(normalize,1000);
     }else{
         setTimeout(install,0);
     }
+})();
+</script>
+
+<div id="v1437-preview-templates" hidden>
+  <section id="conversation-page-preview" class="v1437-page-preview v1437-conversation-preview" aria-label="Conversation preview">
+    <div class="v1437-preview-heading"><strong>Recent conversation</strong><span>Latest turns</span></div>
+    <div id="conversation-page-preview-turns" class="v1437-preview-turns"></div>
+    <div class="v1437-preview-actions">
+      <button type="button" id="conversation-preview-start">🎙 Start / Resume</button>
+      <button type="button" id="conversation-preview-ask">💬 Ask Tutor</button>
+      <button type="button" id="conversation-preview-open">↗ Open Conversation</button>
+    </div>
+  </section>
+  <section id="ask-tutor-page-preview" class="v1437-page-preview v1437-ask-preview" aria-label="Ask Tutor quick actions">
+    <div class="v1437-preview-heading"><strong>Ask Tutor</strong><span id="ask-tutor-preview-context">Select a conversation turn for contextual help.</span></div>
+    <div class="v1437-preview-actions v1437-ask-actions">
+      <button type="button" data-ask-action="analyze">🔎 Analyze</button>
+      <button type="button" data-ask-action="translate">🌐 Translate</button>
+      <button type="button" data-ask-action="why">❓ Why this wording?</button>
+      <button type="button" data-ask-action="reply">↩️ Help me reply</button>
+      <button type="button" data-ask-action="open">💬 Open Ask Tutor</button>
+    </div>
+  </section>
+</div>
+
+<script id="workspace-v1437-page-previews">
+(()=>{
+"use strict";
+const $=id=>document.getElementById(id);
+
+function selectedTurn(){
+  return document.querySelector('#voice-chat-messages-log .conversation-turn-card.transcript-turn-selected');
+}
+function selectedContext(){
+  const el=selectedTurn();
+  return String(el?.dataset?.transcriptText||"").trim();
+}
+function recentHistory(){
+  try{
+    const h=typeof window.getVoiceTutorHistory==="function" ? window.getVoiceTutorHistory() : [];
+    return Array.isArray(h) ? h.slice(-4) : [];
+  }catch(e){ return []; }
+}
+function currentContext(){
+  const selected=selectedContext();
+  if(selected)return selected;
+  const h=recentHistory();
+  const lastTutor=[...h].reverse().find(x=>x?.role!=="user");
+  return String(lastTutor?.text||h[h.length-1]?.text||"").trim();
+}
+function placePreview(preview, hints){
+  if(!preview)return;
+  for(const selector of hints){
+    const host=document.querySelector(selector);
+    if(host && !host.contains(preview)){
+      host.appendChild(preview);
+      return;
+    }
+  }
+}
+function place(){
+  const templates=$("v1437-preview-templates");
+  if(templates)templates.hidden=false;
+  placePreview($("conversation-page-preview"),[
+    "#conversation-transcript-section",
+    "#voice-transcript-page-section",
+    ".conversation-transcript-section",
+    "#conversation-view"
+  ]);
+  placePreview($("ask-tutor-page-preview"),[
+    "#ask-tutor-section",
+    ".ask-tutor-section",
+    "#language-coach-section",
+    "#ask-tutor-page-section"
+  ]);
+  if(templates && !templates.children.length)templates.remove();
+}
+function renderConversation(){
+  const host=$("conversation-page-preview-turns");
+  if(!host)return;
+  const h=recentHistory();
+  host.replaceChildren();
+  if(!h.length){
+    const empty=document.createElement("div");
+    empty.className="v1437-preview-empty";
+    empty.textContent="No conversation yet. Start speaking or typing to begin.";
+    host.appendChild(empty);
+    return;
+  }
+  h.forEach(entry=>{
+    const row=document.createElement("div");
+    const user=entry?.role==="user";
+    row.className="v1437-preview-turn "+(user?"user":"tutor");
+    const role=document.createElement("span");
+    role.className="role";
+    role.textContent=user?"You":"Tutor";
+    const text=document.createElement("span");
+    text.textContent=String(entry?.text||"").trim();
+    row.append(role,text);
+    host.appendChild(row);
+  });
+  host.scrollTop=host.scrollHeight;
+}
+function renderAsk(){
+  const label=$("ask-tutor-preview-context");
+  const context=currentContext();
+  if(label)label.textContent=context
+    ? (selectedContext() ? `Selected: ${context}` : `Current context: ${context}`)
+    : "Start a conversation or select a transcript turn for contextual help.";
+  document.querySelectorAll('#ask-tutor-page-preview [data-ask-action]:not([data-ask-action="open"])')
+    .forEach(btn=>btn.disabled=!context);
+}
+function setContext(){
+  const context=currentContext();
+  if(context && typeof window.setAskTutorContext==="function")window.setAskTutorContext(context);
+  return context;
+}
+function openAsk(){
+  setContext();
+  window.openAskTutorFromConversation?.();
+}
+function clickAskAction(action){
+  const context=setContext();
+  if(action==="open"){ openAsk(); return; }
+  if(!context)return;
+  openAsk();
+  setTimeout(()=>{
+    if(action==="analyze"){
+      if(typeof window.openAskTutorAnalysisForText==="function")window.openAskTutorAnalysisForText(context);
+      else document.querySelector('#language-coach-window button')?.click?.();
+      return;
+    }
+    const win=$("language-coach-window");
+    if(!win)return;
+    const buttons=[...win.querySelectorAll("button")];
+    const match=buttons.find(b=>{
+      const t=String(b.textContent||"").toLowerCase();
+      return action==="translate" ? t.includes("translate")
+        : action==="why" ? t.includes("why this wording")
+        : action==="reply" ? t.includes("help me reply")
+        : false;
+    });
+    match?.click();
+  },80);
+}
+function bind(){
+  $("conversation-preview-start")?.addEventListener("click",()=>window.startVoiceConversation?.());
+  $("conversation-preview-ask")?.addEventListener("click",openAsk);
+  $("conversation-preview-open")?.addEventListener("click",()=>{
+    if(typeof window.openVoiceTranscript==="function")window.openVoiceTranscript();
+    else if(typeof window.workspaceOpenTool==="function")window.workspaceOpenTool("transcript");
+  });
+  document.querySelectorAll("#ask-tutor-page-preview [data-ask-action]").forEach(btn=>{
+    btn.addEventListener("click",()=>clickAskAction(btn.dataset.askAction));
+  });
+}
+function refresh(){ place(); renderConversation(); renderAsk(); }
+function install(){
+  place(); bind(); refresh();
+  const log=$("voice-chat-messages-log");
+  if(log){
+    const obs=new MutationObserver(refresh);
+    obs.observe(log,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]});
+  }
+  document.addEventListener("click",e=>{
+    if(e.target?.closest?.("#voice-chat-messages-log"))setTimeout(refresh,0);
+  });
+  window.addEventListener("languagechange",refresh);
+  setInterval(refresh,1500);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
+else install();
 })();
 </script>
 </body>
