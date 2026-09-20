@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.13
-  Build: Transcript-Only Docked Conversation
+  Version: 14.3.14
+  Build: Authoritative Transcript View
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.13";
-window.LANGUAGETUTOR_BUILD="Transcript-Only Docked Conversation";
+window.LANGUAGETUTOR_VERSION="14.3.14";
+window.LANGUAGETUTOR_BUILD="Authoritative Transcript View";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7454,6 +7454,30 @@ window.LANGUAGETUTOR_BUILD="Transcript-Only Docked Conversation";
   color:#5b21b6 !important;
 }
 #conversation-page-preview-turns .v1437-preview-turn.tutor .role{color:#6d28d9 !important}
+</style>
+
+<style id="workspace-v14314-authoritative-transcript-css">
+/* Conversation Transcript uses the real #voice-chat-messages-log in both docked and
+   floating states. The former Recent conversation duplicate is retired. */
+#conversation-page-preview{display:none !important}
+#conversation-view:not(.is-floating) .conversation-shared-body{
+  display:block !important;
+  min-height:150px !important;
+  max-height:330px !important;
+  overflow:hidden !important;
+  padding:12px !important;
+}
+#conversation-view:not(.is-floating) #voice-chat-messages-log{
+  display:block !important;
+  height:auto !important;
+  min-height:125px !important;
+  max-height:300px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
 </style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
@@ -8171,6 +8195,7 @@ window.LANGUAGETUTOR_BUILD="Transcript-Only Docked Conversation";
                                 <button type="button" onclick="saveCurrentTutorTranscript('voice',this)">💾 Save</button>
                                 <button type="button" onclick="openSavedTutorTranscripts()">🗂 Saved</button>
                                 <button type="button" onclick="openAskTutorFromConversation()">❓ Ask Tutor</button>
+                                <button type="button" id="conversation-transcript-share" title="Share, email, copy, or download this transcript">↗ Share</button>
                             </div>
                         </div>
 
@@ -27021,10 +27046,7 @@ function placePreview(preview,hints){
 function place(){
   const templates=$("v1437-preview-templates");
   if(templates)templates.hidden=false;
-  placePreview($("conversation-page-preview"),[
-    "#conversation-transcript-section","#voice-transcript-page-section",
-    ".conversation-transcript-section","#conversation-view"
-  ]);
+  // v14.3.14: no duplicate Conversation preview. The real transcript view is authoritative.
   placePreview($("ask-tutor-page-preview"),[
     "#ask-tutor-section",".ask-tutor-section","#language-coach-section","#ask-tutor-page-section"
   ]);
@@ -27117,22 +27139,19 @@ function refresh(){
   refreshQueued=true;
   requestAnimationFrame(()=>{
     refreshQueued=false;
-    renderConversation(); renderAsk();
+    renderAsk();
   });
 }
 function install(){
   place();bind();refresh();
-  const targets=[$("voice-chat-messages-log")].filter(Boolean);
-  targets.forEach(target=>{
-    const obs=new MutationObserver(refresh);
-    obs.observe(target,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["class","data-transcript-text"]});
-  });
+  const transcriptLog=$("voice-chat-messages-log");
+  if(transcriptLog){
+    const obs=new MutationObserver(renderAsk);
+    obs.observe(transcriptLog,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["class","data-transcript-text"]});
+  }
   const structureObserver=new MutationObserver(()=>{
-    const conversation=$("conversation-page-preview");
     const ask=$("ask-tutor-page-preview");
-    if((conversation && !conversation.isConnected) || (ask && !ask.isConnected)){
-      place();
-    }
+    if(ask && !ask.isConnected)place();
   });
   structureObserver.observe(document.body,{childList:true,subtree:true});
   document.addEventListener("click",e=>{
@@ -27246,6 +27265,7 @@ function download(){
 }
 function install(){
   $("conversation-preview-share")?.addEventListener("click",openPanel);
+  $("conversation-transcript-share")?.addEventListener("click",openPanel);
   $("transcript-share-close")?.addEventListener("click",closePanel);
   $("transcript-share-panel")?.addEventListener("click",e=>{if(e.target===$("transcript-share-panel"))closePanel();});
   $("transcript-share-native")?.addEventListener("click",nativeShare);
@@ -27263,7 +27283,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.13";
+   el.textContent="LanguageTutor v14.3.14";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
