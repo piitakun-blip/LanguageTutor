@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.30
-  Build: Language Tools Section Buttons
+  Version: 14.3.31
+  Build: Safe Language Tools Navigation
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.30";
-window.LANGUAGETUTOR_BUILD="Language Tools Section Buttons";
+window.LANGUAGETUTOR_VERSION="14.3.31";
+window.LANGUAGETUTOR_BUILD="Safe Language Tools Navigation";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7803,42 +7803,34 @@ body > #language-coach-window.ask-tutor-detached > .language-coach-titlebar{
 }
 </style>
 
-<style id="workspace-v14330-language-section-buttons-css">
-#language-tools-section-strip{
+<style id="workspace-v14331-safe-language-tools-navigation-css">
+.v14331-old-shortcut-strip{display:none!important}
+.language-tools-section-nav-v14331{
   display:flex;
   flex-wrap:wrap;
   gap:10px;
-  padding:10px 12px;
-  margin:0 10px 10px;
-  border:1px solid #ddd2ff;
-  border-radius:12px;
-  background:#fbf9ff;
+  margin:0 0 14px;
 }
-#language-tools-section-strip .language-tools-section-button{
+.language-tools-section-button-v14331{
   appearance:none;
   border:1px solid #d8dfea;
   background:#fff;
   border-radius:12px;
-  min-height:42px;
-  padding:9px 14px;
+  min-height:44px;
+  padding:10px 15px;
   display:inline-flex;
   align-items:center;
   gap:7px;
   color:#34435a;
   font:700 13px/1.2 inherit;
   cursor:pointer;
-  box-shadow:none;
 }
-#language-tools-section-strip .language-tools-section-button:hover{
+.language-tools-section-button-v14331:hover{
   border-color:#b9a7ff;
   background:#f8f5ff;
 }
-#language-tools-section-strip .language-tools-section-button:focus-visible{
-  outline:3px solid rgba(99,102,241,.24);
-  outline-offset:2px;
-}
-@media (max-width:720px){
-  #language-tools-section-strip .language-tools-section-button{
+@media(max-width:720px){
+  .language-tools-section-button-v14331{
     flex:1 1 100%;
     justify-content:flex-start;
   }
@@ -27721,7 +27713,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.30";
+   el.textContent="LanguageTutor v14.3.31";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -28369,104 +28361,90 @@ else install();
 })();
 </script>
 
-<script id="workspace-v14330-language-section-buttons">
+<script id="workspace-v14331-safe-language-tools-navigation">
 (()=>{
 "use strict";
-const $=id=>document.getElementById(id);
 
-function root(){
-  return $("conversation-language-tools-section") ||
-         document.querySelector(".language-tools-flat-root") ||
-         $("language-tools-view");
+const LABELS=[
+  ["Grammar Tools","🧰"],
+  ["Study & Review","📚"],
+  ["Translation & Manual Input","🌐"]
+];
+
+function norm(v){return (v||"").replace(/\s+/g," ").trim();}
+
+function toolView(){
+  return document.getElementById("language-tools-view");
 }
-function summaries(){
-  const r=root();
-  if(!r)return [];
-  return [...r.querySelectorAll("summary")].filter(s=>{
-    const t=(s.textContent||"").replace(/\s+/g," ").trim();
-    return /^(Grammar Tools|Study & Review|Translation & Manual Input)$/i.test(t);
-  });
+
+function matchingSummary(label){
+  const view=toolView();
+  if(!view)return null;
+  return [...view.querySelectorAll("summary")].find(
+    s=>norm(s.textContent).toLowerCase()===label.toLowerCase()
+  )||null;
 }
-function findSummary(label){
-  return summaries().find(s=>(s.textContent||"").replace(/\s+/g," ").trim().toLowerCase()===label.toLowerCase());
-}
+
 function openSection(label){
-  const summary=findSummary(label);
+  const summary=matchingSummary(label);
   if(!summary)return false;
-  const details=summary.closest("details");
-  if(details)details.open=true;
+  const target=summary.closest("details");
+  if(!target)return false;
 
-  // Close the other sibling study accordions so the selected section is unambiguous.
-  summaries().forEach(other=>{
-    if(other===summary)return;
-    const d=other.closest("details");
-    if(d && d!==details)d.open=false;
-  });
-
-  requestAnimationFrame(()=>{
-    summary.scrollIntoView({behavior:"smooth",block:"nearest"});
-    const focusable=details?.querySelector("button,input,select,textarea,[tabindex]:not([tabindex='-1'])");
-    if(focusable && typeof focusable.focus==="function"){
-      try{focusable.focus({preventScroll:true});}catch(_){}
+  // Use the existing accordion DOM directly; no synthetic clicks and no DOM observer.
+  [...toolView().querySelectorAll("details")].forEach(d=>{
+    const sm=d.querySelector(":scope > summary");
+    if(sm && LABELS.some(([name])=>norm(sm.textContent).toLowerCase()===name.toLowerCase())){
+      d.open=(d===target);
     }
   });
+
+  requestAnimationFrame(()=>summary.scrollIntoView({behavior:"smooth",block:"nearest"}));
   return true;
 }
-function ensureStrip(){
-  const view=$("language-tools-view");
-  if(!view)return;
-  let strip=$("language-tools-section-strip");
-  if(!strip){
-    strip=document.createElement("div");
-    strip.id="language-tools-section-strip";
-    strip.className="language-tools-section-strip";
-    const labels=[
-      ["Grammar Tools","🧰"],
-      ["Study & Review","📚"],
-      ["Translation & Manual Input","🌐"]
-    ];
-    labels.forEach(([label,icon])=>{
-      const b=document.createElement("button");
-      b.type="button";
-      b.className="language-tools-section-button";
-      b.dataset.section=label;
-      b.innerHTML=`<span aria-hidden="true">${icon}</span><span>${label}</span>`;
-      b.addEventListener("click",()=>openSection(label));
-      strip.appendChild(b);
-    });
 
-    // Put navigation immediately below the workspace title/open bar.
-    const first=view.firstElementChild;
-    if(first)first.insertAdjacentElement("afterend",strip);
-    else view.prepend(strip);
+function install(){
+  const view=toolView();
+  if(!view || document.getElementById("language-tools-section-nav-v14331"))return;
+
+  const summaries=LABELS.map(([label])=>matchingSummary(label));
+  if(summaries.some(x=>!x))return; // fail safely: leave the existing UI untouched.
+
+  const nav=document.createElement("div");
+  nav.id="language-tools-section-nav-v14331";
+  nav.className="language-tools-section-nav-v14331";
+
+  LABELS.forEach(([label,icon])=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="language-tools-section-button-v14331";
+    b.innerHTML=`<span aria-hidden="true">${icon}</span><span>${label}</span>`;
+    b.addEventListener("click",()=>openSection(label));
+    nav.appendChild(b);
+  });
+
+  // Insert immediately before the first of the three actual accordion sections.
+  const firstDetails=summaries[0].closest("details");
+  firstDetails.parentNode.insertBefore(nav,firstDetails);
+
+  // Hide only the old shortcut strip by locating the exact four shortcut buttons and
+  // their shared parent. Never delete nodes; this makes the patch reversible/safe.
+  const shortcutNames=["Verbs","Prepositions & Cases","Articles & Endings","Adjectives"];
+  const buttons=[...view.querySelectorAll("button")];
+  const shortcuts=shortcutNames.map(name=>buttons.find(b=>norm(b.textContent)===name));
+  if(shortcuts.every(Boolean)){
+    const parent=shortcuts[0].parentElement;
+    if(parent && shortcuts.every(b=>b.parentElement===parent)){
+      parent.classList.add("v14331-old-shortcut-strip");
+    }
   }
 }
-function removeOldQuickStrip(){
-  // Retire the old Verbs / Prepositions & Cases / Articles & Endings / Adjectives strip.
-  // The tools themselves remain inside Grammar Tools.
-  const view=$("language-tools-view");
-  if(!view)return;
-  [...view.querySelectorAll("button")].forEach(b=>{
-    const t=(b.textContent||"").replace(/\s+/g," ").trim();
-    if(/^(Verbs|Prepositions & Cases|Articles & Endings|Adjectives)$/i.test(t)){
-      const parent=b.parentElement;
-      b.remove();
-      if(parent && !parent.querySelector("button") && !parent.textContent.trim())parent.remove();
-    }
-  });
-}
-function install(){
-  removeOldQuickStrip();
-  ensureStrip();
 
-  const mo=new MutationObserver(()=>{
-    removeOldQuickStrip();
-    ensureStrip();
-  });
-  mo.observe(document.body,{childList:true,subtree:true});
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",()=>requestAnimationFrame(install),{once:true});
+}else{
+  requestAnimationFrame(install);
 }
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
-else install();
 
 window.openLanguageToolsSection=openSection;
 })();
