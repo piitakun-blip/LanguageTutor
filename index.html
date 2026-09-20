@@ -7234,6 +7234,134 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
  font-family:inherit!important;font-size:11px!important;font-weight:700!important
 }
 </style>
+
+<style id="workspace-v1434-live-transcript-prominence-css">
+/* v14.3.4 — make live speech feedback a first-class conversation cue. */
+#voice-live-transcript.voice-live-interim-status{
+    min-height:58px!important;
+    max-height:150px!important;
+    margin:8px 0!important;
+    padding:10px 12px!important;
+    border:2px solid #bfdbfe!important;
+    border-radius:12px!important;
+    background:#f8fbff!important;
+    color:#1e293b!important;
+    font-size:14px!important;
+    line-height:1.5!important;
+    box-shadow:0 0 0 3px rgba(59,130,246,.07),0 5px 16px rgba(15,23,42,.06)!important;
+}
+#voice-live-transcript.voice-live-interim-status.voice-live-interim-idle{
+    max-height:0!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    border-width:0!important;
+    box-shadow:none!important;
+    opacity:0!important;
+}
+#voice-live-transcript .voice-live-line{
+    display:grid;
+    grid-template-columns:68px minmax(0,1fr);
+    gap:8px;
+    align-items:start;
+    padding:6px 8px;
+    margin:3px 0;
+    border-radius:8px;
+}
+#voice-live-transcript .voice-live-role{
+    font-size:10px;
+    line-height:1.6;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.045em;
+}
+#voice-live-transcript .voice-live-text{
+    font-size:14px;
+    line-height:1.5;
+    font-weight:650;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+}
+#voice-live-transcript .voice-live-learner{
+    background:#eff6ff;
+    color:#1d4ed8;
+    border-left:3px solid #60a5fa;
+}
+#voice-live-transcript .voice-live-tutor{
+    background:#f5f3ff;
+    color:#5b21b6;
+    border-left:3px solid #a78bfa;
+}
+#voice-live-transcript .voice-live-translation{
+    background:#f0fdf4;
+    color:#166534;
+    border-left:3px solid #86efac;
+}
+#voice-live-transcript .voice-live-status{
+    background:#fffbeb;
+    color:#92400e;
+    border-left:3px solid #fbbf24;
+}
+#voice-live-transcript .voice-live-placeholder{
+    color:#64748b;
+    font-size:13px;
+    font-weight:650;
+}
+@media(max-width:640px){
+    #voice-live-transcript.voice-live-interim-status{
+        max-height:170px!important;
+        padding:9px!important;
+    }
+    #voice-live-transcript .voice-live-line{
+        grid-template-columns:56px minmax(0,1fr);
+        gap:6px;
+        padding:6px;
+    }
+    #voice-live-transcript .voice-live-text{font-size:15px;}
+}
+</style>
+
+<style id="workspace-v1436-unified-floating-status-bars">
+/* v14.3.6 — all four floating-workspace placeholders use one flat visual hierarchy.
+   Some older workspace generations leave a bordered inner shell around Tutor Controls
+   and Ask Tutor. Flatten only those on-page floating-status placeholders; floating
+   windows themselves are untouched. */
+body .workspace-section:has(#tutor-controls-floating-status:not([hidden])),
+body .workspace-section:has(#ask-tutor-floating-status:not([hidden])),
+body .conversation-fold:has(#tutor-controls-floating-status:not([hidden])),
+body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
+    padding:0!important;
+}
+#tutor-controls-floating-status:not([hidden]),
+#ask-tutor-floating-status:not([hidden]){
+    width:100%!important;
+    box-sizing:border-box!important;
+    margin:0!important;
+    border:0!important;
+    outline:0!important;
+    box-shadow:none!important;
+    background:transparent!important;
+    border-radius:0!important;
+}
+#tutor-controls-floating-status:not([hidden]) > *,
+#ask-tutor-floating-status:not([hidden]) > *{
+    box-shadow:none;
+}
+/* Legacy inner wrappers can remain for compatibility but should not render as a
+   second card while their workspace is floating. */
+#tutor-controls-floating-status:not([hidden]) .workspace-floating-status-inner,
+#ask-tutor-floating-status:not([hidden]) .workspace-floating-status-inner,
+#tutor-controls-floating-status:not([hidden]) .workspace-status-inner,
+#ask-tutor-floating-status:not([hidden]) .workspace-status-inner{
+    border:0!important;
+    outline:0!important;
+    box-shadow:none!important;
+    background:transparent!important;
+    border-radius:0!important;
+    margin:0!important;
+    padding:0!important;
+}
+</style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
 
@@ -7978,7 +8106,10 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
                         <button type="button" id="voice-restate-btn" onclick="restateLastVoiceTurn()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-bold transition" title="Discard the last captured turn and say it again">
                             ↺ Restate
                         </button>
-                        <button type="button" onclick="newVoiceConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold transition">
+                        <button type="button" id="conversation-ask-tutor-btn" onclick="openAskTutorFromConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs font-bold transition" title="Pause practice and ask Tutor about this conversation">
+                                    💬 Ask Tutor
+                                </button>
+                                <button type="button" onclick="newVoiceConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold transition">
                             New conversation
                         </button>
                     </div>
@@ -14999,15 +15130,37 @@ Do not add quotation marks or labels.`;
         const targetTranslation=String(voiceTutorState.liveUserTargetTranslation||"").trim();
         const tutor=stripTutorMarkdown(voiceTutorState.liveTutorText);
         const listening=String(listeningText||"").trim();
-        const lines=[];
-        if(user) lines.push(`You: ${user}`);
-        if(targetTranslation) lines.push(`${langConfig().name}: ${targetTranslation}`);
-        if(tutor) lines.push(`Tutor: ${tutor}`);
-        if(listening) lines.push(listening);
-        live.textContent=lines.length ? lines.join("\n\n") : "What the microphone hears will appear here.";
+
+        live.replaceChildren();
+
+        const addLine=(role,label,text)=>{
+            const value=String(text||"").trim();
+            if(!value)return;
+            const row=document.createElement("div");
+            row.className=`voice-live-line voice-live-${role}`;
+            const tag=document.createElement("span");
+            tag.className="voice-live-role";
+            tag.textContent=label;
+            const body=document.createElement("span");
+            body.className="voice-live-text";
+            body.textContent=value;
+            row.append(tag,body);
+            live.appendChild(row);
+        };
+
+        addLine("learner","You",user);
+        if(targetTranslation)addLine("translation",langConfig().name,targetTranslation);
+        addLine("tutor","Tutor",tutor);
+        addLine("status","Listening",listening);
+
+        if(!live.children.length){
+            const idle=document.createElement("div");
+            idle.className="voice-live-placeholder";
+            idle.textContent="What the microphone hears will appear here.";
+            live.appendChild(idle);
+        }
         live.scrollTop=live.scrollHeight;
     }
-
     window.newVoiceConversation=function(){
         if(voiceTutorState.active) stopVoiceConversation(true);
         voiceTutorState.micSession=false;
@@ -15586,6 +15739,16 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         const previousUser=history[userIndex];
         const inputMode=previousUser?.inputMode==="english" ? "english" : "target";
 
+        // Capture the Tutor prompt that immediately preceded the learner's turn.
+        // Retry returns to that prompt rather than presenting an empty live panel.
+        let previousTutor=null;
+        for(let i=userIndex-1;i>=0;i--){
+            if(history[i]?.role==="assistant"){
+                previousTutor=history[i];
+                break;
+            }
+        }
+
         // Remove the learner turn and anything the tutor produced after it.
         history.splice(userIndex);
         renderVoiceTutorTranscript();
@@ -15599,19 +15762,40 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         voiceTutorState.liveUserText="";
         voiceTutorState.liveUserTargetTranslation="";
-        voiceTutorState.liveTutorText="";
+        voiceTutorState.liveTutorText=previousTutor ? String(previousTutor.text||"") : "";
         voiceTutorState.phase="idle";
         voiceTutorState.inputMode=inputMode;
-        renderVoiceLiveTurn("Restate your last turn…");
+        renderVoiceLiveTurn(previousTutor ? "Listen again, then reply…" : "Restate your last turn…");
         voiceTutorStatus(
-            inputMode==="english"
-                ? "Restate your English question."
-                : `Restate your ${langConfig().name} turn.`,
-            "listening"
+            previousTutor
+                ? "Returning to the Tutor's previous prompt…"
+                : (inputMode==="english"
+                    ? "Restate your English question."
+                    : `Restate your ${langConfig().name} turn.`),
+            "normal"
         );
         updateVoiceRestateButton();
 
-        setTimeout(()=>resumeVoiceRecognition(true,inputMode),150);
+        const resumeAfterPrompt=()=>{
+            voiceTutorStatus(
+                inputMode==="english"
+                    ? "Your turn — listening for your English reply."
+                    : `Your turn — listening in ${langConfig().name}…`,
+                "listening"
+            );
+            renderVoiceLiveTurn("Your turn — listening…");
+            setTimeout(()=>resumeVoiceRecognition(true,inputMode),120);
+        };
+
+        if(previousTutor){
+            const promptText=stripTutorMarkdown(previousTutor.text);
+            const promptLocale=previousTutor.replyLanguage==="en" ? "en-US" : langConfig().locale;
+            Promise.resolve(speakRawText(promptText,promptLocale))
+                .then(()=>setTimeout(resumeAfterPrompt,180))
+                .catch(()=>resumeAfterPrompt());
+        }else{
+            resumeAfterPrompt();
+        }
     };
 
     window.startVoiceConversation=function(){
@@ -24098,7 +24282,7 @@ window.addEventListener("load",mountToolbar,{once:true});
 </script>
 
 <script id="workspace-v108-unified-saved-transcript-format-marker">
-window.__languageTutorWorkspaceVersion="10.8";
+window.__languageTutorWorkspaceVersion="14.3.4-prominent-live-transcript-retry-prompt";
 </script>
 
 
@@ -26540,6 +26724,48 @@ setTimeout(normalize,300); setTimeout(normalize,1000);
 })();
 </script>
 
+
+<script id="workspace-v1435-conversation-ask-tutor-context">
+(()=>{
+    "use strict";
+    function install(){
+        if(typeof window.openAskTutorFromConversation!=="function" || window.openAskTutorFromConversation.__v1435Context)return;
+        const original=window.openAskTutorFromConversation;
+        function contextualOpen(){
+            try{
+                const selected=document.querySelector(
+                    '#voice-chat-messages-log .conversation-turn-card.transcript-turn-selected'
+                );
+                const selectedText=String(selected?.dataset?.transcriptText||"").trim();
+                if(selectedText && typeof window.setAskTutorContext==="function"){
+                    window.setAskTutorContext(selectedText);
+                }else if(typeof window.setAskTutorContext==="function"){
+                    const history=typeof window.getVoiceTutorHistory==="function"
+                        ? window.getVoiceTutorHistory()
+                        : [];
+                    const recent=Array.isArray(history) ? history.slice(-6) : [];
+                    if(recent.length){
+                        const context=recent.map(entry=>{
+                            const role=entry?.role==="user" ? "Learner" : "Tutor";
+                            return `${role}: ${String(entry?.text||"").trim()}`;
+                        }).filter(line=>!/: $/.test(line)).join("\n");
+                        if(context)window.setAskTutorContext(context);
+                    }
+                }
+            }catch(e){}
+            return original.apply(this,arguments);
+        }
+        contextualOpen.__v1435Context=true;
+        contextualOpen.__v1435Original=original;
+        window.openAskTutorFromConversation=contextualOpen;
+    }
+    if(document.readyState==="loading"){
+        document.addEventListener("DOMContentLoaded",()=>setTimeout(install,0),{once:true});
+    }else{
+        setTimeout(install,0);
+    }
+})();
+</script>
 </body>
 </html>
 
