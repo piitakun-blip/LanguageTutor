@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.25
-  Build: Embedded Ask Tutor Workspace
+  Version: 14.3.26
+  Build: Visible Live Conversation Transcript
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.25";
-window.LANGUAGETUTOR_BUILD="Embedded Ask Tutor Workspace";
+window.LANGUAGETUTOR_VERSION="14.3.26";
+window.LANGUAGETUTOR_BUILD="Visible Live Conversation Transcript";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7674,6 +7674,30 @@ body > #ask-tutor-page-preview{display:none !important}
 #ask-tutor-embedded-host #language-coach-window .floating-window-body{
   max-height:none !important;
   overflow:visible !important;
+}
+</style>
+
+<style id="workspace-v14326-visible-transcript-css">
+/* The docked Conversation Transcript is a real review surface, not a thin preview. */
+#conversation-view:not(.is-floating) .conversation-shared-body{
+  min-height:360px !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+}
+#conversation-view:not(.is-floating) #voice-chat-messages-log{
+  display:block !important;
+  min-height:280px !important;
+  height:360px !important;
+  max-height:360px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  padding:10px 12px 34px !important;
+  scroll-padding-bottom:34px !important;
+}
+#conversation-view:not(.is-floating) #voice-chat-messages-log .conversation-turn-card{
+  display:block !important;
+  visibility:visible !important;
 }
 </style>
 </head>
@@ -15065,6 +15089,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         scrollToLatest();
         requestAnimationFrame(scrollToLatest);
     }
+
+    window.renderVoiceTutorTranscript=renderVoiceTutorTranscript;
 
     function stripTutorMarkdown(value){
         return String(value||"")
@@ -27551,7 +27577,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.25";
+   el.textContent="LanguageTutor v14.3.26";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -27890,6 +27916,69 @@ function install(){
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
 else install();
+})();
+</script>
+
+<script id="workspace-v14326-visible-transcript">
+(()=>{
+"use strict";
+
+function log(){return document.getElementById("voice-chat-messages-log");}
+function history(){
+  try{
+    const h=window.getVoiceTutorHistory?.();
+    return Array.isArray(h)?h:[];
+  }catch(_){return [];}
+}
+function nearBottom(el){
+  return !el || (el.scrollHeight-el.scrollTop-el.clientHeight)<90;
+}
+function showLatest(force=false){
+  const el=log();
+  if(!el)return;
+  if(force || nearBottom(el)){
+    requestAnimationFrame(()=>{ el.scrollTop=el.scrollHeight; });
+  }
+}
+function ensureRendered(){
+  const el=log();
+  if(!el)return;
+  const h=history();
+  const cards=el.querySelectorAll(".conversation-turn-card").length;
+
+  // The committed Conversation history is the source of truth. If the docked view
+  // is blank/stale while Tutor Controls already has committed turns, rebuild it.
+  if(h.length && cards!==h.length && typeof window.renderVoiceTutorTranscript==="function"){
+    window.renderVoiceTutorTranscript();
+  }
+  showLatest(true);
+}
+function install(){
+  const el=log();
+  if(el && !el.__v14326Observer){
+    const observer=new MutationObserver(()=>showLatest(true));
+    observer.observe(el,{childList:true,subtree:true});
+    el.__v14326Observer=observer;
+  }
+
+  // A completed live YOU/TUTOR exchange should immediately be visible in Conversation.
+  const live=document.getElementById("voice-live-transcript");
+  if(live && !live.__v14326Observer){
+    let timer=0;
+    const observer=new MutationObserver(()=>{
+      clearTimeout(timer);
+      timer=setTimeout(ensureRendered,40);
+    });
+    observer.observe(live,{childList:true,subtree:true,characterData:true});
+    live.__v14326Observer=observer;
+  }
+
+  ensureRendered();
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
+else install();
+
+document.addEventListener("languagetutor:transcript-rendered",()=>showLatest(true));
 })();
 </script>
 </body>
