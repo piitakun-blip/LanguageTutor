@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.16
-  Build: Workspace Icons + Grammar Quick Actions
+  Version: 14.3.20
+  Build: Ask Tutor Lower Control Row
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -6760,7 +6760,7 @@ body.conversation-first-layout main.conversation-first-main{
 
 /* Slightly more explicit top-level identity without adding another large header. */
 #conversation-transcript-section::before{
-    content:"Conversation Transcript";
+    content:"💬 Conversation Transcript";
     display:block;
     margin:0 0 6px 2px;
     color:#475569;
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.16";
-window.LANGUAGETUTOR_BUILD="Workspace Icons + Grammar Quick Actions";
+window.LANGUAGETUTOR_VERSION="14.3.20";
+window.LANGUAGETUTOR_BUILD="Ask Tutor Lower Control Row";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7544,6 +7544,32 @@ window.LANGUAGETUTOR_BUILD="Workspace Icons + Grammar Quick Actions";
 @media(max-width:640px){
   .language-tools-docked-quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
   .language-tools-docked-quick-actions button{min-height:42px;white-space:normal}
+}
+</style>
+
+<style id="workspace-v14317-selectable-transcript-css">
+#conversation-view:not(.is-floating) #voice-chat-messages-log .conversation-turn-card[data-transcript-selectable="1"]{
+  cursor:pointer !important;
+  transition:box-shadow .15s ease,border-color .15s ease,transform .15s ease;
+}
+#conversation-view:not(.is-floating) #voice-chat-messages-log .conversation-turn-card[data-transcript-selectable="1"]:hover{
+  box-shadow:0 0 0 2px rgba(99,102,241,.13);
+}
+#conversation-view #voice-chat-messages-log .conversation-turn-card.transcript-turn-selected{
+  box-shadow:0 0 0 3px rgba(99,102,241,.22) !important;
+  border-color:#818cf8 !important;
+}
+</style>
+
+<style id="workspace-v14320-ask-tutor-lower-row-css">
+#conversation-ask-tutor-btn.conversation-lower-row-ask-tutor{
+  min-height:36px !important;
+  padding:6px 12px !important;
+  border-color:#f1c7cf !important;
+  background:#fff2f4 !important;
+  color:#9f2945 !important;
+  font-size:11px !important;
+  font-weight:800 !important;
 }
 </style>
 </head>
@@ -26724,25 +26750,30 @@ window.openDockedGrammarTool=function(tab){
     const tools=document.getElementById("conversation-language-tools-section");
     if(tools?.tagName==="DETAILS")tools.open=true;
 
-    // Open the Grammar Tools subsection itself when it is a details element.
     const grammarSection=document.getElementById("conversation-grammar-section");
     if(grammarSection?.tagName==="DETAILS")grammarSection.open=true;
 
+    // Drive the real Grammar Tools controls instead of trying to call their
+    // implementation functions from this later scoped workspace script.
     const container=document.getElementById("cheat-sheet-container");
     if(container?.classList.contains("hidden")){
-        // Use the established toggle so initialization and arrow state remain correct.
-        if(typeof toggleCheatSheet==="function")toggleCheatSheet();
-        else container.classList.remove("hidden");
+        document.getElementById("grammar-tools-toggle")?.click();
     }
 
-    if(typeof setGrammarMainTab==="function")setGrammarMainTab(tab);
+    // Clicking the real tab invokes the original setGrammarMainTab() path and all
+    // tool-specific initialization/rendering.
+    const realTab=document.getElementById("grammar-tab-"+tab);
+    if(realTab){
+        realTab.click();
+    }
 
-    // Keep this a docked quick-launch action: reveal the chosen grammar tool on-page
-    // rather than forcing Language Tools into a floating window.
     requestAnimationFrame(()=>{
-        const panel=document.getElementById("grammar-main-"+tab)
-            || document.getElementById("cheat-sheet-container");
-        panel?.scrollIntoView?.({behavior:"smooth",block:"nearest"});
+        requestAnimationFrame(()=>{
+            const panel=document.getElementById("grammar-main-"+tab)
+                || document.getElementById("cheat-sheet-container");
+            panel?.scrollIntoView?.({behavior:"smooth",block:"start"});
+            try{panel?.focus?.({preventScroll:true});}catch(_){}
+        });
     });
 };
 
@@ -27395,13 +27426,144 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.16";
+   el.textContent="LanguageTutor v14.3.20";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
    else document.body.appendChild(el);
  };
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",add,{once:true});else add();
+})();
+</script>
+
+<script id="workspace-v14317-selectable-transcript-repair">
+(()=>{
+"use strict";
+
+function history(){
+  try{
+    const h=typeof window.getVoiceTutorHistory==="function" ? window.getVoiceTutorHistory() : [];
+    return Array.isArray(h)?h:[];
+  }catch(_){return [];}
+}
+function targetText(entry){
+  if(!entry)return "";
+  if(entry.role==="user" && entry.inputMode==="english"){
+    return String(entry.targetTranslation||"").trim();
+  }
+  const raw=String(entry.text||"").trim();
+  if(entry.role==="assistant" && typeof stripTutorMarkdown==="function"){
+    try{return String(stripTutorMarkdown(raw)||"").trim();}catch(_){}
+  }
+  return raw;
+}
+function hydrateSelectableCards(){
+  const log=document.getElementById("voice-chat-messages-log");
+  if(!log)return;
+  const cards=[...log.querySelectorAll(".conversation-turn-card")];
+  const h=history();
+
+  cards.forEach((card,index)=>{
+    const entry=card.__transcriptEntry || h[index];
+    if(!entry)return;
+    const text=targetText(entry);
+    if(!text)return;
+
+    card.__transcriptEntry=entry;
+    card.dataset.transcriptSelectable="1";
+    card.dataset.transcriptText=text;
+    card.dataset.transcriptLanguage=String(document.body?.dataset?.studyLanguage||"de");
+    card.tabIndex=0;
+    card.setAttribute("role","button");
+    card.setAttribute("aria-label","Select this transcript line for Ask Tutor and study actions");
+  });
+
+  // Keep the original shared selection toolbar mounted directly above the transcript.
+  const toolbar=document.getElementById("transcript-selection-toolbar");
+  if(toolbar && toolbar.parentElement!==log.parentElement){
+    log.parentElement?.insertBefore(toolbar,log);
+  }
+}
+function selectCard(card){
+  if(!card)return;
+  // Prefer the app's established selection controller so Analyze/Translate/Ask Tutor
+  // keep exactly the same behavior as before the docked-transcript redesign.
+  if(typeof window.selectPresentTranscriptLine==="function"){
+    window.selectPresentTranscriptLine(card);
+    return;
+  }
+  document.querySelectorAll("#voice-chat-messages-log .transcript-turn-selected")
+    .forEach(el=>el.classList.remove("transcript-turn-selected"));
+  card.classList.add("transcript-turn-selected");
+  window.setAskTutorContext?.(String(card.dataset.transcriptText||"").trim());
+}
+function install(){
+  hydrateSelectableCards();
+  const log=document.getElementById("voice-chat-messages-log");
+  if(log && !log.__v14317SelectionRepair){
+    const observer=new MutationObserver(hydrateSelectableCards);
+    observer.observe(log,{childList:true,subtree:true});
+    log.__v14317SelectionRepair=observer;
+  }
+
+  // Capture phase makes selection resilient even if an older workspace handler
+  // changes DOM placement later.
+  document.addEventListener("click",event=>{
+    const card=event.target?.closest?.("#voice-chat-messages-log .conversation-turn-card");
+    if(!card || event.target.closest?.("button,a,input,textarea,select,summary"))return;
+    if(String(window.getSelection?.()||"").trim())return;
+    hydrateSelectableCards();
+    if(card.dataset.transcriptSelectable==="1")selectCard(card);
+  },true);
+
+  document.addEventListener("keydown",event=>{
+    if(event.key!=="Enter" && event.key!==" ")return;
+    const card=event.target?.closest?.("#voice-chat-messages-log .conversation-turn-card");
+    if(!card)return;
+    hydrateSelectableCards();
+    if(card.dataset.transcriptSelectable!=="1")return;
+    event.preventDefault();
+    selectCard(card);
+  },true);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
+else install();
+})();
+</script>
+
+<script id="workspace-v14320-ask-tutor-lower-row">
+(()=>{
+"use strict";
+function placeAskTutorWithComposerActions(){
+  const ask=document.getElementById("conversation-ask-tutor-btn");
+  if(!ask)return;
+
+  const composer=document.getElementById("conversation-reply-composer");
+  const root=composer || ask.closest(".conversation-primary-card") || document;
+
+  // Locate the row containing the existing Live voice / German keys /
+  // English → German & send controls.
+  const buttons=[...root.querySelectorAll("button")];
+  const live=buttons.find(b=>/live voice/i.test(String(b.textContent||"")));
+  const keys=buttons.find(b=>/german keys/i.test(String(b.textContent||"")));
+  const english=buttons.find(b=>/english\s*→\s*german|english.*german.*send/i.test(String(b.textContent||"")));
+  const anchor=live || keys || english;
+  const row=anchor?.parentElement;
+  if(!row)return;
+
+  if(ask.parentElement!==row){
+    // Put Ask Tutor first in the secondary/lower action row.
+    row.insertBefore(ask,row.firstChild);
+  }
+  ask.classList.add("conversation-lower-row-ask-tutor");
+}
+function install(){
+  placeAskTutorWithComposerActions();
+  const observer=new MutationObserver(placeAskTutorWithComposerActions);
+  observer.observe(document.body,{childList:true,subtree:true});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
+else install();
 })();
 </script>
 </body>
