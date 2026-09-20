@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.14
-  Build: Authoritative Transcript View
+  Version: 14.3.16
+  Build: Workspace Icons + Grammar Quick Actions
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.14";
-window.LANGUAGETUTOR_BUILD="Authoritative Transcript View";
+window.LANGUAGETUTOR_VERSION="14.3.16";
+window.LANGUAGETUTOR_BUILD="Workspace Icons + Grammar Quick Actions";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7477,6 +7477,73 @@ window.LANGUAGETUTOR_BUILD="Authoritative Transcript View";
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   scrollbar-gutter:stable;
+}
+</style>
+
+<style id="workspace-v14315-docked-ask-actions-css">
+/* The four core Ask Tutor actions remain visible on the page even when Ask Tutor itself
+   is docked. They mirror the floating window's top action row. */
+#ask-tutor-page-preview .v1437-ask-actions{
+  display:flex !important;
+  flex-wrap:wrap;
+  gap:8px;
+}
+#ask-tutor-page-preview [data-ask-action="analyze"],
+#ask-tutor-page-preview [data-ask-action="translate"],
+#ask-tutor-page-preview [data-ask-action="why"],
+#ask-tutor-page-preview [data-ask-action="reply"]{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+}
+/* Open Ask Tutor remains available when needed; the four teaching actions are the
+   persistent docked controls the learner asked for. */
+</style>
+
+<style id="workspace-v14316-icons-grammar-quick-actions-css">
+.workspace-title-icon{display:inline-block;margin-right:4px}
+#ask-tutor-section .ask-title-icon{font-style:normal}
+
+/* Keep the Tutor Controls Ask Tutor button visually consistent with Ask Tutor elsewhere. */
+#conversation-ask-tutor-btn{
+  border-color:#f1c7cf !important;
+  background:#fff2f4 !important;
+  color:#9f2945 !important;
+}
+
+/* Useful grammar entry points remain visible while Language Tools is docked. */
+.language-tools-docked-quick-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:0 0 8px;
+  padding:9px 10px;
+  border:1px solid #e1d9f7;
+  border-radius:10px;
+  background:#fcfbff;
+}
+.language-tools-docked-quick-actions button{
+  min-height:36px;
+  padding:6px 10px;
+  border:1px solid #d8cff2;
+  border-radius:9px;
+  background:#fff;
+  color:#5b4a86;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+}
+.language-tools-docked-quick-actions button:hover{
+  background:#f4f0ff;
+  border-color:#bfb0e8;
+}
+#language-tools-view.is-floating > .language-tools-docked-quick-actions{
+  display:none !important;
+}
+@media(max-width:640px){
+  .language-tools-docked-quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .language-tools-docked-quick-actions button{min-height:42px;white-space:normal}
 }
 </style>
 </head>
@@ -8225,7 +8292,7 @@ window.LANGUAGETUTOR_BUILD="Authoritative Transcript View";
                             ↺ Restate
                         </button>
                         <button type="button" id="conversation-ask-tutor-btn" onclick="openAskTutorFromConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 text-rose-800 text-xs font-bold transition" title="Pause practice and ask Tutor about this conversation">
-                                    💬 Ask Tutor
+                                    ❓ Ask Tutor
                                 </button>
                                 <button type="button" onclick="newVoiceConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold transition">
                             New conversation
@@ -26240,7 +26307,7 @@ const STORAGE_KEY="languagetutor_primary_workspace_rects_v1414";
 
 const registry={
     tutor:{
-        label:"Tutor Controls",
+        label:"🎛️ Tutor Controls",
         subtitle:"Settings, voice controls, live status, and reply composer",
         viewId:"tutor-controls-view",
         shellId:"tutor-controls-window",
@@ -26249,7 +26316,7 @@ const registry={
         placeholderId:"tutor-controls-placeholder"
     },
     tools:{
-        label:"Language Tools",
+        label:"🧰 Language Tools & Study",
         subtitle:"Grammar Tools, Study & Review, Translation & Manual Input",
         viewId:"language-tools-view",
         shellId:"language-tools-window",
@@ -26473,7 +26540,7 @@ function ensureTranscriptSection(){
 
     const dockedTitle=document.createElement("div");
     dockedTitle.className="primary-workspace-docked-title";
-    dockedTitle.textContent="Conversation Transcript";
+    dockedTitle.textContent="💬 Conversation Transcript";
 
     const openTranscript=document.createElement("button");
     openTranscript.type="button";
@@ -26628,12 +26695,56 @@ function ensureLanguageToolsView(){
     view.className="primary-workspace-view";
 
     const bar=createDockedBar("tools");
-    view.append(bar,tools);
+
+    const quick=document.createElement("div");
+    quick.id="language-tools-docked-quick-actions";
+    quick.className="language-tools-docked-quick-actions";
+    quick.setAttribute("aria-label","Grammar quick actions");
+    [
+        ["🔤 Verbs","verbs"],
+        ["🧭 Prepositions & Cases","cases"],
+        ["📰 Articles & Endings","articles"],
+        ["✨ Adjectives","adjectives"]
+    ].forEach(([label,tab])=>{
+        const button=document.createElement("button");
+        button.type="button";
+        button.textContent=label;
+        button.addEventListener("click",()=>window.openDockedGrammarTool?.(tab));
+        quick.appendChild(button);
+    });
+
+    view.append(bar,quick,tools);
     parent.insertBefore(view,placeholder);
 
     return view;
 }
 
+
+window.openDockedGrammarTool=function(tab){
+    const tools=document.getElementById("conversation-language-tools-section");
+    if(tools?.tagName==="DETAILS")tools.open=true;
+
+    // Open the Grammar Tools subsection itself when it is a details element.
+    const grammarSection=document.getElementById("conversation-grammar-section");
+    if(grammarSection?.tagName==="DETAILS")grammarSection.open=true;
+
+    const container=document.getElementById("cheat-sheet-container");
+    if(container?.classList.contains("hidden")){
+        // Use the established toggle so initialization and arrow state remain correct.
+        if(typeof toggleCheatSheet==="function")toggleCheatSheet();
+        else container.classList.remove("hidden");
+    }
+
+    if(typeof setGrammarMainTab==="function")setGrammarMainTab(tab);
+
+    // Keep this a docked quick-launch action: reveal the chosen grammar tool on-page
+    // rather than forcing Language Tools into a floating window.
+    requestAnimationFrame(()=>{
+        const panel=document.getElementById("grammar-main-"+tab)
+            || document.getElementById("cheat-sheet-container");
+        panel?.scrollIntoView?.({behavior:"smooth",block:"nearest"});
+    });
+};
 
 function openPrimaryWorkspace(name){
     const spec=registry[name];
@@ -26829,7 +26940,7 @@ function ensureAskSection(){
   s=document.createElement("section");
   s.id="ask-tutor-section";
   s.className="unified-workspace-section unified-workspace-ask";
-  s.innerHTML='<div class="unified-workspace-bar"><div class="unified-workspace-title">Ask Tutor</div><button type="button" class="primary-workspace-open-btn ask-workspace-state">↗ Open Ask Tutor</button></div><div class="primary-workspace-placeholder ask-workspace-placeholder"></div>';
+  s.innerHTML='<div class="unified-workspace-bar"><div class="unified-workspace-title"><span class="workspace-title-icon ask-title-icon">❓</span> Ask Tutor</div><button type="button" class="primary-workspace-open-btn ask-workspace-state">↗ Open Ask Tutor</button></div><div class="primary-workspace-placeholder ask-workspace-placeholder"></div>';
   s.querySelector(".ask-workspace-state").addEventListener("click",()=>{
     if(askVisible()) window.returnAskTutorWorkspace?.();
     else window.openAskTutorWorkspace?.();
@@ -27048,7 +27159,8 @@ function place(){
   if(templates)templates.hidden=false;
   // v14.3.14: no duplicate Conversation preview. The real transcript view is authoritative.
   placePreview($("ask-tutor-page-preview"),[
-    "#ask-tutor-section",".ask-tutor-section","#language-coach-section","#ask-tutor-page-section"
+    "#ask-tutor-section",".ask-tutor-section","#ask-tutor-page-section",
+    "#language-coach-section","#ask-tutor-placeholder"
   ]);
   if(templates && !templates.children.length)templates.remove();
 }
@@ -27283,7 +27395,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.14";
+   el.textContent="LanguageTutor v14.3.16";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
