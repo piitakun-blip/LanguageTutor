@@ -15382,14 +15382,14 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
     window.resumeVoiceRecognition=function(manual=false,inputMode="target"){
         if(!voiceTutorState.active)return;
-        // The private Coach owns the mic while its window is open. This prevents
-        // Tutor speech completion / recognition onend from silently restarting
-        // the live conversation microphone behind Coach dictation.
-        const coachWindow=document.getElementById("language-coach-window");
-        if(coachWindow && !coachWindow.hidden){
+        // v14.3.3: microphone ownership is based on who is actually listening,
+        // not merely on whether Ask Tutor is visible.
+        const micCoordinator=window.languageTutorMicCoordinator;
+        if(micCoordinator?.owner && micCoordinator.owner!=="conversation"){
             voiceTutorState.coachMicPaused=true;
             return;
         }
+        if(micCoordinator)micCoordinator.owner="conversation";
         voiceTutorState.coachMicPaused=false;
         if(voiceTutorState.speaking || voiceTutorState.phase==="processing")return;
 
@@ -24103,13 +24103,20 @@ window.__languageTutorWorkspaceVersion="10.8";
 
 
 <script id="workspace-v1431-workspace-polish-marker">
-window.__languageTutorWorkspaceVersion="14.3.2-cleanup-diagram-removed";
+window.__languageTutorWorkspaceVersion="14.3.3-shared-mic-coordinator";
 </script>
 
 
 <script id="workspace-v12-conversation-workspace">
 (()=>{
 "use strict";
+
+// v14.3.3: one explicit owner for browser speech recognition.
+// This coordinates Conversation and Ask Tutor without rewriting either recognizer.
+window.languageTutorMicCoordinator=window.languageTutorMicCoordinator||{
+    owner:null,
+    conversationWasListening:false
+};
 
 const askState={
     context:"",
@@ -24120,7 +24127,9 @@ const askState={
         recognition:null,
         speaking:false,
         waitingForTutor:false,
-        restartTimer:null
+        restartTimer:null,
+        noSpeechTimer:null,
+        silenceTimer:null
     }
 };
 
@@ -24731,8 +24740,17 @@ function updateAskVoiceButtons(){
 }
 
 function pauseLiveConversationForAskTutor(){
+    const mic=window.languageTutorMicCoordinator;
     try{
-        if(typeof voiceTutorState==="undefined" || !voiceTutorState?.active)return;
+        const conversationActive=typeof voiceTutorState!=="undefined" && Boolean(voiceTutorState?.active);
+        const wasListening=conversationActive && (
+            voiceTutorState.phase==="listening" || Boolean(voiceTutorState.recognition)
+        );
+        if(mic){
+            mic.conversationWasListening=Boolean(mic.conversationWasListening || wasListening);
+            mic.owner="askTutor";
+        }
+        if(!conversationActive)return;
         if(typeof clearVoiceSilenceTimer==="function")clearVoiceSilenceTimer();
         if(typeof destroyVoiceRecognition==="function")destroyVoiceRecognition();
         if(typeof setVoiceMicIndicator==="function")setVoiceMicIndicator(false);
@@ -24755,8 +24773,20 @@ function clearAskRestart(){
     }
 }
 
+function clearAskListeningTimers(){
+    if(askState.voice.noSpeechTimer){
+        clearTimeout(askState.voice.noSpeechTimer);
+        askState.voice.noSpeechTimer=null;
+    }
+    if(askState.voice.silenceTimer){
+        clearTimeout(askState.voice.silenceTimer);
+        askState.voice.silenceTimer=null;
+    }
+}
+
 function stopAskRecognition(){
     clearAskRestart();
+    clearAskListeningTimers();
     const rec=askState.voice.recognition;
     askState.voice.recognition=null;
     if(rec){
@@ -24772,6 +24802,8 @@ window.stopAskTutorVoice=function(cancelSpeech=true){
     askState.voice.waitingForTutor=false;
     askState.voice.speaking=false;
     stopAskRecognition();
+    const mic=window.languageTutorMicCoordinator;
+    if(mic?.owner==="askTutor")mic.owner=null;
     if(cancelSpeech){
         try{window.speechSynthesis?.cancel()}catch(_){}
     }
@@ -24891,6 +24923,7 @@ function listenAskTutorVoice(){
 
     pauseLiveConversationForAskTutor();
     stopAskRecognition();
+    if(window.languageTutorMicCoordinator)window.languageTutorMicCoordinator.owner="askTutor";
 
     const c=currentCfg();
     const rec=new Ctor();
@@ -24905,6 +24938,37 @@ function listenAskTutorVoice(){
     updateAskVoiceButtons();
 
     let finalSent=false;
+    let latestHeard="";
+
+    const submitHeard=text=>{
+        const rawQuestion=String(text||"").trim();
+        if(!rawQuestion || finalSent)return;
+        finalSent=true;
+        clearAskListeningTimers();
+        askState.voice.waitingForTutor=true;
+        askState.voice.recognition=null;
+        try{rec.stop()}catch(_){}
+        (async()=>{
+            if(askState.voice.mode==="en"){
+                setStatus(`Interpreting your English + ${c.name} question…`);
+            }
+            const normalized=await normalizeMixedAskVoiceQuestion(rawQuestion);
+            window.askTutorQuestion(normalized,{
+                fromVoice:true,
+                inputLanguage:askState.voice.mode,
+                rawVoiceText:rawQuestion
+            });
+        })();
+    };
+
+    // Stop an abandoned Ask Tutor mic instead of leaving it open indefinitely.
+    clearAskListeningTimers();
+    askState.voice.noSpeechTimer=setTimeout(()=>{
+        askState.voice.noSpeechTimer=null;
+        if(finalSent || latestHeard || askState.voice.recognition!==rec)return;
+        window.stopAskTutorVoice(false);
+        setStatus("Ask Tutor microphone stopped after 10 seconds with no speech.");
+    },10000);
 
     rec.onresult=event=>{
         let finalText="";
@@ -24915,27 +24979,20 @@ function listenAskTutorVoice(){
             else interim+=part;
         }
         const heard=String(finalText||interim||"").trim();
-        setHeard(heard);
-
-        if(finalText.trim() && !finalSent){
-            finalSent=true;
-            askState.voice.waitingForTutor=true;
-            askState.voice.recognition=null;
-            try{rec.stop()}catch(_){}
-
-            const rawQuestion=finalText.trim();
-            (async()=>{
-                if(askState.voice.mode==="en"){
-                    setStatus(`Interpreting your English + ${c.name} question…`);
-                }
-                const normalized=await normalizeMixedAskVoiceQuestion(rawQuestion);
-                window.askTutorQuestion(normalized,{
-                    fromVoice:true,
-                    inputLanguage:askState.voice.mode,
-                    rawVoiceText:rawQuestion
-                });
-            })();
+        if(heard){
+            latestHeard=heard;
+            if(askState.voice.noSpeechTimer){
+                clearTimeout(askState.voice.noSpeechTimer);
+                askState.voice.noSpeechTimer=null;
+            }
+            if(askState.voice.silenceTimer)clearTimeout(askState.voice.silenceTimer);
+            askState.voice.silenceTimer=setTimeout(()=>{
+                askState.voice.silenceTimer=null;
+                submitHeard(latestHeard);
+            },1800);
         }
+        setHeard(heard);
+        if(finalText.trim())submitHeard(finalText.trim());
     };
 
     rec.onerror=event=>{
@@ -25203,9 +25260,28 @@ if(typeof oldSetLanguage==="function"){
 const previousCoachClose=window.closeLanguageCoach;
 if(typeof previousCoachClose==="function"){
     window.closeLanguageCoach=function(...args){
+        const mic=window.languageTutorMicCoordinator;
+        const shouldResume=Boolean(mic?.conversationWasListening);
         window.stopAskTutorVoice?.(true);
         window.closeAskTutorEmbeddedAnalysis?.();
-        return previousCoachClose.apply(this,args);
+        const result=previousCoachClose.apply(this,args);
+        if(mic){
+            mic.owner=null;
+            mic.conversationWasListening=false;
+        }
+        if(shouldResume){
+            setTimeout(()=>{
+                try{
+                    if(typeof voiceTutorState!=="undefined" && voiceTutorState?.active &&
+                       voiceTutorState?.micSession && !voiceTutorState?.speaking &&
+                       voiceTutorState?.phase!=="processing" &&
+                       typeof resumeVoiceRecognition==="function"){
+                        resumeVoiceRecognition(true,"target");
+                    }
+                }catch(_){}
+            },140);
+        }
+        return result;
     };
 }
 
