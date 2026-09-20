@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.31
-  Build: Safe Language Tools Navigation
+  Version: 14.3.28
+  Build: Ask Tutor Single Workspace Lifecycle
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.31";
-window.LANGUAGETUTOR_BUILD="Safe Language Tools Navigation";
+window.LANGUAGETUTOR_VERSION="14.3.28";
+window.LANGUAGETUTOR_BUILD="Ask Tutor Single Workspace Lifecycle";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7787,53 +7787,6 @@ body > #language-coach-window.ask-tutor-detached{
 }
 body > #language-coach-window.ask-tutor-detached > .language-coach-titlebar{
   display:flex!important;
-}
-</style>
-
-<style id="workspace-v14329-transcript-follow-latest-css">
-/* Enough bottom clearance that the final card can sit fully above the viewport edge. */
-#conversation-view:not(.is-floating) #voice-chat-messages-log{
-  padding-bottom:48px !important;
-  scroll-padding-bottom:48px !important;
-}
-#conversation-view:not(.is-floating) #voice-chat-messages-log::after{
-  content:"";
-  display:block;
-  height:28px;
-}
-</style>
-
-<style id="workspace-v14331-safe-language-tools-navigation-css">
-.v14331-old-shortcut-strip{display:none!important}
-.language-tools-section-nav-v14331{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  margin:0 0 14px;
-}
-.language-tools-section-button-v14331{
-  appearance:none;
-  border:1px solid #d8dfea;
-  background:#fff;
-  border-radius:12px;
-  min-height:44px;
-  padding:10px 15px;
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  color:#34435a;
-  font:700 13px/1.2 inherit;
-  cursor:pointer;
-}
-.language-tools-section-button-v14331:hover{
-  border-color:#b9a7ff;
-  background:#f8f5ff;
-}
-@media(max-width:720px){
-  .language-tools-section-button-v14331{
-    flex:1 1 100%;
-    justify-content:flex-start;
-  }
 }
 </style>
 </head>
@@ -27713,7 +27666,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.31";
+   el.textContent="LanguageTutor v14.3.28";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -28292,161 +28245,6 @@ function install(){
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
 else install();
-})();
-</script>
-
-<script id="workspace-v14329-transcript-follow-latest">
-(()=>{
-"use strict";
-const log=()=>document.getElementById("voice-chat-messages-log");
-let userReviewing=false;
-let programmatic=false;
-let lastTop=0;
-
-function atBottom(el){
-  return (el.scrollHeight-el.scrollTop-el.clientHeight)<=28;
-}
-function scrollLatest(){
-  const el=log();
-  if(!el)return;
-  programmatic=true;
-  requestAnimationFrame(()=>{
-    el.scrollTop=el.scrollHeight;
-    lastTop=el.scrollTop;
-    requestAnimationFrame(()=>{programmatic=false;});
-  });
-}
-function install(){
-  const el=log();
-  if(!el)return;
-
-  // Default behavior: transcript follows the conversation.
-  scrollLatest();
-
-  // If the learner deliberately scrolls upward, preserve that review position.
-  el.addEventListener("scroll",()=>{
-    if(programmatic)return;
-    const now=el.scrollTop;
-    if(now < lastTop-4 && !atBottom(el)) userReviewing=true;
-    if(atBottom(el)) userReviewing=false;
-    lastTop=now;
-  },{passive:true});
-
-  // New transcript cards should reveal the newest output unless the learner is
-  // intentionally reviewing older transcript lines.
-  const mo=new MutationObserver(mutations=>{
-    const changed=mutations.some(m=>m.type==="childList" && (m.addedNodes.length||m.removedNodes.length));
-    if(changed && !userReviewing)scrollLatest();
-  });
-  mo.observe(el,{childList:true,subtree:true});
-
-  document.addEventListener("languagetutor:transcript-rendered",()=>{
-    if(!userReviewing)scrollLatest();
-  });
-
-  // Conversation live output can precede the committed transcript DOM by a tick.
-  const live=document.getElementById("voice-live-transcript");
-  if(live){
-    let timer=0;
-    const liveObserver=new MutationObserver(()=>{
-      if(userReviewing)return;
-      clearTimeout(timer);
-      timer=setTimeout(scrollLatest,80);
-    });
-    liveObserver.observe(live,{childList:true,subtree:true,characterData:true});
-  }
-}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
-else install();
-})();
-</script>
-
-<script id="workspace-v14331-safe-language-tools-navigation">
-(()=>{
-"use strict";
-
-const LABELS=[
-  ["Grammar Tools","🧰"],
-  ["Study & Review","📚"],
-  ["Translation & Manual Input","🌐"]
-];
-
-function norm(v){return (v||"").replace(/\s+/g," ").trim();}
-
-function toolView(){
-  return document.getElementById("language-tools-view");
-}
-
-function matchingSummary(label){
-  const view=toolView();
-  if(!view)return null;
-  return [...view.querySelectorAll("summary")].find(
-    s=>norm(s.textContent).toLowerCase()===label.toLowerCase()
-  )||null;
-}
-
-function openSection(label){
-  const summary=matchingSummary(label);
-  if(!summary)return false;
-  const target=summary.closest("details");
-  if(!target)return false;
-
-  // Use the existing accordion DOM directly; no synthetic clicks and no DOM observer.
-  [...toolView().querySelectorAll("details")].forEach(d=>{
-    const sm=d.querySelector(":scope > summary");
-    if(sm && LABELS.some(([name])=>norm(sm.textContent).toLowerCase()===name.toLowerCase())){
-      d.open=(d===target);
-    }
-  });
-
-  requestAnimationFrame(()=>summary.scrollIntoView({behavior:"smooth",block:"nearest"}));
-  return true;
-}
-
-function install(){
-  const view=toolView();
-  if(!view || document.getElementById("language-tools-section-nav-v14331"))return;
-
-  const summaries=LABELS.map(([label])=>matchingSummary(label));
-  if(summaries.some(x=>!x))return; // fail safely: leave the existing UI untouched.
-
-  const nav=document.createElement("div");
-  nav.id="language-tools-section-nav-v14331";
-  nav.className="language-tools-section-nav-v14331";
-
-  LABELS.forEach(([label,icon])=>{
-    const b=document.createElement("button");
-    b.type="button";
-    b.className="language-tools-section-button-v14331";
-    b.innerHTML=`<span aria-hidden="true">${icon}</span><span>${label}</span>`;
-    b.addEventListener("click",()=>openSection(label));
-    nav.appendChild(b);
-  });
-
-  // Insert immediately before the first of the three actual accordion sections.
-  const firstDetails=summaries[0].closest("details");
-  firstDetails.parentNode.insertBefore(nav,firstDetails);
-
-  // Hide only the old shortcut strip by locating the exact four shortcut buttons and
-  // their shared parent. Never delete nodes; this makes the patch reversible/safe.
-  const shortcutNames=["Verbs","Prepositions & Cases","Articles & Endings","Adjectives"];
-  const buttons=[...view.querySelectorAll("button")];
-  const shortcuts=shortcutNames.map(name=>buttons.find(b=>norm(b.textContent)===name));
-  if(shortcuts.every(Boolean)){
-    const parent=shortcuts[0].parentElement;
-    if(parent && shortcuts.every(b=>b.parentElement===parent)){
-      parent.classList.add("v14331-old-shortcut-strip");
-    }
-  }
-}
-
-if(document.readyState==="loading"){
-  document.addEventListener("DOMContentLoaded",()=>requestAnimationFrame(install),{once:true});
-}else{
-  requestAnimationFrame(install);
-}
-
-window.openLanguageToolsSection=openSection;
 })();
 </script>
 </body>
