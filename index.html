@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.21
-  Build: Transcript Recording + Ask Tutor Context Fix
+  Version: 14.3.24
+  Build: Docked Ask Actions + Flat Language Tools
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.21";
-window.LANGUAGETUTOR_BUILD="Transcript Recording + Ask Tutor Context Fix";
+window.LANGUAGETUTOR_VERSION="14.3.24";
+window.LANGUAGETUTOR_BUILD="Docked Ask Actions + Flat Language Tools";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7570,6 +7570,70 @@ window.LANGUAGETUTOR_BUILD="Transcript Recording + Ask Tutor Context Fix";
   color:#9f2945 !important;
   font-size:11px !important;
   font-weight:800 !important;
+}
+</style>
+
+<style id="workspace-v14322-taller-docked-transcript-css">
+/* Give the docked transcript enough vertical room to be genuinely useful for review.
+   The transcript itself remains the scroll container. */
+#conversation-view:not(.is-floating) .conversation-shared-body{
+  min-height:260px !important;
+  max-height:500px !important;
+}
+#conversation-view:not(.is-floating) #voice-chat-messages-log{
+  min-height:235px !important;
+  max-height:455px !important;
+  padding-bottom:26px !important;
+  scroll-padding-bottom:26px;
+}
+/* Ensure the final card can scroll completely above the lower edge instead of being
+   clipped flush against the container boundary. */
+#conversation-view:not(.is-floating) #voice-chat-messages-log::after{
+  content:"";
+  display:block;
+  height:18px;
+  flex:0 0 18px;
+}
+</style>
+
+<style id="workspace-v14323-ask-placement-guard-css">
+#v1437-preview-templates{display:none !important}
+body > #ask-tutor-page-preview{display:none !important}
+#ask-tutor-section > #ask-tutor-page-preview{
+  display:block !important;
+  position:static !important;
+  inset:auto !important;
+  width:auto !important;
+  max-width:none !important;
+}
+</style>
+
+<style id="workspace-v14324-docked-actions-flat-tools-css">
+/* Ask Tutor quick actions belong inside the pink docked section, not elsewhere. */
+#ask-tutor-section > #ask-tutor-page-preview{
+  display:block !important;
+  margin:8px 10px 10px !important;
+  position:static !important;
+}
+#ask-tutor-section.is-floating > #ask-tutor-page-preview,
+#ask-tutor-section[data-floating="true"] > #ask-tutor-page-preview{
+  display:none !important;
+}
+
+/* Remove the redundant inner Language Tools & Study hierarchy level. */
+#conversation-language-tools-section.language-tools-flat-root{
+  display:block !important;
+  border:0 !important;
+  background:transparent !important;
+  padding:0 !important;
+  margin:0 !important;
+}
+#conversation-language-tools-section.language-tools-flat-root > summary{
+  display:none !important;
+}
+#conversation-language-tools-section.language-tools-flat-root > .section-content,
+#conversation-language-tools-section.language-tools-flat-root > .conversation-tools-content{
+  padding-top:0 !important;
 }
 </style>
 </head>
@@ -27186,27 +27250,31 @@ function currentContext(){
   return String(lastTutor?.text||h[h.length-1]?.text||"").trim();
 }
 function placePreview(preview,hints){
-  if(!preview)return;
-  // Once mounted into a real page section, keep it there. Re-parenting the preview on
-  // every refresh can make it alternate between visible/hidden legacy hosts.
-  if(preview.dataset.v14310Mounted==="true" && preview.isConnected)return;
+  if(!preview)return false;
   for(const selector of hints){
     const host=document.querySelector(selector);
     if(host && host.isConnected){
-      host.appendChild(preview);
+      // A preview is considered mounted only when it is actually inside the intended
+      // workspace. Being connected inside the hidden template is NOT mounted.
+      if(preview.parentElement!==host)host.appendChild(preview);
       preview.dataset.v14310Mounted="true";
-      return;
+      return true;
     }
   }
+  preview.dataset.v14310Mounted="false";
+  return false;
 }
 function place(){
   const templates=$("v1437-preview-templates");
-  if(templates)templates.hidden=false;
-  // v14.3.14: no duplicate Conversation preview. The real transcript view is authoritative.
+  // Templates must never become page UI. They remain hidden until their child is moved
+  // into the real docked Ask Tutor workspace.
+  if(templates)templates.hidden=true;
+
+  // v14.3.14+: no duplicate Conversation preview. The real transcript is authoritative.
   placePreview($("ask-tutor-page-preview"),[
-    "#ask-tutor-section",".ask-tutor-section","#ask-tutor-page-section",
-    "#language-coach-section","#ask-tutor-placeholder"
+    "#ask-tutor-section"
   ]);
+
   if(templates && !templates.children.length)templates.remove();
 }
 function renderConversation(){
@@ -27308,7 +27376,10 @@ function install(){
   }
   const structureObserver=new MutationObserver(()=>{
     const ask=$("ask-tutor-page-preview");
-    if(ask && !ask.isConnected)place();
+    const host=$("ask-tutor-section");
+    // Retry while Ask Tutor is still parked in the hidden template, and repair placement
+    // if a workspace lifecycle patch ever moves/recreates the docked section.
+    if(ask && host && ask.parentElement!==host)place();
   });
   structureObserver.observe(document.body,{childList:true,subtree:true});
   document.addEventListener("click",e=>{
@@ -27440,7 +27511,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.21";
+   el.textContent="LanguageTutor v14.3.24";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -27575,6 +27646,51 @@ function placeAskTutorWithComposerActions(){
 function install(){
   placeAskTutorWithComposerActions();
   const observer=new MutationObserver(placeAskTutorWithComposerActions);
+  observer.observe(document.body,{childList:true,subtree:true});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
+else install();
+})();
+</script>
+
+<script id="workspace-v14324-docked-actions-flat-tools">
+(()=>{
+"use strict";
+
+function ensureAskTutorDockedActions(){
+  const host=document.getElementById("ask-tutor-section");
+  const preview=document.getElementById("ask-tutor-page-preview");
+  if(!host || !preview)return;
+  // Keep the quick actions physically inside the pink Ask Tutor section whenever
+  // Ask Tutor is docked/closed. The floating window retains its own action row.
+  if(preview.parentElement!==host)host.appendChild(preview);
+}
+
+function flattenLanguageTools(){
+  const view=document.getElementById("language-tools-view");
+  const tools=document.getElementById("conversation-language-tools-section");
+  if(!view || !tools)return;
+
+  // Remove the redundant inner "Language Tools & Study" accordion level.
+  if(tools.tagName==="DETAILS"){
+    tools.open=true;
+    const summary=tools.querySelector(":scope > summary");
+    if(summary)summary.hidden=true;
+  }
+
+  // The useful sections become the first visible hierarchy under the workspace:
+  // Grammar Tools / Study & Review / Translation & Manual Input.
+  tools.classList.add("language-tools-flat-root");
+}
+
+function sync(){
+  ensureAskTutorDockedActions();
+  flattenLanguageTools();
+}
+
+function install(){
+  sync();
+  const observer=new MutationObserver(sync);
   observer.observe(document.body,{childList:true,subtree:true});
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
