@@ -15750,6 +15750,56 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
     }
 
+    function replayTutorPromptBeforeMic(text,locale){
+        return new Promise(resolve=>{
+            const clean=String(text||"").trim();
+            if(!clean || !("speechSynthesis" in window)){ resolve(); return; }
+
+            // Recognition must remain fully absent during Tutor playback.
+            clearVoiceSilenceTimer();
+            destroyVoiceRecognition();
+            setVoiceMicIndicator(false);
+            voiceTutorState.phase="replaying";
+            voiceTutorState.speaking=true;
+
+            try{window.speechSynthesis.cancel();}catch(e){}
+
+            const utterance=new SpeechSynthesisUtterance(clean);
+            utterance.lang=locale||langConfig().locale;
+            if(typeof window.getLanguageTutorSpeechRate==="function"){
+                utterance.rate=window.getLanguageTutorSpeechRate(utterance.lang);
+            }
+
+            let finished=false;
+            const finish=()=>{
+                if(finished)return;
+                finished=true;
+                voiceTutorState.speaking=false;
+                voiceTutorState.phase="idle";
+                resolve();
+            };
+            utterance.onend=finish;
+            utterance.onerror=finish;
+
+            // Choose the same locale-appropriate voice when available, but never delay
+            // microphone gating on voice discovery.
+            Promise.resolve(typeof getSpeechVoicesReady==="function" ? getSpeechVoicesReady() : [])
+                .then(voices=>{
+                    try{
+                        const matched=typeof chooseVoiceForLocale==="function"
+                            ? chooseVoiceForLocale(voices||[],utterance.lang)
+                            : null;
+                        if(matched)utterance.voice=matched;
+                    }catch(e){}
+                    window.speechSynthesis.speak(utterance);
+                })
+                .catch(()=>window.speechSynthesis.speak(utterance));
+
+            // Safety release only; normal path is utterance.onend.
+            setTimeout(finish,30000);
+        });
+    }
+
     window.restateLastVoiceTurn=function(){
         if(!voiceTutorState.active)return;
         if(voiceTutorState.phase==="processing"){
@@ -15825,9 +15875,14 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         if(previousTutor){
             const promptText=stripTutorMarkdown(previousTutor.text);
             const promptLocale=previousTutor.replyLanguage==="en" ? "en-US" : langConfig().locale;
-            Promise.resolve(speakRawText(promptText,promptLocale))
-                .then(()=>setTimeout(resumeAfterPrompt,180))
-                .catch(()=>resumeAfterPrompt());
+            // IMPORTANT: speakRawText() starts browser TTS but does not return a
+            // completion Promise. Waiting on Promise.resolve(speakRawText(...)) therefore
+            // reopened recognition immediately, allowing the Tutor's own voice to be
+            // captured as the learner's reply. Keep recognition destroyed until the
+            // replay utterance actually ends.
+            replayTutorPromptBeforeMic(promptText,promptLocale)
+                .then(()=>setTimeout(resumeAfterPrompt,300))
+                .catch(()=>setTimeout(resumeAfterPrompt,300));
         }else{
             resumeAfterPrompt();
         }
@@ -26897,9 +26952,16 @@ function currentContext(){
 }
 function placePreview(preview,hints){
   if(!preview)return;
+  // Once mounted into a real page section, keep it there. Re-parenting the preview on
+  // every refresh can make it alternate between visible/hidden legacy hosts.
+  if(preview.dataset.v14310Mounted==="true" && preview.isConnected)return;
   for(const selector of hints){
     const host=document.querySelector(selector);
-    if(host && !host.contains(preview)){ host.appendChild(preview); return; }
+    if(host && host.isConnected){
+      host.appendChild(preview);
+      preview.dataset.v14310Mounted="true";
+      return;
+    }
   }
 }
 function place(){
@@ -26993,7 +27055,7 @@ function refresh(){
   refreshQueued=true;
   requestAnimationFrame(()=>{
     refreshQueued=false;
-    place(); renderConversation(); renderAsk();
+    renderConversation(); renderAsk();
   });
 }
 function install(){
@@ -27003,6 +27065,14 @@ function install(){
     const obs=new MutationObserver(refresh);
     obs.observe(target,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["class","data-transcript-text"]});
   });
+  const structureObserver=new MutationObserver(()=>{
+    const conversation=$("conversation-page-preview");
+    const ask=$("ask-tutor-page-preview");
+    if((conversation && !conversation.isConnected) || (ask && !ask.isConnected)){
+      place();
+    }
+  });
+  structureObserver.observe(document.body,{childList:true,subtree:true});
   document.addEventListener("click",e=>{
     if(e.target?.closest?.("#voice-chat-messages-log"))setTimeout(refresh,0);
   });
