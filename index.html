@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.20
-  Build: Ask Tutor Lower Control Row
+  Version: 14.3.21
+  Build: Transcript Recording + Ask Tutor Context Fix
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.20";
-window.LANGUAGETUTOR_BUILD="Ask Tutor Lower Control Row";
+window.LANGUAGETUTOR_VERSION="14.3.21";
+window.LANGUAGETUTOR_BUILD="Transcript Recording + Ask Tutor Context Fix";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -14804,6 +14804,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         // This is especially important after Continue Conversation restored
         // a saved transcript.
         if(typeof renderVoiceTutorTranscript==="function")renderVoiceTutorTranscript();
+        document.dispatchEvent(new CustomEvent("languagetutor:transcript-rendered"));
 
         updateConversationViewState();
         window.setTranscriptPlaceholderOpen?.(true);
@@ -15327,6 +15328,15 @@ Do not add quotation marks or labels.`;
         // Keep local session memory bounded too. The prompt uses an even smaller slice.
         if(history.length>200) history.splice(0,history.length-200);
         appendVoiceTutorBubble(entry,true);
+
+        // v14.3.21: committed history is authoritative. If a workspace move or
+        // late DOM patch caused a just-recorded card not to appear, rebuild it.
+        const log=document.getElementById("voice-chat-messages-log");
+        const rendered=log?.querySelectorAll(".conversation-turn-card").length||0;
+        if(log && rendered!==history.length){
+            renderVoiceTutorTranscript();
+        }
+
         updateVoiceRestateButton();
     }
 
@@ -24468,12 +24478,16 @@ function save(button){
 
 function coach(){
     if(!state.text)return;
-    if(typeof window.openTutorCoachForPhrase==="function"){
-        window.openTutorCoachForPhrase(state.text,state.text);
+
+    // The selected transcript line itself is the Ask Tutor context.
+    window.setAskTutorContext?.(state.text);
+
+    if(typeof window.openAskTutorFromConversation==="function"){
+        window.openAskTutorFromConversation();
         return;
     }
     if(typeof window.openLanguageCoach==="function"){
-        window.openLanguageCoach(`Phrase: ${state.text}\nSentence: ${state.text}\n\nHelp me understand this phrase in context.`);
+        window.openLanguageCoach("");
         window.workspaceOpenTool?.("coach");
     }
 }
@@ -27426,7 +27440,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.20";
+   el.textContent="LanguageTutor v14.3.21";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -27499,6 +27513,7 @@ function selectCard(card){
 }
 function install(){
   hydrateSelectableCards();
+  document.addEventListener("languagetutor:transcript-rendered",hydrateSelectableCards);
   const log=document.getElementById("voice-chat-messages-log");
   if(log && !log.__v14317SelectionRepair){
     const observer=new MutationObserver(hydrateSelectableCards);
