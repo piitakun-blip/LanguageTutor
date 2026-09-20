@@ -26824,7 +26824,7 @@ setTimeout(normalize,300); setTimeout(normalize,1000);
   </section>
 </div>
 
-<script id="workspace-v1437-page-previews">
+<script id="workspace-v1438-page-previews">
 (()=>{
 "use strict";
 const $=id=>document.getElementById(id);
@@ -26836,67 +26836,104 @@ function selectedContext(){
   const el=selectedTurn();
   return String(el?.dataset?.transcriptText||"").trim();
 }
-function recentHistory(){
+function historyTurns(){
   try{
     const h=typeof window.getVoiceTutorHistory==="function" ? window.getVoiceTutorHistory() : [];
-    return Array.isArray(h) ? h.slice(-4) : [];
+    return Array.isArray(h) ? h.map(x=>({
+      role:x?.role==="user"?"user":"tutor",
+      text:String(x?.text||"").trim()
+    })).filter(x=>x.text) : [];
   }catch(e){ return []; }
+}
+function renderedTurns(){
+  const log=$("voice-chat-messages-log");
+  if(!log)return [];
+  const cards=[...log.querySelectorAll(".conversation-turn-card")];
+  const turns=[];
+  cards.forEach(card=>{
+    const explicit=String(card.dataset?.transcriptText||"").trim();
+    const raw=explicit || String(card.innerText||card.textContent||"").trim();
+    if(!raw)return;
+    const cls=String(card.className||"").toLowerCase();
+    let role=card.dataset?.role;
+    if(role!=="user" && role!=="assistant" && role!=="tutor"){
+      role=(cls.includes("user")||cls.includes("learner"))?"user":"tutor";
+    }
+    turns.push({role:role==="user"?"user":"tutor",text:raw});
+  });
+  return turns;
+}
+function liveTurns(){
+  const turns=[];
+  try{
+    const user=String(window.voiceTutorState?.liveUserText||"").trim();
+    const tutor=String(window.voiceTutorState?.liveTutorText||"").trim();
+    if(user)turns.push({role:"user",text:user});
+    if(tutor)turns.push({role:"tutor",text:tutor});
+  }catch(e){}
+  return turns;
+}
+function normalized(text){
+  return String(text||"").replace(/\s+/g," ").trim();
+}
+function mergedRecentTurns(){
+  // Prefer what the learner can actually see. History remains the fallback.
+  const base=renderedTurns();
+  const source=base.length ? base : historyTurns();
+  const merged=[...source];
+  liveTurns().forEach(turn=>{
+    const key=turn.role+"|"+normalized(turn.text);
+    const already=merged.some(x=>x.role+"|"+normalized(x.text)===key);
+    if(!already)merged.push(turn);
+  });
+  return merged.filter(x=>x.text).slice(-4);
 }
 function currentContext(){
   const selected=selectedContext();
   if(selected)return selected;
-  const h=recentHistory();
-  const lastTutor=[...h].reverse().find(x=>x?.role!=="user");
+  const h=mergedRecentTurns();
+  const lastTutor=[...h].reverse().find(x=>x.role==="tutor");
   return String(lastTutor?.text||h[h.length-1]?.text||"").trim();
 }
-function placePreview(preview, hints){
+function placePreview(preview,hints){
   if(!preview)return;
   for(const selector of hints){
     const host=document.querySelector(selector);
-    if(host && !host.contains(preview)){
-      host.appendChild(preview);
-      return;
-    }
+    if(host && !host.contains(preview)){ host.appendChild(preview); return; }
   }
 }
 function place(){
   const templates=$("v1437-preview-templates");
   if(templates)templates.hidden=false;
   placePreview($("conversation-page-preview"),[
-    "#conversation-transcript-section",
-    "#voice-transcript-page-section",
-    ".conversation-transcript-section",
-    "#conversation-view"
+    "#conversation-transcript-section","#voice-transcript-page-section",
+    ".conversation-transcript-section","#conversation-view"
   ]);
   placePreview($("ask-tutor-page-preview"),[
-    "#ask-tutor-section",
-    ".ask-tutor-section",
-    "#language-coach-section",
-    "#ask-tutor-page-section"
+    "#ask-tutor-section",".ask-tutor-section","#language-coach-section","#ask-tutor-page-section"
   ]);
   if(templates && !templates.children.length)templates.remove();
 }
 function renderConversation(){
   const host=$("conversation-page-preview-turns");
   if(!host)return;
-  const h=recentHistory();
+  const turns=mergedRecentTurns();
   host.replaceChildren();
-  if(!h.length){
+  if(!turns.length){
     const empty=document.createElement("div");
     empty.className="v1437-preview-empty";
     empty.textContent="No conversation yet. Start speaking or typing to begin.";
     host.appendChild(empty);
     return;
   }
-  h.forEach(entry=>{
+  turns.forEach(entry=>{
     const row=document.createElement("div");
-    const user=entry?.role==="user";
-    row.className="v1437-preview-turn "+(user?"user":"tutor");
+    row.className="v1437-preview-turn "+(entry.role==="user"?"user":"tutor");
     const role=document.createElement("span");
     role.className="role";
-    role.textContent=user?"You":"Tutor";
+    role.textContent=entry.role==="user"?"You":"Tutor";
     const text=document.createElement("span");
-    text.textContent=String(entry?.text||"").trim();
+    text.textContent=entry.text;
     row.append(role,text);
     host.appendChild(row);
   });
@@ -26906,7 +26943,7 @@ function renderAsk(){
   const label=$("ask-tutor-preview-context");
   const context=currentContext();
   if(label)label.textContent=context
-    ? (selectedContext() ? `Selected: ${context}` : `Current context: ${context}`)
+    ? (selectedContext()?`Selected: ${context}`:`Current context: ${context}`)
     : "Start a conversation or select a transcript turn for contextual help.";
   document.querySelectorAll('#ask-tutor-page-preview [data-ask-action]:not([data-ask-action="open"])')
     .forEach(btn=>btn.disabled=!context);
@@ -26916,13 +26953,10 @@ function setContext(){
   if(context && typeof window.setAskTutorContext==="function")window.setAskTutorContext(context);
   return context;
 }
-function openAsk(){
-  setContext();
-  window.openAskTutorFromConversation?.();
-}
+function openAsk(){ setContext(); window.openAskTutorFromConversation?.(); }
 function clickAskAction(action){
   const context=setContext();
-  if(action==="open"){ openAsk(); return; }
+  if(action==="open"){openAsk();return;}
   if(!context)return;
   openAsk();
   setTimeout(()=>{
@@ -26931,15 +26965,13 @@ function clickAskAction(action){
       else document.querySelector('#language-coach-window button')?.click?.();
       return;
     }
-    const win=$("language-coach-window");
-    if(!win)return;
+    const win=$("language-coach-window"); if(!win)return;
     const buttons=[...win.querySelectorAll("button")];
     const match=buttons.find(b=>{
       const t=String(b.textContent||"").toLowerCase();
-      return action==="translate" ? t.includes("translate")
-        : action==="why" ? t.includes("why this wording")
-        : action==="reply" ? t.includes("help me reply")
-        : false;
+      return action==="translate"?t.includes("translate")
+        :action==="why"?t.includes("why this wording")
+        :action==="reply"?t.includes("help me reply"):false;
     });
     match?.click();
   },80);
@@ -26949,25 +26981,33 @@ function bind(){
   $("conversation-preview-ask")?.addEventListener("click",openAsk);
   $("conversation-preview-open")?.addEventListener("click",()=>{
     if(typeof window.openVoiceTranscript==="function")window.openVoiceTranscript();
-    else if(typeof window.workspaceOpenTool==="function")window.workspaceOpenTool("transcript");
+    else window.workspaceOpenTool?.("transcript");
   });
   document.querySelectorAll("#ask-tutor-page-preview [data-ask-action]").forEach(btn=>{
     btn.addEventListener("click",()=>clickAskAction(btn.dataset.askAction));
   });
 }
-function refresh(){ place(); renderConversation(); renderAsk(); }
+let refreshQueued=false;
+function refresh(){
+  if(refreshQueued)return;
+  refreshQueued=true;
+  requestAnimationFrame(()=>{
+    refreshQueued=false;
+    place(); renderConversation(); renderAsk();
+  });
+}
 function install(){
-  place(); bind(); refresh();
-  const log=$("voice-chat-messages-log");
-  if(log){
+  place();bind();refresh();
+  const targets=[$("voice-chat-messages-log"),$("voice-live-transcript")].filter(Boolean);
+  targets.forEach(target=>{
     const obs=new MutationObserver(refresh);
-    obs.observe(log,{childList:true,subtree:true,attributes:true,attributeFilter:["class"]});
-  }
+    obs.observe(target,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["class","data-transcript-text"]});
+  });
   document.addEventListener("click",e=>{
     if(e.target?.closest?.("#voice-chat-messages-log"))setTimeout(refresh,0);
   });
-  window.addEventListener("languagechange",refresh);
-  setInterval(refresh,1500);
+  // Small fallback poll catches state updates that do not mutate either rendered transcript node.
+  setInterval(refresh,700);
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
 else install();
