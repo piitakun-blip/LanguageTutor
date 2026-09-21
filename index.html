@@ -1,6 +1,6 @@
 <!--
   LanguageTutor
-  Version: 14.3.27
+  Version: 14.3.27.4
   Build: Transcript DOM Sync
   Based on: 14.3.11
 -->
@@ -7437,7 +7437,7 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.27";
+window.LANGUAGETUTOR_VERSION="14.3.27.4";
 window.LANGUAGETUTOR_BUILD="Transcript DOM Sync";
 </script>
 
@@ -27608,7 +27608,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.27";
+   el.textContent="LanguageTutor v14.3.27.4";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -28066,6 +28066,138 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 else install();
 })();
 </script>
+
+
+<style id="workspace-v143272-conversation-views-css">
+/* v14.3.27.2
+   Docked transcript stays compact and scrollable.
+   Floating/open transcript retains its existing spacious layout. */
+#conversation-view:not(.is-floating) #voice-chat-messages-log{
+  height:260px !important;
+  min-height:260px !important;
+  max-height:260px !important;
+  overflow-y:auto !important;
+  overscroll-behavior:contain;
+  scroll-behavior:smooth;
+}
+
+/* Live Transcription is a rolling three-utterance context window. */
+#voice-live-transcript{
+  overflow:hidden !important;
+}
+</style>
+
+<script id="workspace-v143272-conversation-views">
+(()=>{
+"use strict";
+
+const LOG_ID="voice-chat-messages-log";
+const LIVE_ID="voice-live-transcript";
+const BOTTOM_GAP=36;
+let transcriptReviewing=false;
+let transcriptProgrammatic=false;
+let transcriptObserver=null;
+let installedLog=null;
+
+function transcriptLog(){
+  return document.getElementById(LOG_ID);
+}
+function nearTranscriptBottom(el){
+  return (el.scrollHeight-el.scrollTop-el.clientHeight)<=BOTTOM_GAP;
+}
+function followTranscriptBottom(force=false){
+  const el=transcriptLog();
+  if(!el || (!force && transcriptReviewing)) return;
+  transcriptProgrammatic=true;
+  requestAnimationFrame(()=>{
+    el.scrollTop=el.scrollHeight;
+    requestAnimationFrame(()=>{ transcriptProgrammatic=false; });
+  });
+}
+function installTranscriptFollow(){
+  const el=transcriptLog();
+  if(!el || installedLog===el) return;
+  installedLog=el;
+  transcriptReviewing=false;
+
+  el.addEventListener("scroll",()=>{
+    if(transcriptProgrammatic) return;
+    transcriptReviewing=!nearTranscriptBottom(el);
+  },{passive:true});
+
+  transcriptObserver?.disconnect();
+  transcriptObserver=new MutationObserver(()=>{
+    if(!transcriptReviewing) followTranscriptBottom();
+  });
+  transcriptObserver.observe(el,{childList:true});
+
+  // Initial docked state should show the newest exchange.
+  followTranscriptBottom(true);
+}
+
+/* Keep only the three newest speech utterance rows in the small live panel.
+   Status/listening rows are not counted as utterances and are left intact. */
+function trimLiveTranscript(){
+  const live=document.getElementById(LIVE_ID);
+  if(!live) return;
+
+  const utterances=[...live.querySelectorAll(".voice-live-line")].filter(row=>{
+    const role=(row.querySelector(".voice-live-role")?.textContent || "").trim().toLowerCase();
+    return role==="you" || role==="tutor";
+  });
+
+  if(utterances.length<=3) return;
+  utterances.slice(0,utterances.length-3).forEach(row=>row.remove());
+}
+function installLiveRollingWindow(){
+  const live=document.getElementById(LIVE_ID);
+  if(!live || live.__v143272Rolling) return;
+  live.__v143272Rolling=true;
+  trimLiveTranscript();
+
+  const mo=new MutationObserver(()=>trimLiveTranscript());
+  mo.observe(live,{childList:true,subtree:false});
+}
+
+function install(){
+  installTranscriptFollow();
+  installLiveRollingWindow();
+}
+
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",install,{once:true});
+}else{
+  install();
+}
+
+/* Existing app code may rebuild either region. Re-check without altering
+   Conversation recognition, TTS, Restate, Ask Tutor, or workspace lifecycle. */
+const pageObserver=new MutationObserver(()=>{
+  if(transcriptLog()!==installedLog) installTranscriptFollow();
+  installLiveRollingWindow();
+});
+pageObserver.observe(document.body,{childList:true,subtree:true});
+
+document.addEventListener("languagetutor:transcript-rendered",()=>{
+  if(!transcriptReviewing) followTranscriptBottom();
+});
+})();
+</script>
+
+
+<style id="workspace-v143274-left-page-layout">
+/* v14.3.27.4 — desktop positioning only.
+   The actual page uses Tailwind max-w-7xl + mx-auto shells. Override those
+   exact shells so the docked app occupies the left side of a wide screen. */
+@media (min-width:1024px){
+  body > header#language-header > div.max-w-7xl.mx-auto,
+  body > main.max-w-7xl.mx-auto,
+  body > footer div.max-w-7xl.mx-auto{
+    margin-left:0 !important;
+    margin-right:auto !important;
+  }
+}
+</style>
 </body>
 </html>
 
