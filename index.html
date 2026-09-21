@@ -1,3 +1,8 @@
+<!--
+LanguageTutor — VERSION 2
+Based on Version 1 / exact user rollback baseline.
+Changes: Version 1 conversation scrolling fix + manual Open All test button.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27305,5 +27310,122 @@ setTimeout(normalize,300); setTimeout(normalize,1000);
 })();
 </script>
 
+
+<style id="language-tutor-version-1-conversation-scroll-fix">
+/* LanguageTutor — VERSION 1
+   Fix: German Conversation open window uses available vertical space for transcript scrolling.
+   No voice, transcript-card, selection, Ask Tutor, or workspace lifecycle logic changed. */
+
+#voice-transcript-window{
+  min-height:360px;
+}
+
+/* The opened window is a vertical flex workspace. */
+#voice-transcript-window:not([hidden]){
+  display:flex;
+  flex-direction:column;
+}
+
+/* Let the conversation workspace/body grow with the resizable window. */
+#voice-transcript-window #conversation-view{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  height:auto !important;
+  max-height:none !important;
+  display:flex !important;
+  flex-direction:column !important;
+}
+
+#voice-transcript-window #conversation-view .voice-transcript-body,
+#voice-transcript-window #conversation-view .conversation-shared-body{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  height:auto !important;
+  max-height:none !important;
+  display:flex !important;
+  flex-direction:column !important;
+}
+
+/* Critical change: remove the compact/page-state transcript height cap in the
+   OPEN window and make the conversation history the scrolling region. */
+#voice-transcript-window #voice-chat-messages-log{
+  flex:1 1 auto !important;
+  min-height:220px !important;
+  height:auto !important;
+  max-height:none !important;
+  overflow-y:auto !important;
+  overscroll-behavior:contain;
+}
+
+/* Selected-line controls stay above the scrolling history. */
+#voice-transcript-window #transcript-selection-toolbar{
+  flex:0 0 auto !important;
+}
+</style>
+
+<style id="language-tutor-version-2-open-all-test-css">
+/* VERSION 2 — diagnostic only.
+   This does NOT auto-open anything and does NOT change workspace lifecycle code. */
+#language-tutor-open-all-test{
+  position:fixed;
+  right:14px;
+  bottom:14px;
+  z-index:2147483200;
+  padding:9px 13px;
+  border:1px solid #94a3b8;
+  border-radius:10px;
+  background:#fff;
+  color:#0f172a;
+  font:600 13px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  box-shadow:0 4px 14px rgba(15,23,42,.16);
+  cursor:pointer;
+}
+#language-tutor-open-all-test:hover{ background:#f8fafc; }
+#language-tutor-open-all-test:disabled{ opacity:.6; cursor:wait; }
+@media (max-width:640px){
+  #language-tutor-open-all-test{ display:none; }
+}
+</style>
+
+<button type="button" id="language-tutor-open-all-test" title="Test the existing Open actions without changing workspace architecture">Open All</button>
+
+<script id="language-tutor-version-2-open-all-test-runtime">
+(()=>{
+"use strict";
+
+/* VERSION 2 test:
+   Reproduce the user's four manual Open actions, sequentially.
+   No startup auto-open. No docking/return overrides. No DOM relocation code. */
+const button=document.getElementById("language-tutor-open-all-test");
+if(!button)return;
+
+const steps=[
+  ["Tutor Controls", ()=>window.openTutorControlsWorkspace?.()],
+  ["Conversation",   ()=>window.openVoiceTranscriptWindow?.()],
+  ["Ask Tutor",      ()=>window.openAskTutorWorkspace?.()],
+  ["Language Tools", ()=>window.openLanguageToolsWorkspace?.()]
+];
+
+button.addEventListener("click",()=>{
+  if(button.disabled)return;
+  button.disabled=true;
+  button.textContent="Opening…";
+
+  steps.forEach(([label,action],index)=>{
+    setTimeout(()=>{
+      try{ action(); }
+      catch(error){ console.error(`Open All test failed at ${label}`,error); }
+
+      if(index===steps.length-1){
+        setTimeout(()=>{
+          button.disabled=false;
+          button.textContent="Open All";
+        },200);
+      }
+    },index*180);
+  });
+});
+})();
+</script>
 </body>
 </html>
