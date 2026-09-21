@@ -1,6 +1,6 @@
 <!--
   LanguageTutor
-  Version: 14.3.27.10
+  Version: 14.3.27.11
   Build: Transcript DOM Sync
   Based on: 14.3.11
 -->
@@ -7437,7 +7437,7 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.27.10";
+window.LANGUAGETUTOR_VERSION="14.3.27.11";
 window.LANGUAGETUTOR_BUILD="Transcript DOM Sync";
 </script>
 
@@ -27639,7 +27639,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.27.10";
+   el.textContent="LanguageTutor v14.3.27.11";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -28319,6 +28319,54 @@ button[onclick="openAskTutorFromConversation()"]{
 .saved-conversation-card .transcript-selection-toolbar,
 .saved-conversation-item .transcript-selection-toolbar{
   top:92px !important;
+}
+</style>
+
+<style id="workspace-v1432711-transcript-open-view-repair">
+/* v14.3.27.11
+   DOCKED Conversation Transcript:
+   compact and internally scrollable, as requested. */
+#conversation-view:not(.is-floating) #voice-chat-messages-log{
+  height:260px !important;
+  min-height:260px !important;
+  max-height:260px !important;
+  overflow-y:auto !important;
+}
+
+/* OPEN Conversation Transcript:
+   the floating host is authoritative. Remove the docked 260px constraint so
+   the selectable alternating transcript occupies the available window height. */
+#voice-transcript-window #conversation-view #voice-chat-messages-log{
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  flex:1 1 auto !important;
+  overflow-y:auto !important;
+}
+
+/* Keep the richer alternating Conversation Transcript layout.
+   These are the real selectable transcript cards, not Live Transcription rows. */
+#voice-chat-messages-log .conversation-turn-card[data-role="user"]{
+  width:82% !important;
+  margin-left:auto !important;
+  margin-right:0 !important;
+}
+#voice-chat-messages-log .conversation-turn-card[data-role="assistant"]{
+  width:82% !important;
+  margin-left:0 !important;
+  margin-right:auto !important;
+}
+
+/* Selected-line actions must fit without silently pushing Ask Tutor offscreen.
+   Analyze remains intentionally hidden by the existing app design. */
+#transcript-selection-toolbar .transcript-selection-actions{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  overflow-x:visible !important;
+}
+#transcript-selected-coach{
+  display:inline-flex !important;
+  visibility:visible !important;
 }
 </style>
 </body>
