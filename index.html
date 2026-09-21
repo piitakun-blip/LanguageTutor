@@ -1,6 +1,6 @@
 <!--
   LanguageTutor
-  Version: 14.3.27.4
+  Version: 14.3.27.5
   Build: Transcript DOM Sync
   Based on: 14.3.11
 -->
@@ -7437,7 +7437,7 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.27.4";
+window.LANGUAGETUTOR_VERSION="14.3.27.5";
 window.LANGUAGETUTOR_BUILD="Transcript DOM Sync";
 </script>
 
@@ -27608,7 +27608,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.27.4";
+   el.textContent="LanguageTutor v14.3.27.5";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -28185,14 +28185,16 @@ document.addEventListener("languagetutor:transcript-rendered",()=>{
 </script>
 
 
-<style id="workspace-v143274-left-page-layout">
-/* v14.3.27.4 — desktop positioning only.
-   The actual page uses Tailwind max-w-7xl + mx-auto shells. Override those
-   exact shells so the docked app occupies the left side of a wide screen. */
+<style id="workspace-v143275-left-narrow-page-layout">
+/* v14.3.27.5 — desktop positioning + narrower docked page.
+   Keep the app on the left and reserve more desktop space on the right for
+   floating/open workspace windows. */
 @media (min-width:1024px){
   body > header#language-header > div.max-w-7xl.mx-auto,
   body > main.max-w-7xl.mx-auto,
   body > footer div.max-w-7xl.mx-auto{
+    width:min(860px, calc(100vw - 24px)) !important;
+    max-width:860px !important;
     margin-left:0 !important;
     margin-right:auto !important;
   }
