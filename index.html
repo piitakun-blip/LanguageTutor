@@ -1,7 +1,7 @@
 <!--
-LanguageTutor — VERSION 2
+LanguageTutor — VERSION 2A
 Based on Version 1 / exact user rollback baseline.
-Changes: Version 1 conversation scrolling fix + manual Open All test button.
+Changes: Version 1 scrolling fix + exact Open Conversation test.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -27363,67 +27363,35 @@ setTimeout(normalize,300); setTimeout(normalize,1000);
 }
 </style>
 
-<style id="language-tutor-version-2-open-all-test-css">
-/* VERSION 2 — diagnostic only.
-   This does NOT auto-open anything and does NOT change workspace lifecycle code. */
-#language-tutor-open-all-test{
-  position:fixed;
-  right:14px;
-  bottom:14px;
-  z-index:2147483200;
-  padding:9px 13px;
-  border:1px solid #94a3b8;
-  border-radius:10px;
-  background:#fff;
-  color:#0f172a;
+<style id="language-tutor-version-2a-open-conversation-test-css">
+#language-tutor-open-conversation-test{
+  position:fixed;right:14px;bottom:14px;z-index:2147483200;
+  padding:9px 13px;border:1px solid #94a3b8;border-radius:10px;
+  background:#fff;color:#0f172a;
   font:600 13px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  box-shadow:0 4px 14px rgba(15,23,42,.16);
-  cursor:pointer;
+  box-shadow:0 4px 14px rgba(15,23,42,.16);cursor:pointer;
 }
-#language-tutor-open-all-test:hover{ background:#f8fafc; }
-#language-tutor-open-all-test:disabled{ opacity:.6; cursor:wait; }
-@media (max-width:640px){
-  #language-tutor-open-all-test{ display:none; }
-}
+#language-tutor-open-conversation-test:hover{background:#f8fafc}
+@media(max-width:640px){#language-tutor-open-conversation-test{display:none}}
 </style>
 
-<button type="button" id="language-tutor-open-all-test" title="Test the existing Open actions without changing workspace architecture">Open All</button>
+<button type="button" id="language-tutor-open-conversation-test">Open Conversation Test</button>
 
-<script id="language-tutor-version-2-open-all-test-runtime">
+<script id="language-tutor-version-2a-open-conversation-test-runtime">
 (()=>{
 "use strict";
+const test=document.getElementById("language-tutor-open-conversation-test");
+if(!test)return;
 
-/* VERSION 2 test:
-   Reproduce the user's four manual Open actions, sequentially.
-   No startup auto-open. No docking/return overrides. No DOM relocation code. */
-const button=document.getElementById("language-tutor-open-all-test");
-if(!button)return;
-
-const steps=[
-  ["Tutor Controls", ()=>window.openTutorControlsWorkspace?.()],
-  ["Conversation",   ()=>window.openVoiceTranscriptWindow?.()],
-  ["Ask Tutor",      ()=>window.openAskTutorWorkspace?.()],
-  ["Language Tools", ()=>window.openLanguageToolsWorkspace?.()]
-];
-
-button.addEventListener("click",()=>{
-  if(button.disabled)return;
-  button.disabled=true;
-  button.textContent="Opening…";
-
-  steps.forEach(([label,action],index)=>{
-    setTimeout(()=>{
-      try{ action(); }
-      catch(error){ console.error(`Open All test failed at ${label}`,error); }
-
-      if(index===steps.length-1){
-        setTimeout(()=>{
-          button.disabled=false;
-          button.textContent="Open All";
-        },200);
-      }
-    },index*180);
-  });
+test.addEventListener("click",()=>{
+  const realOpen=document.querySelector(
+    "#conversation-transcript-docked-bar .primary-workspace-open-btn"
+  );
+  if(!realOpen){
+    test.textContent="Open button not found";
+    return;
+  }
+  realOpen.click();
 });
 })();
 </script>
