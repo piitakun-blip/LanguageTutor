@@ -1,6 +1,6 @@
 <!--
   LanguageTutor
-  Version: 14.3.27.7
+  Version: 14.3.27.8
   Build: Transcript DOM Sync
   Based on: 14.3.11
 -->
@@ -7437,7 +7437,7 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.27.7";
+window.LANGUAGETUTOR_VERSION="14.3.27.8";
 window.LANGUAGETUTOR_BUILD="Transcript DOM Sync";
 </script>
 
@@ -27636,7 +27636,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.27.7";
+   el.textContent="LanguageTutor v14.3.27.8";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -28285,6 +28285,41 @@ document.addEventListener("languagetutor:transcript-rendered",()=>{
 /* The docked transcript remains compact/scrollable; cards alternate inside it.
    Open/floating transcript inherits the same cards with its larger viewport. */
 </style>
+
+<script id="workspace-v143278-hide-transcript-top-ask-tutor">
+(()=>{
+"use strict";
+function apply(){
+  const log=document.getElementById("voice-chat-messages-log");
+  if(!log)return;
+
+  // Work upward to the German Conversation window, then inspect buttons before
+  // the selected-line controls. Hide only the top toolbar Ask Tutor button.
+  const windowRoot=log.closest(".floating-window, .conversation-window, section, .panel") || log.parentElement?.parentElement;
+  if(!windowRoot)return;
+
+  const selectedArea=[...windowRoot.querySelectorAll("*")].find(el=>
+    (el.textContent||"").trim().toUpperCase()==="SELECTED LINE"
+  );
+
+  [...windowRoot.querySelectorAll("button")].forEach(btn=>{
+    const label=(btn.textContent||"").replace(/\s+/g," ").trim();
+    if(!/Ask Tutor/i.test(label))return;
+    // Keep the Ask Tutor control associated with Selected Line.
+    if(selectedArea && (selectedArea.parentElement?.contains(btn) || selectedArea.closest("div")?.contains(btn)))return;
+    // Top toolbar is above the transcript log and is the first Ask Tutor action.
+    const r=btn.getBoundingClientRect(), lr=log.getBoundingClientRect();
+    if(r.top < lr.top){
+      btn.style.display="none";
+      btn.setAttribute("data-v143278-hidden-top-ask-tutor","true");
+    }
+  });
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>requestAnimationFrame(apply),{once:true});
+else requestAnimationFrame(apply);
+new MutationObserver(apply).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
 
