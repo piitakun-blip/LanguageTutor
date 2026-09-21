@@ -27305,6 +27305,220 @@ setTimeout(normalize,300); setTimeout(normalize,1000);
 })();
 </script>
 
+
+<style id="workspace-v14301-always-open-css">
+/* v14.3.0.1 — Always-open primary workspaces.
+   Primary app areas stay in the page. Utility windows (Analysis, keyboards,
+   Settings, etc.) keep their existing floating behavior. */
+
+/* Open/Return controls and floating placeholders are no longer needed. */
+#tutor-controls-section .primary-workspace-open-btn,
+#conversation-transcript-section .primary-workspace-open-btn,
+#ask-tutor-section .primary-workspace-open-btn,
+#language-tools-view .primary-workspace-open-btn,
+#tutor-controls-placeholder,
+#conversation-transcript-placeholder,
+#ask-tutor-section .primary-workspace-placeholder,
+#language-tools-placeholder,
+.primary-workspace-return-btn{
+  display:none !important;
+}
+
+/* Keep the four primary workspaces visibly in normal document flow. */
+#tutor-controls-section,
+#conversation-transcript-section,
+#ask-tutor-section,
+#language-tools-view{
+  display:block !important;
+  visibility:visible !important;
+}
+
+/* Transcript is always the real in-page transcript. */
+#conversation-transcript-section{
+  display:flex !important;
+  flex-direction:column !important;
+}
+#conversation-transcript-section #conversation-view{
+  display:flex !important;
+  position:static !important;
+  inset:auto !important;
+  width:auto !important;
+  max-width:none !important;
+  transform:none !important;
+}
+
+/* Ask Tutor is now a permanent page workspace instead of a floating window. */
+#ask-tutor-section #language-coach-window{
+  display:block !important;
+  position:static !important;
+  inset:auto !important;
+  left:auto !important;
+  top:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  width:100% !important;
+  max-width:none !important;
+  min-width:0 !important;
+  height:auto !important;
+  max-height:none !important;
+  transform:none !important;
+  resize:none !important;
+  box-shadow:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  z-index:auto !important;
+}
+#ask-tutor-section #language-coach-drag-handle{
+  cursor:default !important;
+}
+#ask-tutor-section .language-coach-close{
+  display:none !important;
+}
+#ask-tutor-section .language-coach-body{
+  max-height:none !important;
+  overflow:visible !important;
+}
+
+/* Tutor Controls / Language Tools never become floating primary windows. */
+#tutor-controls-view,
+#language-tools-view{
+  position:static !important;
+  inset:auto !important;
+  width:auto !important;
+  max-width:none !important;
+  transform:none !important;
+}
+</style>
+
+<script id="workspace-v14301-always-open-runtime">
+(()=>{
+"use strict";
+window.__languageTutorWorkspaceVersion="14.3.0.1-always-open-primary-workspaces";
+const $=id=>document.getElementById(id);
+
+function main(){
+  return document.querySelector("main.conversation-first-main") ||
+         document.querySelector("main") || document.body;
+}
+function putAfter(node,ref){
+  if(node && ref?.parentNode) ref.parentNode.insertBefore(node,ref.nextSibling);
+}
+
+function makeAskTutorPermanent(){
+  const section=$("ask-tutor-section");
+  const coach=$("language-coach-window");
+  if(!section || !coach)return;
+
+  let host=$("ask-tutor-permanent-host");
+  if(!host){
+    host=document.createElement("div");
+    host.id="ask-tutor-permanent-host";
+    host.className="ask-tutor-permanent-host";
+    const bar=section.querySelector(".unified-workspace-bar");
+    if(bar)bar.insertAdjacentElement("afterend",host);
+    else section.appendChild(host);
+  }
+
+  if(coach.parentElement!==host)host.appendChild(coach);
+  coach.hidden=false;
+  coach.removeAttribute("hidden");
+  coach.classList.remove("is-minimized");
+}
+
+function returnPrimaryToPage(id,anchorId){
+  const view=$(id), anchor=$(anchorId);
+  if(view && anchor?.parentElement && view.parentElement!==anchor.parentElement){
+    anchor.parentElement.insertBefore(view,anchor.nextSibling);
+  }
+  view?.classList.remove("is-floating");
+}
+
+function makeTranscriptPermanent(){
+  const section=$("conversation-transcript-section");
+  const view=$("conversation-view");
+  if(!section || !view)return;
+
+  if(view.parentElement!==section){
+    const bar=$("conversation-transcript-docked-bar");
+    bar ? putAfter(view,bar) : section.appendChild(view);
+  }
+  view.classList.remove("is-floating");
+  section.classList.remove("transcript-is-floating");
+
+  const floating=$("voice-transcript-window");
+  if(floating){
+    floating.hidden=true;
+    floating.setAttribute("hidden","");
+  }
+}
+
+function makePrimaryWorkspacesPermanent(){
+  // Let the rollback build create its normal sections first, then simplify.
+  if(typeof window.normalizeLanguageTutorWorkspaces==="function"){
+    try{ window.normalizeLanguageTutorWorkspaces(); }catch(_){}
+  }
+
+  returnPrimaryToPage("tutor-controls-view","tutor-controls-home-anchor");
+  returnPrimaryToPage("language-tools-view","language-tools-home-anchor");
+  makeTranscriptPermanent();
+  makeAskTutorPermanent();
+
+  // Preserve the established page order.
+  const m=main(), chat=$("conversation-primary-section");
+  let ref=chat;
+  ["tutor-controls-section","conversation-transcript-section","ask-tutor-section","language-tools-view"].forEach(id=>{
+    const node=$(id);
+    if(!node)return;
+    if(node.parentElement!==m || node.previousElementSibling!==ref){
+      ref?.nextSibling ? m.insertBefore(node,ref.nextSibling) : m.appendChild(node);
+    }
+    ref=node;
+  });
+}
+
+/* Compatibility: old buttons/functions elsewhere can still call these names,
+   but primary workspaces now stay in-page instead of detaching. */
+window.openTutorControlsWorkspace=()=>makePrimaryWorkspacesPermanent();
+window.returnTutorControlsWorkspace=()=>makePrimaryWorkspacesPermanent();
+window.openLanguageToolsWorkspace=()=>makePrimaryWorkspacesPermanent();
+window.returnLanguageToolsWorkspace=()=>makePrimaryWorkspacesPermanent();
+window.openVoiceTranscriptWindow=()=>makePrimaryWorkspacesPermanent();
+window.dockVoiceTranscript=()=>makePrimaryWorkspacesPermanent();
+window.returnTranscriptWorkspace=()=>makePrimaryWorkspacesPermanent();
+
+window.openAskTutorWorkspace=()=>{
+  makePrimaryWorkspacesPermanent();
+  $("language-coach-input")?.focus();
+};
+window.returnAskTutorWorkspace=()=>makePrimaryWorkspacesPermanent();
+
+/* Preserve existing selected-line -> Ask Tutor behavior. Existing launchers may
+   set context before opening; after they run, immediately restore the coach to
+   its permanent in-page host without clearing that context/thread. */
+const oldConversationAsk=window.openAskTutorFromConversation;
+if(typeof oldConversationAsk==="function"){
+  window.openAskTutorFromConversation=function(...args){
+    const result=oldConversationAsk.apply(this,args);
+    requestAnimationFrame(()=>{
+      makePrimaryWorkspacesPermanent();
+      $("ask-tutor-section")?.scrollIntoView({behavior:"smooth",block:"start"});
+      $("language-coach-input")?.focus();
+    });
+    return result;
+  };
+}
+
+function boot(){
+  setTimeout(makePrimaryWorkspacesPermanent,0);
+  setTimeout(makePrimaryWorkspacesPermanent,250);
+  setTimeout(makePrimaryWorkspacesPermanent,900);
+}
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",boot,{once:true});
+}else{
+  boot();
+}
+})();
+</script>
 </body>
 </html>
-
