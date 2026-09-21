@@ -1,6 +1,6 @@
 <!--
   LanguageTutor
-  Version: 14.3.27.2
+  Version: 14.3.27.1
   Build: Transcript DOM Sync
   Based on: 14.3.11
 -->
@@ -7437,7 +7437,7 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.27.2";
+window.LANGUAGETUTOR_VERSION="14.3.27.1";
 window.LANGUAGETUTOR_BUILD="Transcript DOM Sync";
 </script>
 
@@ -27608,7 +27608,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.27.2";
+   el.textContent="LanguageTutor v14.3.27.1";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -28067,120 +28067,57 @@ else install();
 })();
 </script>
 
-
-<style id="workspace-v143272-conversation-views-css">
-/* v14.3.27.2
-   Docked transcript stays compact and scrollable.
-   Floating/open transcript retains its existing spacious layout. */
-#conversation-view:not(.is-floating) #voice-chat-messages-log{
-  height:260px !important;
-  min-height:260px !important;
-  max-height:260px !important;
-  overflow-y:auto !important;
-  overscroll-behavior:contain;
-  scroll-behavior:smooth;
-}
-
-/* Live Transcription is a rolling three-utterance context window. */
-#voice-live-transcript{
-  overflow:hidden !important;
-}
-</style>
-
-<script id="workspace-v143272-conversation-views">
+<script id="workspace-v143271-transcript-follow">
 (()=>{
 "use strict";
-
 const LOG_ID="voice-chat-messages-log";
-const LIVE_ID="voice-live-transcript";
-const BOTTOM_GAP=36;
-let transcriptReviewing=false;
-let transcriptProgrammatic=false;
-let transcriptObserver=null;
-let installedLog=null;
+const BOTTOM_GAP=48;
+let reviewing=false;
+let programmatic=false;
 
-function transcriptLog(){
-  return document.getElementById(LOG_ID);
-}
-function nearTranscriptBottom(el){
+function log(){ return document.getElementById(LOG_ID); }
+function nearBottom(el){
   return (el.scrollHeight-el.scrollTop-el.clientHeight)<=BOTTOM_GAP;
 }
-function followTranscriptBottom(force=false){
-  const el=transcriptLog();
-  if(!el || (!force && transcriptReviewing)) return;
-  transcriptProgrammatic=true;
+function toBottom(){
+  const el=log();
+  if(!el || reviewing)return;
+  programmatic=true;
   requestAnimationFrame(()=>{
     el.scrollTop=el.scrollHeight;
-    requestAnimationFrame(()=>{ transcriptProgrammatic=false; });
+    requestAnimationFrame(()=>{ programmatic=false; });
   });
 }
-function installTranscriptFollow(){
-  const el=transcriptLog();
-  if(!el || installedLog===el) return;
-  installedLog=el;
-  transcriptReviewing=false;
+function install(){
+  const el=log();
+  if(!el || el.__v143271Follow)return;
+  el.__v143271Follow=true;
+
+  // Start with the newest transcript content visible.
+  programmatic=true;
+  el.scrollTop=el.scrollHeight;
+  requestAnimationFrame(()=>{ programmatic=false; });
 
   el.addEventListener("scroll",()=>{
-    if(transcriptProgrammatic) return;
-    transcriptReviewing=!nearTranscriptBottom(el);
+    if(programmatic)return;
+    reviewing=!nearBottom(el);
   },{passive:true});
 
-  transcriptObserver?.disconnect();
-  transcriptObserver=new MutationObserver(()=>{
-    if(!transcriptReviewing) followTranscriptBottom();
+  // Only child changes in the existing transcript log trigger follow behavior.
+  const mo=new MutationObserver(()=>{
+    if(!reviewing)toBottom();
   });
-  transcriptObserver.observe(el,{childList:true});
+  mo.observe(el,{childList:true});
 
-  // Initial docked state should show the newest exchange.
-  followTranscriptBottom(true);
-}
-
-/* Keep only the three newest speech utterance rows in the small live panel.
-   Status/listening rows are not counted as utterances and are left intact. */
-function trimLiveTranscript(){
-  const live=document.getElementById(LIVE_ID);
-  if(!live) return;
-
-  const utterances=[...live.querySelectorAll(".voice-live-line")].filter(row=>{
-    const role=(row.querySelector(".voice-live-role")?.textContent || "").trim().toLowerCase();
-    return role==="you" || role==="tutor";
+  document.addEventListener("languagetutor:transcript-rendered",()=>{
+    if(!reviewing)toBottom();
   });
-
-  if(utterances.length<=3) return;
-  utterances.slice(0,utterances.length-3).forEach(row=>row.remove());
 }
-function installLiveRollingWindow(){
-  const live=document.getElementById(LIVE_ID);
-  if(!live || live.__v143272Rolling) return;
-  live.__v143272Rolling=true;
-  trimLiveTranscript();
-
-  const mo=new MutationObserver(()=>trimLiveTranscript());
-  mo.observe(live,{childList:true,subtree:false});
-}
-
-function install(){
-  installTranscriptFollow();
-  installLiveRollingWindow();
-}
-
 if(document.readyState==="loading"){
   document.addEventListener("DOMContentLoaded",install,{once:true});
 }else{
   install();
 }
-
-/* Existing app code may rebuild either region. Re-check without altering
-   Conversation recognition, TTS, Restate, Ask Tutor, or workspace lifecycle. */
-const pageObserver=new MutationObserver(()=>{
-  if(transcriptLog()!==installedLog) installTranscriptFollow();
-  installLiveRollingWindow();
-});
-pageObserver.observe(document.body,{childList:true,subtree:true});
-
-document.addEventListener("languagetutor:transcript-rendered",()=>{
-  if(!transcriptReviewing) followTranscriptBottom();
-});
 })();
 </script>
 </body>
