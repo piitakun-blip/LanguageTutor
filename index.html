@@ -1,6 +1,6 @@
 <!--
   LanguageTutor
-  Version: 14.3.27.11
+  Version: 14.3.27.2
   Build: Transcript DOM Sync
   Based on: 14.3.11
 -->
@@ -7437,7 +7437,7 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.27.11";
+window.LANGUAGETUTOR_VERSION="14.3.27.2";
 window.LANGUAGETUTOR_BUILD="Transcript DOM Sync";
 </script>
 
@@ -8494,7 +8494,7 @@ body > #ask-tutor-page-preview{display:none !important}
                         </div>
                         <div class="mt-2 rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2">
                             <div class="text-[9px] uppercase tracking-wider font-bold text-slate-400">Live transcription</div>
-                            <div id="voice-live-transcript" class="text-[12px] text-slate-700 mt-1 min-h-[118px] max-h-[150px] overflow-hidden leading-relaxed pr-1 whitespace-pre-wrap">What the microphone hears will appear here.</div>
+                            <div id="voice-live-transcript" class="text-[12px] text-slate-700 mt-1 min-h-[58px] max-h-[96px] overflow-y-auto leading-relaxed pr-1 whitespace-pre-wrap">What the microphone hears will appear here.</div>
                         </div>
                     </div>
 
@@ -15449,12 +15449,9 @@ Do not add quotation marks or labels.`;
         if(entry.note){
             const details=document.createElement("details");
             details.className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] text-amber-950";
-            // Surface correction feedback immediately instead of hiding it
-            // behind a collapsed disclosure.
-            details.open=true;
             const summary=document.createElement("summary");
             summary.className="cursor-pointer font-bold text-amber-700";
-            summary.textContent=entry.correctionAudio ? "Correction" : "Tutor note";
+            summary.textContent="Tutor note";
             const noteRow=document.createElement("div");
             noteRow.className="teacher-note-row mt-1";
             const note=document.createElement("div");
@@ -15511,10 +15508,12 @@ Do not add quotation marks or labels.`;
     function renderVoiceLiveTurn(listeningText=""){
         const live=document.getElementById("voice-live-transcript");
         if(!live)return;
-
-        const currentUser=String(voiceTutorState.liveUserText||"").trim();
-        const currentTutor=stripTutorMarkdown(voiceTutorState.liveTutorText);
+        const user=String(voiceTutorState.liveUserText||"").trim();
+        const targetTranslation=String(voiceTutorState.liveUserTargetTranslation||"").trim();
+        const tutor=stripTutorMarkdown(voiceTutorState.liveTutorText);
         const listening=String(listeningText||"").trim();
+
+        live.replaceChildren();
 
         const addLine=(role,label,text)=>{
             const value=String(text||"").trim();
@@ -15531,39 +15530,9 @@ Do not add quotation marks or labels.`;
             live.appendChild(row);
         };
 
-        // Build a lightweight rolling context from committed history. This is
-        // intentionally separate from the full Conversation Transcript renderer.
-        const committed=voiceTutorHistory()
-            .filter(e=>e && (e.role==="user" || e.role==="assistant"))
-            .map(e=>({
-                role:e.role,
-                text:String(
-                    e.role==="user" && e.inputMode==="english" && e.targetTranslation
-                        ? e.targetTranslation
-                        : e.text||""
-                ).trim()
-            }))
-            .filter(e=>e.text);
-
-        // Add current live values only when they are not already the committed tail.
-        const rolling=committed.slice();
-        const last=()=>rolling[rolling.length-1];
-        if(currentUser && !(last()?.role==="user" && last()?.text===currentUser)){
-            rolling.push({role:"user",text:currentUser});
-        }
-        if(currentTutor && !(last()?.role==="assistant" && last()?.text===currentTutor)){
-            rolling.push({role:"assistant",text:currentTutor});
-        }
-
-        live.replaceChildren();
-
-        rolling.slice(-3).forEach(e=>{
-            if(e.role==="assistant") addLine("tutor","Tutor",e.text);
-            else addLine("learner","You",e.text);
-        });
-
-        // Listening/status remains informational and does not count as one of
-        // the three conversation utterances.
+        addLine("learner","You",user);
+        if(targetTranslation)addLine("translation",langConfig().name,targetTranslation);
+        addLine("tutor","Tutor",tutor);
         addLine("status","Listening",listening);
 
         if(!live.children.length){
@@ -27639,7 +27608,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.27.11";
+   el.textContent="LanguageTutor v14.3.27.2";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -28214,161 +28183,6 @@ document.addEventListener("languagetutor:transcript-rendered",()=>{
 });
 })();
 </script>
-
-
-<style id="workspace-v143275-left-narrow-page-layout">
-/* v14.3.27.5 — desktop positioning + narrower docked page.
-   Keep the app on the left and reserve more desktop space on the right for
-   floating/open workspace windows. */
-@media (min-width:1024px){
-  body > header#language-header > div.max-w-7xl.mx-auto,
-  body > main.max-w-7xl.mx-auto,
-  body > footer div.max-w-7xl.mx-auto{
-    width:min(860px, calc(100vw - 24px)) !important;
-    max-width:860px !important;
-    margin-left:0 !important;
-    margin-right:auto !important;
-  }
-}
-</style>
-
-<style id="workspace-v143276-live-three-lines">
-/* v14.3.27.6 — Live Transcription is a lightweight rolling context panel.
-   Conversation Transcript keeps its separate selectable-card formatting. */
-#voice-live-transcript{
-  min-height:118px !important;
-  max-height:150px !important;
-  overflow:hidden !important;
-}
-</style>
-
-<style id="workspace-v143277-alternating-transcript-cards">
-/* v14.3.27.7 — Canonical Conversation Transcript presentation.
-   This changes presentation only: existing transcript cards, dataset metadata,
-   click selection, and Ask Tutor context routing remain intact. */
-
-#voice-chat-messages-log .conversation-turn-card{
-  width:82% !important;
-  max-width:1000px !important;
-  box-sizing:border-box;
-  margin-top:10px !important;
-  margin-bottom:10px !important;
-  border-radius:14px !important;
-  cursor:pointer;
-}
-
-/* Tutor turns: left */
-#voice-chat-messages-log .conversation-turn-card[data-role="assistant"],
-#voice-chat-messages-log .conversation-turn-card.assistant,
-#voice-chat-messages-log .conversation-turn-card.tutor{
-  margin-left:0 !important;
-  margin-right:auto !important;
-  background:#f3f1ff !important;
-  border-left:4px solid #8b6cff !important;
-}
-
-/* Learner turns: right */
-#voice-chat-messages-log .conversation-turn-card[data-role="user"],
-#voice-chat-messages-log .conversation-turn-card.user,
-#voice-chat-messages-log .conversation-turn-card.learner{
-  margin-left:auto !important;
-  margin-right:0 !important;
-  background:#f3f7fb !important;
-  border-left:0 !important;
-}
-
-/* Preserve a clear selected-card state for Ask Tutor context. */
-#voice-chat-messages-log .conversation-turn-card.selected,
-#voice-chat-messages-log .conversation-turn-card.is-selected,
-#voice-chat-messages-log .conversation-turn-card[aria-selected="true"]{
-  outline:3px solid rgba(99,102,241,.42) !important;
-  outline-offset:2px;
-}
-
-/* The docked transcript remains compact/scrollable; cards alternate inside it.
-   Open/floating transcript inherits the same cards with its larger viewport. */
-</style>
-
-
-<style id="workspace-v143279-transcript-toolbar-and-corrections">
-/* Hide only the redundant Ask Tutor launcher in the German Conversation
-   top toolbar. The Selected Line -> Ask Tutor action remains available. */
-#conversation-view .conversation-workspace-toolbar
-button[onclick="openAskTutorFromConversation()"]{
-  display:none !important;
-}
-</style>
-
-<style id="workspace-v1432710-sticky-continue-conversation">
-/* v14.3.27.10 — Saved conversation review:
-   keep the conversation header/actions (especially Continue Conversation)
-   visible while scrolling, just as the Selected Line controls remain visible. */
-.saved-conversation-card > .saved-conversation-header,
-.saved-conversation-item > .saved-conversation-header,
-.saved-conversation-header{
-  position:sticky !important;
-  top:0 !important;
-  z-index:32 !important;
-  background:rgba(255,255,255,.97) !important;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-}
-
-/* If the selected-line toolbar is also sticky in this view, give it room below
-   the retained conversation header rather than letting the two overlap. */
-.saved-conversation-card .transcript-selection-toolbar,
-.saved-conversation-item .transcript-selection-toolbar{
-  top:92px !important;
-}
-</style>
-
-<style id="workspace-v1432711-transcript-open-view-repair">
-/* v14.3.27.11
-   DOCKED Conversation Transcript:
-   compact and internally scrollable, as requested. */
-#conversation-view:not(.is-floating) #voice-chat-messages-log{
-  height:260px !important;
-  min-height:260px !important;
-  max-height:260px !important;
-  overflow-y:auto !important;
-}
-
-/* OPEN Conversation Transcript:
-   the floating host is authoritative. Remove the docked 260px constraint so
-   the selectable alternating transcript occupies the available window height. */
-#voice-transcript-window #conversation-view #voice-chat-messages-log{
-  height:auto !important;
-  min-height:0 !important;
-  max-height:none !important;
-  flex:1 1 auto !important;
-  overflow-y:auto !important;
-}
-
-/* Keep the richer alternating Conversation Transcript layout.
-   These are the real selectable transcript cards, not Live Transcription rows. */
-#voice-chat-messages-log .conversation-turn-card[data-role="user"]{
-  width:82% !important;
-  margin-left:auto !important;
-  margin-right:0 !important;
-}
-#voice-chat-messages-log .conversation-turn-card[data-role="assistant"]{
-  width:82% !important;
-  margin-left:0 !important;
-  margin-right:auto !important;
-}
-
-/* Selected-line actions must fit without silently pushing Ask Tutor offscreen.
-   Analyze remains intentionally hidden by the existing app design. */
-#transcript-selection-toolbar .transcript-selection-actions{
-  display:flex !important;
-  flex-wrap:wrap !important;
-  overflow-x:visible !important;
-}
-#transcript-selected-coach{
-  display:inline-flex !important;
-  visibility:visible !important;
-}
-</style>
 </body>
 </html>
 
