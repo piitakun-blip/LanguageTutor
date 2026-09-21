@@ -27306,218 +27306,108 @@ setTimeout(normalize,300); setTimeout(normalize,1000);
 </script>
 
 
-<style id="workspace-v14302-always-open-floating-css">
-/* v14.3.0.2 — Primary workspaces are always-open desktop windows.
-   Chat remains the page. Utility windows retain their existing behavior. */
+<style id="workspace-v14303-transcript-only-permanent-open-css">
+/* v14.3.0.3 — Narrow experiment:
+   ONLY Conversation Transcript is permanently in its existing OPEN window state.
+   Tutor Controls, Ask Tutor, and Language Tools are untouched. */
 
-@media (min-width: 900px){
-  /* The page no longer needs docked copies of the four workspaces. */
-  #tutor-controls-section,
-  #conversation-transcript-section,
-  #ask-tutor-section{
+@media (min-width:900px){
+  /* Once Transcript is floating, its page placeholder/open-return strip is noise. */
+  #conversation-transcript-section.transcript-is-floating{
     min-height:0 !important;
-  }
-
-  /* Primary windows use their existing opened-state surfaces. */
-  #tutor-controls-window,
-  #voice-transcript-window,
-  #language-coach-window,
-  #language-tools-window{
-    display:flex !important;
-    flex-direction:column !important;
-    position:fixed !important;
+    padding:0 !important;
     margin:0 !important;
-    max-width:none !important;
-    max-height:none !important;
-    transform:none !important;
-    visibility:visible !important;
-    opacity:1 !important;
-    resize:both !important;
-    overflow:hidden !important;
+    border:0 !important;
+    background:transparent !important;
   }
-
-  /* Starting desktop arrangement:
-       left ~34% = Chat page
-       right ~66% = workspace windows
-       controls across top; transcript middle; Ask Tutor + Language Tools bottom.
-  */
-  #tutor-controls-window{
-    left:35vw !important;
-    top:12px !important;
-    width:calc(65vw - 24px) !important;
-    height:150px !important;
-  }
-  #voice-transcript-window{
-    left:35vw !important;
-    top:174px !important;
-    width:calc(65vw - 24px) !important;
-    height:44vh !important;
-  }
-  #language-coach-window{
-    left:35vw !important;
-    top:calc(174px + 44vh + 12px) !important;
-    width:calc(32.5vw - 18px) !important;
-    height:calc(56vh - 198px) !important;
-  }
-  #language-tools-window{
-    left:67.5vw !important;
-    top:calc(174px + 44vh + 12px) !important;
-    width:calc(32.5vw - 18px) !important;
-    height:calc(56vh - 198px) !important;
-  }
-
-  /* Old page-state controls/placeholders are no longer part of the desktop UX. */
-  #tutor-controls-docked-bar,
-  #conversation-transcript-docked-bar,
-  #ask-tutor-docked-bar,
-  #language-tools-docked-bar,
-  #tutor-controls-placeholder,
-  #conversation-transcript-placeholder,
-  #language-tools-placeholder,
-  .primary-workspace-return-btn{
+  #conversation-transcript-section.transcript-is-floating
+    > #conversation-transcript-docked-bar,
+  #conversation-transcript-section.transcript-is-floating
+    > #conversation-transcript-placeholder{
     display:none !important;
   }
 
-  /* Permanent workspace windows do not need close/return controls. */
-  #tutor-controls-window [data-workspace-return],
-  #voice-transcript-window [data-workspace-return],
-  #language-coach-window [data-workspace-return],
-  #language-tools-window [data-workspace-return]{
+  /* The canonical floating transcript stays movable/resizable using the
+     rollback build's own window implementation. */
+  #voice-transcript-window:not([hidden]){
+    resize:both !important;
+  }
+
+  /* No close/return action for this experiment: Transcript is permanent-open. */
+  #voice-transcript-window #voice-transcript-close-btn{
     display:none !important;
   }
 }
-
-/* On smaller screens, don't force desktop geometry. Existing responsive
-   behavior remains available rather than placing four tiny draggable windows. */
 </style>
 
-<script id="workspace-v14302-always-open-floating-runtime">
+<script id="workspace-v14303-transcript-only-permanent-open-runtime">
 (()=>{
 "use strict";
-window.__languageTutorWorkspaceVersion="14.3.0.2-always-open-floating";
+window.__languageTutorWorkspaceExperiment="14.3.0.3-transcript-only-permanent-open";
 
-const ids={
-  controls:"tutor-controls-window",
-  transcript:"voice-transcript-window",
-  coach:"language-coach-window",
-  tools:"language-tools-window"
-};
 const $=id=>document.getElementById(id);
-const desktop=()=>window.matchMedia("(min-width: 900px)").matches;
+const desktop=()=>window.matchMedia("(min-width:900px)").matches;
 
-function show(el){
-  if(!el)return;
-  el.hidden=false;
-  el.removeAttribute("hidden");
-  el.classList.add("is-floating");
-  el.classList.remove("hidden","is-minimized");
-  el.style.display="flex";
+let canonicalOpen=null;
+
+function transcriptReallyOpen(){
+  const win=$("voice-transcript-window");
+  const body=$("voice-transcript-window-body");
+  const view=$("conversation-view");
+  return Boolean(win && body && view && !win.hidden && view.parentElement===body);
 }
 
-function openExistingWorkspace(kind){
-  const id=ids[kind], el=$(id);
-  if(el){ show(el); return el; }
-
-  // Ask the rollback build to create/open its canonical window if it is lazy.
-  const candidates={
-    controls:["openTutorControlsWorkspace","openTutorControlsWindow"],
-    transcript:["openVoiceTranscriptWindow"],
-    coach:["openAskTutorWorkspace","openLanguageCoach"],
-    tools:["openLanguageToolsWorkspace","openLanguageToolsWindow"]
-  }[kind] || [];
-
-  for(const name of candidates){
-    const fn=window[name];
-    if(typeof fn==="function" && !fn.__alwaysOpenWrapper){
-      try{ fn.call(window); }catch(_){}
-      const created=$(id);
-      if(created){ show(created); return created; }
-    }
-  }
-  return null;
-}
-
-function ensureAll(){
+function openTranscriptOnly(){
   if(!desktop())return;
-  openExistingWorkspace("controls");
-  openExistingWorkspace("transcript");
-  openExistingWorkspace("coach");
-  openExistingWorkspace("tools");
-}
-
-/* Once the canonical windows exist, legacy Open/Return actions simply make
-   them visible. Nothing is docked back into the page. */
-function installPermanentAPIs(){
-  const map={
-    openTutorControlsWorkspace:"controls",
-    returnTutorControlsWorkspace:"controls",
-    dockTutorControlsWorkspace:"controls",
-    openVoiceTranscriptWindow:"transcript",
-    returnTranscriptWorkspace:"transcript",
-    dockVoiceTranscript:"transcript",
-    openAskTutorWorkspace:"coach",
-    returnAskTutorWorkspace:"coach",
-    dockAskTutorWorkspace:"coach",
-    openLanguageToolsWorkspace:"tools",
-    returnLanguageToolsWorkspace:"tools",
-    dockLanguageToolsWorkspace:"tools"
-  };
-
-  for(const [name,kind] of Object.entries(map)){
-    const previous=window[name];
-    const wrapper=function(...args){
-      const existing=$(ids[kind]);
-      if(existing){ show(existing); existing.style.zIndex="2147483000"; return existing; }
-      if(typeof previous==="function"){
-        try{ previous.apply(this,args); }catch(_){}
-      }
-      const made=$(ids[kind]);
-      show(made);
-      return made;
-    };
-    wrapper.__alwaysOpenWrapper=true;
-    window[name]=wrapper;
+  const fn=canonicalOpen || window.openVoiceTranscriptWindow;
+  if(typeof fn!=="function")return;
+  if(!transcriptReallyOpen()){
+    try{ fn.call(window); }catch(err){ console.warn("Transcript open experiment:",err); }
   }
 }
 
-/* Keep selected-line -> Ask Tutor behavior, but Ask Tutor is already open.
-   Existing code still sets its selected context/thread. */
-function protectAskTutorRouting(){
-  const previous=window.openAskTutorFromConversation;
-  if(typeof previous!=="function" || previous.__alwaysOpenRouting)return;
-  const wrapper=function(...args){
-    const result=previous.apply(this,args);
-    const coach=$(ids.coach);
-    show(coach);
-    if(coach)coach.style.zIndex="2147483100";
-    $("language-coach-input")?.focus();
-    return result;
-  };
-  wrapper.__alwaysOpenRouting=true;
-  window.openAskTutorFromConversation=wrapper;
-}
-
-function clampWindows(){
+/* Install only after the rollback build has completed its own workspace setup.
+   We retain its canonical open routine and change only what "dock/return/close"
+   mean for Transcript. No other workspace API is touched. */
+function install(){
   if(!desktop())return;
-  for(const id of Object.values(ids)){
-    const el=$(id);
-    if(!el)continue;
-    const r=el.getBoundingClientRect();
-    if(r.left > innerWidth-80) el.style.left=Math.max(8,innerWidth-r.width-8)+"px";
-    if(r.top > innerHeight-50) el.style.top=Math.max(8,innerHeight-r.height-8)+"px";
-  }
+
+  canonicalOpen=window.openVoiceTranscriptWindow;
+  if(typeof canonicalOpen!=="function")return;
+
+  const keepOpen=function(){
+    openTranscriptOnly();
+    return $("voice-transcript-window");
+  };
+  keepOpen.__v14303=true;
+
+  window.dockVoiceTranscript=keepOpen;
+  window.returnTranscriptWorkspace=keepOpen;
+  window.closeVoiceTranscriptWindow=keepOpen;
+
+  /* Existing toggle buttons should no longer be able to return Transcript
+     to page state. */
+  window.toggleVoiceTranscriptWindow=keepOpen;
+
+  openTranscriptOnly();
+
+  requestAnimationFrame(()=>{
+    try{ window.setTranscriptPlaceholderOpen?.(true); }catch(_){}
+  });
 }
 
 function boot(){
-  // Let the rollback build initialize its own DOM/functions first.
-  setTimeout(()=>{ensureAll(); installPermanentAPIs(); protectAskTutorRouting();},50);
-  setTimeout(()=>{ensureAll(); protectAskTutorRouting(); clampWindows();},400);
-  setTimeout(()=>{ensureAll(); clampWindows();},1200);
+  /* Existing rollback code performs delayed normalization at 300ms and 1000ms.
+     Wait until after that lifecycle instead of competing with startup. */
+  setTimeout(install,1400);
+  setTimeout(openTranscriptOnly,1800);
 }
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});
-else boot();
 
-window.addEventListener("resize",()=>setTimeout(clampWindows,80));
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",boot,{once:true});
+}else{
+  boot();
+}
 })();
 </script>
 </body>
