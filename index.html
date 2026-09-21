@@ -1,7 +1,7 @@
 <!--
   LanguageTutor
-  Version: 14.3.27.1
-  Build: Transcript DOM Sync
+  Version: 14.3.26
+  Build: Visible Live Conversation Transcript
   Based on: 14.3.11
 -->
 <!DOCTYPE html>
@@ -7437,8 +7437,8 @@ body .conversation-fold:has(#ask-tutor-floating-status:not([hidden])){
 </style>
 
 <script id="languagetutor-build-info">
-window.LANGUAGETUTOR_VERSION="14.3.27.1";
-window.LANGUAGETUTOR_BUILD="Transcript DOM Sync";
+window.LANGUAGETUTOR_VERSION="14.3.26";
+window.LANGUAGETUTOR_BUILD="Visible Live Conversation Transcript";
 </script>
 
 <style id="workspace-v14313-transcript-only-css">
@@ -7698,37 +7698,6 @@ body > #ask-tutor-page-preview{display:none !important}
 #conversation-view:not(.is-floating) #voice-chat-messages-log .conversation-turn-card{
   display:block !important;
   visibility:visible !important;
-}
-</style>
-
-<style id="workspace-v14327-transcript-dom-sync-css">
-#voice-chat-messages-log .conversation-turn-card{
-  margin:8px 0 !important;
-  padding:12px 14px !important;
-  border:1px solid #d9e3f2;
-  border-radius:12px;
-  background:#fff;
-}
-#voice-chat-messages-log .conversation-turn-card.tutor{
-  background:#f5f3ff;
-  border-left:4px solid #9b7cff;
-}
-#voice-chat-messages-log .conversation-turn-card.learner{
-  background:#eef5ff;
-  border-left:4px solid #63a4ff;
-}
-#voice-chat-messages-log .conversation-turn-label{
-  margin-bottom:5px;
-  font-size:10px;
-  font-weight:800;
-  letter-spacing:.06em;
-}
-#voice-chat-messages-log .conversation-turn-card.tutor .conversation-turn-label{color:#5b35c8}
-#voice-chat-messages-log .conversation-turn-card.learner .conversation-turn-label{color:#245dcc}
-#voice-chat-messages-log .conversation-turn-text{
-  font-size:14px;
-  line-height:1.45;
-  color:#24324a;
 }
 </style>
 </head>
@@ -27608,7 +27577,7 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
    if(document.getElementById("languagetutor-version-label"))return;
    const el=document.createElement("div");
    el.id="languagetutor-version-label";
-   el.textContent="LanguageTutor v14.3.27.1";
+   el.textContent="LanguageTutor v14.3.26";
    el.style.cssText="font-size:10px;color:#94a3b8;text-align:right;margin:6px 10px 2px;user-select:text";
    const host=document.querySelector("#settings-panel,#settings-content,.settings-panel,.settings-content");
    if(host)host.appendChild(el);
@@ -27950,174 +27919,66 @@ else install();
 })();
 </script>
 
-<script id="workspace-v14327-transcript-dom-sync">
+<script id="workspace-v14326-visible-transcript">
 (()=>{
 "use strict";
-const $=id=>document.getElementById(id);
 
-function transcriptLog(){return $("voice-chat-messages-log");}
+function log(){return document.getElementById("voice-chat-messages-log");}
 function history(){
   try{
     const h=window.getVoiceTutorHistory?.();
     return Array.isArray(h)?h:[];
   }catch(_){return [];}
 }
-function clean(s){return String(s||"").replace(/\s+/g," ").trim();}
-function liveRows(){
-  const live=$("voice-live-transcript");
-  if(!live)return [];
-  return [...live.querySelectorAll(".voice-live-line")].map(row=>{
-    const roleEl=row.querySelector(".voice-live-role");
-    const textEl=row.querySelector(".voice-live-text");
-    const role=clean(roleEl?.textContent).toLowerCase();
-    const text=clean(textEl?.textContent);
-    if(!text)return null;
-    if(role==="you")return {role:"user",text,inputMode:"voice",__domSync:true};
-    if(role==="tutor")return {role:"assistant",text,__domSync:true};
-    return null;
-  }).filter(Boolean);
+function nearBottom(el){
+  return !el || (el.scrollHeight-el.scrollTop-el.clientHeight)<90;
 }
-function signature(e){
-  return (e.role==="assistant"?"assistant":"user")+"|"+clean(e.text||e.targetTranslation);
-}
-function committedEntries(){
-  const h=history().filter(e=>e && (e.role==="user"||e.role==="assistant"));
-  const live=liveRows();
-  if(!live.length)return h;
-
-  // History remains authoritative, but the rendered live YOU/TUTOR rows are used as an
-  // immediate bridge when history has not yet received the exchange.
-  const seen=new Set(h.map(signature));
-  const merged=h.slice();
-  for(const e of live){
-    const sig=signature(e);
-    if(!seen.has(sig)){ merged.push(e); seen.add(sig); }
+function showLatest(force=false){
+  const el=log();
+  if(!el)return;
+  if(force || nearBottom(el)){
+    requestAnimationFrame(()=>{ el.scrollTop=el.scrollHeight; });
   }
-  return merged;
 }
-function cardText(entry){
-  if(entry.role==="user" && entry.inputMode==="english" && entry.targetTranslation)
-    return clean(entry.targetTranslation);
-  return clean(entry.text);
-}
-function buildCard(entry){
-  const card=document.createElement("div");
-  card.className="conversation-turn-card "+(entry.role==="assistant"?"tutor":"learner");
-  card.__transcriptEntry=entry;
-  card.dataset.transcriptSelectable="1";
-  card.dataset.transcriptText=cardText(entry);
-  card.dataset.transcriptLanguage=String(document.body?.dataset?.studyLanguage||"de");
-  card.tabIndex=0;
-  card.setAttribute("role","button");
-  card.setAttribute("aria-label","Select this transcript line for Ask Tutor and study actions");
+function ensureRendered(){
+  const el=log();
+  if(!el)return;
+  const h=history();
+  const cards=el.querySelectorAll(".conversation-turn-card").length;
 
-  const label=document.createElement("div");
-  label.className="conversation-turn-label";
-  label.textContent=entry.role==="assistant"?"GERMAN TUTOR":"YOU";
-
-  const text=document.createElement("div");
-  text.className="conversation-turn-text";
-  text.textContent=cardText(entry);
-
-  card.append(label,text);
-  return card;
-}
-function sync(forceScroll=true){
-  const log=transcriptLog();
-  if(!log)return;
-  const entries=committedEntries();
-  if(!entries.length)return;
-
-  const wanted=entries.map(signature);
-  const current=[...log.querySelectorAll(".conversation-turn-card")].map(c=>{
-    const role=c.classList.contains("tutor")?"assistant":"user";
-    return role+"|"+clean(c.dataset.transcriptText||c.querySelector(".conversation-turn-text")?.textContent||c.textContent);
-  });
-
-  if(wanted.join("\n")!==current.join("\n")){
-    // Rebuild only the transcript cards. Keep selection toolbar outside this log intact.
-    log.replaceChildren(...entries.map(buildCard));
-    document.dispatchEvent(new CustomEvent("languagetutor:transcript-rendered"));
+  // The committed Conversation history is the source of truth. If the docked view
+  // is blank/stale while Tutor Controls already has committed turns, rebuild it.
+  if(h.length && cards!==h.length && typeof window.renderVoiceTutorTranscript==="function"){
+    window.renderVoiceTutorTranscript();
   }
-  if(forceScroll)requestAnimationFrame(()=>{log.scrollTop=log.scrollHeight;});
+  showLatest(true);
 }
 function install(){
-  const live=$("voice-live-transcript");
-  if(live && !live.__v14327){
+  const el=log();
+  if(el && !el.__v14326Observer){
+    const observer=new MutationObserver(()=>showLatest(true));
+    observer.observe(el,{childList:true,subtree:true});
+    el.__v14326Observer=observer;
+  }
+
+  // A completed live YOU/TUTOR exchange should immediately be visible in Conversation.
+  const live=document.getElementById("voice-live-transcript");
+  if(live && !live.__v14326Observer){
     let timer=0;
-    const mo=new MutationObserver(()=>{
+    const observer=new MutationObserver(()=>{
       clearTimeout(timer);
-      timer=setTimeout(()=>sync(true),30);
+      timer=setTimeout(ensureRendered,40);
     });
-    mo.observe(live,{childList:true,subtree:true,characterData:true});
-    live.__v14327=mo;
+    observer.observe(live,{childList:true,subtree:true,characterData:true});
+    live.__v14326Observer=observer;
   }
-  const log=transcriptLog();
-  if(log && !log.__v14327){
-    const mo=new MutationObserver(()=>{});
-    mo.observe(log,{childList:true});
-    log.__v14327=mo;
-  }
-  sync(true);
-  // Low-cost fallback for browsers/DOM paths where a mutation is missed.
-  setInterval(()=>sync(false),1000);
+
+  ensureRendered();
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",install,{once:true});
 else install();
-})();
-</script>
 
-<script id="workspace-v143271-transcript-follow">
-(()=>{
-"use strict";
-const LOG_ID="voice-chat-messages-log";
-const BOTTOM_GAP=48;
-let reviewing=false;
-let programmatic=false;
-
-function log(){ return document.getElementById(LOG_ID); }
-function nearBottom(el){
-  return (el.scrollHeight-el.scrollTop-el.clientHeight)<=BOTTOM_GAP;
-}
-function toBottom(){
-  const el=log();
-  if(!el || reviewing)return;
-  programmatic=true;
-  requestAnimationFrame(()=>{
-    el.scrollTop=el.scrollHeight;
-    requestAnimationFrame(()=>{ programmatic=false; });
-  });
-}
-function install(){
-  const el=log();
-  if(!el || el.__v143271Follow)return;
-  el.__v143271Follow=true;
-
-  // Start with the newest transcript content visible.
-  programmatic=true;
-  el.scrollTop=el.scrollHeight;
-  requestAnimationFrame(()=>{ programmatic=false; });
-
-  el.addEventListener("scroll",()=>{
-    if(programmatic)return;
-    reviewing=!nearBottom(el);
-  },{passive:true});
-
-  // Only child changes in the existing transcript log trigger follow behavior.
-  const mo=new MutationObserver(()=>{
-    if(!reviewing)toBottom();
-  });
-  mo.observe(el,{childList:true});
-
-  document.addEventListener("languagetutor:transcript-rendered",()=>{
-    if(!reviewing)toBottom();
-  });
-}
-if(document.readyState==="loading"){
-  document.addEventListener("DOMContentLoaded",install,{once:true});
-}else{
-  install();
-}
+document.addEventListener("languagetutor:transcript-rendered",()=>showLatest(true));
 })();
 </script>
 </body>
