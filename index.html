@@ -27306,218 +27306,218 @@ setTimeout(normalize,300); setTimeout(normalize,1000);
 </script>
 
 
-<style id="workspace-v14301-always-open-css">
-/* v14.3.0.1 — Always-open primary workspaces.
-   Primary app areas stay in the page. Utility windows (Analysis, keyboards,
-   Settings, etc.) keep their existing floating behavior. */
+<style id="workspace-v14302-always-open-floating-css">
+/* v14.3.0.2 — Primary workspaces are always-open desktop windows.
+   Chat remains the page. Utility windows retain their existing behavior. */
 
-/* Open/Return controls and floating placeholders are no longer needed. */
-#tutor-controls-section .primary-workspace-open-btn,
-#conversation-transcript-section .primary-workspace-open-btn,
-#ask-tutor-section .primary-workspace-open-btn,
-#language-tools-view .primary-workspace-open-btn,
-#tutor-controls-placeholder,
-#conversation-transcript-placeholder,
-#ask-tutor-section .primary-workspace-placeholder,
-#language-tools-placeholder,
-.primary-workspace-return-btn{
-  display:none !important;
+@media (min-width: 900px){
+  /* The page no longer needs docked copies of the four workspaces. */
+  #tutor-controls-section,
+  #conversation-transcript-section,
+  #ask-tutor-section{
+    min-height:0 !important;
+  }
+
+  /* Primary windows use their existing opened-state surfaces. */
+  #tutor-controls-window,
+  #voice-transcript-window,
+  #language-coach-window,
+  #language-tools-window{
+    display:flex !important;
+    flex-direction:column !important;
+    position:fixed !important;
+    margin:0 !important;
+    max-width:none !important;
+    max-height:none !important;
+    transform:none !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    resize:both !important;
+    overflow:hidden !important;
+  }
+
+  /* Starting desktop arrangement:
+       left ~34% = Chat page
+       right ~66% = workspace windows
+       controls across top; transcript middle; Ask Tutor + Language Tools bottom.
+  */
+  #tutor-controls-window{
+    left:35vw !important;
+    top:12px !important;
+    width:calc(65vw - 24px) !important;
+    height:150px !important;
+  }
+  #voice-transcript-window{
+    left:35vw !important;
+    top:174px !important;
+    width:calc(65vw - 24px) !important;
+    height:44vh !important;
+  }
+  #language-coach-window{
+    left:35vw !important;
+    top:calc(174px + 44vh + 12px) !important;
+    width:calc(32.5vw - 18px) !important;
+    height:calc(56vh - 198px) !important;
+  }
+  #language-tools-window{
+    left:67.5vw !important;
+    top:calc(174px + 44vh + 12px) !important;
+    width:calc(32.5vw - 18px) !important;
+    height:calc(56vh - 198px) !important;
+  }
+
+  /* Old page-state controls/placeholders are no longer part of the desktop UX. */
+  #tutor-controls-docked-bar,
+  #conversation-transcript-docked-bar,
+  #ask-tutor-docked-bar,
+  #language-tools-docked-bar,
+  #tutor-controls-placeholder,
+  #conversation-transcript-placeholder,
+  #language-tools-placeholder,
+  .primary-workspace-return-btn{
+    display:none !important;
+  }
+
+  /* Permanent workspace windows do not need close/return controls. */
+  #tutor-controls-window [data-workspace-return],
+  #voice-transcript-window [data-workspace-return],
+  #language-coach-window [data-workspace-return],
+  #language-tools-window [data-workspace-return]{
+    display:none !important;
+  }
 }
 
-/* Keep the four primary workspaces visibly in normal document flow. */
-#tutor-controls-section,
-#conversation-transcript-section,
-#ask-tutor-section,
-#language-tools-view{
-  display:block !important;
-  visibility:visible !important;
-}
-
-/* Transcript is always the real in-page transcript. */
-#conversation-transcript-section{
-  display:flex !important;
-  flex-direction:column !important;
-}
-#conversation-transcript-section #conversation-view{
-  display:flex !important;
-  position:static !important;
-  inset:auto !important;
-  width:auto !important;
-  max-width:none !important;
-  transform:none !important;
-}
-
-/* Ask Tutor is now a permanent page workspace instead of a floating window. */
-#ask-tutor-section #language-coach-window{
-  display:block !important;
-  position:static !important;
-  inset:auto !important;
-  left:auto !important;
-  top:auto !important;
-  right:auto !important;
-  bottom:auto !important;
-  width:100% !important;
-  max-width:none !important;
-  min-width:0 !important;
-  height:auto !important;
-  max-height:none !important;
-  transform:none !important;
-  resize:none !important;
-  box-shadow:none !important;
-  border:0 !important;
-  border-radius:0 !important;
-  z-index:auto !important;
-}
-#ask-tutor-section #language-coach-drag-handle{
-  cursor:default !important;
-}
-#ask-tutor-section .language-coach-close{
-  display:none !important;
-}
-#ask-tutor-section .language-coach-body{
-  max-height:none !important;
-  overflow:visible !important;
-}
-
-/* Tutor Controls / Language Tools never become floating primary windows. */
-#tutor-controls-view,
-#language-tools-view{
-  position:static !important;
-  inset:auto !important;
-  width:auto !important;
-  max-width:none !important;
-  transform:none !important;
-}
+/* On smaller screens, don't force desktop geometry. Existing responsive
+   behavior remains available rather than placing four tiny draggable windows. */
 </style>
 
-<script id="workspace-v14301-always-open-runtime">
+<script id="workspace-v14302-always-open-floating-runtime">
 (()=>{
 "use strict";
-window.__languageTutorWorkspaceVersion="14.3.0.1-always-open-primary-workspaces";
-const $=id=>document.getElementById(id);
+window.__languageTutorWorkspaceVersion="14.3.0.2-always-open-floating";
 
-function main(){
-  return document.querySelector("main.conversation-first-main") ||
-         document.querySelector("main") || document.body;
-}
-function putAfter(node,ref){
-  if(node && ref?.parentNode) ref.parentNode.insertBefore(node,ref.nextSibling);
-}
-
-function makeAskTutorPermanent(){
-  const section=$("ask-tutor-section");
-  const coach=$("language-coach-window");
-  if(!section || !coach)return;
-
-  let host=$("ask-tutor-permanent-host");
-  if(!host){
-    host=document.createElement("div");
-    host.id="ask-tutor-permanent-host";
-    host.className="ask-tutor-permanent-host";
-    const bar=section.querySelector(".unified-workspace-bar");
-    if(bar)bar.insertAdjacentElement("afterend",host);
-    else section.appendChild(host);
-  }
-
-  if(coach.parentElement!==host)host.appendChild(coach);
-  coach.hidden=false;
-  coach.removeAttribute("hidden");
-  coach.classList.remove("is-minimized");
-}
-
-function returnPrimaryToPage(id,anchorId){
-  const view=$(id), anchor=$(anchorId);
-  if(view && anchor?.parentElement && view.parentElement!==anchor.parentElement){
-    anchor.parentElement.insertBefore(view,anchor.nextSibling);
-  }
-  view?.classList.remove("is-floating");
-}
-
-function makeTranscriptPermanent(){
-  const section=$("conversation-transcript-section");
-  const view=$("conversation-view");
-  if(!section || !view)return;
-
-  if(view.parentElement!==section){
-    const bar=$("conversation-transcript-docked-bar");
-    bar ? putAfter(view,bar) : section.appendChild(view);
-  }
-  view.classList.remove("is-floating");
-  section.classList.remove("transcript-is-floating");
-
-  const floating=$("voice-transcript-window");
-  if(floating){
-    floating.hidden=true;
-    floating.setAttribute("hidden","");
-  }
-}
-
-function makePrimaryWorkspacesPermanent(){
-  // Let the rollback build create its normal sections first, then simplify.
-  if(typeof window.normalizeLanguageTutorWorkspaces==="function"){
-    try{ window.normalizeLanguageTutorWorkspaces(); }catch(_){}
-  }
-
-  returnPrimaryToPage("tutor-controls-view","tutor-controls-home-anchor");
-  returnPrimaryToPage("language-tools-view","language-tools-home-anchor");
-  makeTranscriptPermanent();
-  makeAskTutorPermanent();
-
-  // Preserve the established page order.
-  const m=main(), chat=$("conversation-primary-section");
-  let ref=chat;
-  ["tutor-controls-section","conversation-transcript-section","ask-tutor-section","language-tools-view"].forEach(id=>{
-    const node=$(id);
-    if(!node)return;
-    if(node.parentElement!==m || node.previousElementSibling!==ref){
-      ref?.nextSibling ? m.insertBefore(node,ref.nextSibling) : m.appendChild(node);
-    }
-    ref=node;
-  });
-}
-
-/* Compatibility: old buttons/functions elsewhere can still call these names,
-   but primary workspaces now stay in-page instead of detaching. */
-window.openTutorControlsWorkspace=()=>makePrimaryWorkspacesPermanent();
-window.returnTutorControlsWorkspace=()=>makePrimaryWorkspacesPermanent();
-window.openLanguageToolsWorkspace=()=>makePrimaryWorkspacesPermanent();
-window.returnLanguageToolsWorkspace=()=>makePrimaryWorkspacesPermanent();
-window.openVoiceTranscriptWindow=()=>makePrimaryWorkspacesPermanent();
-window.dockVoiceTranscript=()=>makePrimaryWorkspacesPermanent();
-window.returnTranscriptWorkspace=()=>makePrimaryWorkspacesPermanent();
-
-window.openAskTutorWorkspace=()=>{
-  makePrimaryWorkspacesPermanent();
-  $("language-coach-input")?.focus();
+const ids={
+  controls:"tutor-controls-window",
+  transcript:"voice-transcript-window",
+  coach:"language-coach-window",
+  tools:"language-tools-window"
 };
-window.returnAskTutorWorkspace=()=>makePrimaryWorkspacesPermanent();
+const $=id=>document.getElementById(id);
+const desktop=()=>window.matchMedia("(min-width: 900px)").matches;
 
-/* Preserve existing selected-line -> Ask Tutor behavior. Existing launchers may
-   set context before opening; after they run, immediately restore the coach to
-   its permanent in-page host without clearing that context/thread. */
-const oldConversationAsk=window.openAskTutorFromConversation;
-if(typeof oldConversationAsk==="function"){
-  window.openAskTutorFromConversation=function(...args){
-    const result=oldConversationAsk.apply(this,args);
-    requestAnimationFrame(()=>{
-      makePrimaryWorkspacesPermanent();
-      $("ask-tutor-section")?.scrollIntoView({behavior:"smooth",block:"start"});
-      $("language-coach-input")?.focus();
-    });
+function show(el){
+  if(!el)return;
+  el.hidden=false;
+  el.removeAttribute("hidden");
+  el.classList.add("is-floating");
+  el.classList.remove("hidden","is-minimized");
+  el.style.display="flex";
+}
+
+function openExistingWorkspace(kind){
+  const id=ids[kind], el=$(id);
+  if(el){ show(el); return el; }
+
+  // Ask the rollback build to create/open its canonical window if it is lazy.
+  const candidates={
+    controls:["openTutorControlsWorkspace","openTutorControlsWindow"],
+    transcript:["openVoiceTranscriptWindow"],
+    coach:["openAskTutorWorkspace","openLanguageCoach"],
+    tools:["openLanguageToolsWorkspace","openLanguageToolsWindow"]
+  }[kind] || [];
+
+  for(const name of candidates){
+    const fn=window[name];
+    if(typeof fn==="function" && !fn.__alwaysOpenWrapper){
+      try{ fn.call(window); }catch(_){}
+      const created=$(id);
+      if(created){ show(created); return created; }
+    }
+  }
+  return null;
+}
+
+function ensureAll(){
+  if(!desktop())return;
+  openExistingWorkspace("controls");
+  openExistingWorkspace("transcript");
+  openExistingWorkspace("coach");
+  openExistingWorkspace("tools");
+}
+
+/* Once the canonical windows exist, legacy Open/Return actions simply make
+   them visible. Nothing is docked back into the page. */
+function installPermanentAPIs(){
+  const map={
+    openTutorControlsWorkspace:"controls",
+    returnTutorControlsWorkspace:"controls",
+    dockTutorControlsWorkspace:"controls",
+    openVoiceTranscriptWindow:"transcript",
+    returnTranscriptWorkspace:"transcript",
+    dockVoiceTranscript:"transcript",
+    openAskTutorWorkspace:"coach",
+    returnAskTutorWorkspace:"coach",
+    dockAskTutorWorkspace:"coach",
+    openLanguageToolsWorkspace:"tools",
+    returnLanguageToolsWorkspace:"tools",
+    dockLanguageToolsWorkspace:"tools"
+  };
+
+  for(const [name,kind] of Object.entries(map)){
+    const previous=window[name];
+    const wrapper=function(...args){
+      const existing=$(ids[kind]);
+      if(existing){ show(existing); existing.style.zIndex="2147483000"; return existing; }
+      if(typeof previous==="function"){
+        try{ previous.apply(this,args); }catch(_){}
+      }
+      const made=$(ids[kind]);
+      show(made);
+      return made;
+    };
+    wrapper.__alwaysOpenWrapper=true;
+    window[name]=wrapper;
+  }
+}
+
+/* Keep selected-line -> Ask Tutor behavior, but Ask Tutor is already open.
+   Existing code still sets its selected context/thread. */
+function protectAskTutorRouting(){
+  const previous=window.openAskTutorFromConversation;
+  if(typeof previous!=="function" || previous.__alwaysOpenRouting)return;
+  const wrapper=function(...args){
+    const result=previous.apply(this,args);
+    const coach=$(ids.coach);
+    show(coach);
+    if(coach)coach.style.zIndex="2147483100";
+    $("language-coach-input")?.focus();
     return result;
   };
+  wrapper.__alwaysOpenRouting=true;
+  window.openAskTutorFromConversation=wrapper;
+}
+
+function clampWindows(){
+  if(!desktop())return;
+  for(const id of Object.values(ids)){
+    const el=$(id);
+    if(!el)continue;
+    const r=el.getBoundingClientRect();
+    if(r.left > innerWidth-80) el.style.left=Math.max(8,innerWidth-r.width-8)+"px";
+    if(r.top > innerHeight-50) el.style.top=Math.max(8,innerHeight-r.height-8)+"px";
+  }
 }
 
 function boot(){
-  setTimeout(makePrimaryWorkspacesPermanent,0);
-  setTimeout(makePrimaryWorkspacesPermanent,250);
-  setTimeout(makePrimaryWorkspacesPermanent,900);
+  // Let the rollback build initialize its own DOM/functions first.
+  setTimeout(()=>{ensureAll(); installPermanentAPIs(); protectAskTutorRouting();},50);
+  setTimeout(()=>{ensureAll(); protectAskTutorRouting(); clampWindows();},400);
+  setTimeout(()=>{ensureAll(); clampWindows();},1200);
 }
-if(document.readyState==="loading"){
-  document.addEventListener("DOMContentLoaded",boot,{once:true});
-}else{
-  boot();
-}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});
+else boot();
+
+window.addEventListener("resize",()=>setTimeout(clampWindows,80));
 })();
 </script>
 </body>
