@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — VERSION 2I CANDIDATE
+LanguageTutor — VERSION 2J CANDIDATE
 Based on Version 1 / exact user rollback baseline.
 Changes: Version 1 scrolling fix + exact Open Conversation test; expanded,
 high-contrast Tutor Controls transcription and text entry; latest-three-turn
@@ -8,6 +8,7 @@ Conversation Transcript opens tall enough for a complete learner–tutor turn;
 continuing a saved conversation replays its most recent tutor line.
 Tutor lines are color-coded in Live Transcription for quick visual separation.
 Primary workspace headings match Ask Tutor's 14px, extra-bold typography.
+Open workspaces use one consistent status strip and one Return control.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -27495,6 +27496,21 @@ test.addEventListener("click",()=>{
   font-weight:900!important;
   line-height:1.2!important;
   letter-spacing:0!important;
+}
+</style>
+
+<style id="language-tutor-version-2j-open-workspace-consistency">
+/* VERSION 2J — match Language Tools' clean open-workspace presentation.
+   The section heading remains a heading; the status strip below it is the
+   single Return affordance. This removes the duplicate Return button that
+   previously appeared in Transcript and Ask Tutor headers. */
+#tutor-controls-section:has(#tutor-controls-placeholder.is-active)
+  .primary-workspace-docked-bar .primary-workspace-open-btn,
+#conversation-transcript-section:has(#conversation-transcript-placeholder.is-active)
+  #conversation-transcript-docked-bar .primary-workspace-open-btn,
+#ask-tutor-section:has(.ask-workspace-placeholder.is-active)
+  .unified-workspace-bar .ask-workspace-state{
+  display:none!important;
 }
 </style>
 </body>
