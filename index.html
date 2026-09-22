@@ -1,11 +1,15 @@
 <!--
-LanguageTutor — VERSION 2G CANDIDATE
+LanguageTutor — VERSION 2K CANDIDATE
 Based on Version 1 / exact user rollback baseline.
 Changes: Version 1 scrolling fix + exact Open Conversation test; expanded,
 high-contrast Tutor Controls transcription and text entry; latest-three-turn
 live transcript; Sentence Diagram removed; Restate replays the tutor cue;
 Conversation Transcript opens tall enough for a complete learner–tutor turn;
 continuing a saved conversation replays its most recent tutor line.
+Tutor lines are color-coded in Live Transcription for quick visual separation.
+Primary workspace headings match Ask Tutor's 14px, extra-bold typography.
+Open workspaces keep a permanent, consistently styled heading above one
+status strip and one Return control. Ask Tutor keeps its open-window palette.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -15362,7 +15366,7 @@ Do not add quotation marks or labels.`;
             if(!formatted)return null;
             const role=entry?.role==="assistant" || entry?.role==="tutor" ? "assistant" : "user";
             const key=`${role}|${String(entry?.text||"").trim()}`;
-            return {key,formatted};
+            return {key,formatted,role};
         };
         const turns=voiceTutorHistory().map(normalize).filter(Boolean);
         const pendingTurns=pending.map(normalize).filter(Boolean);
@@ -15378,7 +15382,21 @@ Do not add quotation marks or labels.`;
             overlap--;
         }
         turns.push(...pendingTurns.slice(overlap));
-        return turns.slice(-3).map(turn=>turn.formatted);
+        return turns.slice(-3);
+    }
+
+    function paintVoiceLiveLines(live,lines,fallback){
+        live.replaceChildren();
+        if(!lines.length){
+            live.textContent=fallback;
+            return;
+        }
+        lines.forEach(line=>{
+            const turn=document.createElement("div");
+            turn.className=`voice-live-turn ${line.role==="assistant" ? "voice-live-turn-tutor" : "voice-live-turn-user"}`;
+            turn.textContent=line.formatted;
+            live.appendChild(turn);
+        });
     }
 
     function renderVoiceLiveTurn(listeningText=""){
@@ -15392,9 +15410,11 @@ Do not add quotation marks or labels.`;
         if(user)pending.push({role:"user",text:user,targetTranslation});
         if(tutor)pending.push({role:"assistant",text:tutor});
         const lines=recentVoiceLiveLines(pending);
-        live.textContent=lines.length
-            ? lines.join("\n\n")
-            : (listening || "What the microphone hears will appear here.");
+        paintVoiceLiveLines(
+            live,
+            lines,
+            listening || "What the microphone hears will appear here."
+        );
         live.scrollTop=live.scrollHeight;
     }
 
@@ -15402,7 +15422,7 @@ Do not add quotation marks or labels.`;
         const live=document.getElementById("voice-live-transcript");
         if(!live)return;
         const lines=recentVoiceLiveLines(Array.isArray(pending) ? pending : []);
-        live.textContent=lines.length ? lines.join("\n\n") : "Live voice is listening…";
+        paintVoiceLiveLines(live,lines,"Live voice is listening…");
         live.scrollTop=live.scrollHeight;
     };
 
@@ -26982,8 +27002,10 @@ function ensureTutorControlsView(){
         content.appendChild(child);
     });
 
-    view.append(bar,content);
-    section.append(anchor,placeholder,view);
+    // Keep the page heading outside the movable content. When the controls
+    // float, the title remains on the page above the single Return strip.
+    view.append(content);
+    section.append(bar,placeholder,anchor,view);
 
     // Put Tutor Controls immediately after the Chat with Tutor bar section,
     // before Transcript / Language Tools.
@@ -27009,21 +27031,26 @@ function ensureLanguageToolsView(){
     if(!tools || !tools.parentElement)return null;
 
     const parent=tools.parentElement;
+    const section=document.createElement("section");
+    section.id="language-tools-section";
+    section.className="conversation-first-section language-tools-primary-section";
+
     const anchor=document.createElement("div");
     anchor.id="language-tools-home-anchor";
     anchor.hidden=true;
-    parent.insertBefore(anchor,tools);
 
     const placeholder=createPlaceholder("tools");
-    parent.insertBefore(placeholder,tools);
 
     view=document.createElement("section");
     view.id="language-tools-view";
     view.className="primary-workspace-view";
 
     const bar=createDockedBar("tools");
-    view.append(bar,tools);
-    parent.insertBefore(view,placeholder);
+    const pageTitle=bar.querySelector(".primary-workspace-docked-title");
+    if(pageTitle)pageTitle.textContent="Language Tools & Study";
+    parent.insertBefore(section,tools);
+    view.append(tools);
+    section.append(bar,placeholder,anchor,view);
 
     return view;
 }
@@ -27264,7 +27291,7 @@ window.returnAskTutorWorkspace=function(){
 function order(){
   const m=main(), chat=$("conversation-primary-section");
   let ref=chat;
-  ["tutor-controls-section","conversation-transcript-section","ask-tutor-section","language-tools-view"].forEach(id=>{
+  ["tutor-controls-section","conversation-transcript-section","ask-tutor-section","language-tools-section"].forEach(id=>{
     const n=$(id); if(!n)return;
     if(n.parentElement!==m || n.previousElementSibling!==ref){
       ref?.nextSibling ? m.insertBefore(n,ref.nextSibling) : m.appendChild(n);
@@ -27432,6 +27459,170 @@ test.addEventListener("click",()=>{
   #conversation-view:not(.is-floating).conversation-is-empty{
     height:320px!important;
     min-height:280px!important;
+  }
+}
+</style>
+
+<style id="language-tutor-version-2h-live-transcript-colors">
+/* VERSION 2H — visually distinguish Tutor speech from learner speech without
+   changing the transcript text or speech-recognition behavior. */
+#voice-live-transcript .voice-live-turn{
+  box-sizing:border-box;
+  width:100%;
+  padding:7px 9px;
+  border-radius:8px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  line-height:1.45;
+}
+#voice-live-transcript .voice-live-turn + .voice-live-turn{
+  margin-top:8px;
+}
+#voice-live-transcript .voice-live-turn-user{
+  border-left:3px solid #cbd5e1;
+  background:#f8fafc;
+  color:#334155;
+}
+#voice-live-transcript .voice-live-turn-tutor{
+  border-left:4px solid #6366f1;
+  background:#eef2ff;
+  color:#3730a3;
+  font-weight:650;
+}
+</style>
+
+<style id="language-tutor-version-2i-heading-typography">
+/* VERSION 2I — match the clear 14px / 900 Ask Tutor heading treatment while
+   retaining each workspace's existing thematic color. */
+.voice-transcript-window-title,
+.primary-workspace-window-title,
+.primary-workspace-docked-title,
+.unified-workspace-title,
+#conversation-tutor-toggle > span:first-child{
+  font-family:inherit!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  line-height:1.2!important;
+  letter-spacing:0!important;
+}
+</style>
+
+<style id="language-tutor-version-2j-open-workspace-consistency">
+/* VERSION 2J — match Language Tools' clean open-workspace presentation.
+   The section heading remains a heading; the status strip below it is the
+   single Return affordance. This removes the duplicate Return button that
+   previously appeared in Transcript and Ask Tutor headers. */
+#tutor-controls-section:has(#tutor-controls-placeholder.is-active)
+  .primary-workspace-docked-bar .primary-workspace-open-btn,
+#conversation-transcript-section:has(#conversation-transcript-placeholder.is-active)
+  #conversation-transcript-docked-bar .primary-workspace-open-btn,
+#ask-tutor-section:has(.ask-workspace-placeholder.is-active)
+  .unified-workspace-bar .ask-workspace-state{
+  display:none!important;
+}
+</style>
+
+<style id="language-tutor-version-2k-permanent-workspace-headings">
+/* VERSION 2K — every primary workspace keeps the same page anatomy while its
+   content is floating: permanent heading bar, then one status/Return strip. */
+#language-tools-section{
+  width:100%!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:10px!important;
+  border:1px solid #ddd2ff!important;
+  border-radius:16px!important;
+  background:#f8f5ff!important;
+}
+
+/* The movable Language Tools view now contains only the actual tool content;
+   its colored page card and heading remain in #language-tools-section. */
+#language-tools-view{
+  width:100%!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+
+#language-tools-section > .primary-workspace-docked-bar{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  width:100%!important;
+  height:44px!important;
+  min-height:44px!important;
+  box-sizing:border-box!important;
+  margin:0 0 8px!important;
+  padding:0 12px!important;
+  border:1px solid #d8cff2!important;
+  border-radius:10px!important;
+  background:#f2effb!important;
+}
+#language-tools-section > .primary-workspace-docked-bar
+  .primary-workspace-docked-title{
+  color:#5a468c!important;
+}
+#language-tools-section:has(#language-tools-placeholder.is-active)
+  > .primary-workspace-docked-bar .primary-workspace-open-btn{
+  display:none!important;
+}
+#language-tools-section > #language-tools-placeholder{
+  margin:0!important;
+}
+
+/* Match the exact inherited type treatment of the Ask Tutor window title. */
+#tutor-controls-section .primary-workspace-docked-title,
+#conversation-transcript-section .primary-workspace-docked-title,
+#ask-tutor-section .unified-workspace-title,
+#language-tools-section .primary-workspace-docked-title{
+  font-family:inherit!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  line-height:1.2!important;
+  letter-spacing:0!important;
+}
+
+/* Ask Tutor keeps the same indigo/lavender identity on the page and in its
+   movable window instead of changing to rose when it is docked. */
+#ask-tutor-section{
+  background:#f5f3ff!important;
+  border-color:#c7d2fe!important;
+}
+#ask-tutor-section .unified-workspace-bar{
+  background:linear-gradient(135deg,#eef2ff,#f5f3ff)!important;
+  border-color:#c7d2fe!important;
+}
+#ask-tutor-section .unified-workspace-title{
+  color:#312e81!important;
+}
+#ask-tutor-section .ask-workspace-placeholder{
+  border-color:#c7d2fe!important;
+  background:#fafaff!important;
+  color:#3730a3!important;
+}
+
+#language-tools-section .primary-workspace-open-btn,
+#language-tools-section .primary-workspace-return-btn{
+  min-height:32px!important;
+  padding:0 11px!important;
+  font-size:11px!important;
+  line-height:1!important;
+  font-weight:700!important;
+  white-space:nowrap!important;
+}
+
+@media(max-width:640px){
+  #language-tools-section{
+    padding:8px!important;
+    border-radius:13px!important;
+  }
+  #language-tools-section > .primary-workspace-docked-bar{
+    height:42px!important;
+    min-height:42px!important;
   }
 }
 </style>
