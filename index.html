@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — VERSION 2K CANDIDATE
+LanguageTutor — VERSION 2L CANDIDATE
 Based on Version 1 / exact user rollback baseline.
 Changes: Version 1 scrolling fix + exact Open Conversation test; expanded,
 high-contrast Tutor Controls transcription and text entry; latest-three-turn
@@ -10,6 +10,8 @@ Tutor lines are color-coded in Live Transcription for quick visual separation.
 Primary workspace headings match Ask Tutor's 14px, extra-bold typography.
 Open workspaces keep a permanent, consistently styled heading above one
 status strip and one Return control. Ask Tutor keeps its open-window palette.
+Ask Tutor now hands the microphone back cleanly; restarting Conversation
+creates fresh recognition. Floating minimize now preserves Ask Tutor onscreen.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -14321,6 +14323,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         manualRestart:false,
         inputMode:"target",
         silenceTimer:null,
+        coachMicPaused:false,
+        coachResumeTimer:null,
         liveUserText:"",
         liveUserTargetTranslation:"",
         liveTutorText:""
@@ -15712,6 +15716,45 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
     }
 
+    function clearPendingCoachMicResume(){
+        if(voiceTutorState.coachResumeTimer){
+            clearTimeout(voiceTutorState.coachResumeTimer);
+            voiceTutorState.coachResumeTimer=null;
+        }
+    }
+
+    /* Ask Tutor runs in separate script scopes. These public handoff methods
+       safely coordinate microphone ownership without reaching into private
+       Conversation state from those other scopes. */
+    window.pauseVoiceConversationForCoach=function(){
+        const shouldResume=Boolean(voiceTutorState.active && voiceTutorState.micSession);
+        clearPendingCoachMicResume();
+        clearVoiceSilenceTimer();
+        destroyVoiceRecognition();
+        setVoiceMicIndicator(false);
+        if(voiceTutorState.phase==="listening")voiceTutorState.phase="idle";
+        voiceTutorState.coachMicPaused=true;
+        if(shouldResume)voiceTutorStatus("Conversation microphone paused while you use Ask Tutor.");
+        return shouldResume;
+    };
+
+    window.resumeVoiceConversationAfterCoach=function(){
+        clearPendingCoachMicResume();
+        voiceTutorState.coachMicPaused=false;
+        if(!voiceTutorState.active || !voiceTutorState.micSession ||
+           voiceTutorState.speaking || voiceTutorState.phase==="processing")return false;
+
+        destroyVoiceRecognition();
+        voiceTutorState.phase="idle";
+        voiceTutorState.coachResumeTimer=setTimeout(()=>{
+            voiceTutorState.coachResumeTimer=null;
+            if(!voiceTutorState.active || !voiceTutorState.micSession ||
+               voiceTutorState.coachMicPaused)return;
+            window.resumeVoiceRecognition?.(true,"target");
+        },140);
+        return true;
+    };
+
     function createVoiceRecognition(inputMode="target"){
         const Ctor=voiceRecognitionConstructor();
         if(!Ctor)return null;
@@ -16061,16 +16104,25 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
             return;
         }
 
-        if(voiceTutorState.micSession){
-            resumeVoiceRecognition(true);
-            return;
+        // A manual Start explicitly reclaims the microphone from Ask Tutor.
+        // Always replace any stale or aborted recognition object.
+        try{window.stopAskTutorVoice?.(true)}catch(_){}
+        const coachWindow=document.getElementById("language-coach-window");
+        if(coachWindow && !coachWindow.hidden){
+            try{window.closeLanguageCoach?.()}catch(_){}
         }
+        clearPendingCoachMicResume();
+        clearVoiceSilenceTimer();
+        destroyVoiceRecognition();
+        try{window.speechSynthesis?.cancel()}catch(_){}
 
         saveVoiceTutorSettings();
         voiceTutorState.active=true;
         voiceTutorState.micSession=true;
         voiceTutorState.resumeMicAfterTurn=true;
+        voiceTutorState.coachMicPaused=false;
         voiceTutorState.language=currentStudyLanguage;
+        voiceTutorState.speaking=false;
         voiceTutorState.phase="idle";
 
         const start=document.getElementById("voice-start-btn");
@@ -16085,7 +16137,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         createVoiceRecognition("target");
         voiceTutorStatus(`Conversation started. Speak in ${langConfig().name}. Listening pauses after 10 seconds of silence.`);
-        resumeVoiceRecognition(true,"target");
+        setTimeout(()=>resumeVoiceRecognition(true,"target"),120);
     };
 
     window.stopVoiceConversation=function(silent=false){
@@ -16094,6 +16146,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         voiceTutorState.resumeMicAfterTurn=false;
         voiceTutorState.phase="idle";
         voiceTutorState.speaking=false;
+        voiceTutorState.coachMicPaused=false;
+        clearPendingCoachMicResume();
         clearVoiceSilenceTimer();
         setVoiceMicIndicator(false);
 
@@ -22914,21 +22968,11 @@ Do not continue the conversation.`;
         // This is a sidebar, not a new Tutor turn. Pause live recognition while
         // the learner works privately, then resume when they return.
         coachState.resumeRecognition=Boolean(
-            typeof voiceTutorState!=="undefined" &&
-            voiceTutorState.active &&
-            voiceTutorState.micSession &&
-            (voiceTutorState.phase==="listening" || voiceTutorState.recognition)
+            window.pauseVoiceConversationForCoach?.()
         );
-
-        if(coachState.resumeRecognition){
-            try{
-                if(typeof clearVoiceSilenceTimer==="function")clearVoiceSilenceTimer();
-                if(typeof destroyVoiceRecognition==="function")destroyVoiceRecognition();
-                if(typeof setVoiceMicIndicator==="function")setVoiceMicIndicator(false);
-                voiceTutorState.phase="idle";
-                if(typeof voiceTutorStatus==="function")voiceTutorStatus("Conversation paused while you use Ask Tutor.");
-            }catch(e){}
-        }
+        // GPT-Live owns an actual media stream; release it before Ask Tutor
+        // becomes the active microphone workspace.
+        try{window.stopTutorLiveVoice?.()}catch(_){}
 
         // If the tutor is currently speaking, pause rather than cancel it.
         coachState.pausedSpeech=false;
@@ -22954,10 +22998,6 @@ Do not continue the conversation.`;
     window.closeLanguageCoach=function(){
         const win=document.getElementById("language-coach-window");
         if(win)win.hidden=true;
-        try{
-            if(typeof voiceTutorState!=="undefined")voiceTutorState.coachMicPaused=false;
-        }catch(e){}
-
         if(coachState.pausedSpeech){
             try{window.speechSynthesis?.resume()}catch(e){}
             coachState.pausedSpeech=false;
@@ -22968,13 +23008,7 @@ Do not continue the conversation.`;
 
         if(coachState.resumeRecognition){
             coachState.resumeRecognition=false;
-            try{
-                if(voiceTutorState?.active && voiceTutorState?.micSession &&
-                   !voiceTutorState?.speaking && voiceTutorState?.phase!=="processing" &&
-                   typeof resumeVoiceRecognition==="function"){
-                    setTimeout(()=>resumeVoiceRecognition(true,"target"),100);
-                }
-            }catch(e){}
+            try{window.resumeVoiceConversationAfterCoach?.()}catch(e){}
         }
     };
 
@@ -23508,41 +23542,13 @@ Requirements:
     }
 
     function pauseConversationMicForCoach(){
-        try{
-            if(typeof voiceTutorState==="undefined" || !voiceTutorState?.active)return false;
-
-            const wasMicSession=Boolean(voiceTutorState.micSession);
-            const wasListening=voiceTutorState.phase==="listening" || Boolean(voiceTutorState.recognition);
-
-            if(typeof clearVoiceSilenceTimer==="function")clearVoiceSilenceTimer();
-            if(typeof destroyVoiceRecognition==="function")destroyVoiceRecognition();
-            if(typeof setVoiceMicIndicator==="function")setVoiceMicIndicator(false);
-
-            // Do not end the conversation session. The Coach temporarily owns
-            // speech recognition while its dictation control is active.
-            if(voiceTutorState.phase==="listening")voiceTutorState.phase="idle";
-            voiceTutorState.coachMicPaused=true;
-
-            if(typeof voiceTutorStatus==="function"){
-                voiceTutorStatus("Conversation microphone paused while you dictate to the Coach.");
-            }
-            return wasMicSession && wasListening;
-        }catch(e){
-            return false;
-        }
+        try{return Boolean(window.pauseVoiceConversationForCoach?.())}
+        catch(e){return false}
     }
 
     function keepConversationMicPausedWhileCoachOpen(){
-        try{
-            if(typeof voiceTutorState==="undefined" || !voiceTutorState?.active)return;
-            if(document.getElementById("language-coach-window")?.hidden)return;
-            if(voiceTutorState.recognition){
-                if(typeof destroyVoiceRecognition==="function")destroyVoiceRecognition();
-                if(typeof setVoiceMicIndicator==="function")setVoiceMicIndicator(false);
-                if(voiceTutorState.phase==="listening")voiceTutorState.phase="idle";
-            }
-            voiceTutorState.coachMicPaused=true;
-        }catch(e){}
+        if(document.getElementById("language-coach-window")?.hidden)return;
+        try{window.pauseVoiceConversationForCoach?.()}catch(e){}
     }
 
     window.toggleLanguageCoachDictation=function(modeOverride){
@@ -25579,17 +25585,7 @@ function updateAskVoiceButtons(){
 }
 
 function pauseLiveConversationForAskTutor(){
-    try{
-        if(typeof voiceTutorState==="undefined" || !voiceTutorState?.active)return;
-        if(typeof clearVoiceSilenceTimer==="function")clearVoiceSilenceTimer();
-        if(typeof destroyVoiceRecognition==="function")destroyVoiceRecognition();
-        if(typeof setVoiceMicIndicator==="function")setVoiceMicIndicator(false);
-        if(voiceTutorState.phase==="listening")voiceTutorState.phase="idle";
-        voiceTutorState.coachMicPaused=true;
-        if(typeof voiceTutorStatus==="function"){
-            voiceTutorStatus("Conversation microphone paused while you use Ask Tutor.");
-        }
-    }catch(_){}
+    try{window.pauseVoiceConversationForCoach?.()}catch(_){}
 }
 
 function askRecognitionCtor(){
@@ -26559,6 +26555,16 @@ async function createLiveSession(mode){
 
 window.toggleTutorLiveVoice=async function(mode="chat"){
     const requested=mode==="ask" ? "ask" : "chat";
+
+    // Starting Conversation is an explicit microphone handoff. Close Ask
+    // Tutor so its private recognizer and visibility guard cannot block chat.
+    if(requested==="chat"){
+        const coachWindow=document.getElementById("language-coach-window");
+        if(coachWindow && !coachWindow.hidden){
+            try{window.stopAskTutorVoice?.(true)}catch(_){}
+            try{window.closeLanguageCoach?.()}catch(_){}
+        }
+    }
 
     if(liveState.active){
         if(liveState.mode===requested){
@@ -27623,6 +27629,183 @@ test.addEventListener("click",()=>{
   #language-tools-section > .primary-workspace-docked-bar{
     height:42px!important;
     min-height:42px!important;
+  }
+}
+</style>
+
+<script id="language-tutor-version-2l-ask-minimize-runtime">
+(()=>{
+"use strict";
+
+function askWindow(){return document.getElementById("language-coach-window")}
+function askMinButton(){
+  return document.querySelector(
+    "#language-coach-drag-handle [data-v95-minimize],"+
+    "#language-coach-drag-handle [data-standard-minimize]"
+  );
+}
+function paintAskMinimizeState(minimized){
+  const button=askMinButton();
+  if(!button)return;
+  button.textContent=minimized ? "□" : "—";
+  button.title=minimized ? "Restore" : "Minimize";
+  button.setAttribute("aria-label",button.title);
+}
+
+const previousMinimize=window.workspaceMinimizeTool;
+window.workspaceMinimizeTool=function(name,...args){
+  if(name!=="coach"){
+    return typeof previousMinimize==="function"
+      ? previousMinimize.call(this,name,...args)
+      : undefined;
+  }
+
+  const panel=askWindow();
+  if(!panel)return;
+  panel.hidden=false;
+  const minimized=panel.classList.toggle("is-minimized-floating");
+  paintAskMinimizeState(minimized);
+  window.workspaceMarkOpen?.("coach",true);
+};
+
+const previousCoachCloseV2L=window.closeLanguageCoach;
+if(typeof previousCoachCloseV2L==="function"){
+  window.closeLanguageCoach=function(...args){
+    askWindow()?.classList.remove("is-minimized-floating");
+    paintAskMinimizeState(false);
+    return previousCoachCloseV2L.apply(this,args);
+  };
+}
+
+function reconcile(){
+  const panel=askWindow();
+  paintAskMinimizeState(Boolean(panel?.classList.contains("is-minimized-floating")));
+}
+document.readyState==="loading"
+  ? document.addEventListener("DOMContentLoaded",()=>setTimeout(reconcile,400),{once:true})
+  : setTimeout(reconcile,400);
+})();
+</script>
+
+<style id="language-tutor-version-2l-workspace-visual-system">
+/* VERSION 2L — one border geometry and one tint pattern across all four
+   primary workspaces, while retaining their individual identifying colors. */
+#tutor-controls-section{
+  --ws-edge:#bfd2ff;--ws-card:#f4f8ff;
+  --ws-head:linear-gradient(135deg,#eef4ff,#f7faff);
+  --ws-status:#f8fbff;--ws-ink:#3157a4;
+}
+#conversation-transcript-section{
+  --ws-edge:#bfe0cf;--ws-card:#f4fbf7;
+  --ws-head:linear-gradient(135deg,#edf8f2,#f8fcfa);
+  --ws-status:#f8fcfa;--ws-ink:#2f6c4d;
+}
+#ask-tutor-section{
+  --ws-edge:#c7d2fe;--ws-card:#f5f3ff;
+  --ws-head:linear-gradient(135deg,#eef2ff,#f5f3ff);
+  --ws-status:#fafaff;--ws-ink:#312e81;
+}
+#language-tools-section{
+  --ws-edge:#d5caf0;--ws-card:#f8f5ff;
+  --ws-head:linear-gradient(135deg,#f2effb,#faf8ff);
+  --ws-status:#fbfaff;--ws-ink:#5a468c;
+}
+
+#tutor-controls-section,
+#conversation-transcript-section,
+#ask-tutor-section,
+#language-tools-section{
+  width:100%!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:10px!important;
+  border:1px solid var(--ws-edge)!important;
+  border-radius:16px!important;
+  background:var(--ws-card)!important;
+}
+
+#tutor-controls-section > .primary-workspace-docked-bar,
+#conversation-transcript-section > #conversation-transcript-docked-bar,
+#ask-tutor-section > .unified-workspace-bar,
+#language-tools-section > .primary-workspace-docked-bar{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  width:100%!important;
+  height:44px!important;
+  min-height:44px!important;
+  box-sizing:border-box!important;
+  margin:0 0 8px!important;
+  padding:0 12px!important;
+  border:1px solid var(--ws-edge)!important;
+  border-radius:10px!important;
+  background:var(--ws-head)!important;
+  color:var(--ws-ink)!important;
+}
+
+#tutor-controls-section .primary-workspace-docked-title,
+#conversation-transcript-section .primary-workspace-docked-title,
+#ask-tutor-section .unified-workspace-title,
+#language-tools-section .primary-workspace-docked-title{
+  color:var(--ws-ink)!important;
+  font-family:inherit!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  line-height:1.2!important;
+}
+
+#tutor-controls-section > #tutor-controls-placeholder,
+#conversation-transcript-section > #conversation-transcript-placeholder,
+#ask-tutor-section > .ask-workspace-placeholder,
+#language-tools-section > #language-tools-placeholder{
+  width:100%!important;
+  min-height:54px!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:9px 12px!important;
+  border:1px solid var(--ws-edge)!important;
+  border-radius:10px!important;
+  background:var(--ws-status)!important;
+  color:var(--ws-ink)!important;
+  box-shadow:none!important;
+  font-size:10px!important;
+  font-weight:800!important;
+}
+
+#tutor-controls-section .primary-workspace-open-btn,
+#conversation-transcript-section .primary-workspace-open-btn,
+#ask-tutor-section .primary-workspace-open-btn,
+#language-tools-section .primary-workspace-open-btn,
+#tutor-controls-section .primary-workspace-return-btn,
+#conversation-transcript-section .primary-workspace-return-btn,
+#ask-tutor-section .primary-workspace-return-btn,
+#language-tools-section .primary-workspace-return-btn{
+  border-width:1px!important;
+  border-color:#cbd5e1!important;
+  background:#fff!important;
+}
+
+/* Ask Tutor minimizes in place to its draggable title bar. It remains open,
+   visible, and restorable instead of being hidden like a closed window. */
+#language-coach-window.is-minimized-floating{
+  height:54px!important;
+  min-height:54px!important;
+  max-height:54px!important;
+  resize:none!important;
+  overflow:hidden!important;
+}
+#language-coach-window.is-minimized-floating .language-coach-body{
+  display:none!important;
+}
+
+@media(max-width:640px){
+  #tutor-controls-section,
+  #conversation-transcript-section,
+  #ask-tutor-section,
+  #language-tools-section{
+    padding:8px!important;
+    border-radius:13px!important;
   }
 }
 </style>
