@@ -1,11 +1,13 @@
 <!--
-LanguageTutor — VERSION 2G CANDIDATE
+LanguageTutor — VERSION 2I CANDIDATE
 Based on Version 1 / exact user rollback baseline.
 Changes: Version 1 scrolling fix + exact Open Conversation test; expanded,
 high-contrast Tutor Controls transcription and text entry; latest-three-turn
 live transcript; Sentence Diagram removed; Restate replays the tutor cue;
 Conversation Transcript opens tall enough for a complete learner–tutor turn;
 continuing a saved conversation replays its most recent tutor line.
+Tutor lines are color-coded in Live Transcription for quick visual separation.
+Primary workspace headings match Ask Tutor's 14px, extra-bold typography.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -15362,7 +15364,7 @@ Do not add quotation marks or labels.`;
             if(!formatted)return null;
             const role=entry?.role==="assistant" || entry?.role==="tutor" ? "assistant" : "user";
             const key=`${role}|${String(entry?.text||"").trim()}`;
-            return {key,formatted};
+            return {key,formatted,role};
         };
         const turns=voiceTutorHistory().map(normalize).filter(Boolean);
         const pendingTurns=pending.map(normalize).filter(Boolean);
@@ -15378,7 +15380,21 @@ Do not add quotation marks or labels.`;
             overlap--;
         }
         turns.push(...pendingTurns.slice(overlap));
-        return turns.slice(-3).map(turn=>turn.formatted);
+        return turns.slice(-3);
+    }
+
+    function paintVoiceLiveLines(live,lines,fallback){
+        live.replaceChildren();
+        if(!lines.length){
+            live.textContent=fallback;
+            return;
+        }
+        lines.forEach(line=>{
+            const turn=document.createElement("div");
+            turn.className=`voice-live-turn ${line.role==="assistant" ? "voice-live-turn-tutor" : "voice-live-turn-user"}`;
+            turn.textContent=line.formatted;
+            live.appendChild(turn);
+        });
     }
 
     function renderVoiceLiveTurn(listeningText=""){
@@ -15392,9 +15408,11 @@ Do not add quotation marks or labels.`;
         if(user)pending.push({role:"user",text:user,targetTranslation});
         if(tutor)pending.push({role:"assistant",text:tutor});
         const lines=recentVoiceLiveLines(pending);
-        live.textContent=lines.length
-            ? lines.join("\n\n")
-            : (listening || "What the microphone hears will appear here.");
+        paintVoiceLiveLines(
+            live,
+            lines,
+            listening || "What the microphone hears will appear here."
+        );
         live.scrollTop=live.scrollHeight;
     }
 
@@ -15402,7 +15420,7 @@ Do not add quotation marks or labels.`;
         const live=document.getElementById("voice-live-transcript");
         if(!live)return;
         const lines=recentVoiceLiveLines(Array.isArray(pending) ? pending : []);
-        live.textContent=lines.length ? lines.join("\n\n") : "Live voice is listening…";
+        paintVoiceLiveLines(live,lines,"Live voice is listening…");
         live.scrollTop=live.scrollHeight;
     };
 
@@ -27433,6 +27451,50 @@ test.addEventListener("click",()=>{
     height:320px!important;
     min-height:280px!important;
   }
+}
+</style>
+
+<style id="language-tutor-version-2h-live-transcript-colors">
+/* VERSION 2H — visually distinguish Tutor speech from learner speech without
+   changing the transcript text or speech-recognition behavior. */
+#voice-live-transcript .voice-live-turn{
+  box-sizing:border-box;
+  width:100%;
+  padding:7px 9px;
+  border-radius:8px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  line-height:1.45;
+}
+#voice-live-transcript .voice-live-turn + .voice-live-turn{
+  margin-top:8px;
+}
+#voice-live-transcript .voice-live-turn-user{
+  border-left:3px solid #cbd5e1;
+  background:#f8fafc;
+  color:#334155;
+}
+#voice-live-transcript .voice-live-turn-tutor{
+  border-left:4px solid #6366f1;
+  background:#eef2ff;
+  color:#3730a3;
+  font-weight:650;
+}
+</style>
+
+<style id="language-tutor-version-2i-heading-typography">
+/* VERSION 2I — match the clear 14px / 900 Ask Tutor heading treatment while
+   retaining each workspace's existing thematic color. */
+.voice-transcript-window-title,
+.primary-workspace-window-title,
+.primary-workspace-docked-title,
+.unified-workspace-title,
+#conversation-tutor-toggle > span:first-child{
+  font-family:inherit!important;
+  font-size:14px!important;
+  font-weight:900!important;
+  line-height:1.2!important;
+  letter-spacing:0!important;
 }
 </style>
 </body>
