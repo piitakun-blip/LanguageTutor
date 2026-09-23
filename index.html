@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — VERSION 2Q CANDIDATE
+LanguageTutor — VERSION 2R CANDIDATE
 Based on Version 1 / exact user rollback baseline.
 Changes: Version 1 scrolling fix + exact Open Conversation test; expanded,
 high-contrast Tutor Controls transcription and text entry; latest-three-turn
@@ -20,6 +20,8 @@ Start Conversation now restores the window if an older handoff callback hides
 it, and Use in Reply fills the composer without closing Ask Tutor.
 Conservative dead-code cleanup removes only unreachable legacy dictation,
 Sentence Diagram, unused compatibility alias, and overwritten marker code.
+Ask Tutor close and minimize retain their existing behavior behind a final
+re-entrancy guard so observer or voice callbacks cannot lock the interface.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -27586,5 +27588,54 @@ test.addEventListener("click",()=>{
   }
 }
 </style>
+
+<script id="language-tutor-version-2r-ask-window-guard">
+(()=>{
+    "use strict";
+
+    const deferRelease=callback=>{
+        if(typeof queueMicrotask==="function")queueMicrotask(callback);
+        else Promise.resolve().then(callback);
+    };
+
+    const previousClose=window.closeLanguageCoach;
+    if(typeof previousClose==="function" && !previousClose.__v2rGuarded){
+        const guardedClose=function(...args){
+            const panel=document.getElementById("language-coach-window");
+            if(panel?.dataset.v2rCloseBusy==="1")return;
+            if(panel)panel.dataset.v2rCloseBusy="1";
+            try{
+                return previousClose.apply(this,args);
+            }finally{
+                deferRelease(()=>{
+                    if(panel)delete panel.dataset.v2rCloseBusy;
+                });
+            }
+        };
+        guardedClose.__v2rGuarded=true;
+        window.closeLanguageCoach=guardedClose;
+    }
+
+    const previousMinimize=window.workspaceMinimizeTool;
+    if(typeof previousMinimize==="function" && !previousMinimize.__v2rCoachGuarded){
+        const guardedMinimize=function(name,...args){
+            if(name!=="coach")return previousMinimize.call(this,name,...args);
+
+            const panel=document.getElementById("language-coach-window");
+            if(panel?.dataset.v2rMinimizeBusy==="1")return;
+            if(panel)panel.dataset.v2rMinimizeBusy="1";
+            try{
+                return previousMinimize.call(this,name,...args);
+            }finally{
+                deferRelease(()=>{
+                    if(panel)delete panel.dataset.v2rMinimizeBusy;
+                });
+            }
+        };
+        guardedMinimize.__v2rCoachGuarded=true;
+        window.workspaceMinimizeTool=guardedMinimize;
+    }
+})();
+</script>
 </body>
 </html>
