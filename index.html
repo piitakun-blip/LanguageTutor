@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — VERSION 2O CANDIDATE
+LanguageTutor — VERSION 2P CANDIDATE
 Based on Version 1 / exact user rollback baseline.
 Changes: Version 1 scrolling fix + exact Open Conversation test; expanded,
 high-contrast Tutor Controls transcription and text entry; latest-three-turn
@@ -16,6 +16,8 @@ If Ask Tutor's recognizer is still releasing, Conversation now rebuilds the
 recognizer and retries briefly instead of silently leaving the mic inactive.
 Starting the Conversation microphone no longer closes the visible Ask Tutor
 window; it transfers microphone ownership while leaving the window in place.
+Start Conversation now restores the window if an older handoff callback hides
+it, and Use in Reply fills the composer without closing Ask Tutor.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -16108,9 +16110,15 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         // A manual Start always creates a clean recognition session. This
         // prevents an Ask Tutor or silence-aborted recognizer from being reused.
+        const coachWindow=document.getElementById("language-coach-window");
+        const keepCoachWindowOpen=Boolean(coachWindow && !coachWindow.hidden);
         try{window.stopAskTutorVoice?.(true)}catch(e){}
         // Keep the Ask Tutor window visible; only transfer microphone ownership.
         voiceTutorState.coachMicPaused=false;
+        if(keepCoachWindowOpen && coachWindow){
+            coachWindow.hidden=false;
+            coachWindow.removeAttribute("hidden");
+        }
         clearVoiceSilenceTimer();
         clearVoiceRecognitionStartRetry();
         voiceTutorState.recognitionStartRetry=0;
@@ -23032,7 +23040,6 @@ Do not continue the conversation.`;
         const input=document.getElementById("voice-text-input");
         if(!input)return;
         input.value=String(phrase||"").trim();
-        window.closeLanguageCoach();
         setTimeout(()=>{
             input.focus();
             input.setSelectionRange?.(input.value.length,input.value.length);
@@ -26627,24 +26634,34 @@ async function createLiveSession(mode){
 
 window.toggleTutorLiveVoice=async function(mode="chat"){
     const requested=mode==="ask" ? "ask" : "chat";
+    const coachWindow=document.getElementById("language-coach-window");
+    const keepCoachWindowOpen=Boolean(requested==="chat" && coachWindow && !coachWindow.hidden);
+    const restoreCoachWindow=()=>{
+        if(!keepCoachWindowOpen || !coachWindow)return;
+        coachWindow.hidden=false;
+        coachWindow.removeAttribute("hidden");
+    };
 
     if(requested==="chat"){
-        const coachWindow=document.getElementById("language-coach-window");
         if(coachWindow && !coachWindow.hidden){
             try{window.stopAskTutorVoice?.(true)}catch(e){}
+            restoreCoachWindow();
         }
     }
 
     if(liveState.active){
         if(liveState.mode===requested){
             await window.stopTutorLiveVoice();
+            restoreCoachWindow();
             return;
         }
         await window.stopTutorLiveVoice();
+        restoreCoachWindow();
     }
 
     if(!gatewayUrl()){
         fallbackStart(requested);
+        restoreCoachWindow();
         return;
     }
 
@@ -26666,6 +26683,7 @@ window.toggleTutorLiveVoice=async function(mode="chat"){
         setModeStatus("GPT-Live unavailable; using the existing voice fallback.");
         fallbackStart(requested);
     }
+    restoreCoachWindow();
 };
 
 window.updateTutorLiveAskContext=function(context){
