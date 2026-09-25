@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — v3.13 SOURCE
+LanguageTutor — v4.0
 Based on Version 1 / exact user rollback baseline.
 Changes: replaces dock/close lifecycle with one persistent floating
 workspace state. Tutor Controls, Conversation Transcript, Ask Tutor, and
@@ -166,6 +166,14 @@ and reply options for the selected line as one updateable reference note. Langua
 switching now preserves each language's conversation while clearing incompatible
 live, Ask Tutor, selection, and Analysis state so content cannot leak across languages.
 German, Spanish, and Japanese character windows now share the Spanish peach/orange heading palette.
+v4.0: replaces the separate cycling and save-layout controls with one accessible
+Window Layout menu. It can minimize all windows, open the chat workspace, open
+all windows, save the current complete arrangement as the desktop startup
+layout, restore that saved layout, or clear it and restore a responsive factory
+layout. Saved layouts include position, expanded size, minimized state, and
+stacking order and never apply to the mobile workspace. GPT-Live WebRTC startup
+now waits for ICE candidate gathering to finish before sending the SDP offer to
+the configured gateway, matching the current OpenAI connection sequence.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -26896,11 +26904,34 @@ async function createLiveSession(mode){
     const offer=await pc.createOffer();
     await pc.setLocalDescription(offer);
 
+    /* GPT-Live expects the complete local SDP offer. Waiting here ensures
+       host, server-reflexive, and relay ICE candidates have been gathered
+       before the Worker exchanges the offer for OpenAI's SDP answer. */
+    if(pc.iceGatheringState!=="complete"){
+        await new Promise((resolve,reject)=>{
+            const timeout=setTimeout(()=>{
+                pc.removeEventListener("icegatheringstatechange",onState);
+                reject(new Error("Timed out while gathering WebRTC connection candidates."));
+            },10000);
+            function onState(){
+                if(pc.iceGatheringState!=="complete")return;
+                clearTimeout(timeout);
+                pc.removeEventListener("icegatheringstatechange",onState);
+                resolve();
+            }
+            pc.addEventListener("icegatheringstatechange",onState);
+            onState();
+        });
+    }
+
+    const localSdp=String(pc.localDescription?.sdp||"").trim();
+    if(!localSdp)throw new Error("WebRTC produced no local SDP offer.");
+
     const response=await fetch(base+"/live",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-            sdp:pc.localDescription?.sdp||offer.sdp,
+            sdp:localSdp,
             mode,
             language:languageInfo().code
         })
@@ -28955,9 +28986,10 @@ function setPrimaryLabels(){
 
 function moveResetIntoBanner(){
   const reset=document.getElementById("all-floating-reset-layout");
+  const control=reset?.closest?.(".lt-layout-menu")||reset;
   const language=document.getElementById("language-selector-wrap");
   const row=language?.parentElement;
-  if(reset && row && reset.parentElement!==row)row.insertBefore(reset,language);
+  if(control && row && control.parentElement!==row)row.insertBefore(control,language);
 }
 
 function simplifyLanguageTools(){
@@ -31765,6 +31797,300 @@ function boot(){
   };
   if(install())return;
   const timer=setInterval(()=>{if(install())clearInterval(timer)},100);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
+<style id="language-tutor-v40-layout-menu-css">
+/* v4.0 — one compact layout menu replaces the former cycle and save buttons. */
+.lt-layout-menu{position:relative;flex:0 0 auto}
+#all-floating-reset-layout.lt-layout-menu-button{
+  position:static!important;inset:auto!important;min-width:118px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;
+}
+.lt-layout-popover{
+  position:absolute;top:calc(100% + 8px);right:0;z-index:2147483647;
+  box-sizing:border-box;width:270px;padding:7px;border:1px solid #cbd5e1;
+  border-radius:12px;background:#fff;color:#0f172a;
+  box-shadow:0 18px 45px rgba(15,23,42,.26);
+}
+.lt-layout-popover[hidden]{display:none!important}
+.lt-layout-popover-title{
+  padding:6px 9px 7px;color:#64748b;font:800 9px/1.2 var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif);
+  letter-spacing:.07em;text-transform:uppercase;
+}
+.lt-layout-popover button{
+  box-sizing:border-box;width:100%;min-height:34px;margin:1px 0;padding:8px 10px;
+  border:0;border-radius:8px;background:transparent;color:#334155;text-align:left;
+  font:750 11px/1.3 var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif);
+  cursor:pointer;
+}
+.lt-layout-popover button:hover,.lt-layout-popover button:focus-visible{background:#eef2ff;color:#312e81;outline:none}
+.lt-layout-popover button:disabled{opacity:.43;cursor:not-allowed;background:transparent;color:#64748b}
+.lt-layout-popover .lt-layout-danger{color:#be123c}
+.lt-layout-popover .lt-layout-danger:hover,.lt-layout-popover .lt-layout-danger:focus-visible{background:#fff1f2;color:#9f1239}
+.lt-layout-divider{height:1px;margin:6px 4px;background:#e2e8f0}
+.lt-layout-menu-status{min-height:17px;padding:5px 9px 2px;color:#047857;font:750 9px/1.25 var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif)}
+body.lt-layout-menu-open #language-header{z-index:2147483646!important}
+#save-default-window-layout{display:none!important}
+@media(max-width:900px){.lt-layout-menu{display:none!important}}
+</style>
+
+<script id="language-tutor-v40-layout-menu-runtime">
+(()=>{
+"use strict";
+const STARTUP_KEY="languagetutor_desktop_startup_layout_v40";
+const LEGACY_LAYOUT_KEYS=[
+  "languagetutor_all_floating_layout_v2t",
+  "languagetutor_quick_translate_window_v207",
+  "languagetutor_keyboard_windows_v210",
+  "languagetutor_user_default_layout_v211",
+  "languagetutor_analysis_window_v214",
+  "languagetutor_scrollable_canvas_positions_v305",
+  "languagetutor_scrollable_canvas_default_v305",
+  "languagetutor_tall_window_heights_v310"
+];
+const definitions={
+  tutor:{id:"tutor-controls-window",button:".all-floating-minimize",defaults:[430,650]},
+  transcript:{id:"voice-transcript-window",button:".all-floating-minimize",defaults:[650,700]},
+  coach:{id:"language-coach-window",button:".all-floating-minimize",defaults:[650,700]},
+  tools:{id:"language-tools-window",button:".all-floating-minimize",defaults:[760,650]},
+  translate:{id:"quick-translate-window",button:".quick-translate-minimize",defaults:[520,420]},
+  analysis:{id:"analysis-workbench-window",button:".analysis-main-minimize",defaults:[650,700]},
+  characters:{
+    getWindow:()=>document.body?.dataset?.studyLanguage==="ja"
+      ? document.getElementById("floating-kana-tool")
+      : document.getElementById("special-character-palette"),
+    button:".language-keyboard-minimize",defaults:[450,330]
+  }
+};
+const core=["tutor","transcript","coach"];
+const supporting=["tools","translate","analysis","characters"];
+const canvasPositionKey="languagetutor_scrollable_canvas_positions_v305";
+let menuButton=null;
+let popover=null;
+
+function desktop(){return innerWidth>900}
+function entry(name){
+  const definition=definitions[name];
+  const win=definition?.getWindow?.()||document.getElementById(definition?.id||"");
+  return win?{definition,win}:null;
+}
+function isMinimized(win){
+  if(!win)return false;
+  if(win.id==="language-coach-window")return Boolean(win.querySelector(".ask-css-minimize-toggle")?.checked);
+  return win.classList.contains("all-floating-minimized")||
+    win.classList.contains("quick-translate-minimized")||
+    win.classList.contains("analysis-main-minimized")||
+    win.classList.contains("special-character-minimized")||
+    win.classList.contains("floating-kana-minimized")||
+    win.classList.contains("is-minimized");
+}
+function setMinimized(name,want){
+  const item=entry(name);if(!item||isMinimized(item.win)===want)return;
+  item.win.querySelector(item.definition.button)?.click();
+}
+function expandedSize(name,item){
+  const win=item.win,defaults=item.definition.defaults;
+  const rect=win.getBoundingClientRect(),small=isMinimized(win);
+  return {
+    width:small?(Number(win.dataset.expandedWidth||win.dataset.keyboardExpandedWidth)||defaults[0]):rect.width,
+    height:small?(Number(win.dataset.expandedHeight||win.dataset.keyboardExpandedHeight)||defaults[1]):rect.height
+  };
+}
+function point(win){
+  const rect=win.getBoundingClientRect();
+  return {left:rect.left+scrollX,top:rect.top+scrollY};
+}
+function readSnapshot(){
+  try{return JSON.parse(localStorage.getItem(STARTUP_KEY)||"null")}catch(_){return null}
+}
+function writeSnapshot(value){
+  try{localStorage.setItem(STARTUP_KEY,JSON.stringify(value));return true}catch(_){return false}
+}
+function currentSnapshot(){
+  const windows={};
+  Object.keys(definitions).forEach(name=>{
+    const item=entry(name);if(!item)return;
+    const location=point(item.win),size=expandedSize(name,item);
+    windows[name]={
+      left:location.left,top:location.top,width:size.width,height:size.height,
+      minimized:isMinimized(item.win),
+      z:Number.parseInt(getComputedStyle(item.win).zIndex,10)||0
+    };
+  });
+  return {version:4,savedAt:new Date().toISOString(),windows};
+}
+function clamp(value,min,max){return Math.max(min,Math.min(max,value))}
+function applyGeometry(name,saved){
+  const item=entry(name);if(!item||!saved)return;
+  const win=item.win,defaults=item.definition.defaults;
+  const width=clamp(Number(saved.width)||defaults[0],300,Math.max(300,document.documentElement.clientWidth-16));
+  const height=clamp(Number(saved.height)||defaults[1],180,1600);
+  const left=clamp(Number(saved.left)||8,8,Math.max(8,document.documentElement.clientWidth-width-8));
+  const top=clamp(Number(saved.top)||8,8,3600);
+  win.dataset.expandedWidth=String(width);win.dataset.expandedHeight=String(height);
+  if(name==="characters"){
+    win.dataset.keyboardExpandedWidth=String(width);win.dataset.keyboardExpandedHeight=String(height);
+  }
+  Object.assign(win.style,{left:left+"px",top:top+"px",right:"auto",bottom:"auto"});
+  if(!isMinimized(win))Object.assign(win.style,{width:width+"px",height:height+"px"});
+}
+function syncCanvasPositions(){
+  const positions={};
+  Object.keys(definitions).forEach(name=>{
+    const item=entry(name);if(item)positions[item.win.id]=point(item.win);
+  });
+  try{localStorage.setItem(canvasPositionKey,JSON.stringify(positions))}catch(_){}
+}
+function restoreStack(snapshot){
+  const ordered=Object.entries(snapshot.windows||{}).sort((a,b)=>(Number(a[1]?.z)||0)-(Number(b[1]?.z)||0));
+  ordered.forEach(([name])=>{
+    const item=entry(name);if(!item)return;
+    if(isMinimized(item.win))window.sendFloatingWindowBehind?.(item.win);
+    else window.bringFloatingWindowToFront?.(item.win);
+  });
+}
+function applySnapshot(snapshot){
+  if(!desktop()||!snapshot?.windows)return false;
+  Object.entries(snapshot.windows).forEach(([name,saved])=>applyGeometry(name,saved));
+  Object.entries(snapshot.windows).forEach(([name,saved])=>setMinimized(name,Boolean(saved.minimized)));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    Object.entries(snapshot.windows).forEach(([name,saved])=>applyGeometry(name,saved));
+    restoreStack(snapshot);syncCanvasPositions();window.ensureWorkspaceCanvasHeight?.();
+  }));
+  return true;
+}
+function setExpandedGeometry(name,left,top,width,height){
+  const item=entry(name);if(!item)return;
+  const win=item.win;
+  win.dataset.expandedWidth=String(width);win.dataset.expandedHeight=String(height);
+  if(name==="characters"){
+    win.dataset.keyboardExpandedWidth=String(width);win.dataset.keyboardExpandedHeight=String(height);
+  }
+  Object.assign(win.style,{left:left+"px",top:top+"px",right:"auto",bottom:"auto"});
+  if(!isMinimized(win))Object.assign(win.style,{width:width+"px",height:height+"px"});
+}
+function factoryLayout(){
+  if(!desktop())return;
+  scrollTo({top:0,left:0,behavior:"auto"});
+  const pageWidth=document.documentElement.clientWidth;
+  const headerHeight=Math.max(76,document.getElementById("language-header")?.getBoundingClientRect().height||0);
+  const top=headerHeight+14,gap=12,margin=12;
+  const available=pageWidth-(margin*2)-(gap*2);
+  const coreHeight=Math.max(560,Math.min(760,innerHeight-headerHeight-28));
+  const tutorWidth=Math.max(300,Math.round(available*.29));
+  const transcriptWidth=Math.max(320,Math.round(available*.35));
+  const coachWidth=Math.max(320,available-tutorWidth-transcriptWidth);
+  core.forEach(name=>setMinimized(name,false));
+  supporting.forEach(name=>setMinimized(name,true));
+  setExpandedGeometry("tutor",margin,top,tutorWidth,coreHeight);
+  setExpandedGeometry("transcript",margin+tutorWidth+gap,top,transcriptWidth,coreHeight);
+  setExpandedGeometry("coach",margin+tutorWidth+gap+transcriptWidth+gap,top,coachWidth,coreHeight);
+  setExpandedGeometry("tools",margin,top+coreHeight+22,760,650);
+  setExpandedGeometry("translate",margin,top+coreHeight+22,520,420);
+  setExpandedGeometry("analysis",margin,top+coreHeight+22,650,700);
+  setExpandedGeometry("characters",margin,top+coreHeight+22,450,330);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    let x=margin,y=top+coreHeight+22,rowHeight=0;
+    supporting.forEach(name=>{
+      const item=entry(name);if(!item)return;
+      const width=item.win.getBoundingClientRect().width||340;
+      const height=item.win.getBoundingClientRect().height||52;
+      if(x+width>pageWidth-margin){x=margin;y+=rowHeight+10;rowHeight=0}
+      Object.assign(item.win.style,{left:x+"px",top:y+"px",right:"auto",bottom:"auto"});
+      x+=width+10;rowHeight=Math.max(rowHeight,height);
+      window.sendFloatingWindowBehind?.(item.win);
+    });
+    core.forEach(name=>{const item=entry(name);if(item)window.bringFloatingWindowToFront?.(item.win)});
+    syncCanvasPositions();window.ensureWorkspaceCanvasHeight?.();
+  }));
+}
+function status(text){
+  const el=popover?.querySelector(".lt-layout-menu-status");if(!el)return;
+  el.textContent=text;clearTimeout(status.timer);
+  status.timer=setTimeout(()=>{el.textContent=""},1800);
+}
+function refreshMenu(){
+  const restore=popover?.querySelector('[data-layout-action="restore"]');
+  if(restore)restore.disabled=!readSnapshot();
+}
+function closeMenu(){
+  if(!popover)return;popover.hidden=true;menuButton?.setAttribute("aria-expanded","false");
+  document.body.classList.remove("lt-layout-menu-open");
+}
+function toggleMenu(){
+  if(!popover)return;
+  const open=popover.hidden;popover.hidden=!open;menuButton?.setAttribute("aria-expanded",String(open));
+  document.body.classList.toggle("lt-layout-menu-open",open);
+  if(open){refreshMenu();popover.querySelector("button:not(:disabled)")?.focus()}
+}
+function action(name){
+  if(name==="minimize")Object.keys(definitions).forEach(key=>setMinimized(key,true));
+  if(name==="chat"){core.forEach(key=>setMinimized(key,false));supporting.forEach(key=>setMinimized(key,true))}
+  if(name==="all")Object.keys(definitions).forEach(key=>setMinimized(key,false));
+  if(name==="save"){
+    if(writeSnapshot(currentSnapshot()))status("Startup layout saved.");
+    else status("The layout could not be saved.");
+    refreshMenu();return;
+  }
+  if(name==="restore"){
+    if(applySnapshot(readSnapshot()))status("Saved layout restored.");
+    else status("No saved layout is available.");
+    return;
+  }
+  if(name==="factory"){
+    if(!confirm("Clear your saved startup layout and restore the built-in factory arrangement?"))return;
+    try{
+      localStorage.removeItem(STARTUP_KEY);
+      LEGACY_LAYOUT_KEYS.forEach(key=>localStorage.removeItem(key));
+    }catch(_){}
+    factoryLayout();status("Factory layout restored.");refreshMenu();return;
+  }
+  syncCanvasPositions();closeMenu();
+}
+function buildMenu(){
+  const old=document.getElementById("all-floating-reset-layout");if(!old||old.closest(".lt-layout-menu"))return Boolean(old);
+  document.getElementById("save-default-window-layout")?.remove();
+  const wrapper=document.createElement("div");wrapper.className="lt-layout-menu";
+  menuButton=old.cloneNode(false);menuButton.id="all-floating-reset-layout";
+  menuButton.className="lt-layout-menu-button";menuButton.dataset.layoutCycleInstalled="1";
+  menuButton.type="button";menuButton.textContent="Window Layout ▾";
+  menuButton.title="Open window layout options";menuButton.setAttribute("aria-haspopup","menu");
+  menuButton.setAttribute("aria-expanded","false");
+  popover=document.createElement("div");popover.className="lt-layout-popover";popover.hidden=true;
+  popover.setAttribute("role","menu");
+  popover.innerHTML=
+    '<div class="lt-layout-popover-title">Window Layout</div>'+
+    '<button type="button" role="menuitem" data-layout-action="chat">💬 Open chat workspace</button>'+
+    '<button type="button" role="menuitem" data-layout-action="all">▣ Open all windows</button>'+
+    '<button type="button" role="menuitem" data-layout-action="minimize">− Minimize all windows</button>'+
+    '<div class="lt-layout-divider"></div>'+
+    '<button type="button" role="menuitem" data-layout-action="restore">↶ Restore saved layout</button>'+
+    '<button type="button" role="menuitem" data-layout-action="save">★ Save current layout as startup</button>'+
+    '<div class="lt-layout-divider"></div>'+
+    '<button type="button" role="menuitem" class="lt-layout-danger" data-layout-action="factory">↺ Clear saved layout and restore factory</button>'+
+    '<div class="lt-layout-menu-status" aria-live="polite"></div>';
+  old.parentElement?.insertBefore(wrapper,old);old.remove();wrapper.append(menuButton,popover);
+  menuButton.addEventListener("click",event=>{event.stopPropagation();toggleMenu()});
+  popover.addEventListener("click",event=>{
+    const button=event.target.closest?.("[data-layout-action]");if(!button||button.disabled)return;
+    event.stopPropagation();action(button.dataset.layoutAction);
+    if(!["save","restore","factory"].includes(button.dataset.layoutAction))closeMenu();
+  });
+  document.addEventListener("pointerdown",event=>{if(!event.target.closest?.(".lt-layout-menu"))closeMenu()});
+  document.addEventListener("keydown",event=>{if(event.key==="Escape"){closeMenu();menuButton?.focus()}});
+  refreshMenu();return true;
+}
+function boot(){
+  if(!desktop())return;
+  let attempts=0;
+  const timer=setInterval(()=>{attempts++;if(buildMenu()||attempts>40)clearInterval(timer)},100);
+  setTimeout(()=>{
+    if(!buildMenu())return;
+    const saved=readSnapshot();
+    if(saved)applySnapshot(saved);else factoryLayout();
+  },1550);
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
