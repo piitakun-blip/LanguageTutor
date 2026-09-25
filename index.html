@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — v3.02 SOURCE
+LanguageTutor — v3.09 SOURCE
 Based on Version 1 / exact user rollback baseline.
 Changes: replaces dock/close lifecycle with one persistent floating
 workspace state. Tutor Controls, Conversation Transcript, Ask Tutor, and
@@ -123,6 +123,30 @@ coordinator; saved transcripts remain available from that transcript window.
 v3.02: strengthens Chat Transcript's selected-line indicator with an explicit
 active-selection state, green context panel, heavier label, and larger selected
 text while keeping the transcript action buttons unchanged.
+v3.03: standardizes the selected-line context shown in Ask Tutor, Chat
+Transcript, and Analysis Workbench as a neutral inset panel with the label
+above a large, bold line. All three views use the label “Selected line.”
+v3.04: keeps the saved-transcript title and Continue Conversation, Rename,
+and Delete actions visible by grouping them with the selected-line tools in
+one sticky control region above the scrolling saved conversation.
+v3.05: expands the desktop into a vertically scrollable workspace canvas.
+Floating windows use document positions, can be arranged below the first
+screen, and retain those canvas positions. The sticky page banner remains
+above every window, and dragging cannot park a window over it.
+v3.06: makes destination-window promotion authoritative after button actions.
+Ask Tutor, Saved Tutor Transcripts, Chat Transcript, Analysis Workbench, Chat
+Settings, language tools, and character windows restore when necessary and
+come to the front after their opening control finishes.
+v3.07: replaces the remaining three selected-context variants with one
+authoritative Selected Line card shared by Ask Tutor, Chat Transcript, and
+Analysis Workbench. A small runtime normalizer prevents older rerenders from
+restoring legacy “Selected context” or “Selected utterance” labels.
+v3.08: moves the Analysis Workbench Color Legend out of the parser card and
+gives it a toggle in the selected-line action row. The same row also gains a
+Translate action for the currently selected conversation line.
+v3.09: moves the Analysis Workbench Chat Transcript shortcut from the title
+bar into the selected-line action row. The title bar now contains only its
+window minimize control.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -17479,6 +17503,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         const head=document.createElement("div");
         head.className="saved-transcript-detail-head";
+        const stickyControls=document.createElement("div");
+        stickyControls.className="saved-transcript-sticky-controls";
         const title=document.createElement("div");
         const displayName=String(selected.name||"").trim();
         title.innerHTML=`<strong>${escapeML(displayName || ((selected.languageName||selected.language||"Language")+" "+(selected.mode==="voice"?"Voice":"Text")+" Tutor"))}</strong><br><span>${escapeML(savedTranscriptLabel(selected))}</span>`;
@@ -17506,7 +17532,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
 
         actions.append(resume,rename,del);
         head.append(title,actions);
-        body.appendChild(head);
+        stickyControls.appendChild(head);
 
         const selectionBar=document.createElement("div");
         selectionBar.id="saved-transcript-selection-toolbar";
@@ -17522,7 +17548,8 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
                 <button type="button" id="saved-transcript-coach" disabled>❓ Ask Tutor</button>
             </div>
             <div id="saved-transcript-selected-translation" class="saved-transcript-selection-translation" hidden></div>`;
-        body.appendChild(selectionBar);
+        stickyControls.appendChild(selectionBar);
+        body.appendChild(stickyControls);
 
         const conversationLog=document.createElement("div");
         conversationLog.className="saved-transcript-conversation-log";
@@ -21610,16 +21637,37 @@ Current work: ${context||"No sentence has been entered yet."}`;
 
     <div class="analysis-workbench-body">
         <div class="analysis-workbench-source">
-            <div class="analysis-workbench-source-label">Selected utterance</div>
+            <div class="analysis-workbench-source-label">Selected line</div>
             <div id="analysis-workbench-sentence"></div>
         </div>
 
         <div class="analysis-workbench-utility-tools">
             <button type="button" onclick="analysisWorkbenchListen()">🔊 Listen</button>
             <button type="button" onclick="analysisWorkbenchCopy(this)">⧉ Copy</button>
+            <button type="button" onclick="analysisWorkbenchTranslate(this)">🌐 Translate</button>
             <button type="button" onclick="analysisWorkbenchSave(this)">＋ Study List</button>
             <button type="button" onclick="analysisWorkbenchCoach()">❓ Ask Tutor</button>
             <button type="button" onclick="workspaceOpenTool('keyboard')">⌨ Keyboard</button>
+            <button type="button" id="analysis-workbench-transcript-button" onclick="window.openVoiceTranscriptWindow?.();requestAnimationFrame(()=>window.bringFloatingWindowToFront?.('voice-transcript-window'))">📄 Chat Transcript</button>
+            <button type="button" id="analysis-workbench-color-legend-toggle" onclick="toggleAnalysisWorkbenchColorLegend(this)" aria-expanded="false">🎨 Color Legend</button>
+        </div>
+
+        <div id="analysis-workbench-color-legend" class="analysis-workbench-color-legend" hidden>
+            <div class="analysis-parser-key-group">
+                <strong>Case = card background</strong>
+                <span class="case-nom">Nominative</span>
+                <span class="case-acc">Accusative</span>
+                <span class="case-dat">Dative</span>
+                <span class="case-gen">Genitive</span>
+                <span class="case-multi">Ambiguous</span>
+            </div>
+            <div class="analysis-parser-key-group">
+                <strong>Gender = word color</strong>
+                <span class="gender-masc">Masculine</span>
+                <span class="gender-fem">Feminine</span>
+                <span class="gender-neut">Neuter</span>
+                <span class="gender-plural">Plural</span>
+            </div>
         </div>
 
         <div id="analysis-workbench-status"></div>
@@ -21767,6 +21815,17 @@ Current work: ${context||"No sentence has been entered yet."}`;
     window.closeAnalysisWorkbench=function(){
         const win=document.getElementById("analysis-workbench-window");
         if(win)win.hidden=true;
+    };
+
+    window.toggleAnalysisWorkbenchColorLegend=function(button){
+        const legend=document.getElementById("analysis-workbench-color-legend");
+        if(!legend)return;
+        const opening=legend.hidden;
+        legend.hidden=!opening;
+        if(button){
+            button.textContent=opening ? "🎨 Hide Legend" : "🎨 Color Legend";
+            button.setAttribute("aria-expanded",String(opening));
+        }
     };
 
 
@@ -21949,9 +22008,9 @@ Current work: ${context||"No sentence has been entered yet."}`;
         // for both in one response made ordinary parsing slower and more fragile.
         const prompt=`You are the grammar parser inside LanguageTutor.
 Language: ${languageName}
-Selected utterance: "${state.sentence}"
+Selected line: "${state.sentence}"
 
-The selected utterance may contain ONE OR MORE sentences. Sentence segmentation is REQUIRED. Identify every sentence boundary first, then analyze each sentence independently. You MUST return the sentences[] envelope even when there is only one sentence.
+The selected line may contain ONE OR MORE sentences. Sentence segmentation is REQUIRED. Identify every sentence boundary first, then analyze each sentence independently. You MUST return the sentences[] envelope even when there is only one sentence.
 
 Return JSON only:
 {"sentences":[
@@ -22049,37 +22108,8 @@ Rules:
     }
 
     function renderWorkbenchParserTiles(card,parsed){
-        // Keep the parser itself visually self-explanatory. The color key is
-        // available on demand instead of occupying space above every parse.
-        const legendToggle=document.createElement("button");
-        legendToggle.type="button";
-        legendToggle.className="analysis-parser-legend-toggle";
-        legendToggle.textContent="Color legend";
-
-        const legend=document.createElement("div");
-        legend.className="analysis-parser-legend hidden";
-        legend.innerHTML=`
-            <div class="analysis-parser-key-group">
-                <strong>Case = card background</strong>
-                <span class="case-nom">Nominative</span>
-                <span class="case-acc">Accusative</span>
-                <span class="case-dat">Dative</span>
-                <span class="case-gen">Genitive</span>
-                <span class="case-multi">Ambiguous</span>
-            </div>
-            <div class="analysis-parser-key-group">
-                <strong>Gender = word color</strong>
-                <span class="gender-masc">Masculine</span>
-                <span class="gender-fem">Feminine</span>
-                <span class="gender-neut">Neuter</span>
-                <span class="gender-plural">Plural</span>
-            </div>
-        `;
-        legendToggle.addEventListener("click",()=>{
-            const opening=legend.classList.contains("hidden");
-            legend.classList.toggle("hidden",!opening);
-            legendToggle.textContent=opening ? "Hide color legend" : "Color legend";
-        });
+        // Color Legend now belongs to the selected-line action row above the
+        // results, so parser cards contain only the parsed sentence content.
         const viewSwitch=document.createElement("div");
         viewSwitch.className="analysis-parser-view-switch";
 
@@ -22120,9 +22150,7 @@ Rules:
             sentenceText.textContent=sentence.text || "";
 
             heading.append(number,sentenceText);
-            if(index===0)heading.appendChild(legendToggle);
             group.appendChild(heading);
-            if(index===0)group.appendChild(legend);
 
             const row=document.createElement("div");
             row.className="analysis-parser-sentence-tiles";
@@ -22574,10 +22602,10 @@ Rules:
 
         const prompt=`You are building pedagogically accurate sentence diagrams for a language learner.
 Language: ${languageName}
-Selected utterance: "${state.sentence}"
+Selected line: "${state.sentence}"
 Existing parse: ${JSON.stringify(parseSummary)}
 
-The selected utterance may contain ONE OR MORE sentences. Sentence segmentation is REQUIRED. You MUST return the sentences[] envelope even when there is only one sentence. Build a SEPARATE syntactic tree for each independent sentence. Never connect independent sentences into one tree.
+The selected line may contain ONE OR MORE sentences. Sentence segmentation is REQUIRED. You MUST return the sentences[] envelope even when there is only one sentence. Build a SEPARATE syntactic tree for each independent sentence. Never connect independent sentences into one tree.
 
 Return JSON only:
 {"sentences":[
@@ -22936,8 +22964,8 @@ Do not continue the conversation.`;
     <div class="language-coach-body">
         <div id="ask-tutor-context" class="ask-tutor-context" hidden>
             <div class="ask-tutor-context-head">
-                <span>Selected context</span>
-                <button type="button" id="ask-tutor-context-clear" title="Clear selected context">×</button>
+                <span>Selected line</span>
+                <button type="button" id="ask-tutor-context-clear" title="Clear selected line">×</button>
             </div>
             <div id="ask-tutor-context-text" class="ask-tutor-context-text"></div>
         </div>
@@ -30196,14 +30224,6 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   font-size:17px!important;line-height:1!important;font-weight:800!important;cursor:pointer!important;
 }
 .analysis-main-minimize:hover{background:#fff!important;box-shadow:0 0 0 3px rgba(79,70,229,.14)!important}
-.analysis-transcripts-button{
-  margin-left:auto!important;flex:0 0 auto!important;height:34px!important;min-height:34px!important;
-  padding:0 10px!important;border:1px solid var(--lt-analysis-accent)!important;border-radius:8px!important;
-  background:rgba(255,255,255,.88)!important;color:#312e81!important;
-  font:800 10.5px/1 var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif)!important;
-  white-space:nowrap!important;cursor:pointer!important;
-}
-.analysis-transcripts-button:hover{background:#fff!important;box-shadow:0 0 0 3px rgba(79,70,229,.14)!important}
 #analysis-workbench-window .analysis-workbench-body{
   flex:1 1 0%!important;height:auto!important;min-height:0!important;overflow:hidden!important;
 }
@@ -30272,19 +30292,10 @@ function setMinimized(want){
 function normalizeTitlebar(){
   const panel=win(),bar=document.getElementById("analysis-workbench-drag-handle");if(!panel||!bar)return;
   bar.querySelectorAll("button,.workspace-v95-title-actions,.workspace-standard-window-actions").forEach(node=>node.remove());
-  const transcripts=document.createElement("button");
-  transcripts.type="button";transcripts.className="analysis-transcripts-button";
-  transcripts.textContent="📄 Chat Transcript";transcripts.title="Open the current chat transcript";
-  transcripts.addEventListener("pointerdown",event=>event.stopPropagation());
-  transcripts.addEventListener("click",event=>{
-    event.preventDefault();event.stopPropagation();
-    window.openVoiceTranscriptWindow?.();
-    requestAnimationFrame(()=>window.bringFloatingWindowToFront?.("voice-transcript-window"));
-  });
   let button=document.createElement("button");button.type="button";button.className="analysis-main-minimize";
   button.addEventListener("pointerdown",event=>event.stopPropagation());
   button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();setMinimized(!panel.classList.contains("analysis-main-minimized"))});
-  bar.append(transcripts,button);setButton();
+  bar.append(button);setButton();
   const subtitle=document.getElementById("analysis-workbench-subtitle");
   if(subtitle){subtitle.hidden=false;subtitle.textContent="Grammar parsing, translation, and wording analysis"}
 }
@@ -30475,31 +30486,481 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 else{bindObservers();setTimeout(bindObservers,900)}
 })();
 </script>
-<style id="language-tutor-v302-selected-line-emphasis-css">
-/* Keep the idle prompt quiet, then turn the summary into an unmistakable
-   active-context panel as soon as a transcript turn is selected. */
+<style id="language-tutor-v303-selected-line-source-card-css">
+/* One visual language for selected-line context across the three windows. */
+.analysis-workbench-source,
+#language-coach-window .ask-tutor-context,
 #voice-transcript-window #transcript-selection-toolbar.has-selection .transcript-selection-summary{
-  box-sizing:border-box!important;width:100%!important;min-height:42px!important;
-  padding:8px 11px!important;border:1px solid #34d399!important;
-  border-left:5px solid #059669!important;border-radius:9px!important;
-  background:linear-gradient(135deg,#ecfdf5 0%,#f0fdf4 100%)!important;
-  box-shadow:0 2px 8px rgba(5,150,105,.12)!important;
+  box-sizing:border-box!important;width:100%!important;min-height:64px!important;
+  padding:11px 12px!important;border:1px solid #e2e8f0!important;
+  border-radius:12px!important;background:#f8fafc!important;box-shadow:none!important;
 }
+.analysis-workbench-source,
+#voice-transcript-window #transcript-selection-toolbar.has-selection .transcript-selection-summary{
+  display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:4px!important;
+}
+.analysis-workbench-source-label,
+#language-coach-window .ask-tutor-context-head > span,
 #voice-transcript-window #transcript-selection-toolbar.has-selection .transcript-selection-label{
-  display:inline-flex!important;align-items:center!important;gap:4px!important;
-  padding:3px 6px!important;border-radius:999px!important;background:#059669!important;
-  color:#fff!important;font-size:8px!important;line-height:1!important;font-weight:900!important;
-  letter-spacing:.07em!important;
+  display:block!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;
+  color:#64748b!important;font-size:9px!important;line-height:1.2!important;font-weight:900!important;
+  letter-spacing:.06em!important;text-transform:uppercase!important;
 }
 #voice-transcript-window #transcript-selection-toolbar.has-selection .transcript-selection-label::before{
-  content:"✓";font-size:9px;line-height:1;
+  content:none!important;
 }
 #voice-transcript-window #transcript-selection-toolbar.has-selection #transcript-selected-preview{
-  color:#064e3b!important;font-size:12px!important;line-height:1.35!important;font-weight:800!important;
+  display:block!important;width:100%!important;margin:0!important;
+  color:#0f172a!important;font-size:16px!important;line-height:1.45!important;font-weight:800!important;
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;
+}
+.analysis-workbench-source #analysis-workbench-sentence,
+#language-coach-window .ask-tutor-context-text{
+  margin-top:4px!important;color:#0f172a!important;font-size:16px!important;
+  line-height:1.45!important;font-weight:800!important;overflow-wrap:anywhere!important;
+}
+#language-coach-window .ask-tutor-context-head{
+  color:#64748b!important;font-size:9px!important;line-height:1.2!important;
+  font-weight:900!important;letter-spacing:.06em!important;text-transform:uppercase!important;
 }
 #voice-chat-messages-log .conversation-turn-card.transcript-turn-selected{
   border-color:#059669!important;
   box-shadow:0 0 0 3px rgba(5,150,105,.20),0 5px 14px rgba(15,23,42,.10)!important;
+}
+</style>
+<style id="language-tutor-v304-saved-transcript-sticky-actions-css">
+/* Keep both saved-transcript action rows together while only the conversation
+   turns scroll beneath them. */
+#saved-transcript-body .saved-transcript-sticky-controls{
+  position:sticky;
+  top:-14px;
+  z-index:8;
+  margin:-14px -14px 12px;
+  padding:14px 14px 10px;
+  border-bottom:1px solid #e2e8f0;
+  background:rgba(255,255,255,.98);
+  box-shadow:0 5px 10px rgba(15,23,42,.05);
+  backdrop-filter:blur(8px);
+}
+#saved-transcript-body .saved-transcript-sticky-controls .saved-transcript-detail-head{
+  margin-bottom:10px;
+}
+#saved-transcript-body .saved-transcript-sticky-controls .saved-transcript-selection-toolbar{
+  position:relative;
+  top:auto;
+  z-index:auto;
+  margin-bottom:0;
+}
+</style>
+<style id="language-tutor-v305-scrollable-workspace-css">
+@media (min-width:701px){
+  html{overflow-y:scroll!important;scroll-behavior:smooth}
+  body{
+    position:relative!important;
+    min-height:max(1800px,calc(100vh + 900px))!important;
+    overflow-x:hidden!important;
+    overflow-y:visible!important;
+  }
+  body>main{min-height:calc(100vh + 720px)!important}
+  #language-header{
+    position:sticky!important;
+    top:0!important;
+    z-index:2147483600!important;
+  }
+  #tutor-controls-window,
+  #voice-transcript-window,
+  #language-coach-window,
+  #language-tools-window,
+  #quick-translate-window,
+  #analysis-workbench-window,
+  #special-character-palette,
+  #floating-kana-tool,
+  #saved-transcripts-window,
+  #text-transcript-window,
+  #conversation-settings-window{
+    position:absolute!important;
+  }
+}
+</style>
+<script id="language-tutor-v305-scrollable-workspace-runtime">
+(()=>{
+"use strict";
+const MOBILE="(max-width:700px)";
+const POSITION_KEY="languagetutor_scrollable_canvas_positions_v305";
+const DEFAULT_KEY="languagetutor_scrollable_canvas_default_v305";
+const windows=[
+  "tutor-controls-window","voice-transcript-window","language-coach-window",
+  "language-tools-window","quick-translate-window","analysis-workbench-window",
+  "special-character-palette","floating-kana-tool","saved-transcripts-window",
+  "text-transcript-window","conversation-settings-window"
+];
+const handles=[
+  ["tutor-controls-window",".primary-workspace-titlebar"],
+  ["voice-transcript-window","#voice-transcript-drag-handle"],
+  ["language-coach-window","#language-coach-drag-handle"],
+  ["language-tools-window",".primary-workspace-titlebar"],
+  ["quick-translate-window",".quick-translate-titlebar"],
+  ["analysis-workbench-window","#analysis-workbench-drag-handle"],
+  ["special-character-palette","#special-character-drag-handle"],
+  ["floating-kana-tool",".floating-kana-titlebar"],
+  ["saved-transcripts-window","#saved-transcripts-drag-handle"],
+  ["text-transcript-window","#text-transcript-drag-handle"],
+  ["conversation-settings-window","#conversation-settings-drag-handle"]
+];
+let drag=null;
+const read=key=>{try{return JSON.parse(localStorage.getItem(key)||"{}")||{}}catch(_){return {}}};
+const write=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}};
+const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+function bannerFloor(){
+  const header=document.getElementById("language-header");
+  return window.scrollY+(header?.offsetHeight||0)+8;
+}
+function canvasHeight(){
+  /* Keep a generous but finite canvas; absolutely positioned windows must not
+     enlarge the drag boundary while they are being moved near its bottom. */
+  return Math.max(1800,window.innerHeight+900);
+}
+function currentPosition(win){
+  const rect=win.getBoundingClientRect();
+  return {left:rect.left+window.scrollX,top:rect.top+window.scrollY};
+}
+function savePosition(win,key=POSITION_KEY){
+  if(!win?.id||win.hidden||matchMedia(MOBILE).matches)return;
+  const state=read(key),point=currentPosition(win);
+  state[win.id]={left:point.left,top:point.top};
+  write(key,state);
+}
+function place(win,point){
+  if(!win||!point||matchMedia(MOBILE).matches)return;
+  const left=clamp(Number(point.left)||8,8,Math.max(8,document.documentElement.clientWidth-win.offsetWidth-8));
+  const top=clamp(Number(point.top)||bannerFloor(),bannerFloor(),Math.max(bannerFloor(),canvasHeight()-52));
+  Object.assign(win.style,{left:left+"px",top:top+"px",right:"auto",bottom:"auto"});
+}
+function restore(key=POSITION_KEY){
+  if(matchMedia(MOBILE).matches)return;
+  const state=read(key);
+  windows.forEach(id=>{const win=document.getElementById(id);if(win&&state[id])place(win,state[id])});
+}
+function handleMatch(target){
+  for(const [id,selector] of handles){
+    const handle=target.closest?.(selector);
+    if(handle&&handle.closest(`#${id}`))return {win:document.getElementById(id),handle};
+  }
+  return null;
+}
+document.addEventListener("pointerdown",event=>{
+  if(matchMedia(MOBILE).matches||event.button!==0||event.target.closest?.("button,input,select,textarea,a"))return;
+  const found=handleMatch(event.target);if(!found?.win)return;
+  const point=currentPosition(found.win);
+  drag={win:found.win,handle:found.handle,pointerId:event.pointerId,
+    offsetX:event.pageX-point.left,offsetY:event.pageY-point.top};
+  window.bringFloatingWindowToFront?.(found.win);
+  try{found.handle.setPointerCapture(event.pointerId)}catch(_){}
+  event.preventDefault();event.stopImmediatePropagation();
+},true);
+document.addEventListener("pointermove",event=>{
+  if(!drag||event.pointerId!==drag.pointerId)return;
+  const maxLeft=Math.max(8,document.documentElement.clientWidth-drag.win.offsetWidth-8);
+  const maxTop=Math.max(bannerFloor(),canvasHeight()-52);
+  drag.win.style.left=clamp(event.pageX-drag.offsetX,8,maxLeft)+"px";
+  drag.win.style.top=clamp(event.pageY-drag.offsetY,bannerFloor(),maxTop)+"px";
+  drag.win.style.right="auto";drag.win.style.bottom="auto";
+  event.preventDefault();event.stopImmediatePropagation();
+},true);
+function stopDrag(event){
+  if(!drag||event.pointerId!==drag.pointerId)return;
+  const win=drag.win;drag=null;savePosition(win);
+  event.preventDefault();event.stopImmediatePropagation();
+}
+document.addEventListener("pointerup",stopDrag,true);
+document.addEventListener("pointercancel",stopDrag,true);
+function bindDefaultButton(){
+  const button=document.getElementById("save-default-window-layout");
+  if(!button||button.dataset.canvasDefaultBound==="1")return;
+  button.dataset.canvasDefaultBound="1";
+  button.addEventListener("click",()=>{
+    const snapshot={};
+    windows.forEach(id=>{const win=document.getElementById(id);if(win&&!win.hidden)snapshot[id]=currentPosition(win)});
+    write(DEFAULT_KEY,snapshot);
+  },true);
+}
+function boot(){
+  if(matchMedia(MOBILE).matches)return;
+  const saved=read(POSITION_KEY),defaults=read(DEFAULT_KEY);
+  const chosen=Object.keys(saved).length?saved:defaults;
+  /* Let the established startup layout finish, then convert/restore its
+     viewport coordinates as document-canvas coordinates. */
+  setTimeout(()=>{
+    windows.forEach(id=>{
+      const win=document.getElementById(id);if(!win)return;
+      if(chosen[id])place(win,chosen[id]);
+      else{
+        const current=currentPosition(win);
+        place(win,{left:current.left,top:Math.max(current.top,bannerFloor())});
+      }
+    });
+    bindDefaultButton();
+  },1250);
+  const observer=new MutationObserver(()=>bindDefaultButton());
+  observer.observe(document.body,{childList:true,subtree:true});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
+<script id="language-tutor-v306-action-window-promotion-runtime">
+(()=>{
+"use strict";
+const minimizedControls={
+  "tutor-controls-window":["all-floating-minimized",".all-floating-minimize"],
+  "voice-transcript-window":["all-floating-minimized",".all-floating-minimize"],
+  "language-tools-window":["all-floating-minimized",".all-floating-minimize"],
+  "quick-translate-window":["quick-translate-minimized",".quick-translate-minimize"],
+  "analysis-workbench-window":["analysis-main-minimized",".analysis-main-minimize"],
+  "special-character-palette":["special-character-minimized",".language-keyboard-minimize"],
+  "floating-kana-tool":["floating-kana-minimized",".language-keyboard-minimize"]
+};
+function restoreIfNeeded(win){
+  if(!win)return;
+  if(win.id==="language-coach-window"){
+    const toggle=win.querySelector(".ask-css-minimize-toggle");
+    if(toggle?.checked)win.querySelector(".ask-css-minimize-label")?.click();
+  }
+  const rule=minimizedControls[win.id];
+  if(rule&&win.classList.contains(rule[0]))win.querySelector(rule[1])?.click();
+  if(win.classList.contains("collapsed")){
+    win.querySelector("#saved-transcripts-collapse-btn,#text-transcript-collapse-btn")?.click();
+  }
+}
+function promote(id){
+  const win=document.getElementById(id);if(!win||win.hidden)return;
+  restoreIfNeeded(win);
+  window.bringFloatingWindowToFront?.(win);
+}
+function promoteAfterAction(id){
+  /* Older focus handlers settle with zero-delay timers. Two animation frames
+     make the destination promotion the final stacking decision. */
+  requestAnimationFrame(()=>requestAnimationFrame(()=>promote(id)));
+}
+function wrap(functionName,id){
+  const original=window[functionName];
+  if(typeof original!=="function"||original.__v306PromotesWindow)return;
+  const wrapped=function(...args){
+    const result=original.apply(this,args);
+    promoteAfterAction(typeof id==="function"?id():id);
+    return result;
+  };
+  wrapped.__v306PromotesWindow=true;
+  window[functionName]=wrapped;
+}
+const activeCharacterWindow=()=>document.body?.dataset?.studyLanguage==="ja"
+  ? "floating-kana-tool":"special-character-palette";
+[
+  ["openSavedTutorTranscripts","saved-transcripts-window"],
+  ["openLanguageCoach","language-coach-window"],
+  ["openAskTutorWorkspace","language-coach-window"],
+  ["openAskTutorFromConversation","language-coach-window"],
+  ["openTutorCoachForPhrase","language-coach-window"],
+  ["openVoiceTranscriptWindow","voice-transcript-window"],
+  ["openTextTranscriptWindow","text-transcript-window"],
+  ["openAnalysisWorkbench","analysis-workbench-window"],
+  ["openAskTutorAnalysisForText","analysis-workbench-window"],
+  ["openConversationSettingsWindow","conversation-settings-window"],
+  ["openTutorControlsWorkspace","tutor-controls-window"],
+  ["openLanguageToolsWorkspace","language-tools-window"],
+  ["openLanguageCharacterTool",activeCharacterWindow],
+  ["openSpecialCharacterPalette","special-character-palette"],
+  ["openFloatingKanaChart","floating-kana-tool"]
+].forEach(([name,id])=>wrap(name,id));
+
+function buttonDestination(button){
+  const label=String(button.textContent||"").trim().toLowerCase();
+  const clue=[button.id,button.className,label,button.title,
+    button.getAttribute("onclick"),button.getAttribute("aria-label")]
+    .filter(Boolean).join(" ").toLowerCase();
+  if(clue.includes("opensavedtutortranscripts")||label==="saved"||label==="🗂 saved"||label.includes("saved transcripts"))return "saved-transcripts-window";
+  if(clue.includes("continue conversation"))return "tutor-controls-window";
+  if(clue.includes("openasktutoranalysisfortext")||clue.includes("openanalysisworkbench")||/\banaly[sz]e\b/.test(clue))return "analysis-workbench-window";
+  if(clue.includes("openlanguagecoach")||clue.includes("openasktutor")||clue.includes("ask tutor"))return "language-coach-window";
+  if(clue.includes("openvoicetranscriptwindow")||clue.includes("chat transcript")||clue.includes("transcripts"))return "voice-transcript-window";
+  if(clue.includes("settings")&&clue.includes("chat"))return "conversation-settings-window";
+  if(clue.includes("language tools"))return "language-tools-window";
+  if(clue.includes("special character")||clue.includes("german keys")||clue.includes("keyboard"))return activeCharacterWindow();
+  if(clue.includes("quick translate"))return "quick-translate-window";
+  if(clue.includes("chat with tutor"))return "tutor-controls-window";
+  return "";
+}
+document.addEventListener("click",event=>{
+  const button=event.target.closest?.("button");if(!button)return;
+  if(button.matches(".all-floating-minimize,.ask-css-minimize-label,.quick-translate-minimize,.analysis-main-minimize,.language-keyboard-minimize"))return;
+  if(/^(minimize|collapse|close|restore)/i.test(String(button.title||"").trim()))return;
+  const destination=buttonDestination(button);
+  if(destination)promoteAfterAction(destination);
+},true);
+})();
+</script>
+<style id="language-tutor-v307-unified-selected-line-card-css">
+/* Authoritative selected-line component: same surface, spacing, label, and
+   content typography in Ask Tutor, Chat Transcript, and Analysis Workbench. */
+#analysis-workbench-window .analysis-workbench-source,
+#language-coach-window #ask-tutor-context.ask-tutor-context,
+#voice-transcript-window #transcript-selection-toolbar.has-selection .transcript-selection-summary{
+  box-sizing:border-box!important;
+  position:relative!important;
+  width:100%!important;
+  min-height:68px!important;
+  padding:12px 14px!important;
+  border:1px solid #d7dee9!important;
+  border-radius:12px!important;
+  background:#f8fafc!important;
+  box-shadow:none!important;
+}
+#analysis-workbench-window .analysis-workbench-source,
+#voice-transcript-window #transcript-selection-toolbar.has-selection .transcript-selection-summary{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  gap:5px!important;
+}
+#language-coach-window #ask-tutor-context.ask-tutor-context{
+  padding-right:46px!important;
+}
+#analysis-workbench-window .analysis-workbench-source-label,
+#language-coach-window .ask-tutor-context-head>span,
+#voice-transcript-window #transcript-selection-toolbar.has-selection .transcript-selection-label{
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#64748b!important;
+  font-family:var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif)!important;
+  font-size:10px!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+  letter-spacing:.065em!important;
+  text-transform:uppercase!important;
+  box-shadow:none!important;
+}
+#voice-transcript-window #transcript-selection-toolbar.has-selection .transcript-selection-label::before{
+  content:none!important;
+  display:none!important;
+}
+#analysis-workbench-window #analysis-workbench-sentence,
+#language-coach-window #ask-tutor-context-text.ask-tutor-context-text,
+#voice-transcript-window #transcript-selection-toolbar.has-selection #transcript-selected-preview{
+  display:block!important;
+  width:100%!important;
+  margin:5px 0 0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  color:#0f172a!important;
+  font-family:var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif)!important;
+  font-size:16px!important;
+  line-height:1.45!important;
+  font-weight:800!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  overflow-wrap:anywhere!important;
+  box-shadow:none!important;
+}
+#language-coach-window .ask-tutor-context-head{
+  display:flex!important;
+  align-items:flex-start!important;
+  min-height:12px!important;
+  margin:0!important;
+  padding:0!important;
+}
+#language-coach-window #ask-tutor-context-clear{
+  position:absolute!important;
+  top:7px!important;
+  right:7px!important;
+  width:28px!important;
+  height:28px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:7px!important;
+  background:transparent!important;
+  color:#64748b!important;
+  font-size:16px!important;
+  line-height:28px!important;
+  box-shadow:none!important;
+}
+#language-coach-window #ask-tutor-context-clear:hover{
+  background:#e2e8f0!important;
+  color:#0f172a!important;
+}
+</style>
+<script id="language-tutor-v307-unified-selected-line-label-runtime">
+(()=>{
+"use strict";
+const selectors=[
+  "#analysis-workbench-window .analysis-workbench-source-label",
+  "#language-coach-window .ask-tutor-context-head>span",
+  "#voice-transcript-window .transcript-selection-label"
+];
+let queued=false;
+function normalize(){
+  queued=false;
+  selectors.forEach(selector=>document.querySelectorAll(selector).forEach(label=>{
+    if(label.textContent!=="Selected line")label.textContent="Selected line";
+  }));
+}
+function queue(){
+  if(queued)return;queued=true;requestAnimationFrame(normalize);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{
+  normalize();new MutationObserver(queue).observe(document.body,{childList:true,subtree:true,characterData:true});
+},{once:true});
+else{
+  normalize();new MutationObserver(queue).observe(document.body,{childList:true,subtree:true,characterData:true});
+}
+})();
+</script>
+<style id="language-tutor-v308-workbench-legend-actions-css">
+#analysis-workbench-color-legend[hidden]{display:none!important}
+#analysis-workbench-color-legend{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:8px;
+  margin:0;
+  padding:10px 12px;
+  border:1px solid #dbe3ee;
+  border-radius:10px;
+  background:#fbfdff;
+  box-shadow:0 2px 7px rgba(15,23,42,.05);
+}
+#analysis-workbench-color-legend .analysis-parser-key-group{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+}
+#analysis-workbench-color-legend .analysis-parser-key-group>strong{
+  margin-right:2px;
+  color:#475569;
+  font-size:9px;
+  font-weight:900;
+}
+#analysis-workbench-color-legend .analysis-parser-key-group>span{
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  padding:3px 8px;
+  border:1px solid #d7dee9;
+  border-radius:9999px;
+  font-size:9px;
+  font-weight:800;
+}
+#analysis-workbench-color-legend-toggle[aria-expanded="true"]{
+  border-color:#93c5fd!important;
+  background:#eff6ff!important;
+  color:#1d4ed8!important;
 }
 </style>
 </body>
