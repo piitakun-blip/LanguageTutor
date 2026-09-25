@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — v3.09 SOURCE
+LanguageTutor — v3.12 SOURCE
 Based on Version 1 / exact user rollback baseline.
 Changes: replaces dock/close lifecycle with one persistent floating
 workspace state. Tutor Controls, Conversation Transcript, Ask Tutor, and
@@ -147,6 +147,19 @@ Translate action for the currently selected conversation line.
 v3.09: moves the Analysis Workbench Chat Transcript shortcut from the title
 bar into the selected-line action row. The title bar now contains only its
 window minimize control.
+v3.10: removes the viewport-height ceiling from content-heavy desktop windows,
+persists taller user-resized heights, and automatically extends the scrollable
+workspace beneath their lowest edge. Compact utility windows keep their
+existing size limits.
+v3.11: reverses the desktop banner stacking constraint: floating windows may
+overlap the sticky banner and render above it, and the drag boundary now uses
+the visible page top rather than the banner's lower edge.
+v3.12: keeps Analysis grammar cards mounted when translating the selected line
+and gives Analysis and Chat Transcript a distinct reference-translation card.
+Ask Tutor shortcuts now render into persistent collapsible Translation Details,
+Why This Wording, and Reply Options sections instead of imitating transcript
+turns; its selected line is persistent and gains a Study List action. Language
+Tools is renamed Study Tools, and the unused Analysis keyboard action is removed.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -21647,7 +21660,6 @@ Current work: ${context||"No sentence has been entered yet."}`;
             <button type="button" onclick="analysisWorkbenchTranslate(this)">🌐 Translate</button>
             <button type="button" onclick="analysisWorkbenchSave(this)">＋ Study List</button>
             <button type="button" onclick="analysisWorkbenchCoach()">❓ Ask Tutor</button>
-            <button type="button" onclick="workspaceOpenTool('keyboard')">⌨ Keyboard</button>
             <button type="button" id="analysis-workbench-transcript-button" onclick="window.openVoiceTranscriptWindow?.();requestAnimationFrame(()=>window.bringFloatingWindowToFront?.('voice-transcript-window'))">📄 Chat Transcript</button>
             <button type="button" id="analysis-workbench-color-legend-toggle" onclick="toggleAnalysisWorkbenchColorLegend(this)" aria-expanded="false">🎨 Color Legend</button>
         </div>
@@ -23610,7 +23622,7 @@ Requirements:
         if(manualBody)manualBody.dataset.combinedManualTools="1";
         toolsBody.appendChild(manualSection);
 
-        const toolsSection=makeFold("conversation-language-tools-section","Language Tools & Study",toolsBody,false);
+        const toolsSection=makeFold("conversation-language-tools-section","Study Tools",toolsBody,false);
         main.replaceChildren(primary,toolsSection);
 
         // Conversation remains the default open workspace.
@@ -26993,7 +27005,7 @@ const registry={
         placeholderId:"tutor-controls-placeholder"
     },
     tools:{
-        label:"🧰 Language Tools",
+        label:"🧰 Study Tools",
         subtitle:"Grammar tools and study review",
         viewId:"language-tools-view",
         shellId:"language-tools-window",
@@ -28903,7 +28915,7 @@ function setPrimaryLabels(){
     "#tutor-controls-window .primary-workspace-window-title":"💬 Chat with Tutor",
     "#voice-transcript-window .voice-transcript-window-title":"📝 Chat Transcript",
     "#language-coach-window .language-coach-title":"❓ Ask Tutor",
-    "#language-tools-window .primary-workspace-window-title":"🧰 Language Tools",
+    "#language-tools-window .primary-workspace-window-title":"🧰 Study Tools",
     "#conversation-settings-window .conversation-settings-title":"⚙ Chat Settings"
   };
   Object.entries(labels).forEach(([selector,text])=>{
@@ -30565,7 +30577,7 @@ else{bindObservers();setTimeout(bindObservers,900)}
   #language-header{
     position:sticky!important;
     top:0!important;
-    z-index:2147483600!important;
+    z-index:1000!important;
   }
   #tutor-controls-window,
   #voice-transcript-window,
@@ -30611,9 +30623,8 @@ let drag=null;
 const read=key=>{try{return JSON.parse(localStorage.getItem(key)||"{}")||{}}catch(_){return {}}};
 const write=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}};
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
-function bannerFloor(){
-  const header=document.getElementById("language-header");
-  return window.scrollY+(header?.offsetHeight||0)+8;
+function workspaceTop(){
+  return window.scrollY+8;
 }
 function canvasHeight(){
   /* Keep a generous but finite canvas; absolutely positioned windows must not
@@ -30633,7 +30644,7 @@ function savePosition(win,key=POSITION_KEY){
 function place(win,point){
   if(!win||!point||matchMedia(MOBILE).matches)return;
   const left=clamp(Number(point.left)||8,8,Math.max(8,document.documentElement.clientWidth-win.offsetWidth-8));
-  const top=clamp(Number(point.top)||bannerFloor(),bannerFloor(),Math.max(bannerFloor(),canvasHeight()-52));
+  const top=clamp(Number(point.top)||workspaceTop(),workspaceTop(),Math.max(workspaceTop(),canvasHeight()-52));
   Object.assign(win.style,{left:left+"px",top:top+"px",right:"auto",bottom:"auto"});
 }
 function restore(key=POSITION_KEY){
@@ -30661,9 +30672,9 @@ document.addEventListener("pointerdown",event=>{
 document.addEventListener("pointermove",event=>{
   if(!drag||event.pointerId!==drag.pointerId)return;
   const maxLeft=Math.max(8,document.documentElement.clientWidth-drag.win.offsetWidth-8);
-  const maxTop=Math.max(bannerFloor(),canvasHeight()-52);
+  const maxTop=Math.max(workspaceTop(),canvasHeight()-52);
   drag.win.style.left=clamp(event.pageX-drag.offsetX,8,maxLeft)+"px";
-  drag.win.style.top=clamp(event.pageY-drag.offsetY,bannerFloor(),maxTop)+"px";
+  drag.win.style.top=clamp(event.pageY-drag.offsetY,workspaceTop(),maxTop)+"px";
   drag.win.style.right="auto";drag.win.style.bottom="auto";
   event.preventDefault();event.stopImmediatePropagation();
 },true);
@@ -30696,7 +30707,7 @@ function boot(){
       if(chosen[id])place(win,chosen[id]);
       else{
         const current=currentPosition(win);
-        place(win,{left:current.left,top:Math.max(current.top,bannerFloor())});
+        place(win,{left:current.left,top:Math.max(current.top,workspaceTop())});
       }
     });
     bindDefaultButton();
@@ -30963,5 +30974,457 @@ else{
   color:#1d4ed8!important;
 }
 </style>
+<style id="language-tutor-v310-tall-workspace-windows-css">
+@media (min-width:701px){
+  #tutor-controls-window,
+  #voice-transcript-window,
+  #language-coach-window,
+  #language-tools-window,
+  #analysis-workbench-window,
+  #saved-transcripts-window,
+  #text-transcript-window,
+  #conversation-settings-window{
+    max-height:none!important;
+  }
+}
+</style>
+<script id="language-tutor-v310-tall-workspace-windows-runtime">
+(()=>{
+"use strict";
+const MOBILE="(max-width:700px)";
+const STORAGE_KEY="languagetutor_tall_window_heights_v310";
+const ids=[
+  "tutor-controls-window","voice-transcript-window","language-coach-window",
+  "language-tools-window","analysis-workbench-window","saved-transcripts-window",
+  "text-transcript-window","conversation-settings-window"
+];
+let ready=false,canvasQueued=false;
+const read=()=>{try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")||{}}catch(_){return {}}};
+const write=value=>{try{localStorage.setItem(STORAGE_KEY,JSON.stringify(value))}catch(_){}};
+function minimized(win){
+  if(!win)return true;
+  if(win.id==="language-coach-window"&&win.querySelector(".ask-css-minimize-toggle")?.checked)return true;
+  return win.classList.contains("all-floating-minimized")||
+    win.classList.contains("analysis-main-minimized")||
+    win.classList.contains("conversation-settings-collapsed")||
+    win.classList.contains("collapsed")||win.classList.contains("is-minimized");
+}
+function savedHeight(win){
+  const stored=Number(read()[win.id]);
+  if(Number.isFinite(stored)&&stored>=180)return stored;
+  const expanded=Number(win.dataset.expandedHeight);
+  return Number.isFinite(expanded)&&expanded>=180?expanded:0;
+}
+function saveHeight(win){
+  if(!ready||matchMedia(MOBILE).matches||!win||win.hidden||minimized(win))return;
+  const height=Math.round(win.getBoundingClientRect().height);
+  if(height<180)return;
+  const state=read();state[win.id]=height;write(state);
+}
+function restoreHeight(win){
+  if(matchMedia(MOBILE).matches||!win)return;
+  const height=savedHeight(win);if(!height)return;
+  if(Math.abs((Number.parseFloat(win.style.height)||win.offsetHeight)-height)>1){
+    win.style.setProperty("height",height+"px");
+  }
+}
+function updateCanvas(){
+  canvasQueued=false;
+  if(matchMedia(MOBILE).matches)return;
+  let needed=Math.max(1800,window.innerHeight+900);
+  ids.forEach(id=>{
+    const win=document.getElementById(id);if(!win||win.hidden)return;
+    const rect=win.getBoundingClientRect();
+    needed=Math.max(needed,Math.ceil(rect.bottom+window.scrollY+120));
+  });
+  document.body.style.setProperty("min-height",needed+"px","important");
+}
+function queueCanvas(){
+  if(canvasQueued)return;canvasQueued=true;requestAnimationFrame(updateCanvas);
+}
+function bind(win){
+  if(!win||win.dataset.tallWindowBound==="1")return;
+  win.dataset.tallWindowBound="1";
+  if("ResizeObserver" in window)new ResizeObserver(()=>{
+    saveHeight(win);queueCanvas();
+  }).observe(win);
+  new MutationObserver(()=>{
+    if(!win.hidden&&!minimized(win))setTimeout(()=>{restoreHeight(win);queueCanvas()},40);
+    else queueCanvas();
+  }).observe(win,{attributes:true,attributeFilter:["class","hidden"]});
+}
+function boot(){
+  if(matchMedia(MOBILE).matches)return;
+  ids.forEach(id=>bind(document.getElementById(id)));
+  document.addEventListener("click",event=>{
+    const control=event.target.closest?.(
+      ".all-floating-minimize,.ask-css-minimize-label,.analysis-main-minimize,"+
+      "#saved-transcripts-collapse-btn,#text-transcript-collapse-btn,#conversation-settings-minimize"
+    );
+    if(!control)return;
+    const win=control.closest(ids.map(id=>`#${id}`).join(","));
+    const height=win?savedHeight(win):0;
+    if(!win||!height)return;
+    setTimeout(()=>{
+      if(minimized(win))return;
+      const state=read();state[win.id]=height;write(state);
+      win.style.setProperty("height",height+"px");queueCanvas();
+    },80);
+  },true);
+  /* Established window runtimes finish their viewport-clamped startup first;
+     taller saved dimensions are then restored as the final size decision. */
+  setTimeout(()=>{
+    ids.forEach(id=>restoreHeight(document.getElementById(id)));
+    ready=true;queueCanvas();
+  },1550);
+  window.addEventListener("resize",queueCanvas,{passive:true});
+  document.addEventListener("pointerup",queueCanvas,true);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
+<style id="language-tutor-v312-persistent-study-results-css">
+/* Translation is reference material, not another speaker turn. */
+.lt-reference-translation,
+#voice-transcript-window #transcript-selected-translation.transcript-selected-translation{
+  box-sizing:border-box!important;
+  display:block!important;
+  width:100%!important;
+  margin:8px 0 0!important;
+  padding:10px 13px 11px 15px!important;
+  border:1px dashed #d6a21e!important;
+  border-left:5px solid #d97706!important;
+  border-radius:8px!important;
+  background:#fffbeb!important;
+  color:#422006!important;
+  box-shadow:none!important;
+  font-family:var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif)!important;
+  font-size:13px!important;
+  line-height:1.5!important;
+  font-weight:700!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+.lt-reference-translation[hidden],
+#voice-transcript-window #transcript-selected-translation[hidden]{display:none!important}
+.lt-reference-translation-label,
+#voice-transcript-window #transcript-selected-translation::before{
+  content:"REFERENCE TRANSLATION";
+  display:block!important;
+  margin:0 0 4px!important;
+  color:#a34b05!important;
+  font-size:9px!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+  letter-spacing:.07em!important;
+  text-transform:uppercase!important;
+}
+.lt-reference-translation-text{display:block;font-size:14px;line-height:1.5;font-weight:800}
+#analysis-workbench-translation-host{flex:0 0 auto;margin:0}
+#analysis-workbench-translation-host .lt-reference-translation{margin:0!important}
+
+/* The selected line is durable context in Ask Tutor. */
+#language-coach-window #ask-tutor-context-clear{display:none!important}
+#language-coach-window #ask-tutor-context.ask-tutor-context{padding-right:14px!important}
+#language-coach-window .ask-tutor-study-actions{flex-wrap:wrap!important}
+
+#ask-tutor-tool-sections{
+  display:flex;flex-direction:column;gap:8px;order:3;
+  flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+}
+#ask-tutor-tool-sections:not(:has(> :not([hidden]))){display:none}
+.ask-tutor-tool-panel{
+  border:1px solid #d9e1ec;border-radius:11px;background:#fff;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);overflow:hidden;
+}
+.ask-tutor-tool-panel[hidden]{display:none!important}
+.ask-tutor-tool-panel>summary{
+  display:flex;align-items:center;gap:8px;min-height:38px;padding:8px 12px;
+  list-style:none;cursor:pointer;color:#25324a;font-size:11px;font-weight:850;
+  user-select:none;
+}
+.ask-tutor-tool-panel>summary::-webkit-details-marker{display:none}
+.ask-tutor-tool-panel>summary::after{content:"▸";margin-left:auto;color:#64748b;font-size:14px}
+.ask-tutor-tool-panel[open]>summary::after{content:"▾"}
+.ask-tutor-tool-panel.translate-panel>summary{background:#fffbeb;border-bottom:1px solid #fde68a}
+.ask-tutor-tool-panel.why-panel>summary{background:#f5f3ff;border-bottom:1px solid #ddd6fe}
+.ask-tutor-tool-panel.reply-panel>summary{background:#ecfdf5;border-bottom:1px solid #a7f3d0}
+.ask-tutor-tool-panel:not([open])>summary{border-bottom:0!important}
+.ask-tutor-tool-content{
+  padding:11px 13px;color:#334155;font-size:12px;line-height:1.6;
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.ask-tutor-tool-content.is-loading{color:#64748b;font-style:italic}
+.ask-tutor-direct-translation{margin:0!important;border-radius:0!important;border-width:0 0 1px 5px!important}
+.ask-tutor-shortcut-error{color:#be123c;font-weight:700}
+.ask-tutor-reply-grid{display:flex;flex-direction:column;gap:9px;white-space:normal}
+.ask-tutor-section-reply-card{
+  padding:10px;border:1px solid #bbf7d0;border-radius:9px;background:#f7fef9;
+}
+.ask-tutor-section-reply-label{
+  color:#047857;font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
+}
+.ask-tutor-section-reply-text{margin-top:4px;color:#102a20;font-size:14px;line-height:1.45;font-weight:800}
+.ask-tutor-section-reply-note{margin-top:3px;color:#526477;font-size:10px;line-height:1.45}
+.ask-tutor-section-reply-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ask-tutor-section-reply-actions button{min-height:29px;padding:5px 8px;font-size:9.5px;font-weight:750}
+</style>
+<script id="language-tutor-v312-persistent-study-results-runtime">
+(()=>{
+"use strict";
+const clean=value=>String(value||"").trim();
+const languageCode=()=>clean(document.body?.dataset?.studyLanguage)||"de";
+function languageConfig(){
+  try{
+    const cfg=typeof window.langConfig==="function"?window.langConfig():null;
+    if(cfg)return cfg;
+  }catch(_){}
+  const code=languageCode();
+  return {code,name:code==="es"?"Spanish":code==="ja"?"Japanese":"German",locale:code==="es"?"es-ES":code==="ja"?"ja-JP":"de-DE"};
+}
+function setCoachStatus(message,error=false){
+  const el=document.getElementById("language-coach-status");if(!el)return;
+  el.textContent=message||"";el.hidden=!message;el.style.color=error?"#be123c":"#64748b";
+}
+async function translateToEnglish(text,code){
+  let value="";
+  if(typeof window.googleTranslateApiCall==="function"){
+    try{value=clean(await window.googleTranslateApiCall(text,code||languageCode(),"en"))}catch(_){}
+  }
+  if(!value&&typeof window.callAIJson==="function"){
+    const data=await window.callAIJson(`Translate this line into concise, natural English. Return JSON only: {"translation":"..."}\nLine: ${text}`);
+    value=clean(data?.translation||data?.text);
+  }
+  return value;
+}
+function makeReferenceCard(id){
+  const card=document.createElement("div");card.id=id;card.className="lt-reference-translation";card.hidden=true;
+  const label=document.createElement("span");label.className="lt-reference-translation-label";label.textContent="Reference translation";
+  const text=document.createElement("span");text.className="lt-reference-translation-text";
+  card.append(label,text);return card;
+}
+
+/* ANALYSIS WORKBENCH: preserve the parse and place translation above it. */
+function analysisSentence(){return clean(document.getElementById("analysis-workbench-sentence")?.textContent)}
+function ensureAnalysisTranslation(){
+  let host=document.getElementById("analysis-workbench-translation-host");if(host)return host;
+  const tools=document.querySelector("#analysis-workbench-window .analysis-workbench-utility-tools");
+  if(!tools)return null;
+  host=document.createElement("div");host.id="analysis-workbench-translation-host";
+  host.appendChild(makeReferenceCard("analysis-workbench-reference-translation"));
+  tools.insertAdjacentElement("afterend",host);return host;
+}
+function clearAnalysisTranslation(){
+  const card=document.getElementById("analysis-workbench-reference-translation");if(!card)return;
+  card.hidden=true;card.dataset.source="";card.dataset.language="";
+  const text=card.querySelector(".lt-reference-translation-text");if(text)text.textContent="";
+}
+function showAnalysisWindow(){
+  const win=document.getElementById("analysis-workbench-window");if(!win)return;
+  win.hidden=false;win.removeAttribute("hidden");
+  if(win.classList.contains("analysis-main-minimized"))win.querySelector(".analysis-main-minimize")?.click();
+  requestAnimationFrame(()=>window.bringFloatingWindowToFront?.(win));
+}
+function parserIsMounted(){return Boolean(document.querySelector("#analysis-workbench-results .analysis-parser-card"))}
+const priorOpenAnalysis=window.openAnalysisWorkbench;
+if(typeof priorOpenAnalysis==="function"){
+  window.openAnalysisWorkbench=function(sentence,code,entry){
+    const next=clean(sentence),win=document.getElementById("analysis-workbench-window");
+    const same=Boolean(next&&next===clean(win?.dataset?.v312AnalysisLine)&&parserIsMounted());
+    if(same){showAnalysisWindow();return win}
+    clearAnalysisTranslation();
+    const result=priorOpenAnalysis.call(this,sentence,code,entry);
+    if(win){win.dataset.v312AnalysisLine=next;win.dataset.v312AnalysisLanguage=clean(code)||languageCode()}
+    ensureAnalysisTranslation();
+    requestAnimationFrame(()=>window.analysisWorkbenchFullParse?.(null));
+    return result;
+  };
+}
+window.analysisWorkbenchTranslate=async function(button){
+  const source=analysisSentence();if(!source)return;
+  const code=clean(document.getElementById("analysis-workbench-window")?.dataset?.v312AnalysisLanguage)||languageCode();
+  ensureAnalysisTranslation();
+  const card=document.getElementById("analysis-workbench-reference-translation");
+  const output=card?.querySelector(".lt-reference-translation-text");if(!card||!output)return;
+  card.hidden=false;
+  if(card.dataset.source===source&&card.dataset.language===code&&clean(output.textContent)&&output.textContent!=="Translating…")return;
+  card.dataset.source=source;card.dataset.language=code;output.textContent="Translating…";
+  const old=button?.textContent||"🌐 Translate";if(button){button.disabled=true;button.textContent="Translating…"}
+  try{output.textContent=await translateToEnglish(source,code)||"Translation unavailable."}
+  catch(_){output.textContent="Translation unavailable. Try again."}
+  finally{if(button){button.disabled=false;button.textContent=old}}
+};
+function analyzeLine(text,entry={source:"ask-tutor",text}){
+  const source=clean(text);if(!source)return;
+  window.openAnalysisWorkbench?.(source,languageCode(),entry);
+  showAnalysisWindow();
+}
+window.toggleAskTutorAnalysis=()=>analyzeLine(window.getAskTutorContext?.()||document.getElementById("ask-tutor-context-text")?.textContent);
+window.showAskTutorAnalysisMode=()=>window.toggleAskTutorAnalysis();
+window.openAskTutorAnalysisForText=text=>analyzeLine(text);
+window.analyzeAskTutorReplyOption=text=>analyzeLine(text,{source:"ask-tutor-reply-option",text});
+
+/* ASK TUTOR: durable tool sections instead of synthetic private-chat turns. */
+function askContext(){return clean(window.getAskTutorContext?.()||document.getElementById("ask-tutor-context-text")?.textContent)}
+function toolSection(id,className,title){
+  const details=document.createElement("details");details.id=id;details.className=`ask-tutor-tool-panel ${className}`;details.hidden=true;
+  const summary=document.createElement("summary");summary.textContent=title;
+  const body=document.createElement("div");body.className="ask-tutor-tool-content";
+  details.append(summary,body);return details;
+}
+function ensureAskToolSections(){
+  let host=document.getElementById("ask-tutor-tool-sections");if(host)return host;
+  const actions=document.querySelector("#language-coach-window .ask-tutor-study-actions");if(!actions)return null;
+  host=document.createElement("div");host.id="ask-tutor-tool-sections";
+  const direct=makeReferenceCard("ask-tutor-direct-translation");direct.classList.add("ask-tutor-direct-translation");
+  host.append(
+    direct,
+    toolSection("ask-tutor-translation-details","translate-panel","🌐 Translation details"),
+    toolSection("ask-tutor-why-section","why-panel","❓ Why this wording?"),
+    toolSection("ask-tutor-reply-section","reply-panel","↩ Reply options")
+  );
+  actions.insertAdjacentElement("afterend",host);return host;
+}
+function resetAskTools(){
+  const host=ensureAskToolSections();if(!host)return;
+  host.querySelectorAll(".lt-reference-translation,.ask-tutor-tool-panel").forEach(panel=>{
+    panel.hidden=true;panel.removeAttribute("open");panel.dataset.context="";panel.dataset.ready="";
+  });
+  host.querySelectorAll(".lt-reference-translation-text,.ask-tutor-tool-content").forEach(el=>{el.replaceChildren();el.textContent=""});
+}
+function openPanel(id,context,loading){
+  ensureAskToolSections();const panel=document.getElementById(id),body=panel?.querySelector(".ask-tutor-tool-content");
+  if(!panel||!body)return null;
+  panel.hidden=false;panel.open=true;panel.dataset.context=context;
+  body.classList.remove("ask-tutor-shortcut-error");
+  body.classList.toggle("is-loading",Boolean(loading));if(loading)body.textContent=loading;
+  return {panel,body};
+}
+function requireAskContext(){
+  const context=askContext();
+  if(!context)setCoachStatus("Select a conversation line first so the Tutor knows what to study.",true);
+  return context;
+}
+async function runAskTranslation(){
+  const context=requireAskContext();if(!context)return;
+  ensureAskToolSections();
+  const direct=document.getElementById("ask-tutor-direct-translation");
+  const directText=direct?.querySelector(".lt-reference-translation-text");
+  const section=document.getElementById("ask-tutor-translation-details");
+  if(section?.dataset.ready==="1"&&section.dataset.context===context){direct.hidden=false;section.hidden=false;section.open=true;return}
+  if(direct&&directText){direct.hidden=false;direct.dataset.source=context;directText.textContent="Translating…"}
+  const opened=openPanel("ask-tutor-translation-details",context,"Preparing translation notes…");if(!opened)return;
+  setCoachStatus("Translating selected line…");
+  let literal="";
+  try{literal=await translateToEnglish(context,languageCode());if(directText)directText.textContent=literal||"Translation unavailable."}catch(_){if(directText)directText.textContent="Translation unavailable."}
+  try{
+    if(typeof window.callAIJson!=="function")throw new Error("Add an API key for translation details.");
+    const cfg=languageConfig();
+    const data=await window.callAIJson(`You are the translation-details tool in LanguageTutor.\nTarget language: ${cfg.name}\nSelected line: ${context}\nGive a natural direct English translation and concise learner-useful details about nuance, idiom, register, or structure. Do not repeat obvious points. Return JSON only: {"translation":"natural English translation","details":"concise explanatory details"}`);
+    const refined=clean(data?.translation);if(refined&&directText)directText.textContent=refined;
+    opened.body.textContent=clean(data?.details||data?.explanation)||"No additional translation notes are needed.";
+    opened.body.classList.remove("is-loading");opened.panel.dataset.ready="1";setCoachStatus("");
+  }catch(error){
+    opened.body.textContent=literal?"Direct translation is available above. Additional details are unavailable.":clean(error?.message)||"Translation details are unavailable.";
+    opened.body.classList.remove("is-loading");opened.panel.dataset.ready=literal?"1":"";setCoachStatus("",false);
+  }
+}
+async function runAskWhy(){
+  const context=requireAskContext();if(!context)return;
+  const existing=document.getElementById("ask-tutor-why-section");
+  if(existing?.dataset.ready==="1"&&existing.dataset.context===context){existing.hidden=false;existing.open=true;return}
+  const opened=openPanel("ask-tutor-why-section",context,"Tutor is examining the wording…");if(!opened)return;
+  setCoachStatus("Tutor is examining the wording…");
+  try{
+    if(typeof window.callAIJson!=="function")throw new Error("Ask Tutor requires a valid API key.");
+    const cfg=languageConfig();
+    const data=await window.callAIJson(`You are the Why This Wording tool in LanguageTutor.\nTarget language: ${cfg.name}\nSelected line: ${context}\nExplain in concise English why this line is worded this way. Focus on the construction, word order, idiom, or register a learner is most likely to wonder about. Compare a plausible alternative only when useful. Return JSON only: {"explanation":"learner-friendly explanation"}`);
+    opened.body.textContent=clean(data?.explanation||data?.answer)||"No explanation was returned.";
+    opened.body.classList.remove("is-loading");opened.panel.dataset.ready="1";setCoachStatus("");
+  }catch(error){opened.body.textContent=clean(error?.message)||"Wording help is unavailable.";opened.body.classList.add("ask-tutor-shortcut-error");setCoachStatus("",false)}
+}
+function replyAction(label,handler,primary=false){
+  const button=document.createElement("button");button.type="button";button.textContent=label;if(primary)button.className="primary";button.addEventListener("click",handler);return button;
+}
+function renderReplyOptions(body,options,intro){
+  body.replaceChildren();body.classList.remove("is-loading","ask-tutor-shortcut-error");
+  const grid=document.createElement("div");grid.className="ask-tutor-reply-grid";
+  if(intro){const lead=document.createElement("div");lead.textContent=intro;grid.appendChild(lead)}
+  const cfg=languageConfig();
+  options.forEach((option,index)=>{
+    const phrase=clean(option?.text);if(!phrase)return;
+    const card=document.createElement("div");card.className="ask-tutor-section-reply-card";
+    const label=document.createElement("div");label.className="ask-tutor-section-reply-label";label.textContent=index===0?"Suggested reply":`Alternative ${index}`;
+    const text=document.createElement("div");text.className="ask-tutor-section-reply-text";text.textContent=phrase;card.append(label,text);
+    if(option?.note){const note=document.createElement("div");note.className="ask-tutor-section-reply-note";note.textContent=clean(option.note);card.appendChild(note)}
+    const actions=document.createElement("div");actions.className="ask-tutor-section-reply-actions";
+    actions.append(
+      replyAction("↩ Use in reply",()=>window.useLanguageCoachPhrase?.(phrase),true),
+      replyAction("🔊 Listen",()=>window.speakRawText?.(phrase,cfg.locale)),
+      replyAction("🔎 Analyze",()=>analyzeLine(phrase,{source:"ask-tutor-reply-option",text:phrase})),
+      replyAction("⧉ Copy",async event=>{try{await navigator.clipboard.writeText(phrase);const b=event.currentTarget,old=b.textContent;b.textContent="✓ Copied";setTimeout(()=>b.textContent=old,900)}catch(_){}}),
+      replyAction("＋ Study List",event=>window.saveVoiceTutorPhrase?.(phrase,cfg.code||languageCode(),event.currentTarget))
+    );
+    card.appendChild(actions);grid.appendChild(card);
+  });
+  body.appendChild(grid);
+}
+async function runAskReply(){
+  const context=requireAskContext();if(!context)return;
+  const existing=document.getElementById("ask-tutor-reply-section");
+  if(existing?.dataset.ready==="1"&&existing.dataset.context===context){existing.hidden=false;existing.open=true;return}
+  const opened=openPanel("ask-tutor-reply-section",context,"Tutor is preparing reply options…");if(!opened)return;
+  setCoachStatus("Tutor is preparing reply options…");
+  try{
+    if(typeof window.callAIJson!=="function")throw new Error("Ask Tutor requires a valid API key.");
+    const cfg=languageConfig();
+    const data=await window.callAIJson(`You are the reply-options tool in LanguageTutor.\nTarget language: ${cfg.name}\nConversation line to answer: ${context}\nCreate three short, natural replies the learner could say next. Option 1 is the simplest default, option 2 varies the wording, and option 3 may add personality or move the conversation forward. Notes are brief English guidance. Return JSON only: {"intro":"brief English guidance or empty string","options":[{"text":"target-language reply","note":"brief English note"},{"text":"target-language reply","note":"brief English note"},{"text":"target-language reply","note":"brief English note"}]}`);
+    const options=Array.isArray(data?.options)?data.options.map(item=>({text:clean(item?.text),note:clean(item?.note)})).filter(item=>item.text).slice(0,4):[];
+    if(!options.length)throw new Error("Tutor returned no usable reply choices.");
+    renderReplyOptions(opened.body,options,clean(data?.intro));opened.panel.dataset.ready="1";setCoachStatus("");
+  }catch(error){opened.body.textContent=clean(error?.message)||"Reply help is unavailable.";opened.body.classList.remove("is-loading");opened.body.classList.add("ask-tutor-shortcut-error");setCoachStatus("",false)}
+}
+function replaceAction(id,handler){
+  const old=document.getElementById(id);if(!old)return null;
+  const button=old.cloneNode(true);old.replaceWith(button);button.addEventListener("click",handler);return button;
+}
+function addAskStudyButton(){
+  const actions=document.querySelector("#language-coach-window .ask-tutor-study-actions");if(!actions||document.getElementById("ask-tutor-study-list-btn"))return;
+  const button=document.createElement("button");button.type="button";button.id="ask-tutor-study-list-btn";button.textContent="＋ Study List";
+  button.addEventListener("click",()=>{const context=requireAskContext();if(context)window.saveVoiceTutorPhrase?.(context,languageCode(),button)});
+  const transcript=document.getElementById("ask-tutor-transcripts-btn");actions.insertBefore(button,transcript||null);
+}
+function installAskTools(){
+  ensureAskToolSections();addAskStudyButton();document.getElementById("ask-tutor-context-clear")?.remove();
+  replaceAction("ask-tutor-analyze-btn",()=>window.toggleAskTutorAnalysis?.());
+  replaceAction("ask-tutor-translate-btn",runAskTranslation);
+  replaceAction("ask-tutor-why-btn",runAskWhy);
+  replaceAction("ask-tutor-reply-btn",runAskReply);
+  const priorSet=window.setAskTutorContext;
+  if(typeof priorSet==="function"&&!priorSet.__v312PersistentTools){
+    const wrapped=function(text){const before=askContext(),result=priorSet.apply(this,arguments),after=askContext();if(before!==after)resetAskTools();return result};
+    wrapped.__v312PersistentTools=true;window.setAskTutorContext=wrapped;
+  }
+  const priorClear=window.clearAskTutorContext;
+  if(typeof priorClear==="function"&&!priorClear.__v312PersistentTools){
+    const wrapped=function(){const result=priorClear.apply(this,arguments);resetAskTools();return result};
+    wrapped.__v312PersistentTools=true;window.clearAskTutorContext=wrapped;
+  }
+}
+
+/* Rename the visible workspace while retaining stable internal IDs. */
+function normalizeStudyToolsName(){
+  document.querySelectorAll("#language-tools-window .primary-workspace-window-title,#language-tools-view .primary-workspace-window-title").forEach(el=>{if(el.textContent!=="🧰 Study Tools")el.textContent="🧰 Study Tools"});
+  const win=document.getElementById("language-tools-window");if(win)win.setAttribute("aria-label","Study Tools window");
+  document.querySelectorAll("button").forEach(button=>{if(clean(button.textContent)==="Language Tools")button.textContent="Study Tools"});
+}
+function boot(){
+  ensureAnalysisTranslation();installAskTools();normalizeStudyToolsName();
+  const observer=new MutationObserver(()=>normalizeStudyToolsName());
+  const tools=document.getElementById("language-tools-window");if(tools)observer.observe(tools,{childList:true,subtree:true,characterData:true});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
 </body>
 </html>
