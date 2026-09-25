@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — v2.14 SOURCE
+LanguageTutor — v3 SOURCE
 Based on Version 1 / exact user rollback baseline.
 Changes: replaces dock/close lifecycle with one persistent floating
 workspace state. Tutor Controls, Conversation Transcript, Ask Tutor, and
@@ -89,6 +89,31 @@ resizable, minimizable, click-to-front workspace; Ask Tutor's Analyze,
 Translate, and Why controls send the current context to it. Both windows join
 Minimize All, Open All, and Set current layout as default, while the chat-only
 layout minimizes them.
+v2.15: prevents the retired Translation & Manual Input interface from flashing
+during first paint. Its legacy DOM remains available in a permanently hidden
+compatibility container, and the shared translation services used by Quick
+Translate, Chat Transcript, and Ask Tutor remain unchanged.
+v2.16: removes the author credential from the compact top banner and places
+“by Peter Ward, Ed.D.” in the footer in place of the retired browser-only
+execution description. The banner subtitle now describes the broader app as
+an interactive Conversation, Grammar & Study Companion in each language.
+v2.17: consolidates API status into the settings gear: it reads “Insert API
+Key” until a key is configured, then changes to “API Key Valid.” The redundant
+status pill is hidden. A shared selected-language bridge also repairs Ask
+Tutor's Help me reply suggestions and Use in reply actions for Spanish and
+Japanese instead of allowing those later modules to fall back to German.
+v2.18: unifies floating-window stacking across every workspace. Selecting a
+window or restoring it from a title card moves it above the others; minimizing
+a window moves its title card behind open windows. The coordinator also
+normalizes the formerly competing keyboard, analysis, and quick-translate
+z-index ranges while preserving Ask Tutor's mutation-safe body-owned layer.
+Ask Tutor also gains a Transcripts shortcut that opens Saved Tutor Transcripts
+and promotes that window through the same stacking coordinator.
+v2.19: changes the German Special Characters window from conversation blue to
+a distinct teal identity, separating it visually from Chat with Tutor while
+leaving its German-specific title, characters, and behavior unchanged.
+v3: promotes the complete v2.19 build to the next major-version milestone.
+This is a version-label change only; its tested behavior is otherwise identical.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -98,6 +123,16 @@ layout minimizes them.
     <meta name="application-name" content="LanguageTutor">
     <meta name="apple-mobile-web-app-title" content="LanguageTutor">
     <title>LanguageTutor</title>
+    <!-- v2.15: suppress the retired translation console before startup scripts
+         can relocate it to the hidden compatibility host. Keep these nodes in
+         the DOM because current tools still share their translation services. -->
+    <style id="language-tutor-v215-retired-manual-first-paint-css">
+        #mobile-input-workspaces,
+        #combined-manual-tools,
+        #retired-manual-input-host {
+            display: none !important;
+        }
+    </style>
     <!-- Tailwind CSS for rich, modern styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome for beautiful icons -->
@@ -7463,9 +7498,8 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
                 <div>
                     <h1 id="language-title" class="text-2xl font-bold tracking-tight" style="color:#fbbf24 !important;">
                         LanguageTutor
-                        <span style="font-size:9px;font-weight:500;color:#cbd5e1;letter-spacing:.04em;white-space:nowrap;vertical-align:baseline;margin-left:7px;">by Peter Ward, Ed.D.</span>
                     </h1>
-                    <p id="language-subtitle" class="text-xs text-amber-100">Interactive German Grammar & Translation Companion</p>
+                    <p id="language-subtitle" class="text-xs text-amber-100">Interactive German Conversation, Grammar &amp; Study Companion</p>
                 </div>
             </div>
             <div class="flex items-center gap-4">
@@ -7478,15 +7512,16 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
                         <option value="ja">日本語</option>
                     </select>
                 </label>
-                <div id="api-status-wrap" class="flex items-center gap-3 px-4 py-2 rounded-full text-xs font-semibold backdrop-blur-sm border">
+                <div id="api-status-wrap" class="hidden" hidden aria-hidden="true">
                     <span id="api-status-dot" class="inline-block w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping"></span>
                     <span id="api-status-text">Active: Free Translation (No Key)</span>
                 </div>
-                <button id="settings-button" onclick="toggleSettingsPanel()" class="p-2 transition rounded-lg flex items-center justify-center border shadow-sm" title="Settings (Translation & AI Keys)">
+                <button id="settings-button" onclick="toggleSettingsPanel()" class="px-3 py-2 gap-2 transition rounded-lg flex items-center justify-center border shadow-sm" title="Insert or update API key">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.43l-1.003.828c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.43l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.52 0 010-.255c.007-.378-.138-.75-.43-.991l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.645-.869l.214-1.28z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
+                    <span class="settings-button-label hidden sm:inline text-xs font-bold whitespace-nowrap">Insert API Key</span>
                 </button>
             </div>
         </div>
@@ -7621,7 +7656,7 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
 
 
             <!-- Inputs and Outputs Console (Two Separate Workspaces) -->
-            <div id="mobile-input-workspaces" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div id="mobile-input-workspaces" class="grid grid-cols-1 xl:grid-cols-2 gap-6" hidden aria-hidden="true">
 
                 <!-- CARD 1: English to German Workspace -->
                 <div id="mobile-english-card" class="mobile-section mobile-translate bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex flex-col justify-between space-y-4">
@@ -8821,7 +8856,7 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
 
     <!-- Page Footer -->
     <footer class="bg-slate-800 text-slate-400 py-6 border-t border-slate-700 text-center text-xs">
-        <p>&copy; 2026 LanguageTutor App. Built for seamless browser-only execution without API keys.</p>
+        <p>&copy; 2026 LanguageTutor App. by Peter Ward, Ed.D.</p>
     </footer>
 
     <!-- Interactive Javascript Logic -->
@@ -9052,6 +9087,17 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
             const chatPill = document.getElementById("chat-status-pill");
             const aiStatus = document.getElementById("ai-provider-status");
             const translationStatus = document.getElementById("translation-key-status");
+            const settingsButton = document.getElementById("settings-button");
+            const settingsLabel = settingsButton?.querySelector(".settings-button-label");
+
+            if (settingsLabel) settingsLabel.textContent = aiKey ? "API Key Valid" : "Insert API Key";
+            if (settingsButton) {
+                settingsButton.dataset.keyValid = aiKey ? "true" : "false";
+                settingsButton.title = aiKey
+                    ? "API key is configured; open API key settings"
+                    : "Insert API key";
+                settingsButton.setAttribute("aria-label", settingsButton.title);
+            }
 
             if (translationStatus) {
                 translationStatus.textContent = translationKey
@@ -9068,7 +9114,7 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
             if (aiKey) {
                 if (dot) dot.className = "inline-block w-2.5 h-2.5 bg-amber-400 rounded-full animate-ping";
                 if (text) {
-                    text.innerText = "AI: " + providerDisplayName(provider);
+                    text.innerText = "API Key Valid";
                     text.className = "text-amber-300 font-semibold";
                 }
                 if (chatOverlay) chatOverlay.classList.add("hidden");
@@ -14337,7 +14383,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         de: {
             code:"de", locale:"de-DE", name:"German", native:"Deutsch",
             title:"DeutschTutor", badge:"🇩🇪",
-            subtitle:"Interactive German Grammar & Translation Companion",
+            subtitle:"Interactive German Conversation, Grammar & Study Companion",
             header:"linear-gradient(180deg,#111111 0%,#111111 72%,#dd0000 72%,#dd0000 86%,#ffcc00 86%,#ffcc00 100%)",
             headerText:"#fff8d6", titleColor:"#ffcc00", subtitleColor:"#fff0a6", bylineColor:"#f8fafc",
             badgeBg:"#ffffff", badgeText:"#111111", badgeBorder:"#111111",
@@ -14350,7 +14396,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         es: {
             code:"es", locale:"es-ES", name:"Spanish", native:"Español",
             title:"Tutor de Español", badge:"🇪🇸",
-            subtitle:"Interactive Spanish Grammar & Translation Companion",
+            subtitle:"Interactive Spanish Conversation, Grammar & Study Companion",
             header:"linear-gradient(180deg,#aa151b 0%,#aa151b 25%,#f1bf00 25%,#f1bf00 80%,#aa151b 80%,#aa151b 100%)",
             headerText:"#5b0b0f", titleColor:"#6f0f15", subtitleColor:"#5b0b0f", bylineColor:"#7b171c",
             badgeBg:"#ffffff", badgeText:"#111111", badgeBorder:"#aa151b",
@@ -14363,7 +14409,7 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         ja: {
             code:"ja", locale:"ja-JP", name:"Japanese", native:"日本語",
             title:"日本語チューター", badge:"🇯🇵",
-            subtitle:"Interactive Japanese Grammar & Translation Companion",
+            subtitle:"Interactive Japanese Conversation, Grammar & Study Companion",
             header:"radial-gradient(circle at 18% 50%,#bc002d 0 24px,transparent 25px),linear-gradient(180deg,#ffffff 0%,#ffffff 88%,#bc002d 88%,#bc002d 100%)",
             headerText:"#1f2937", titleColor:"#bc002d", subtitleColor:"#475569", bylineColor:"#64748b",
             badgeBg:"#ffffff", badgeText:"#111111", badgeBorder:"#bc002d",
@@ -16318,6 +16364,12 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
     }
 
     function langConfig(){ return LANGUAGE_MODES[currentStudyLanguage] || LANGUAGE_MODES.de; }
+    /* Later workspace modules run in their own closures. Expose the selected
+       language controller so Ask Tutor and its reply actions do not silently
+       fall back to German when Spanish or Japanese is active. */
+    window.LANGUAGE_MODES=LANGUAGE_MODES;
+    window.langConfig=langConfig;
+    window.currentStudyLanguage=currentStudyLanguage;
     function targetCode(){ return langConfig().code; }
     function targetLocale(){ return langConfig().locale; }
     function cap(s){ s=String(s||""); return s ? s[0].toUpperCase()+s.slice(1) : s; }
@@ -18082,6 +18134,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         if(!LANGUAGE_MODES[code]) code="de";
         if(voiceTutorState.active) stopVoiceConversation(true);
         currentStudyLanguage=code;
+        window.currentStudyLanguage=code;
         clearActiveNonGermanAIParse();
         if(typeof clearQuizAdvanceTimer==="function") clearQuizAdvanceTimer();
         if(typeof resetLanguageQuizCard==="function") resetLanguageQuizCard(code);
@@ -20675,6 +20728,7 @@ Current work: ${context||"No sentence has been entered yet."}`;
         buildMultilangGrammarShell();
         const stored=(typeof safeStorageGet==="function" ? safeStorageGet("deutschlerner_study_language") : "") || "de";
         currentStudyLanguage=LANGUAGE_MODES[stored]?stored:"de";
+        window.currentStudyLanguage=currentStudyLanguage;
 
         const selector=document.getElementById("study-language-select");
         if(selector){
@@ -22884,6 +22938,7 @@ Do not continue the conversation.`;
             <button type="button" id="ask-tutor-translate-btn">🌐 Translate</button>
             <button type="button" id="ask-tutor-why-btn">❓ Why this wording?</button>
             <button type="button" id="ask-tutor-reply-btn">↩ Help me reply</button>
+            <button type="button" id="ask-tutor-transcripts-btn" onclick="openSavedTutorTranscripts()" title="Open saved tutor transcripts">🗂 Transcripts</button>
         </div>
 
         <div id="ask-tutor-analysis-host" class="ask-tutor-analysis-host" hidden></div>
@@ -23512,6 +23567,8 @@ Requirements:
         toolsBody.appendChild(subsection("Study & Review",study,"combined-study-review"));
 
         const manualSection=subsection("Translation & Manual Input",manual,"combined-manual-tools");
+        manualSection.hidden=true;
+        manualSection.setAttribute("aria-hidden","true");
         const manualBody=manualSection.querySelector("#mobile-input-workspaces") || manualSection;
         if(manualBody)manualBody.dataset.combinedManualTools="1";
         toolsBody.appendChild(manualSection);
@@ -29623,9 +29680,9 @@ window.addEventListener("resize",()=>{if(mounted)position(false)});
   resize:both!important;
 }
 body[data-study-language="de"] #special-character-palette{
-  --lt-keyboard-accent:#1d4ed8;--lt-keyboard-border:#60a5fa;
-  --lt-keyboard-title-bg:linear-gradient(135deg,#bfdbfe 0%,#dbeafe 100%);
-  --lt-keyboard-title-ink:#1e3a8a;--lt-keyboard-helper-ink:#3f5f91;
+  --lt-keyboard-accent:#0f766e;--lt-keyboard-border:#2dd4bf;
+  --lt-keyboard-title-bg:linear-gradient(135deg,#99f6e4 0%,#ccfbf1 100%);
+  --lt-keyboard-title-ink:#134e4a;--lt-keyboard-helper-ink:#316f69;
 }
 body[data-study-language="es"] #special-character-palette{
   --lt-keyboard-accent:#c2410c;--lt-keyboard-border:#fb923c;
@@ -30272,6 +30329,124 @@ function bind(){
   setTimeout(normalizeTitlebar,500);setTimeout(normalizeTitlebar,900);
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bind,{once:true});else bind();
+})();
+</script>
+<style id="language-tutor-v218-window-stack-css">
+/* Ask Tutor remains mutation-safe: its back layer, like its front layer, is
+   owned by the body rather than written onto the observed outer window. */
+body.ask-tutor-force-back #language-coach-window{
+  z-index:20000!important;
+}
+</style>
+<script id="language-tutor-v218-window-stack-runtime">
+(()=>{
+"use strict";
+const ids=[
+  "tutor-controls-window","voice-transcript-window","language-coach-window",
+  "language-tools-window","quick-translate-window","analysis-workbench-window",
+  "special-character-palette","floating-kana-tool","saved-transcripts-window",
+  "text-transcript-window","conversation-settings-window"
+];
+const selector=ids.map(id=>`#${id}`).join(",");
+const lastState=new WeakMap();
+
+function panel(value){
+  return typeof value==="string" ? document.getElementById(value) : value;
+}
+function minimized(win){
+  if(!win)return false;
+  if(win.id==="language-coach-window"){
+    return Boolean(win.querySelector(".ask-css-minimize-toggle")?.checked);
+  }
+  return win.classList.contains("all-floating-minimized") ||
+    win.classList.contains("quick-translate-minimized") ||
+    win.classList.contains("analysis-main-minimized") ||
+    win.classList.contains("special-character-minimized") ||
+    win.classList.contains("floating-kana-minimized") ||
+    win.classList.contains("is-minimized");
+}
+function visiblePanels(){
+  return ids.map(id=>document.getElementById(id)).filter(win=>win&&!win.hidden);
+}
+function setLayer(win,value){
+  if(!win || win.id==="language-coach-window")return;
+  win.style.setProperty("z-index",String(value),"important");
+}
+function syncAskTutorLayer(target=null){
+  const coach=document.getElementById("language-coach-window");
+  document.body.classList.remove("ask-tutor-force-front","ask-tutor-force-back");
+  if(!coach || coach.hidden)return;
+  if(target===coach){
+    document.body.style.setProperty("--ask-tutor-front-layer","60000");
+    document.body.classList.add("ask-tutor-force-front");
+  }else if(minimized(coach)){
+    document.body.classList.add("ask-tutor-force-back");
+  }
+}
+function bringToFront(value){
+  const target=panel(value);if(!target || target.hidden)return;
+  const others=visiblePanels().filter(win=>win!==target).sort((a,b)=>{
+    const group=Number(minimized(a))-Number(minimized(b));
+    if(group)return -group; /* minimized cards first, open windows above them */
+    const az=Number.parseInt(getComputedStyle(a).zIndex,10)||0;
+    const bz=Number.parseInt(getComputedStyle(b).zIndex,10)||0;
+    return az-bz;
+  });
+  let layer=30000;
+  others.forEach(win=>setLayer(win,layer+=10));
+  syncAskTutorLayer(target);
+  if(target.id!=="language-coach-window")setLayer(target,60000);
+}
+function sendBehind(value){
+  const target=panel(value);if(!target)return;
+  if(target.id==="language-coach-window"){
+    document.body.classList.remove("ask-tutor-force-front");
+    document.body.classList.add("ask-tutor-force-back");
+  }else setLayer(target,20000);
+}
+function settleAfterInteraction(win,before){
+  setTimeout(()=>{
+    const after=minimized(win);
+    lastState.set(win,after);
+    if(!before && after)sendBehind(win);
+    else bringToFront(win);
+  },0);
+}
+function trackInteraction(event){
+  const win=event.target?.closest?.(selector);
+  if(!win || win.hidden)return;
+  const before=minimized(win);
+  bringToFront(win);
+  settleAfterInteraction(win,before);
+}
+function bindObservers(){
+  visiblePanels().forEach(win=>{
+    if(win.dataset.v218StackObserved==="1")return;
+    win.dataset.v218StackObserved="1";
+    lastState.set(win,minimized(win));
+    new MutationObserver(()=>{
+      const before=lastState.get(win);
+      const after=minimized(win);
+      lastState.set(win,after);
+      if(before===after)return;
+      if(after)sendBehind(win);else bringToFront(win);
+    }).observe(win,{attributes:true,attributeFilter:["class","hidden"]});
+  });
+}
+
+window.bringFloatingWindowToFront=bringToFront;
+window.sendFloatingWindowBehind=sendBehind;
+document.addEventListener("pointerdown",trackInteraction,true);
+/* Programmatic .click() calls used by the layout-cycle button do not emit a
+   pointer event, so capture clicks as well and settle after their toggle. */
+document.addEventListener("click",event=>{
+  const win=event.target?.closest?.(selector);if(!win||win.hidden)return;
+  settleAfterInteraction(win,lastState.has(win)?lastState.get(win):minimized(win));
+},true);
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{
+  bindObservers();setTimeout(bindObservers,900);
+},{once:true});
+else{bindObservers();setTimeout(bindObservers,900)}
 })();
 </script>
 </body>
