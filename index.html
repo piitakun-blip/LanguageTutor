@@ -23017,7 +23017,7 @@ Do not continue the conversation.`;
             <div class="tutor-composer-tools">
                 <div id="language-coach-status" class="tutor-composer-status"></div>
                 <div class="tutor-composer-tool-buttons">
-                    <button type="button" id="ask-tutor-live-voice-btn" title="Start Tutor voice; automatically falls back if needed">🎙 Voice</button>
+                    <button type="button" id="ask-tutor-live-voice-btn" title="Start natural GPT-Live Tutor voice; automatically falls back if needed">🎙 Voice</button>
                     <button type="button" id="ask-tutor-speak-english" hidden aria-hidden="true">🎙 Ask by voice</button>
                     <button type="button" id="ask-tutor-speak-target" hidden aria-hidden="true">🎙 Speak German</button>
                     <button type="button" id="ask-tutor-keyboard-btn" onclick="focusCoachAndOpenKeyboard()">⌨ German keys</button>
@@ -25994,7 +25994,7 @@ function speakAskTutorAnswer(answer){
 
     try{
         if(typeof window.getLanguageTutorSpeechRate==="function"){
-            utterance.rate=window.getLanguageTutorSpeechRate("en-US");
+            utterance.rate=window.getLanguageTutorSpeechRate(selectedLocale);
         }
         const preferred=selectedVoiceName || (typeof window.getLanguageTutorPreferredVoiceName==="function"
             ? window.getLanguageTutorPreferredVoiceName(selectedLocale)
@@ -26530,6 +26530,26 @@ function languageInfo(){
     };
 }
 
+function selectedConversationVoiceName(){
+    const direct=String(document.getElementById("conversation-voice-select")?.value||"").trim();
+    if(direct)return direct;
+    try{return String(window.getLanguageTutorPreferredVoiceName?.(languageInfo().locale)||"").trim()}catch(_){return ""}
+}
+
+function speakSelectedAskLiveVoice(text){
+    if(!liveState.useSelectedAskVoice || !("speechSynthesis" in window))return;
+    const clean=String(text||"").trim();
+    if(!clean)return;
+    const utterance=new SpeechSynthesisUtterance(clean);
+    const voices=window.speechSynthesis.getVoices?.()||[];
+    const selected=voices.find(voice=>voice.name===liveState.selectedVoiceName);
+    utterance.lang=selected?.lang||languageInfo().locale;
+    if(selected)utterance.voice=selected;
+    utterance.rate=window.getLanguageTutorSpeechRate?.(utterance.lang)||1;
+    try{window.speechSynthesis.cancel()}catch(_){ }
+    window.speechSynthesis.speak(utterance);
+}
+
 function selectedAskContext(){
     try{return String(window.getAskTutorContext?.()||"").trim()}catch(_){return ""}
 }
@@ -26648,26 +26668,6 @@ function setLiveHeard(){
     });
     if(!el.children.length)el.textContent="Live voice is listening…";
     el.scrollTop=el.scrollHeight;
-}
-
-function selectedConversationVoiceName(){
-    const direct=String(document.getElementById("conversation-voice-select")?.value||"").trim();
-    if(direct)return direct;
-    try{return String(window.getLanguageTutorPreferredVoiceName?.(languageInfo().locale)||"").trim()}catch(_){return ""}
-}
-
-function speakSelectedAskLiveVoice(text){
-    if(!liveState.useSelectedAskVoice || !("speechSynthesis" in window))return;
-    const clean=String(text||"").trim();
-    if(!clean)return;
-    const utterance=new SpeechSynthesisUtterance(clean);
-    const voices=window.speechSynthesis.getVoices?.()||[];
-    const selected=voices.find(voice=>voice.name===liveState.selectedVoiceName);
-    utterance.lang=selected?.lang||languageInfo().locale;
-    if(selected)utterance.voice=selected;
-    utterance.rate=window.getLanguageTutorSpeechRate?.(utterance.lang)||1;
-    try{window.speechSynthesis.cancel()}catch(_){ }
-    window.speechSynthesis.speak(utterance);
 }
 
 function clearTimer(seg){
@@ -26799,7 +26799,7 @@ function updateLiveButtons(){
     if(chatTop){
         chatTop.classList.toggle("live-active",chatActive);
         chatTop.textContent=chatActive
-            ? "■ Stop live voice"
+            ? "■ Stop voice"
             : (configured ? "🎙 Start Live Chat" : "🎙 Start Chat");
     }
     if(ask){
@@ -27018,6 +27018,27 @@ window.updateTutorLiveAskContext=function(context){
         type:"session.instructions.append",
         content:`The learner selected a new conversation line for study. Use this as the current tutoring context:\n${String(context||"(none selected)")}`
     });
+};
+
+const nonLiveRestateLastVoiceTurn=window.restateLastVoiceTurn;
+window.restateLastVoiceTurn=async function(){
+    if(!(liveState.active && liveState.mode==="chat"))return nonLiveRestateLastVoiceTurn?.();
+    commitSegment("input");
+    commitSegment("output");
+    const history=window.getVoiceTutorHistory?.()||[];
+    const previous=[...history].reverse().find(entry=>entry?.role==="assistant" && String(entry.text||"").trim());
+    if(!previous){setModeStatus("There is no previous tutor line to repeat yet.");return}
+    setModeStatus("Repeating the tutor's previous line…");
+    if("speechSynthesis" in window){
+        const utterance=new SpeechSynthesisUtterance(String(previous.text||""));
+        const selectedName=selectedConversationVoiceName();
+        const selected=(window.speechSynthesis.getVoices?.()||[]).find(voice=>voice.name===selectedName);
+        utterance.lang=selected?.lang||languageInfo().locale;
+        if(selected)utterance.voice=selected;
+        utterance.rate=window.getLanguageTutorSpeechRate?.(utterance.lang)||1;
+        try{window.speechSynthesis.cancel()}catch(_){ }
+        window.speechSynthesis.speak(utterance);
+    }
 };
 
 function mirrorTypedContext(text,source){
@@ -27932,32 +27953,6 @@ const specs={
   transcript:{id:"voice-transcript-window",open:"openVoiceTranscriptWindow",left:330,top:24,width:600,height:650},
   coach:{id:"language-coach-window",open:"openAskTutorWorkspace",left:155,top:115,width:560,height:610},
   tools:{id:"language-tools-window",open:"openLanguageToolsWorkspace",left:650,top:82,width:650,height:650}
-};
-
-const nonLiveRestateLastVoiceTurn=window.restateLastVoiceTurn;
-window.restateLastVoiceTurn=async function(){
-    if(!(liveState.active && liveState.mode==="chat")){
-        return nonLiveRestateLastVoiceTurn?.();
-    }
-    commitSegment("input");
-    commitSegment("output");
-    const history=window.getVoiceTutorHistory?.()||[];
-    const previous=[...history].reverse().find(entry=>entry?.role==="assistant" && String(entry.text||"").trim());
-    if(!previous){
-        setModeStatus("There is no previous tutor line to repeat yet.");
-        return;
-    }
-    setModeStatus("Repeating the tutor's previous line…");
-    if("speechSynthesis" in window){
-        const utterance=new SpeechSynthesisUtterance(String(previous.text||""));
-        const selectedName=selectedConversationVoiceName();
-        const selected=(window.speechSynthesis.getVoices?.()||[]).find(voice=>voice.name===selectedName);
-        utterance.lang=selected?.lang||languageInfo().locale;
-        if(selected)utterance.voice=selected;
-        utterance.rate=window.getLanguageTutorSpeechRate?.(utterance.lang)||1;
-        try{window.speechSynthesis.cancel()}catch(_){ }
-        window.speechSynthesis.speak(utterance);
-    }
 };
 let topLayer=32000;
 let normalizing=false;
@@ -31270,8 +31265,6 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 }
 .ask-tutor-section-reply-text{margin-top:4px;color:#102a20;font-size:14px;line-height:1.45;font-weight:800}
 .ask-tutor-section-reply-note{margin-top:3px;color:#526477;font-size:10px;line-height:1.45}
-.ask-tutor-section-reply-translation{margin-top:7px;padding:8px 10px;border:1px solid #93c5fd;border-left:4px solid #3b82f6;border-radius:8px;background:#eff6ff;color:#1e3a8a;font-size:11px;line-height:1.45;font-weight:700}
-.ask-tutor-section-reply-translation::before{content:"English translation";display:block;margin-bottom:3px;color:#2563eb;font-size:8px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}
 .ask-tutor-section-reply-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .ask-tutor-section-reply-actions button{min-height:29px;padding:5px 8px;font-size:9.5px;font-weight:750}
 </style>
@@ -31479,7 +31472,6 @@ function renderReplyOptions(body,options,intro){
     const label=document.createElement("div");label.className="ask-tutor-section-reply-label";label.textContent=index===0?"Suggested reply":`Alternative ${index}`;
     const text=document.createElement("div");text.className="ask-tutor-section-reply-text";text.textContent=phrase;card.append(label,text);
     if(option?.note){const note=document.createElement("div");note.className="ask-tutor-section-reply-note";note.textContent=clean(option.note);card.appendChild(note)}
-    if(option?.translation){const translation=document.createElement("div");translation.className="ask-tutor-section-reply-translation";translation.textContent=clean(option.translation);card.appendChild(translation)}
     const actions=document.createElement("div");actions.className="ask-tutor-section-reply-actions";
     actions.append(
       replyAction("↩ Use in reply",()=>window.useLanguageCoachPhrase?.(phrase),true),
@@ -31501,9 +31493,9 @@ async function runAskReply(){
   try{
     if(typeof window.callAIJson!=="function")throw new Error("Ask Tutor requires a valid API key.");
     const cfg=languageConfig();
-    const data=await window.callAIJson(`You are the reply-options tool in LanguageTutor.\nTarget language: ${cfg.name}\nConversation line to answer: ${context}\nCreate three short, natural replies the learner could say next. Option 1 is the simplest default, option 2 varies the wording, and option 3 may add personality or move the conversation forward. Include a natural English translation for every reply. Notes are brief English guidance. Return JSON only: {"intro":"brief English guidance or empty string","options":[{"text":"target-language reply","translation":"natural English translation","note":"brief English note"},{"text":"target-language reply","translation":"natural English translation","note":"brief English note"},{"text":"target-language reply","translation":"natural English translation","note":"brief English note"}]}`);
+    const data=await window.callAIJson(`You are the reply-options tool in LanguageTutor.\nTarget language: ${cfg.name}\nConversation line to answer: ${context}\nCreate three short, natural replies the learner could say next. Option 1 is the simplest default, option 2 varies the wording, and option 3 may add personality or move the conversation forward. Notes are brief English guidance. Return JSON only: {"intro":"brief English guidance or empty string","options":[{"text":"target-language reply","note":"brief English note"},{"text":"target-language reply","note":"brief English note"},{"text":"target-language reply","note":"brief English note"}]}`);
     if(askContext()!==context || languageCode()!==(cfg.code||languageCode()))return;
-    const options=Array.isArray(data?.options)?data.options.map(item=>({text:clean(item?.text),translation:clean(item?.translation||item?.english),note:clean(item?.note)})).filter(item=>item.text).slice(0,4):[];
+    const options=Array.isArray(data?.options)?data.options.map(item=>({text:clean(item?.text),note:clean(item?.note)})).filter(item=>item.text).slice(0,4):[];
     if(!options.length)throw new Error("Tutor returned no usable reply choices.");
     renderReplyOptions(opened.body,options,clean(data?.intro));opened.panel.dataset.ready="1";setCoachStatus("");
   }catch(error){if(askContext()!==context)return;opened.body.textContent=clean(error?.message)||"Reply help is unavailable.";opened.body.classList.remove("is-loading");opened.body.classList.add("ask-tutor-shortcut-error");setCoachStatus("",false)}
@@ -31681,8 +31673,8 @@ function noteAsText(note){
   if(note.translation)parts.push(`Reference translation:\n${note.translation}`);
   if(note.translationDetails)parts.push(`Translation details:\n${note.translationDetails}`);
   if(note.why)parts.push(`Why this wording?\n${note.why}`);
-  if(note.analysis)parts.push(`Grammar analysis:\n${note.analysis}`);
   if(note.replies?.length)parts.push(`Reply options:\n${note.replies.map((reply,index)=>`${index+1}. ${reply.text}${reply.note?`\n   ${reply.note}`:""}`).join("\n")}`);
+  if(note.analysis)parts.push(`Grammar analysis:\n${note.analysis}`);
   return parts.join("\n\n");
 }
 function noteSection(title,value){
@@ -32123,7 +32115,7 @@ function buildMenu(){
     '<button type="button" role="menuitem" data-layout-action="restore">↶ Restore saved layout</button>'+
     '<button type="button" role="menuitem" data-layout-action="save">★ Save current layout as startup</button>'+
     '<div class="lt-layout-divider"></div>'+
-    '<button type="button" role="menuitem" class="lt-layout-danger" data-layout-action="factory">↺ Reset</button>'+
+    '<button type="button" role="menuitem" class="lt-layout-danger" data-layout-action="factory">↺ Reset</button>'+ 
     '<div class="lt-layout-menu-status" aria-live="polite"></div>';
   old.parentElement?.insertBefore(wrapper,old);old.remove();wrapper.append(menuButton,popover);
   menuButton.addEventListener("click",event=>{event.stopPropagation();toggleMenu()});
@@ -32149,45 +32141,38 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
 </script>
-<style id="language-tutor-v401-refinements-css">
+<style id="language-tutor-v401-workspace-behavior">
 #language-header{position:sticky!important;top:0!important;z-index:5000!important}
-@media(min-width:701px){
+@media(min-width:641px){
   #voice-transcript-window{max-height:none!important}
   #special-character-palette,#floating-kana-tool{max-height:min(420px,calc(100dvh - 16px))!important}
 }
 .quick-translate-voice-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
 .quick-translate-voice-tools button{min-height:32px!important;padding:5px 9px!important;border:1px solid #c4b5fd!important;border-radius:8px!important;background:#fff!important;color:#5b21b6!important;font-size:10px!important;font-weight:800!important}
 .quick-translate-voice-tools button.is-listening{border-color:#fb7185!important;background:#fff1f2!important;color:#be123c!important}
-#analysis-workbench-history-shell{flex:0 1 220px;min-height:0;display:flex;flex-direction:column;border:1px solid #c7d2fe;border-radius:11px;background:#f8faff;overflow:hidden}
+#analysis-workbench-history-shell{flex:0 1 240px;min-height:92px;display:flex;flex-direction:column;border:1px solid #c7d2fe;border-radius:11px;background:#f8faff;overflow:hidden;margin-bottom:8px}
 #analysis-workbench-history-shell[hidden]{display:none!important}
-.analysis-history-heading{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-bottom:1px solid #dbe3ee;background:#eef2ff;color:#3730a3;font-size:10px;font-weight:900}
-#analysis-workbench-history{flex:1 1 auto;min-height:0;overflow-y:auto;padding:8px;overscroll-behavior:contain}
-.analysis-history-item{margin-bottom:8px;border:1px solid #dbe3ee;border-radius:9px;background:#fff;overflow:hidden}
-.analysis-history-item>summary{padding:8px 10px;cursor:pointer;color:#1e293b;font-size:10px;font-weight:850;overflow-wrap:anywhere}
-.analysis-history-content{max-height:280px;overflow:auto;padding:0 9px 9px}
-.analysis-history-actions,.analysis-current-actions{display:flex;flex-wrap:wrap;gap:6px;padding:7px 0}
-.analysis-current-actions{position:sticky;top:0;z-index:3;margin:-2px -2px 8px;padding:7px 8px;border-bottom:1px solid #e2e8f0;background:rgba(255,255,255,.96)}
-.analysis-history-heading button,.analysis-current-actions button,.analysis-history-actions button{min-height:29px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#475569;font-size:9px;font-weight:800}
-.analysis-notes-saved{border-color:#86efac!important;background:#f0fdf4!important;color:#15803d!important}
+.analysis-history-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;background:#eef2ff;border-bottom:1px solid #c7d2fe;font-size:10px;font-weight:900;color:#3730a3}
+.analysis-history-head button,.analysis-history-actions button,.analysis-current-actions button{min-height:29px;padding:4px 8px;border:1px solid #c7d2fe;border-radius:7px;background:#fff;color:#3730a3;font-size:9px;font-weight:800}
+.analysis-history-list{min-height:0;overflow:auto;padding:7px;display:grid;gap:7px}
+.analysis-history-entry{border:1px solid #dbe2f2;border-radius:9px;background:#fff;overflow:hidden}
+.analysis-history-entry>summary{cursor:pointer;padding:8px 10px;font-size:11px;font-weight:850;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.analysis-history-content{max-height:300px;overflow:auto;padding:0 9px 9px}
+.analysis-history-actions{display:flex;flex-wrap:wrap;gap:6px;padding:0 9px 9px}
+.analysis-current-actions{position:sticky;top:0;z-index:3;display:flex;gap:6px;margin:-2px -2px 8px;padding:7px 8px;border-bottom:1px solid #e2e8f0;background:rgba(255,255,255,.96)}
 </style>
-<script id="language-tutor-v401-refinements-runtime">
+<script id="language-tutor-v401-workspace-behavior-runtime">
 (()=>{
 "use strict";
-const clean=value=>String(value||"").trim();
-let quickRecognition=null,lastSentence="";
-const NOTES_KEY="languagetutor_study_notes_v313";
-function cfg(){try{return window.langConfig?.()||{code:"de",name:"German",locale:"de-DE"}}catch(_){return {code:"de",name:"German",locale:"de-DE"}}}
-function languageCode(){return clean(document.body?.dataset?.studyLanguage||window.currentStudyLanguage)||"de"}
-
-function stopQuickVoice(){
-  if(quickRecognition)try{quickRecognition.abort()}catch(_){}
-  quickRecognition=null;document.querySelectorAll(".quick-translate-voice-tools button").forEach(button=>button.classList.remove("is-listening"));
-}
+const clean=value=>String(value||"").replace(/\s+/g," ").trim();
+const cfg=()=>{try{return typeof langConfig==="function"?langConfig():null}catch(_){return null}};
+let quickRecognition=null;
+function stopQuickVoice(){try{quickRecognition?.stop()}catch(_){ }quickRecognition=null;document.querySelectorAll(".quick-translate-voice-tools button").forEach(button=>button.classList.remove("is-listening"))}
 function startQuickVoice(mode,button){
   const Ctor=window.SpeechRecognition||window.webkitSpeechRecognition,input=document.getElementById("ask-tutor-quick-translate-input");
   if(!Ctor||!input){const status=document.getElementById("ask-tutor-quick-translate-status");if(status)status.textContent="Voice input is unavailable in this browser.";return}
   stopQuickVoice();const recognition=new Ctor();quickRecognition=recognition;
-  recognition.lang=mode==="en"?"en-US":cfg().locale;recognition.interimResults=true;recognition.continuous=false;recognition.maxAlternatives=1;
+  recognition.lang=mode==="en"?"en-US":(cfg()?.locale||"de-DE");recognition.interimResults=true;recognition.continuous=false;recognition.maxAlternatives=1;
   const existing=clean(input.value),prefix=existing?existing+" ":"";button.classList.add("is-listening");
   recognition.onresult=event=>{let finalText="",interim="";for(let i=event.resultIndex;i<event.results.length;i++){const part=event.results[i]?.[0]?.transcript||"";if(event.results[i].isFinal)finalText+=part;else interim+=part}input.value=prefix+clean(finalText||interim);input.focus()};
   recognition.onend=()=>{quickRecognition=null;button.classList.remove("is-listening")};recognition.onerror=recognition.onend;
@@ -32196,66 +32181,62 @@ function startQuickVoice(mode,button){
 function installQuickVoice(){
   const status=document.getElementById("ask-tutor-quick-translate-status");if(!status)return false;
   const existing=document.querySelector(".quick-translate-voice-tools");
-  if(existing){const targetButton=existing.querySelector('[data-quick-voice="target"]');if(targetButton)targetButton.textContent=`🎙 ${cfg().name} voice`;return true}
+  if(existing){const targetButton=existing.querySelector('[data-quick-voice="target"]');if(targetButton)targetButton.textContent=`🎙 ${cfg()?.name||"Study language"} voice`;return true}
   const tools=document.createElement("div");tools.className="quick-translate-voice-tools";
   const english=document.createElement("button");english.type="button";english.dataset.quickVoice="english";english.textContent="🎙 English voice";
-  const target=document.createElement("button");target.type="button";target.dataset.quickVoice="target";target.textContent=`🎙 ${cfg().name} voice`;
+  const target=document.createElement("button");target.type="button";target.dataset.quickVoice="target";target.textContent=`🎙 ${cfg()?.name||"Study language"} voice`;
   english.addEventListener("click",()=>startQuickVoice("en",english));target.addEventListener("click",()=>startQuickVoice("target",target));
   tools.append(english,target);status.insertAdjacentElement("afterend",tools);return true;
 }
-
+const NOTES_KEY="languagetutor_study_notes_v313";
+function readNotes(){try{const notes=JSON.parse(localStorage.getItem(NOTES_KEY)||"[]");return Array.isArray(notes)?notes:[]}catch(_){return []}}
+function writeNotes(notes){try{localStorage.setItem(NOTES_KEY,JSON.stringify(notes));return true}catch(_){return false}}
+function analysisText(node){const copy=node.cloneNode(true);copy.querySelectorAll("button,.analysis-current-actions,.analysis-history-actions").forEach(el=>el.remove());return clean(copy.textContent)}
+function saveAnalysisNote(sentence,node,button){
+  const analysis=analysisText(node);if(!analysis)return;
+  const language=clean(document.body?.dataset?.studyLanguage||window.currentStudyLanguage)||"de",notes=readNotes(),now=new Date().toISOString();
+  notes.unshift({id:globalThis.crypto?.randomUUID?.()||`analysis-${Date.now()}`,language,selectedLine:sentence,title:`Analysis: ${sentence.slice(0,62)}`,analysis,createdAt:now,updatedAt:now});
+  if(!writeNotes(notes))return;
+  try{window.renderStudyNotes?.()}catch(_){ }
+  if(button){const old=button.textContent;button.textContent="✓ Added to Notes";setTimeout(()=>button.textContent=old,1200)}
+}
 function results(){return document.getElementById("analysis-workbench-results")}
 function ensureHistory(){
   let shell=document.getElementById("analysis-workbench-history-shell");if(shell)return shell;
   const current=results();if(!current)return null;
   shell=document.createElement("section");shell.id="analysis-workbench-history-shell";shell.hidden=true;
-  const heading=document.createElement("div");heading.className="analysis-history-heading";
-  const label=document.createElement("span");label.textContent="Parsed analysis history";
-  const clear=document.createElement("button");clear.type="button";clear.textContent="Clear all";
-  const list=document.createElement("div");list.id="analysis-workbench-history";
-  clear.addEventListener("click",()=>{list.replaceChildren();shell.hidden=true});heading.append(label,clear);shell.append(heading,list);current.insertAdjacentElement("beforebegin",shell);return shell;
-}
-function saveAnalysisNote(sentence,node,button){
-  const analysis=clean(node?.innerText||node?.textContent);if(!sentence||!analysis)return;
-  let notes=[];try{const value=JSON.parse(localStorage.getItem(NOTES_KEY)||"[]");if(Array.isArray(value))notes=value}catch(_){}
-  const language=languageCode(),key=`${language}::${sentence.toLocaleLowerCase()}`,index=notes.findIndex(note=>`${note.language}::${clean(note.selectedLine).toLocaleLowerCase()}`===key),now=new Date().toISOString();
-  if(index>=0)notes[index]={...notes[index],analysis,updatedAt:now};
-  else notes.unshift({id:crypto.randomUUID?.()||`note-${Date.now()}`,language,selectedLine:sentence,title:sentence.slice(0,72),analysis,createdAt:now,updatedAt:now,replies:[]});
-  try{localStorage.setItem(NOTES_KEY,JSON.stringify(notes))}catch(_){return}
-  const old=button.textContent;button.textContent=index>=0?"✓ Notes updated":"✓ Added to Notes";button.classList.add("analysis-notes-saved");setTimeout(()=>{button.textContent=old;button.classList.remove("analysis-notes-saved")},1300);
-}
-function makeActions(sentence,node,onClear,className){
-  const actions=document.createElement("div");actions.className=className;
-  const notes=document.createElement("button");notes.type="button";notes.textContent="📝 Add to Notes";notes.addEventListener("click",()=>saveAnalysisNote(sentence,node,notes));
-  const clear=document.createElement("button");clear.type="button";clear.textContent="Clear";clear.addEventListener("click",onClear);actions.append(notes,clear);return actions;
+  const head=document.createElement("div");head.className="analysis-history-head";head.append(document.createTextNode("Previous analyses"));
+  const clear=document.createElement("button");clear.type="button";clear.textContent="Clear all";clear.addEventListener("click",()=>{shell.querySelector(".analysis-history-list")?.replaceChildren();shell.hidden=true});head.appendChild(clear);
+  const list=document.createElement("div");list.className="analysis-history-list";shell.append(head,list);current.insertAdjacentElement("beforebegin",shell);return shell;
 }
 function archiveCurrent(){
-  const box=results(),sentence=clean(document.getElementById("analysis-workbench-sentence")?.textContent)||lastSentence;if(!box||!sentence||!box.querySelector(".analysis-parser-card"))return;
-  const shell=ensureHistory(),list=document.getElementById("analysis-workbench-history");if(!shell||!list)return;
-  const item=document.createElement("details");item.className="analysis-history-item";const summary=document.createElement("summary");summary.textContent=sentence;
-  const content=document.createElement("div");content.className="analysis-history-content";
-  [...box.children].filter(child=>!child.classList.contains("analysis-current-actions")).forEach(child=>content.appendChild(child.cloneNode(true)));
-  content.prepend(makeActions(sentence,content,()=>{item.remove();if(!list.children.length)shell.hidden=true},"analysis-history-actions"));item.append(summary,content);list.prepend(item);shell.hidden=false;
+  const box=results(),parser=box?.querySelector(".analysis-parser-card");if(!parser)return;
+  const sentence=clean(document.getElementById("analysis-workbench-sentence")?.textContent);if(!sentence)return;
+  parser.querySelector(":scope > .analysis-current-actions")?.remove();
+  const shell=ensureHistory(),list=shell?.querySelector(".analysis-history-list");if(!list)return;
+  const entry=document.createElement("details");entry.className="analysis-history-entry";
+  const summary=document.createElement("summary");summary.textContent=sentence;
+  const content=document.createElement("div");content.className="analysis-history-content";content.appendChild(parser);
+  const actions=document.createElement("div");actions.className="analysis-history-actions";
+  const notes=document.createElement("button");notes.type="button";notes.textContent="📝 Add to Notes";notes.addEventListener("click",()=>saveAnalysisNote(sentence,parser,notes));
+  const clear=document.createElement("button");clear.type="button";clear.textContent="Clear";clear.addEventListener("click",()=>{entry.remove();if(!list.children.length)shell.hidden=true});
+  actions.append(notes,clear);entry.append(summary,content,actions);list.prepend(entry);shell.hidden=false;
 }
-function installCurrentActions(){
-  const box=results();if(!box||!box.querySelector(".analysis-parser-card")||box.querySelector(":scope > .analysis-current-actions"))return;
-  const sentence=clean(document.getElementById("analysis-workbench-sentence")?.textContent)||lastSentence;
-  box.prepend(makeActions(sentence,box,()=>box.replaceChildren(),"analysis-current-actions"));
+function addCurrentActions(){
+  const parser=results()?.querySelector(".analysis-parser-card");if(!parser||parser.querySelector(":scope > .analysis-current-actions"))return;
+  const sentence=clean(document.getElementById("analysis-workbench-sentence")?.textContent);if(!sentence)return;
+  const actions=document.createElement("div");actions.className="analysis-current-actions";
+  const notes=document.createElement("button");notes.type="button";notes.textContent="📝 Add to Notes";notes.addEventListener("click",()=>saveAnalysisNote(sentence,parser,notes));
+  const clear=document.createElement("button");clear.type="button";clear.textContent="Clear";clear.addEventListener("click",()=>parser.remove());actions.append(notes,clear);parser.prepend(actions);
 }
-function installAnalysisHistory(){
-  ensureHistory();const box=results();if(box&&box.dataset.historyObserved!=="1"){box.dataset.historyObserved="1";new MutationObserver(()=>requestAnimationFrame(installCurrentActions)).observe(box,{childList:true,subtree:true})}
-  const original=window.openAnalysisWorkbench;if(typeof original!=="function"||original.__v401History)return false;
-  const wrapped=function(sentence,...args){const next=clean(sentence);if(lastSentence&&next&&next!==lastSentence)archiveCurrent();const value=original.call(this,sentence,...args);if(next)lastSentence=next;return value};
+function wrapAnalysis(){
+  const prior=window.openAnalysisWorkbench;if(typeof prior!=="function"||prior.__v401History)return false;
+  const wrapped=function(sentence,...rest){const next=clean(sentence),current=clean(document.getElementById("analysis-workbench-sentence")?.textContent);if(next&&current&&next!==current)archiveCurrent();const out=prior.call(this,sentence,...rest);setTimeout(addCurrentActions,250);return out};
   wrapped.__v401History=true;window.openAnalysisWorkbench=wrapped;return true;
 }
-function renameVoiceControls(){
-  const ask=document.getElementById("ask-tutor-live-voice-btn");if(ask&&!/stop/i.test(ask.textContent))ask.textContent="🎙 Voice";
-  const chat=document.getElementById("conversation-live-voice-btn");if(chat&&!/stop/i.test(chat.textContent))chat.textContent="🎙 Voice";
-}
-function boot(){
-  installQuickVoice();renameVoiceControls();setTimeout(()=>{installQuickVoice();installAnalysisHistory();renameVoiceControls()},1800);
-  new MutationObserver(()=>{installQuickVoice();renameVoiceControls()}).observe(document.body,{childList:true,subtree:true});
-}
+function renameVoiceButtons(){document.querySelectorAll("button").forEach(button=>{const value=clean(button.textContent);if(value==="🎙 Live voice")button.textContent="🎙 Voice";else if(value==="■ Stop live voice")button.textContent="■ Stop voice"})}
+const observer=new MutationObserver(()=>{installQuickVoice();addCurrentActions();renameVoiceButtons()});
+function boot(){installQuickVoice();ensureHistory();wrapAnalysis();addCurrentActions();renameVoiceButtons();observer.observe(document.body,{childList:true,subtree:true});setTimeout(wrapAnalysis,1800)}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
 </script>
