@@ -8283,7 +8283,7 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
                         <button type="button" id="voice-english-turn-btn" onclick="replyToVoiceTutorInEnglish()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 text-xs font-bold transition" title="Say your reply in English and see how to say it in the target language">
                             🇺🇸 Reply in English
                         </button>
-                        <button type="button" id="voice-restate-btn" onclick="restateLastVoiceTurn()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-bold transition" title="Have the tutor repeat the previous line">
+                        <button type="button" id="voice-restate-btn" onclick="restateLastVoiceTurn()" class="hidden min-h-[44px] px-4 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-800 text-xs font-bold transition" title="Discard the last captured turn and say it again">
                             ↺ Restate
                         </button>
                         <button type="button" id="voice-new-chat-btn" onclick="newVoiceConversation()" class="min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-bold transition">
@@ -8321,7 +8321,7 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
                                 <button type="button" id="conversation-live-voice-btn" onclick="toggleTutorLiveVoice('chat')"
                                     class="min-h-[36px] px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-[10px] font-bold transition"
                                     title="Start natural GPT-Live voice; automatically falls back to the existing voice system if needed">
-                                    🎙 Voice
+                                    🎙 Live voice
                                 </button>
                                 <button type="button" id="conversation-keyboard-btn" onclick="openConversationKeyboard()"
                                     class="min-h-[36px] px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] font-bold transition"
@@ -14786,8 +14786,8 @@ Plain text only. No Markdown, headings, bullets, or asterisks.`;
         const button=document.getElementById("voice-restate-btn");
         if(!button)return;
         const history=voiceTutorHistory();
-        const hasTutorTurn=history.some(entry=>entry.role==="assistant");
-        button.classList.toggle("hidden",!voiceTutorState.active || !hasTutorTurn);
+        const hasUserTurn=history.some(entry=>entry.role==="user");
+        button.classList.toggle("hidden",!voiceTutorState.active || !hasUserTurn);
     }
 
 
@@ -16122,7 +16122,7 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
     }
 
-    window.restateLastVoiceTurn=async function(){
+    window.restateLastVoiceTurn=function(){
         if(!voiceTutorState.active)return;
         if(voiceTutorState.phase==="processing"){
             voiceTutorStatus("Wait for the tutor to finish this turn, then tap Restate.","normal");
@@ -16130,35 +16130,48 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
 
         const history=voiceTutorHistory();
-        let tutorIndex=-1;
+        let userIndex=-1;
         for(let i=history.length-1;i>=0;i--){
-            if(history[i]?.role==="assistant"){
-                tutorIndex=i;
+            if(history[i]?.role==="user"){
+                userIndex=i;
                 break;
             }
         }
-        if(tutorIndex<0){
-            voiceTutorStatus("There is no previous tutor line to repeat yet.","normal");
+        if(userIndex<0){
+            voiceTutorStatus("There is no captured turn to restate yet.","normal");
             updateVoiceRestateButton();
             return;
         }
-        const previousTutor=history[tutorIndex];
-        const shouldResume=voiceTutorState.resumeMicAfterTurn && voiceTutorState.micSession;
+
+        const previousUser=history[userIndex];
+        const inputMode=previousUser?.inputMode==="english" ? "english" : "target";
+
+        // Remove the learner turn and anything the tutor produced after it.
+        history.splice(userIndex);
+        renderVoiceTutorTranscript();
+
+        // Stop speech and recognition so the replacement begins cleanly.
         try{window.speechSynthesis?.cancel();}catch(e){}
         voiceTutorState.speaking=false;
         clearVoiceSilenceTimer();
         destroyVoiceRecognition();
         setVoiceMicIndicator(false);
-        voiceTutorState.liveTutorText=String(previousTutor.text||"");
-        voiceTutorState.phase="speaking";
-        renderVoiceLiveTurn();
-        voiceTutorStatus("Repeating the tutor's previous line…","speaking");
-        await speakVoiceTutorText(previousTutor.text,previousTutor.replyLanguage==="en" ? "en" : "target");
-        if(!voiceTutorState.active)return;
+
+        voiceTutorState.liveUserText="";
+        voiceTutorState.liveUserTargetTranslation="";
+        voiceTutorState.liveTutorText="";
         voiceTutorState.phase="idle";
-        if(shouldResume)setTimeout(()=>resumeVoiceRecognition(true,"target"),150);
-        else voiceTutorStatus("Ready for your next reply.","normal");
+        voiceTutorState.inputMode=inputMode;
+        renderVoiceLiveTurn("Restate your last turn…");
+        voiceTutorStatus(
+            inputMode==="english"
+                ? "Restate your English question."
+                : `Restate your ${langConfig().name} turn.`,
+            "listening"
+        );
         updateVoiceRestateButton();
+
+        setTimeout(()=>resumeVoiceRecognition(true,inputMode),150);
     };
 
     window.startVoiceConversation=function(){
@@ -23017,7 +23030,7 @@ Do not continue the conversation.`;
             <div class="tutor-composer-tools">
                 <div id="language-coach-status" class="tutor-composer-status"></div>
                 <div class="tutor-composer-tool-buttons">
-                    <button type="button" id="ask-tutor-live-voice-btn" title="Start natural GPT-Live Tutor voice; automatically falls back if needed">🎙 Voice</button>
+                    <button type="button" id="ask-tutor-live-voice-btn" title="Start natural GPT-Live Tutor voice; automatically falls back if needed">🎙 Live voice</button>
                     <button type="button" id="ask-tutor-speak-english" hidden aria-hidden="true">🎙 Ask by voice</button>
                     <button type="button" id="ask-tutor-speak-target" hidden aria-hidden="true">🎙 Speak German</button>
                     <button type="button" id="ask-tutor-keyboard-btn" onclick="focusCoachAndOpenKeyboard()">⌨ German keys</button>
@@ -25988,21 +26001,19 @@ function speakAskTutorAnswer(answer){
     try{window.speechSynthesis.cancel()}catch(_){}
 
     const utterance=new SpeechSynthesisUtterance(String(answer||""));
-    const selectedVoiceName=String(document.getElementById("conversation-voice-select")?.value||"").trim();
-    const selectedLocale=(typeof langConfig==="function" ? langConfig()?.locale : "")||"en-US";
-    utterance.lang=selectedLocale;
+    utterance.lang="en-US";
 
     try{
         if(typeof window.getLanguageTutorSpeechRate==="function"){
-            utterance.rate=window.getLanguageTutorSpeechRate(selectedLocale);
+            utterance.rate=window.getLanguageTutorSpeechRate("en-US");
         }
-        const preferred=selectedVoiceName || (typeof window.getLanguageTutorPreferredVoiceName==="function"
-            ? window.getLanguageTutorPreferredVoiceName(selectedLocale)
-            : "");
+        const preferred=typeof window.getLanguageTutorPreferredVoiceName==="function"
+            ? window.getLanguageTutorPreferredVoiceName("en-US")
+            : "";
         const voices=window.speechSynthesis.getVoices?.()||[];
         const exact=voices.find(v=>preferred && v.name===preferred);
-        const localeMatch=voices.find(v=>String(v.lang||"").toLowerCase().startsWith(selectedLocale.slice(0,2).toLowerCase()));
-        if(exact||localeMatch)utterance.voice=exact||localeMatch;
+        const english=voices.find(v=>String(v.lang||"").toLowerCase().startsWith("en"));
+        if(exact||english)utterance.voice=exact||english;
     }catch(_){}
 
     const finish=()=>{
@@ -26462,8 +26473,6 @@ const liveState={
     audio:null,
     ready:false,
     sessionId:"",
-    selectedVoiceName:"",
-    useSelectedAskVoice:false,
     input:{text:"",start:null,end:null,timer:null},
     output:{text:"",start:null,end:null,timer:null}
 };
@@ -26528,26 +26537,6 @@ function languageInfo(){
         name:code==="es"?"Spanish":code==="ja"?"Japanese":"German",
         locale:code==="es"?"es-ES":code==="ja"?"ja-JP":"de-DE"
     };
-}
-
-function selectedConversationVoiceName(){
-    const direct=String(document.getElementById("conversation-voice-select")?.value||"").trim();
-    if(direct)return direct;
-    try{return String(window.getLanguageTutorPreferredVoiceName?.(languageInfo().locale)||"").trim()}catch(_){return ""}
-}
-
-function speakSelectedAskLiveVoice(text){
-    if(!liveState.useSelectedAskVoice || !("speechSynthesis" in window))return;
-    const clean=String(text||"").trim();
-    if(!clean)return;
-    const utterance=new SpeechSynthesisUtterance(clean);
-    const voices=window.speechSynthesis.getVoices?.()||[];
-    const selected=voices.find(voice=>voice.name===liveState.selectedVoiceName);
-    utterance.lang=selected?.lang||languageInfo().locale;
-    if(selected)utterance.voice=selected;
-    utterance.rate=window.getLanguageTutorSpeechRate?.(utterance.lang)||1;
-    try{window.speechSynthesis.cancel()}catch(_){ }
-    window.speechSynthesis.speak(utterance);
 }
 
 function selectedAskContext(){
@@ -26701,12 +26690,10 @@ function commitSegment(which){
         }
     }else if(liveState.mode==="ask"){
         window.addAskTutorLiveTurn?.(which==="input" ? "user" : "tutor",text);
-        if(which==="output")speakSelectedAskLiveVoice(text);
     }
 
     resetSegment(seg);
     setLiveHeard();
-    updateLiveButtons();
 }
 
 function appendTranscript(which,event){
@@ -26787,31 +26774,26 @@ function updateLiveButtons(){
     const chatTop=document.getElementById("voice-start-btn");
     const ask=document.getElementById("ask-tutor-live-voice-btn");
     const stop=document.getElementById("voice-stop-btn");
-    const restate=document.getElementById("voice-restate-btn");
 
     const chatActive=active && mode==="chat";
     const askActive=active && mode==="ask";
 
     if(chatComposer){
         chatComposer.classList.toggle("live-active",chatActive);
-        chatComposer.textContent=chatActive ? "■ Stop voice" : "🎙 Voice";
+        chatComposer.textContent=chatActive ? "■ Stop live voice" : "🎙 Live voice";
     }
     if(chatTop){
         chatTop.classList.toggle("live-active",chatActive);
         chatTop.textContent=chatActive
-            ? "■ Stop voice"
+            ? "■ Stop live voice"
             : (configured ? "🎙 Start Live Chat" : "🎙 Start Chat");
     }
     if(ask){
         ask.classList.toggle("live-active",askActive);
-        ask.textContent=askActive ? "■ Stop voice" : "🎙 Voice";
+        ask.textContent=askActive ? "■ Stop live voice" : "🎙 Live voice";
     }
     if(stop){
         stop.classList.toggle("hidden",!chatActive);
-    }
-    if(restate && chatActive){
-        const history=window.getVoiceTutorHistory?.()||[];
-        restate.classList.toggle("hidden",!history.some(entry=>entry?.role==="assistant"));
     }
 }
 
@@ -26845,8 +26827,6 @@ function cleanupLive(stopTracks=true){
     liveState.audio=null;
     liveState.ready=false;
     liveState.sessionId="";
-    liveState.selectedVoiceName="";
-    liveState.useSelectedAskVoice=false;
     resetSegment(liveState.input);
     resetSegment(liveState.output);
     updateLiveButtons();
@@ -26899,9 +26879,6 @@ async function createLiveSession(mode){
     audio.autoplay=true;
     audio.playsInline=true;
     audio.hidden=true;
-    liveState.selectedVoiceName=selectedConversationVoiceName();
-    liveState.useSelectedAskVoice=mode==="ask" && Boolean(liveState.selectedVoiceName);
-    audio.muted=liveState.useSelectedAskVoice;
     document.body.appendChild(audio);
 
     pc.ontrack=event=>{
@@ -27018,27 +26995,6 @@ window.updateTutorLiveAskContext=function(context){
         type:"session.instructions.append",
         content:`The learner selected a new conversation line for study. Use this as the current tutoring context:\n${String(context||"(none selected)")}`
     });
-};
-
-const nonLiveRestateLastVoiceTurn=window.restateLastVoiceTurn;
-window.restateLastVoiceTurn=async function(){
-    if(!(liveState.active && liveState.mode==="chat"))return nonLiveRestateLastVoiceTurn?.();
-    commitSegment("input");
-    commitSegment("output");
-    const history=window.getVoiceTutorHistory?.()||[];
-    const previous=[...history].reverse().find(entry=>entry?.role==="assistant" && String(entry.text||"").trim());
-    if(!previous){setModeStatus("There is no previous tutor line to repeat yet.");return}
-    setModeStatus("Repeating the tutor's previous line…");
-    if("speechSynthesis" in window){
-        const utterance=new SpeechSynthesisUtterance(String(previous.text||""));
-        const selectedName=selectedConversationVoiceName();
-        const selected=(window.speechSynthesis.getVoices?.()||[]).find(voice=>voice.name===selectedName);
-        utterance.lang=selected?.lang||languageInfo().locale;
-        if(selected)utterance.voice=selected;
-        utterance.rate=window.getLanguageTutorSpeechRate?.(utterance.lang)||1;
-        try{window.speechSynthesis.cancel()}catch(_){ }
-        window.speechSynthesis.speak(utterance);
-    }
 };
 
 function mirrorTypedContext(text,source){
@@ -31674,7 +31630,6 @@ function noteAsText(note){
   if(note.translationDetails)parts.push(`Translation details:\n${note.translationDetails}`);
   if(note.why)parts.push(`Why this wording?\n${note.why}`);
   if(note.replies?.length)parts.push(`Reply options:\n${note.replies.map((reply,index)=>`${index+1}. ${reply.text}${reply.note?`\n   ${reply.note}`:""}`).join("\n")}`);
-  if(note.analysis)parts.push(`Grammar analysis:\n${note.analysis}`);
   return parts.join("\n\n");
 }
 function noteSection(title,value){
@@ -31701,8 +31656,7 @@ function noteCard(note){
   [
     noteSection("Reference translation",note.translation),
     noteSection("Translation details",note.translationDetails),
-    noteSection("Why this wording?",note.why),
-    noteSection("Grammar analysis",note.analysis)
+    noteSection("Why this wording?",note.why)
   ].filter(Boolean).forEach(section=>card.appendChild(section));
   if(Array.isArray(note.replies)&&note.replies.length){
     const section=document.createElement("section");section.className="study-note-section";
@@ -32086,12 +32040,12 @@ function action(name){
     return;
   }
   if(name==="factory"){
-    if(!confirm("Reset the saved startup layout and restore the original arrangement?"))return;
+    if(!confirm("Clear your saved startup layout and restore the built-in factory arrangement?"))return;
     try{
       localStorage.removeItem(STARTUP_KEY);
       LEGACY_LAYOUT_KEYS.forEach(key=>localStorage.removeItem(key));
     }catch(_){}
-    factoryLayout();status("Window layout reset.");refreshMenu();return;
+    factoryLayout();status("Factory layout restored.");refreshMenu();return;
   }
   syncCanvasPositions();closeMenu();
 }
@@ -32115,7 +32069,7 @@ function buildMenu(){
     '<button type="button" role="menuitem" data-layout-action="restore">↶ Restore saved layout</button>'+
     '<button type="button" role="menuitem" data-layout-action="save">★ Save current layout as startup</button>'+
     '<div class="lt-layout-divider"></div>'+
-    '<button type="button" role="menuitem" class="lt-layout-danger" data-layout-action="factory">↺ Reset</button>'+ 
+    '<button type="button" role="menuitem" class="lt-layout-danger" data-layout-action="factory">↺ Clear saved layout and restore factory</button>'+
     '<div class="lt-layout-menu-status" aria-live="polite"></div>';
   old.parentElement?.insertBefore(wrapper,old);old.remove();wrapper.append(menuButton,popover);
   menuButton.addEventListener("click",event=>{event.stopPropagation();toggleMenu()});
@@ -32138,105 +32092,6 @@ function boot(){
     if(saved)applySnapshot(saved);else factoryLayout();
   },1550);
 }
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
-})();
-</script>
-<style id="language-tutor-v401-workspace-behavior">
-#language-header{position:sticky!important;top:0!important;z-index:5000!important}
-@media(min-width:641px){
-  #voice-transcript-window{max-height:none!important}
-  #special-character-palette,#floating-kana-tool{max-height:min(420px,calc(100dvh - 16px))!important}
-}
-.quick-translate-voice-tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
-.quick-translate-voice-tools button{min-height:32px!important;padding:5px 9px!important;border:1px solid #c4b5fd!important;border-radius:8px!important;background:#fff!important;color:#5b21b6!important;font-size:10px!important;font-weight:800!important}
-.quick-translate-voice-tools button.is-listening{border-color:#fb7185!important;background:#fff1f2!important;color:#be123c!important}
-#analysis-workbench-history-shell{flex:0 1 240px;min-height:92px;display:flex;flex-direction:column;border:1px solid #c7d2fe;border-radius:11px;background:#f8faff;overflow:hidden;margin-bottom:8px}
-#analysis-workbench-history-shell[hidden]{display:none!important}
-.analysis-history-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;background:#eef2ff;border-bottom:1px solid #c7d2fe;font-size:10px;font-weight:900;color:#3730a3}
-.analysis-history-head button,.analysis-history-actions button,.analysis-current-actions button{min-height:29px;padding:4px 8px;border:1px solid #c7d2fe;border-radius:7px;background:#fff;color:#3730a3;font-size:9px;font-weight:800}
-.analysis-history-list{min-height:0;overflow:auto;padding:7px;display:grid;gap:7px}
-.analysis-history-entry{border:1px solid #dbe2f2;border-radius:9px;background:#fff;overflow:hidden}
-.analysis-history-entry>summary{cursor:pointer;padding:8px 10px;font-size:11px;font-weight:850;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.analysis-history-content{max-height:300px;overflow:auto;padding:0 9px 9px}
-.analysis-history-actions{display:flex;flex-wrap:wrap;gap:6px;padding:0 9px 9px}
-.analysis-current-actions{position:sticky;top:0;z-index:3;display:flex;gap:6px;margin:-2px -2px 8px;padding:7px 8px;border-bottom:1px solid #e2e8f0;background:rgba(255,255,255,.96)}
-</style>
-<script id="language-tutor-v401-workspace-behavior-runtime">
-(()=>{
-"use strict";
-const clean=value=>String(value||"").replace(/\s+/g," ").trim();
-const cfg=()=>{try{return typeof langConfig==="function"?langConfig():null}catch(_){return null}};
-let quickRecognition=null;
-function stopQuickVoice(){try{quickRecognition?.stop()}catch(_){ }quickRecognition=null;document.querySelectorAll(".quick-translate-voice-tools button").forEach(button=>button.classList.remove("is-listening"))}
-function startQuickVoice(mode,button){
-  const Ctor=window.SpeechRecognition||window.webkitSpeechRecognition,input=document.getElementById("ask-tutor-quick-translate-input");
-  if(!Ctor||!input){const status=document.getElementById("ask-tutor-quick-translate-status");if(status)status.textContent="Voice input is unavailable in this browser.";return}
-  stopQuickVoice();const recognition=new Ctor();quickRecognition=recognition;
-  recognition.lang=mode==="en"?"en-US":(cfg()?.locale||"de-DE");recognition.interimResults=true;recognition.continuous=false;recognition.maxAlternatives=1;
-  const existing=clean(input.value),prefix=existing?existing+" ":"";button.classList.add("is-listening");
-  recognition.onresult=event=>{let finalText="",interim="";for(let i=event.resultIndex;i<event.results.length;i++){const part=event.results[i]?.[0]?.transcript||"";if(event.results[i].isFinal)finalText+=part;else interim+=part}input.value=prefix+clean(finalText||interim);input.focus()};
-  recognition.onend=()=>{quickRecognition=null;button.classList.remove("is-listening")};recognition.onerror=recognition.onend;
-  try{recognition.start()}catch(_){stopQuickVoice()}
-}
-function installQuickVoice(){
-  const status=document.getElementById("ask-tutor-quick-translate-status");if(!status)return false;
-  const existing=document.querySelector(".quick-translate-voice-tools");
-  if(existing){const targetButton=existing.querySelector('[data-quick-voice="target"]');if(targetButton)targetButton.textContent=`🎙 ${cfg()?.name||"Study language"} voice`;return true}
-  const tools=document.createElement("div");tools.className="quick-translate-voice-tools";
-  const english=document.createElement("button");english.type="button";english.dataset.quickVoice="english";english.textContent="🎙 English voice";
-  const target=document.createElement("button");target.type="button";target.dataset.quickVoice="target";target.textContent=`🎙 ${cfg()?.name||"Study language"} voice`;
-  english.addEventListener("click",()=>startQuickVoice("en",english));target.addEventListener("click",()=>startQuickVoice("target",target));
-  tools.append(english,target);status.insertAdjacentElement("afterend",tools);return true;
-}
-const NOTES_KEY="languagetutor_study_notes_v313";
-function readNotes(){try{const notes=JSON.parse(localStorage.getItem(NOTES_KEY)||"[]");return Array.isArray(notes)?notes:[]}catch(_){return []}}
-function writeNotes(notes){try{localStorage.setItem(NOTES_KEY,JSON.stringify(notes));return true}catch(_){return false}}
-function analysisText(node){const copy=node.cloneNode(true);copy.querySelectorAll("button,.analysis-current-actions,.analysis-history-actions").forEach(el=>el.remove());return clean(copy.textContent)}
-function saveAnalysisNote(sentence,node,button){
-  const analysis=analysisText(node);if(!analysis)return;
-  const language=clean(document.body?.dataset?.studyLanguage||window.currentStudyLanguage)||"de",notes=readNotes(),now=new Date().toISOString();
-  notes.unshift({id:globalThis.crypto?.randomUUID?.()||`analysis-${Date.now()}`,language,selectedLine:sentence,title:`Analysis: ${sentence.slice(0,62)}`,analysis,createdAt:now,updatedAt:now});
-  if(!writeNotes(notes))return;
-  try{window.renderStudyNotes?.()}catch(_){ }
-  if(button){const old=button.textContent;button.textContent="✓ Added to Notes";setTimeout(()=>button.textContent=old,1200)}
-}
-function results(){return document.getElementById("analysis-workbench-results")}
-function ensureHistory(){
-  let shell=document.getElementById("analysis-workbench-history-shell");if(shell)return shell;
-  const current=results();if(!current)return null;
-  shell=document.createElement("section");shell.id="analysis-workbench-history-shell";shell.hidden=true;
-  const head=document.createElement("div");head.className="analysis-history-head";head.append(document.createTextNode("Previous analyses"));
-  const clear=document.createElement("button");clear.type="button";clear.textContent="Clear all";clear.addEventListener("click",()=>{shell.querySelector(".analysis-history-list")?.replaceChildren();shell.hidden=true});head.appendChild(clear);
-  const list=document.createElement("div");list.className="analysis-history-list";shell.append(head,list);current.insertAdjacentElement("beforebegin",shell);return shell;
-}
-function archiveCurrent(){
-  const box=results(),parser=box?.querySelector(".analysis-parser-card");if(!parser)return;
-  const sentence=clean(document.getElementById("analysis-workbench-sentence")?.textContent);if(!sentence)return;
-  parser.querySelector(":scope > .analysis-current-actions")?.remove();
-  const shell=ensureHistory(),list=shell?.querySelector(".analysis-history-list");if(!list)return;
-  const entry=document.createElement("details");entry.className="analysis-history-entry";
-  const summary=document.createElement("summary");summary.textContent=sentence;
-  const content=document.createElement("div");content.className="analysis-history-content";content.appendChild(parser);
-  const actions=document.createElement("div");actions.className="analysis-history-actions";
-  const notes=document.createElement("button");notes.type="button";notes.textContent="📝 Add to Notes";notes.addEventListener("click",()=>saveAnalysisNote(sentence,parser,notes));
-  const clear=document.createElement("button");clear.type="button";clear.textContent="Clear";clear.addEventListener("click",()=>{entry.remove();if(!list.children.length)shell.hidden=true});
-  actions.append(notes,clear);entry.append(summary,content,actions);list.prepend(entry);shell.hidden=false;
-}
-function addCurrentActions(){
-  const parser=results()?.querySelector(".analysis-parser-card");if(!parser||parser.querySelector(":scope > .analysis-current-actions"))return;
-  const sentence=clean(document.getElementById("analysis-workbench-sentence")?.textContent);if(!sentence)return;
-  const actions=document.createElement("div");actions.className="analysis-current-actions";
-  const notes=document.createElement("button");notes.type="button";notes.textContent="📝 Add to Notes";notes.addEventListener("click",()=>saveAnalysisNote(sentence,parser,notes));
-  const clear=document.createElement("button");clear.type="button";clear.textContent="Clear";clear.addEventListener("click",()=>parser.remove());actions.append(notes,clear);parser.prepend(actions);
-}
-function wrapAnalysis(){
-  const prior=window.openAnalysisWorkbench;if(typeof prior!=="function"||prior.__v401History)return false;
-  const wrapped=function(sentence,...rest){const next=clean(sentence),current=clean(document.getElementById("analysis-workbench-sentence")?.textContent);if(next&&current&&next!==current)archiveCurrent();const out=prior.call(this,sentence,...rest);setTimeout(addCurrentActions,250);return out};
-  wrapped.__v401History=true;window.openAnalysisWorkbench=wrapped;return true;
-}
-function renameVoiceButtons(){document.querySelectorAll("button").forEach(button=>{const value=clean(button.textContent);if(value==="🎙 Live voice")button.textContent="🎙 Voice";else if(value==="■ Stop live voice")button.textContent="■ Stop voice"})}
-const observer=new MutationObserver(()=>{installQuickVoice();addCurrentActions();renameVoiceButtons()});
-function boot(){installQuickVoice();ensureHistory();wrapAnalysis();addCurrentActions();renameVoiceButtons();observer.observe(document.body,{childList:true,subtree:true});setTimeout(wrapAnalysis,1800)}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
 </script>
