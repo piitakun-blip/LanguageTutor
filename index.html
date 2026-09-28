@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — v4.09
+LanguageTutor — v4.10
 Based on Version 1 / exact user rollback baseline.
 Changes: replaces dock/close lifecycle with one persistent floating
 workspace state. Tutor Controls, Conversation Transcript, Ask Tutor, and
@@ -184,6 +184,8 @@ v4.08: changes the desktop banner from sticky to fixed positioning and reserves
 its measured height in the document so it remains visible throughout page scrolling.
 v4.09: prevents a completed live Tutor line from being echoed again as a pending
 line and rejects immediately repeated GPT-Live transcript commits.
+v4.10: makes Chat Transcript reliably follow each newly completed learner or
+Tutor turn, including delayed card reflow after transcript controls update.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -32376,6 +32378,43 @@ function boot(){
   }
   addEventListener("resize",syncBannerHeight,{passive:true});
   setTimeout(syncBannerHeight,400);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
+<script id="language-tutor-v410-transcript-auto-follow-runtime">
+(()=>{
+"use strict";
+let followTimer=0;
+function scrollToLatest(){
+  const log=document.getElementById("voice-chat-messages-log");
+  if(!log)return;
+  const apply=()=>{log.scrollTop=Math.max(0,log.scrollHeight-log.clientHeight)};
+  apply();
+  requestAnimationFrame(()=>{apply();requestAnimationFrame(apply)});
+  clearTimeout(followTimer);
+  followTimer=setTimeout(apply,90);
+  setTimeout(apply,260);
+}
+window.scrollChatTranscriptToLatest=scrollToLatest;
+function containsTurn(node){
+  return node?.nodeType===1 &&
+    (node.matches?.(".conversation-turn-card")||node.querySelector?.(".conversation-turn-card"));
+}
+function bind(){
+  const log=document.getElementById("voice-chat-messages-log");
+  if(!log||log.dataset.v410AutoFollow==="1")return Boolean(log);
+  log.dataset.v410AutoFollow="1";
+  new MutationObserver(records=>{
+    const addedTurn=records.some(record=>[...record.addedNodes].some(containsTurn));
+    if(addedTurn)scrollToLatest();
+  }).observe(log,{childList:true});
+  return true;
+}
+function boot(){
+  let attempts=0;
+  if(bind())return;
+  const timer=setInterval(()=>{attempts++;if(bind()||attempts>40)clearInterval(timer)},100);
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
