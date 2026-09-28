@@ -1,7 +1,6 @@
 <!--
-LanguageTutor — v4.16
-
--->
+LanguageTutor — v4.17
+a-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,6 +17,36 @@ LanguageTutor — v4.16
         #combined-manual-tools,
         #retired-manual-input-host {
             display: none !important;
+        }
+    </style>
+    <style id="language-tutor-v417-student-first-paint-css">
+        /* Student mode is the default. Keep legacy workspaces from flashing
+           while their compatibility runtimes finish constructing the shared
+           transcript and controls. The banner remains available immediately. */
+        body.lt-student-starting {
+            background:#d8e0e8 !important;
+        }
+        body.lt-student-starting > * {
+            visibility:hidden !important;
+        }
+        body.lt-student-starting > #language-header {
+            visibility:visible !important;
+        }
+        body.lt-student-starting::after {
+            content:"Opening Student conversation…";
+            visibility:visible !important;
+            position:fixed;
+            left:50%;
+            top:calc(var(--lt-fixed-banner-height,76px) + 30px);
+            transform:translateX(-50%);
+            z-index:2147483490;
+            padding:9px 13px;
+            border:1px solid #bfdbfe;
+            border-radius:10px;
+            background:#f8fbff;
+            color:#475569;
+            font:800 11px/1.25 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+            box-shadow:0 8px 24px rgba(15,23,42,.12);
         }
     </style>
     <!-- Tailwind CSS for rich, modern styling -->
@@ -7371,7 +7400,7 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
 </style>
 
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
+<body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800 lt-student-mode lt-student-starting" data-workspace-mode="student">
 
     <!-- Header Section -->
     <!-- HEADER-V5-ROUNDTRIP-NORMALIZED -->
@@ -32118,8 +32147,9 @@ function buildMenu(){
   const wrapper=document.createElement("div");wrapper.className="lt-layout-menu";
   menuButton=old.cloneNode(false);menuButton.id="all-floating-reset-layout";
   menuButton.className="lt-layout-menu-button";menuButton.dataset.layoutCycleInstalled="1";
-  menuButton.type="button";menuButton.textContent="Window Layout ▾";
-  menuButton.title="Open window layout options";menuButton.setAttribute("aria-haspopup","menu");
+  menuButton.type="button";menuButton.textContent="Student conversation mode ▾";
+  menuButton.title="Current view: Student conversation mode. Open workspace options.";
+  menuButton.setAttribute("aria-label","Student conversation mode. Open workspace options.");menuButton.setAttribute("aria-haspopup","menu");
   menuButton.setAttribute("aria-expanded","false");
   popover=document.createElement("div");popover.className="lt-layout-popover";popover.hidden=true;
   popover.setAttribute("role","menu");
@@ -32311,7 +32341,8 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 <style id="language-tutor-v411-student-conversation-css">
 /* v4.11 — a focused, single-window conversation workspace for students. */
 body.lt-student-mode{
-  overflow:hidden!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
 }
 body.lt-student-mode #tutor-controls-window,
 body.lt-student-mode #language-coach-window,
@@ -32345,17 +32376,17 @@ body.lt-student-mode #saved-transcripts-window:not([hidden]){
 }
 body.lt-student-mode #voice-transcript-window{
   display:flex!important;
-  position:fixed!important;
+  position:absolute!important;
   left:max(12px,calc(50vw - 590px))!important;
   right:auto!important;
   top:calc(var(--lt-fixed-banner-height,76px) + 12px)!important;
   bottom:auto!important;
   width:min(1180px,calc(100vw - 24px))!important;
-  height:min(760px,calc(100vh - var(--lt-fixed-banner-height,76px) - 24px));
+  height:900px;
   min-width:420px!important;
   min-height:420px!important;
   max-width:calc(100vw - 16px)!important;
-  max-height:calc(100vh - var(--lt-fixed-banner-height,76px) - 24px)!important;
+  max-height:none!important;
   resize:both!important;
   z-index:2147483400!important;
   overflow:hidden!important;
@@ -32473,6 +32504,7 @@ body.lt-student-mode #voice-text-english-btn{display:none!important}
   body{padding-top:var(--lt-fixed-banner-height,68px)!important}
   #language-header{position:fixed!important;top:0!important;left:0!important;right:0!important;z-index:2147483500!important}
   body.lt-student-mode #voice-transcript-window{
+    position:fixed!important;
     left:0!important;right:0!important;top:var(--lt-fixed-banner-height,68px)!important;bottom:0!important;
     width:100vw!important;height:auto!important;border-radius:0!important;border-left:0!important;border-right:0!important;
     min-width:0!important;max-width:none!important;resize:none!important;
@@ -32503,7 +32535,7 @@ body.lt-student-mode #voice-text-english-btn{display:none!important}
 "use strict";
 const MODE_KEY="languagetutor_workspace_mode_v411";
 const STUDENT_HEIGHT_KEY="languagetutor_student_chat_height_v413";
-const STUDENT_GEOMETRY_KEY="languagetutor_student_chat_geometry_v413";
+const STUDENT_GEOMETRY_KEY="languagetutor_student_chat_geometry_v417";
 const MOBILE="(max-width:700px)";
 const minimizedClasses=["all-floating-minimized","voice-transcript-collapsed","conversation-shared-collapsed","is-minimized"];
 const positionProps=["left","top","right","bottom","width","height"];
@@ -32531,19 +32563,26 @@ function applyStudentGeometry(win){
   const saved=savedStudentGeometry(),legacyHeight=savedStudentHeight();
   positionProps.forEach(prop=>win.style.removeProperty(prop));
   if(saved?.left!=null)win.style.setProperty("left",Math.max(8,Math.min(Number(saved.left)||8,innerWidth-120))+"px","important");
-  if(saved?.top!=null){const floor=Math.ceil(document.getElementById("language-header")?.getBoundingClientRect().height||76)+8;win.style.setProperty("top",Math.max(floor,Math.min(Number(saved.top)||floor,innerHeight-80))+"px","important")}
+  if(saved?.top!=null){const floor=Math.ceil(document.getElementById("language-header")?.getBoundingClientRect().height||76)+8;win.style.setProperty("top",Math.max(floor,Math.min(Number(saved.top)||floor,4800))+"px","important")}
   const width=Number(saved?.width);
   if(width)win.style.setProperty("width",Math.max(420,Math.min(width,innerWidth-16))+"px","important");
   const height=Number(saved?.height)||legacyHeight;
-  if(height)win.style.setProperty("height",Math.max(420,Math.min(height,innerHeight-120))+"px","important");
+  if(height)win.style.setProperty("height",Math.max(420,Math.min(height,3200))+"px","important");
 }
 function rememberStudentGeometry(win){
   if(!win||matchMedia(MOBILE).matches)return;
-  const rect=win.getBoundingClientRect(),geometry={left:Math.round(rect.left),top:Math.round(rect.top),width:Math.round(rect.width),height:Math.round(rect.height)};
+  const rect=win.getBoundingClientRect(),geometry={left:Math.round(rect.left+scrollX),top:Math.round(rect.top+scrollY),width:Math.round(rect.width),height:Math.round(rect.height)};
   try{
     localStorage.setItem(STUDENT_GEOMETRY_KEY,JSON.stringify(geometry));
     localStorage.setItem(STUDENT_HEIGHT_KEY,String(geometry.height));
   }catch(_){}
+}
+function ensureStudentCanvas(win=document.getElementById("voice-transcript-window")){
+  if(!active||!win||matchMedia(MOBILE).matches)return;
+  const rect=win.getBoundingClientRect();
+  const needed=Math.max(1800,Math.ceil(rect.bottom+scrollY+160));
+  const current=Math.max(document.body.scrollHeight,Number.parseFloat(getComputedStyle(document.body).minHeight)||0);
+  if(needed>current)document.body.style.setProperty("min-height",needed+"px","important");
 }
 function captureHome(node){return node?{node,parent:node.parentElement,next:node.nextSibling}:null}
 function restoreHome(home){
@@ -32592,18 +32631,19 @@ function beginStudentDrag(event){
   const handle=event.target.closest?.("#voice-transcript-drag-handle");if(!handle)return false;
   const win=document.getElementById("voice-transcript-window"),rect=win?.getBoundingClientRect();if(!win||!rect)return false;
   bringStudentWindowFront(win);win.dataset.userPositioned="1";
-  studentDrag={win,handle,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,left:rect.left,top:rect.top,width:rect.width,height:rect.height};
+  studentDrag={win,handle,pointerId:event.pointerId,startX:event.pageX,startY:event.pageY,left:rect.left+scrollX,top:rect.top+scrollY,width:rect.width,height:rect.height};
   try{handle.setPointerCapture(event.pointerId)}catch(_){}
   event.preventDefault();event.stopImmediatePropagation();return true;
 }
 function moveStudentDrag(event){
   if(!studentDrag||event.pointerId!==studentDrag.pointerId)return;
-  const headerBottom=Math.ceil(document.getElementById("language-header")?.getBoundingClientRect().bottom||76)+8;
-  const left=Math.max(8,Math.min(studentDrag.left+event.clientX-studentDrag.startX,innerWidth-studentDrag.width-8));
-  const top=Math.max(headerBottom,Math.min(studentDrag.top+event.clientY-studentDrag.startY,innerHeight-studentDrag.height-8));
+  const headerBottom=scrollY+Math.ceil(document.getElementById("language-header")?.getBoundingClientRect().bottom||76)+8;
+  const left=Math.max(8,Math.min(studentDrag.left+event.pageX-studentDrag.startX,document.documentElement.clientWidth-studentDrag.width-8));
+  const top=Math.max(headerBottom,studentDrag.top+event.pageY-studentDrag.startY);
   studentDrag.win.style.setProperty("left",left+"px","important");studentDrag.win.style.setProperty("top",top+"px","important");
+  ensureStudentCanvas(studentDrag.win);
 }
-function endStudentDrag(event){if(!studentDrag||event?.pointerId!==studentDrag.pointerId)return;rememberStudentGeometry(studentDrag.win);studentDrag=null}
+function endStudentDrag(event){if(!studentDrag||event?.pointerId!==studentDrag.pointerId)return;rememberStudentGeometry(studentDrag.win);ensureStudentCanvas(studentDrag.win);studentDrag=null}
 function buildConsole(){
   let console=document.getElementById("student-conversation-console");if(console)return console;
   const view=document.getElementById("conversation-view"),titlebar=document.getElementById("voice-transcript-drag-handle");
@@ -32802,6 +32842,13 @@ function setTitle(student){
 function refreshMenu(){
   document.querySelectorAll("[data-workspace-mode]").forEach(button=>button.classList.toggle("lt-workspace-mode-active",button.dataset.workspaceMode===(active?"student":"advanced")));
   document.querySelector(".lt-layout-popover")?.classList.toggle("lt-student-layout-menu",active);
+  const menuButton=document.querySelector(".lt-layout-menu-button");
+  if(menuButton){
+    const label=active?"Student conversation mode":"Advanced workspace";
+    menuButton.textContent=label+" ▾";
+    menuButton.title=`Current view: ${label}. Open workspace options.`;
+    menuButton.setAttribute("aria-label",`${label}. Open workspace options.`);
+  }
 }
 function enterStudent(persist=true){
   if(active){refreshMenu();return}
@@ -32810,13 +32857,19 @@ function enterStudent(persist=true){
   applyStudentGeometry(win);showStudentQuickTranslate();
   syncStudentHeader();
   if(!headerObserver&&"ResizeObserver" in window){headerObserver=new ResizeObserver(syncStudentHeader);const header=document.getElementById("language-header");if(header)headerObserver.observe(header)}
-  if("ResizeObserver" in window){studentResizeObserver?.disconnect();studentResizeObserver=new ResizeObserver(()=>{if(active)rememberStudentGeometry(win)});studentResizeObserver.observe(win)}
+  if("ResizeObserver" in window){studentResizeObserver?.disconnect();studentResizeObserver=new ResizeObserver(()=>{if(active){rememberStudentGeometry(win);ensureStudentCanvas(win)}});studentResizeObserver.observe(win)}
   buildConsole();mountSharedControls();setTitle(true);watchTranscript();watchState();scanTurns();
-  requestAnimationFrame(()=>{window.scrollChatTranscriptToLatest?.();syncControls()});
+  requestAnimationFrame(()=>{
+    window.scrollChatTranscriptToLatest?.();syncControls();ensureStudentCanvas(win);
+    document.body.classList.remove("lt-student-starting");
+  });
   if(persist&&!matchMedia(MOBILE).matches)storeMode("student");refreshMenu();
 }
 function enterAdvanced(persist=true){
-  if(!active){if(persist)storeMode("advanced");refreshMenu();return}
+  if(!active){
+    document.body.classList.remove("lt-student-mode","lt-student-starting");document.body.dataset.workspaceMode="advanced";
+    setTitle(false);if(persist)storeMode("advanced");refreshMenu();return;
+  }
   active=false;logObserver?.disconnect();stateObserver?.disconnect();studentResizeObserver?.disconnect();
   document.body.classList.remove("lt-student-mode");document.body.dataset.workspaceMode="advanced";
   restoreSharedControls();setTitle(false);
@@ -32855,6 +32908,7 @@ function boot(){
   setTimeout(()=>{
     enterStudent(false);
   },1750);
+  setTimeout(()=>document.body.classList.remove("lt-student-starting"),6000);
   document.addEventListener("pointerdown",event=>{
     if(!active)return;
     const panel=event.target.closest?.("#voice-transcript-window,#quick-translate-window,#saved-transcripts-window");
