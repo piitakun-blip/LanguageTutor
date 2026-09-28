@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — v4.06
+LanguageTutor — v4.07
 Based on Version 1 / exact user rollback baseline.
 Changes: replaces dock/close lifecycle with one persistent floating
 workspace state. Tutor Controls, Conversation Transcript, Ask Tutor, and
@@ -176,6 +176,10 @@ now waits for ICE candidate gathering to finish before sending the SDP offer to
 the configured gateway, matching the current OpenAI connection sequence.
 v4.06: deepens the neutral workspace canvas so white window interiors have
 clearer visual separation while preserving each window's accent-color identity.
+v4.07: adds a Tidy layout action that respects manually chosen window sizes and
+open states while aligning nearby windows, regularizing gaps, and removing overlap.
+The page banner now stays above the workspace while scrolling, and desktop drag
+boundaries keep window title bars below the visible banner.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -30680,7 +30684,7 @@ else{bindObservers();setTimeout(bindObservers,900)}
   #language-header{
     position:sticky!important;
     top:0!important;
-    z-index:1000!important;
+    z-index:2147483500!important;
   }
   #tutor-controls-window,
   #voice-transcript-window,
@@ -30727,7 +30731,9 @@ const read=key=>{try{return JSON.parse(localStorage.getItem(key)||"{}")||{}}catc
 const write=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}};
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 function workspaceTop(){
-  return window.scrollY+8;
+  const header=document.getElementById("language-header");
+  const headerHeight=Math.max(0,Math.ceil(header?.getBoundingClientRect().height||0));
+  return window.scrollY+headerHeight+8;
 }
 function canvasHeight(){
   /* Keep a generous but finite canvas; absolutely positioned windows must not
@@ -31921,6 +31927,16 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 .lt-layout-divider{height:1px;margin:6px 4px;background:#e2e8f0}
 .lt-layout-menu-status{min-height:17px;padding:5px 9px 2px;color:#047857;font:750 9px/1.25 var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif)}
 body.lt-layout-menu-open #language-header{z-index:2147483646!important}
+body.lt-layout-tidying #tutor-controls-window,
+body.lt-layout-tidying #voice-transcript-window,
+body.lt-layout-tidying #language-coach-window,
+body.lt-layout-tidying #language-tools-window,
+body.lt-layout-tidying #quick-translate-window,
+body.lt-layout-tidying #analysis-workbench-window,
+body.lt-layout-tidying #special-character-palette,
+body.lt-layout-tidying #floating-kana-tool{
+  transition:left .22s ease,top .22s ease!important;
+}
 #save-default-window-layout{display:none!important}
 @media(max-width:900px){.lt-layout-menu{display:none!important}}
 </style>
@@ -32095,6 +32111,61 @@ function factoryLayout(){
     syncCanvasPositions();window.ensureWorkspaceCanvasHeight?.();
   }));
 }
+function tidyLayout(){
+  if(!desktop())return false;
+  const margin=12,gap=14,grid=8,rowTolerance=72;
+  const pageWidth=document.documentElement.clientWidth;
+  const rightEdge=Math.max(margin+300,pageWidth-margin);
+  const headerHeight=Math.max(76,document.getElementById("language-header")?.getBoundingClientRect().height||0);
+  const topFloor=headerHeight+14;
+  const snap=(value,origin)=>origin+Math.round((value-origin)/grid)*grid;
+  const items=Object.keys(definitions).map(name=>{
+    const item=entry(name);if(!item||item.win.hidden||getComputedStyle(item.win).display==="none")return null;
+    const rect=item.win.getBoundingClientRect(),location=point(item.win);
+    if(rect.width<1||rect.height<1)return null;
+    return {name,win:item.win,left:location.left,top:location.top,width:rect.width,height:rect.height};
+  }).filter(Boolean).sort((a,b)=>a.top-b.top||a.left-b.left);
+  if(!items.length)return false;
+
+  const rows=[];
+  items.forEach(item=>{
+    let best=null,bestDistance=Infinity;
+    rows.forEach(row=>{
+      const distance=Math.abs(item.top-row.anchor);
+      if(distance<=rowTolerance&&distance<bestDistance){best=row;bestDistance=distance}
+    });
+    if(!best){rows.push({anchor:item.top,items:[item]});return}
+    best.items.push(item);
+    best.anchor=best.items.reduce((sum,current)=>sum+current.top,0)/best.items.length;
+  });
+  rows.sort((a,b)=>a.anchor-b.anchor);
+
+  document.body.classList.add("lt-layout-tidying");
+  let nextTop=topFloor;
+  rows.forEach(row=>{
+    row.items.sort((a,b)=>a.left-b.left);
+    const originalTop=Math.max(topFloor,snap(Math.min(...row.items.map(item=>item.top)),topFloor));
+    let rowTop=Math.max(nextTop,originalTop);
+    const requiredWidth=row.items.reduce((sum,item)=>sum+item.width,0)+gap*Math.max(0,row.items.length-1);
+    let rowLeft=Math.max(margin,snap(Math.min(...row.items.map(item=>item.left)),margin));
+    if(rowLeft+requiredWidth>rightEdge)rowLeft=margin;
+    let left=rowLeft,lineHeight=0;
+
+    row.items.forEach(item=>{
+      if(left>rowLeft&&left+item.width>rightEdge){
+        rowTop+=lineHeight+gap;left=rowLeft;lineHeight=0;
+      }
+      const safeLeft=item.width>rightEdge-margin?margin:left;
+      Object.assign(item.win.style,{left:safeLeft+"px",top:rowTop+"px",right:"auto",bottom:"auto"});
+      left=safeLeft+item.width+gap;
+      lineHeight=Math.max(lineHeight,item.height);
+    });
+    nextTop=rowTop+lineHeight+gap;
+  });
+  setTimeout(()=>document.body.classList.remove("lt-layout-tidying"),260);
+  syncCanvasPositions();window.ensureWorkspaceCanvasHeight?.();
+  return true;
+}
 function status(text){
   const el=popover?.querySelector(".lt-layout-menu-status");if(!el)return;
   el.textContent=text;clearTimeout(status.timer);
@@ -32118,6 +32189,7 @@ function action(name){
   if(name==="minimize")Object.keys(definitions).forEach(key=>setMinimized(key,true));
   if(name==="chat"){core.forEach(key=>setMinimized(key,false));supporting.forEach(key=>setMinimized(key,true))}
   if(name==="all")Object.keys(definitions).forEach(key=>setMinimized(key,false));
+  if(name==="tidy"){tidyLayout();syncCanvasPositions();return}
   if(name==="save"){
     if(writeSnapshot(currentSnapshot()))status("Startup layout saved.");
     else status("The layout could not be saved.");
@@ -32154,6 +32226,7 @@ function buildMenu(){
     '<button type="button" role="menuitem" data-layout-action="chat">💬 Open chat workspace</button>'+
     '<button type="button" role="menuitem" data-layout-action="all">▣ Open all windows</button>'+
     '<button type="button" role="menuitem" data-layout-action="minimize">− Minimize all windows</button>'+
+    '<button type="button" role="menuitem" data-layout-action="tidy">⊞ Tidy current layout</button>'+
     '<div class="lt-layout-divider"></div>'+
     '<button type="button" role="menuitem" data-layout-action="restore">↶ Restore saved layout</button>'+
     '<button type="button" role="menuitem" data-layout-action="save">★ Save current layout as startup</button>'+
