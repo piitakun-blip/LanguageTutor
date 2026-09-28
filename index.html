@@ -1,6 +1,207 @@
 <!--
-LanguageTutor — v4.17
-a-->
+LanguageTutor — v4.10
+Based on Version 1 / exact user rollback baseline.
+Changes: replaces dock/close lifecycle with one persistent floating
+workspace state. Tutor Controls, Conversation Transcript, Ask Tutor, and
+Language Tools open at startup and can be dragged or resized. Minimize turns
+each window into a draggable title card; restore expands that same window.
+Ask Tutor uses a CSS-only checkbox collapse so legacy observers receive no
+outer-window mutation and no JavaScript-driven minimize DOM update.
+Conversation speech recognition now pauses only while Ask Tutor actively owns
+the microphone, rather than whenever its permanently open window is visible.
+v1.03: continuing a saved conversation mirrors its last three turns in Tutor
+Controls and speaks the most recent Tutor line before the learner continues.
+The empty/new-conversation state now uses the same full-height floating
+transcript area instead of the retired compact 70–90 px page layout.
+v1.04: Saved Transcripts is promoted above every open workspace whenever it
+opens or receives pointer focus.
+v1.05: opening or clicking Ask Tutor promotes it above the other windows
+without mutating Ask Tutor's observed outer-window style.
+v1.06: all movable windows share click-to-front focus behavior; Saved
+Transcripts and Ask Tutor are also promoted immediately when opened.
+The Conversation minimize control is anchored to the title bar's upper-right
+edge instead of inheriting the legacy title-copy flex geometry.
+v1.07: Conversation settings moves from the permanent Tutor Controls layout
+into an on-demand movable window opened by a button beside Start Conversation.
+The Tutor Controls window is renamed Chat with Tutor, and the redundant
+page-level Chat with Tutor status bar is hidden after detachment.
+v1.08: Ask Tutor's active results, thread, or analysis area expands with the
+resizable window while its composer remains anchored at the bottom.
+v1.10: retains the confirmed all-floating-window startup state, adds a compact
+automatic two-way Quick Translate tool inside Ask Tutor, and renames the
+language-specific conversation window to identify it as a transcript.
+v2.01: begins the major-version series and makes the Conversation Settings
+window remount and expand its live settings controls whenever it opens.
+v2.02: unifies icon-based window headings, simplifies Language Tools into a
+single-layer two-button workspace, retires Translation & Manual Input from
+Language Tools, adopts Chat wording, repairs Chat Settings content mounting,
+and moves Reset window positions into the banner control row.
+v2.03: renames selected-line Save actions to “＋ Study List” so they are
+clearly distinguished from the whole-transcript Save control.
+v2.04: prevents Ask Tutor's CSS restore icon from overlapping legacy literal
+button text in its minimized title card, and removes the redundant upper
+Ask Tutor button from the Chat Transcript toolbar while retaining the
+selected-line Ask Tutor action.
+v2.05: establishes a consistent typography hierarchy across floating windows:
+one interface font family, unified button labels, distinct window and section
+headings, readable body text, and smaller supporting labels.
+v2.06: simplifies transcript speaker labels from language-specific forms such
+as “German Tutor” to the concise “Tutor”; the learner label still identifies
+the spoken language where useful.
+v2.07: moves the existing Quick Translate tool out of Ask Tutor and into its
+own persistent floating workspace with drag, resize, minimize/restore,
+click-to-front, saved geometry, and Reset Window Positions support.
+v2.08: presents each Quick Translate result as a transcript-style card with
+Listen, Copy, Study List, and Ask Tutor actions while retaining Use in reply
+for translations into the study language. Current and saved transcript
+translations also use a larger, labeled, high-contrast result card.
+v2.09: gives every primary workspace a concise, consistently styled helper
+line beneath its title, including minimized title cards.
+v2.10: strengthens the functional color identity of each primary window with
+distinct high-contrast borders, title bars, title text, helper text, and
+matching minimize controls while preserving light content areas. Minimized
+cards now share exact title, helper, and restore-control typography. German,
+Spanish, and Japanese character keyboards also use the same draggable,
+resizable, minimizable, click-to-front window behavior and participate in
+Reset window positions.
+v2.11: replaces Reset window positions with a context-aware three-state
+workspace layout control. It cycles from minimizing the persistent main
+windows, to restoring the three conversation windows, to restoring all,
+while preserving each window's user-selected position and expanded size.
+On-demand Chat Settings remains on-demand. A
+separate Set current layout as default control snapshots the main window
+positions and expanded sizes and reapplies that arrangement at future startup.
+v2.12: consolidates Analysis Workbench navigation into Ask Tutor's Analyze,
+Translate, and Why this wording controls. Analyze opens directly to the grammar
+parse; Translate and Why switch the open workbench content. The redundant
+internal mode row and sentence-diagram UI are removed, translations use the
+prominent transcript-style result card, Save is renamed + Study List, and the
+embedded workbench title bar retains only its close control. The remaining
+Color legend opens from a compact button inside the first sentence heading,
+so the parser tiles begin immediately without a permanent control row.
+v2.13: renames the German and Spanish input windows to German Special
+Characters and Spanish Special Characters. Keyboard minimize controls now use
+their native non-drag control classes and stop pointer propagation, preventing
+the title-bar drag handler from intercepting collapse and restore presses.
+v2.14: promotes the active language's character input and Analysis Workbench
+to persistent startup windows. Analysis is again a separate draggable,
+resizable, minimizable, click-to-front workspace; Ask Tutor's Analyze,
+Translate, and Why controls send the current context to it. Both windows join
+Minimize All, Open All, and Set current layout as default, while the chat-only
+layout minimizes them.
+v2.15: prevents the retired Translation & Manual Input interface from flashing
+during first paint. Its legacy DOM remains available in a permanently hidden
+compatibility container, and the shared translation services used by Quick
+Translate, Chat Transcript, and Ask Tutor remain unchanged.
+v2.16: removes the author credential from the compact top banner and places
+“by Peter Ward, Ed.D.” in the footer in place of the retired browser-only
+execution description. The banner subtitle now describes the broader app as
+an interactive Conversation, Grammar & Study Companion in each language.
+v2.17: consolidates API status into the settings gear: it reads “Insert API
+Key” until a key is configured, then changes to “API Key Valid.” The redundant
+status pill is hidden. A shared selected-language bridge also repairs Ask
+Tutor's Help me reply suggestions and Use in reply actions for Spanish and
+Japanese instead of allowing those later modules to fall back to German.
+v2.18: unifies floating-window stacking across every workspace. Selecting a
+window or restoring it from a title card moves it above the others; minimizing
+a window moves its title card behind open windows. The coordinator also
+normalizes the formerly competing keyboard, analysis, and quick-translate
+z-index ranges while preserving Ask Tutor's mutation-safe body-owned layer.
+Ask Tutor also gains a Transcripts shortcut that opens Saved Tutor Transcripts
+and promotes that window through the same stacking coordinator.
+v2.19: changes the German Special Characters window from conversation blue to
+a distinct teal identity, separating it visually from Chat with Tutor while
+leaving its German-specific title, characters, and behavior unchanged.
+v3: promotes the complete v2.19 build to the next major-version milestone.
+This is a version-label change only; its tested behavior is otherwise identical.
+v3.01: gives Ask Tutor and Analysis Workbench distinct responsibilities. Only
+Ask Tutor's Analyze action opens the standalone workbench; Translate, Why this
+wording, and Help me reply now answer inside Ask Tutor's private thread. The
+Ask Tutor and the Analysis Workbench title bar gain Chat Transcript shortcuts
+that open the current conversation transcript through the unified front-window
+coordinator; saved transcripts remain available from that transcript window.
+v3.02: strengthens Chat Transcript's selected-line indicator with an explicit
+active-selection state, green context panel, heavier label, and larger selected
+text while keeping the transcript action buttons unchanged.
+v3.03: standardizes the selected-line context shown in Ask Tutor, Chat
+Transcript, and Analysis Workbench as a neutral inset panel with the label
+above a large, bold line. All three views use the label “Selected line.”
+v3.04: keeps the saved-transcript title and Continue Conversation, Rename,
+and Delete actions visible by grouping them with the selected-line tools in
+one sticky control region above the scrolling saved conversation.
+v3.05: expands the desktop into a vertically scrollable workspace canvas.
+Floating windows use document positions, can be arranged below the first
+screen, and retain those canvas positions. The sticky page banner remains
+above every window, and dragging cannot park a window over it.
+v3.06: makes destination-window promotion authoritative after button actions.
+Ask Tutor, Saved Tutor Transcripts, Chat Transcript, Analysis Workbench, Chat
+Settings, language tools, and character windows restore when necessary and
+come to the front after their opening control finishes.
+v3.07: replaces the remaining three selected-context variants with one
+authoritative Selected Line card shared by Ask Tutor, Chat Transcript, and
+Analysis Workbench. A small runtime normalizer prevents older rerenders from
+restoring legacy “Selected context” or “Selected utterance” labels.
+v3.08: moves the Analysis Workbench Color Legend out of the parser card and
+gives it a toggle in the selected-line action row. The same row also gains a
+Translate action for the currently selected conversation line.
+v3.09: moves the Analysis Workbench Chat Transcript shortcut from the title
+bar into the selected-line action row. The title bar now contains only its
+window minimize control.
+v3.10: removes the viewport-height ceiling from content-heavy desktop windows,
+persists taller user-resized heights, and automatically extends the scrollable
+workspace beneath their lowest edge. Compact utility windows keep their
+existing size limits.
+v3.11: reverses the desktop banner stacking constraint: floating windows may
+overlap the sticky banner and render above it, and the drag boundary now uses
+the visible page top rather than the banner's lower edge.
+v3.12: keeps Analysis grammar cards mounted when translating the selected line
+and gives Analysis and Chat Transcript a distinct reference-translation card.
+Ask Tutor shortcuts now render into persistent collapsible Translation Details,
+Why This Wording, and Reply Options sections instead of imitating transcript
+turns; its selected line is persistent and gains a Study List action. Language
+Tools is renamed Study Tools, and the unused Analysis keyboard action is removed.
+v3.13: adds a language-scoped Study Notes library inside Study Tools. Ask Tutor's
+Add to Notes action captures all generated translation details, wording guidance,
+and reply options for the selected line as one updateable reference note. Language
+switching now preserves each language's conversation while clearing incompatible
+live, Ask Tutor, selection, and Analysis state so content cannot leak across languages.
+German, Spanish, and Japanese character windows now share the Spanish peach/orange heading palette.
+v4.0: replaces the separate cycling and save-layout controls with one accessible
+Window Layout menu. It can minimize all windows, open the chat workspace, open
+all windows, save the current complete arrangement as the desktop startup
+layout, restore that saved layout, or clear it and restore a responsive factory
+layout. Saved layouts include position, expanded size, minimized state, and
+stacking order and never apply to the mobile workspace. GPT-Live WebRTC startup
+now waits for ICE candidate gathering to finish before sending the SDP offer to
+the configured gateway, matching the current OpenAI connection sequence.
+v4.06: deepens the neutral workspace canvas so white window interiors have
+clearer visual separation while preserving each window's accent-color identity.
+v4.07: adds a Tidy layout action that respects manually chosen window sizes and
+open states while aligning nearby windows, regularizing gaps, and removing overlap.
+The page banner now stays above the workspace while scrolling, and desktop drag
+boundaries keep window title bars below the visible banner.
+v4.08: changes the desktop banner from sticky to fixed positioning and reserves
+its measured height in the document so it remains visible throughout page scrolling.
+v4.09: prevents a completed live Tutor line from being echoed again as a pending
+line and rejects immediately repeated GPT-Live transcript commits.
+v4.10: makes Chat Transcript reliably follow each newly completed learner or
+Tutor turn, including delayed card reflow after transcript controls update.
+v4.16: makes Student conversation mode the startup workspace, keeps Quick
+Translate open without a duplicate shortcut, groups conversation-management
+actions at the right, consistently names the Student transcript “Chat Tutor,”
+lets that desktop window move and resize in both directions, and changes Quick
+Translate’s Student actions by hiding Study List and replacing Ask Tutor with
+an inline Why This Wording panel.
+v4.17: places the desktop Student Chat Tutor window on the scrollable workspace
+instead of fixing it to the viewport. It can grow well beyond one screen in
+height, scroll naturally with the page, and retains its document position and
+two-direction size between sessions. Mobile remains screen-fitted. The layout
+menu button now names the active mode instead of using “Window Layout.” Student
+first-paint masking prevents older workspace layers from flashing during boot.
+v4.18: removes the priority lock that prevented the browser resize control from
+changing Student Chat Tutor's saved width and height. A visible lower-right
+resize affordance makes two-direction resizing easier to discover.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32381,7 +32582,7 @@ body.lt-student-mode #voice-transcript-window{
   right:auto!important;
   top:calc(var(--lt-fixed-banner-height,76px) + 12px)!important;
   bottom:auto!important;
-  width:min(1180px,calc(100vw - 24px))!important;
+  width:min(1180px,calc(100vw - 24px));
   height:900px;
   min-width:420px!important;
   min-height:420px!important;
@@ -32390,6 +32591,20 @@ body.lt-student-mode #voice-transcript-window{
   resize:both!important;
   z-index:2147483400!important;
   overflow:hidden!important;
+}
+body.lt-student-mode #voice-transcript-window::after{
+  content:"";
+  position:absolute;
+  right:4px;
+  bottom:4px;
+  width:15px;
+  height:15px;
+  z-index:20;
+  pointer-events:none;
+  opacity:.72;
+  background:
+    linear-gradient(135deg,transparent 0 52%,#2563eb 53% 59%,transparent 60%),
+    linear-gradient(135deg,transparent 0 70%,#2563eb 71% 77%,transparent 78%);
 }
 body.lt-student-mode #voice-transcript-window #conversation-view{
   display:flex!important;
@@ -32509,6 +32724,7 @@ body.lt-student-mode #voice-text-english-btn{display:none!important}
     width:100vw!important;height:auto!important;border-radius:0!important;border-left:0!important;border-right:0!important;
     min-width:0!important;max-width:none!important;resize:none!important;
   }
+  body.lt-student-mode #voice-transcript-window::after{display:none!important}
   body.lt-student-mode #saved-transcripts-window:not([hidden]){
     left:0!important;right:0!important;top:var(--lt-fixed-banner-height,68px)!important;bottom:0!important;
     width:100vw!important;height:auto!important;min-height:0!important;border-radius:0!important;
@@ -32565,9 +32781,9 @@ function applyStudentGeometry(win){
   if(saved?.left!=null)win.style.setProperty("left",Math.max(8,Math.min(Number(saved.left)||8,innerWidth-120))+"px","important");
   if(saved?.top!=null){const floor=Math.ceil(document.getElementById("language-header")?.getBoundingClientRect().height||76)+8;win.style.setProperty("top",Math.max(floor,Math.min(Number(saved.top)||floor,4800))+"px","important")}
   const width=Number(saved?.width);
-  if(width)win.style.setProperty("width",Math.max(420,Math.min(width,innerWidth-16))+"px","important");
+  if(width)win.style.setProperty("width",Math.max(420,Math.min(width,innerWidth-16))+"px");
   const height=Number(saved?.height)||legacyHeight;
-  if(height)win.style.setProperty("height",Math.max(420,Math.min(height,3200))+"px","important");
+  if(height)win.style.setProperty("height",Math.max(420,Math.min(height,3200))+"px");
 }
 function rememberStudentGeometry(win){
   if(!win||matchMedia(MOBILE).matches)return;
