@@ -16135,28 +16135,46 @@ Set reply_language to "en" only when the spoken reply is primarily English; othe
         }
 
         const history=voiceTutorHistory();
-        let tutorIndex=-1;
+        let userIndex=-1;
         for(let i=history.length-1;i>=0;i--){
-            if(history[i]?.role==="assistant" && String(history[i]?.text||"").trim()){
-                tutorIndex=i;
+            if(history[i]?.role==="user" && String(history[i]?.text||"").trim()){
+                userIndex=i;
                 break;
             }
         }
-        if(tutorIndex<0){
-            voiceTutorStatus("There is no tutor line to repeat yet.","normal");
+        if(userIndex<0){
+            voiceTutorStatus("There is no learner turn to restate yet.","normal");
             updateVoiceRestateButton();
             return;
         }
-        const previousTutor=history[tutorIndex];
+
+        // Roll back the learner's latest turn and every tutor response that
+        // followed it, leaving the preceding tutor prompt as the active turn.
+        history.splice(userIndex);
+        const previousTutor=[...history].reverse().find(entry=>
+            entry?.role==="assistant" && String(entry?.text||"").trim()
+        );
+        renderVoiceTutorTranscript();
+
         const shouldResume=voiceTutorState.active && voiceTutorState.resumeMicAfterTurn && voiceTutorState.micSession;
         try{window.speechSynthesis?.cancel();}catch(e){}
         voiceTutorState.speaking=false;
         clearVoiceSilenceTimer();
         if(voiceTutorState.active)destroyVoiceRecognition();
         setVoiceMicIndicator(false);
+        voiceTutorState.liveUserText="";
+        voiceTutorState.liveUserTargetTranslation="";
+        if(!previousTutor){
+            voiceTutorState.liveTutorText="";
+            renderVoiceLiveTurn();
+            voiceTutorState.phase="idle";
+            voiceTutorStatus("The latest exchange was removed. There is no earlier tutor line to replay.","normal");
+            updateVoiceRestateButton();
+            return;
+        }
         voiceTutorState.liveTutorText=String(previousTutor.text||"").trim();
         renderVoiceLiveTurn();
-        voiceTutorStatus("Repeating the tutor's most recent line…","speaking");
+        voiceTutorStatus("Latest exchange removed. Repeating the preceding tutor line…","speaking");
         try{
             await speakVoiceTutorText(previousTutor.text,previousTutor.replyLanguage==="en" ? "en" : "target");
         }catch(e){
@@ -31249,6 +31267,16 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
   padding:11px 13px;color:#334155;font-size:12px;line-height:1.6;
   white-space:pre-wrap;overflow-wrap:anywhere;
 }
+.ask-tutor-tool-panel[open]>.ask-tutor-tool-content{
+  overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;
+}
+#ask-tutor-translation-details[open]>.ask-tutor-tool-content,
+#ask-tutor-why-section[open]>.ask-tutor-tool-content{
+  max-height:clamp(140px,24vh,240px);
+}
+#ask-tutor-reply-section[open]>.ask-tutor-tool-content{
+  max-height:clamp(220px,42vh,440px);
+}
 .ask-tutor-tool-content.is-loading{color:#64748b;font-style:italic}
 .ask-tutor-direct-translation{margin:0!important;border-radius:0!important;border-width:0 0 1px 5px!important}
 .ask-tutor-shortcut-error{color:#be123c;font-weight:700}
@@ -31261,6 +31289,15 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 }
 .ask-tutor-section-reply-text{margin-top:4px;color:#102a20;font-size:14px;line-height:1.45;font-weight:800}
 .ask-tutor-section-reply-note{margin-top:3px;color:#526477;font-size:10px;line-height:1.45}
+.ask-tutor-section-reply-translation{
+  margin-top:8px;padding:8px 10px;border-left:4px solid #d97706;border-radius:7px;
+  background:#fffbeb;color:#422006;font-size:11px;line-height:1.5;font-weight:750;
+}
+.ask-tutor-section-reply-translation::before{
+  content:"ENGLISH TRANSLATION";display:block;margin-bottom:3px;color:#a34b05;
+  font-size:8px;line-height:1.2;font-weight:900;letter-spacing:.06em;
+}
+.ask-tutor-section-reply-translation[hidden]{display:none!important}
 .ask-tutor-section-reply-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .ask-tutor-section-reply-actions button{min-height:29px;padding:5px 8px;font-size:9.5px;font-weight:750}
 </style>
@@ -31468,10 +31505,29 @@ function renderReplyOptions(body,options,intro){
     const label=document.createElement("div");label.className="ask-tutor-section-reply-label";label.textContent=index===0?"Suggested reply":`Alternative ${index}`;
     const text=document.createElement("div");text.className="ask-tutor-section-reply-text";text.textContent=phrase;card.append(label,text);
     if(option?.note){const note=document.createElement("div");note.className="ask-tutor-section-reply-note";note.textContent=clean(option.note);card.appendChild(note)}
+    const translation=document.createElement("div");translation.className="ask-tutor-section-reply-translation";translation.hidden=true;card.appendChild(translation);
     const actions=document.createElement("div");actions.className="ask-tutor-section-reply-actions";
+    const translate=replyAction("🌐 Translate",async event=>{
+      const button=event.currentTarget;
+      if(translation.dataset.ready==="1"){
+        translation.hidden=!translation.hidden;
+        button.textContent=translation.hidden?"🌐 Translate":"🌐 Hide translation";
+        return;
+      }
+      translation.hidden=false;translation.textContent="Translating…";button.disabled=true;
+      try{
+        const english=await translateToEnglish(phrase,cfg.code||languageCode());
+        translation.textContent=english||"Translation unavailable.";
+        translation.dataset.ready=english?"1":"";
+        button.textContent=english?"🌐 Hide translation":"🌐 Translate";
+      }catch(_){
+        translation.textContent="Translation unavailable.";translation.dataset.ready="";button.textContent="🌐 Translate";
+      }finally{button.disabled=false}
+    });
     actions.append(
       replyAction("↩ Use in reply",()=>window.useLanguageCoachPhrase?.(phrase),true),
       replyAction("🔊 Listen",()=>window.speakRawText?.(phrase,cfg.locale)),
+      translate,
       replyAction("🔎 Analyze",()=>analyzeLine(phrase,{source:"ask-tutor-reply-option",text:phrase})),
       replyAction("⧉ Copy",async event=>{try{await navigator.clipboard.writeText(phrase);const b=event.currentTarget,old=b.textContent;b.textContent="✓ Copied";setTimeout(()=>b.textContent=old,900)}catch(_){}}),
       replyAction("＋ Study List",event=>window.saveVoiceTutorPhrase?.(phrase,cfg.code||languageCode(),event.currentTarget))
@@ -31568,6 +31624,7 @@ body[data-study-language="es"] #special-character-palette,
   color:#64748b;font-size:11px;line-height:1.55;text-align:center;
 }
 .study-notes-list{display:flex;flex-direction:column;gap:10px;padding-bottom:8px}
+.study-notes-empty[hidden],.study-notes-list[hidden]{display:none!important}
 .study-note-card{
   padding:12px;border:1px solid #d8dfea;border-left:5px solid #8b5cf6;
   border-radius:11px;background:#fff;box-shadow:0 3px 10px rgba(15,23,42,.06);
