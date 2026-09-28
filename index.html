@@ -1,179 +1,5 @@
 <!--
-LanguageTutor — v4.05
-Based on Version 1 / exact user rollback baseline.
-Changes: replaces dock/close lifecycle with one persistent floating
-workspace state. Tutor Controls, Conversation Transcript, Ask Tutor, and
-Language Tools open at startup and can be dragged or resized. Minimize turns
-each window into a draggable title card; restore expands that same window.
-Ask Tutor uses a CSS-only checkbox collapse so legacy observers receive no
-outer-window mutation and no JavaScript-driven minimize DOM update.
-Conversation speech recognition now pauses only while Ask Tutor actively owns
-the microphone, rather than whenever its permanently open window is visible.
-v1.03: continuing a saved conversation mirrors its last three turns in Tutor
-Controls and speaks the most recent Tutor line before the learner continues.
-The empty/new-conversation state now uses the same full-height floating
-transcript area instead of the retired compact 70–90 px page layout.
-v1.04: Saved Transcripts is promoted above every open workspace whenever it
-opens or receives pointer focus.
-v1.05: opening or clicking Ask Tutor promotes it above the other windows
-without mutating Ask Tutor's observed outer-window style.
-v1.06: all movable windows share click-to-front focus behavior; Saved
-Transcripts and Ask Tutor are also promoted immediately when opened.
-The Conversation minimize control is anchored to the title bar's upper-right
-edge instead of inheriting the legacy title-copy flex geometry.
-v1.07: Conversation settings moves from the permanent Tutor Controls layout
-into an on-demand movable window opened by a button beside Start Conversation.
-The Tutor Controls window is renamed Chat with Tutor, and the redundant
-page-level Chat with Tutor status bar is hidden after detachment.
-v1.08: Ask Tutor's active results, thread, or analysis area expands with the
-resizable window while its composer remains anchored at the bottom.
-v1.10: retains the confirmed all-floating-window startup state, adds a compact
-automatic two-way Quick Translate tool inside Ask Tutor, and renames the
-language-specific conversation window to identify it as a transcript.
-v2.01: begins the major-version series and makes the Conversation Settings
-window remount and expand its live settings controls whenever it opens.
-v2.02: unifies icon-based window headings, simplifies Language Tools into a
-single-layer two-button workspace, retires Translation & Manual Input from
-Language Tools, adopts Chat wording, repairs Chat Settings content mounting,
-and moves Reset window positions into the banner control row.
-v2.03: renames selected-line Save actions to “＋ Study List” so they are
-clearly distinguished from the whole-transcript Save control.
-v2.04: prevents Ask Tutor's CSS restore icon from overlapping legacy literal
-button text in its minimized title card, and removes the redundant upper
-Ask Tutor button from the Chat Transcript toolbar while retaining the
-selected-line Ask Tutor action.
-v2.05: establishes a consistent typography hierarchy across floating windows:
-one interface font family, unified button labels, distinct window and section
-headings, readable body text, and smaller supporting labels.
-v2.06: simplifies transcript speaker labels from language-specific forms such
-as “German Tutor” to the concise “Tutor”; the learner label still identifies
-the spoken language where useful.
-v2.07: moves the existing Quick Translate tool out of Ask Tutor and into its
-own persistent floating workspace with drag, resize, minimize/restore,
-click-to-front, saved geometry, and Reset Window Positions support.
-v2.08: presents each Quick Translate result as a transcript-style card with
-Listen, Copy, Study List, and Ask Tutor actions while retaining Use in reply
-for translations into the study language. Current and saved transcript
-translations also use a larger, labeled, high-contrast result card.
-v2.09: gives every primary workspace a concise, consistently styled helper
-line beneath its title, including minimized title cards.
-v2.10: strengthens the functional color identity of each primary window with
-distinct high-contrast borders, title bars, title text, helper text, and
-matching minimize controls while preserving light content areas. Minimized
-cards now share exact title, helper, and restore-control typography. German,
-Spanish, and Japanese character keyboards also use the same draggable,
-resizable, minimizable, click-to-front window behavior and participate in
-Reset window positions.
-v2.11: replaces Reset window positions with a context-aware three-state
-workspace layout control. It cycles from minimizing the persistent main
-windows, to restoring the three conversation windows, to restoring all,
-while preserving each window's user-selected position and expanded size.
-On-demand Chat Settings remains on-demand. A
-separate Set current layout as default control snapshots the main window
-positions and expanded sizes and reapplies that arrangement at future startup.
-v2.12: consolidates Analysis Workbench navigation into Ask Tutor's Analyze,
-Translate, and Why this wording controls. Analyze opens directly to the grammar
-parse; Translate and Why switch the open workbench content. The redundant
-internal mode row and sentence-diagram UI are removed, translations use the
-prominent transcript-style result card, Save is renamed + Study List, and the
-embedded workbench title bar retains only its close control. The remaining
-Color legend opens from a compact button inside the first sentence heading,
-so the parser tiles begin immediately without a permanent control row.
-v2.13: renames the German and Spanish input windows to German Special
-Characters and Spanish Special Characters. Keyboard minimize controls now use
-their native non-drag control classes and stop pointer propagation, preventing
-the title-bar drag handler from intercepting collapse and restore presses.
-v2.14: promotes the active language's character input and Analysis Workbench
-to persistent startup windows. Analysis is again a separate draggable,
-resizable, minimizable, click-to-front workspace; Ask Tutor's Analyze,
-Translate, and Why controls send the current context to it. Both windows join
-Minimize All, Open All, and Set current layout as default, while the chat-only
-layout minimizes them.
-v2.15: prevents the retired Translation & Manual Input interface from flashing
-during first paint. Its legacy DOM remains available in a permanently hidden
-compatibility container, and the shared translation services used by Quick
-Translate, Chat Transcript, and Ask Tutor remain unchanged.
-v2.16: removes the author credential from the compact top banner and places
-“by Peter Ward, Ed.D.” in the footer in place of the retired browser-only
-execution description. The banner subtitle now describes the broader app as
-an interactive Conversation, Grammar & Study Companion in each language.
-v2.17: consolidates API status into the settings gear: it reads “Insert API
-Key” until a key is configured, then changes to “API Key Valid.” The redundant
-status pill is hidden. A shared selected-language bridge also repairs Ask
-Tutor's Help me reply suggestions and Use in reply actions for Spanish and
-Japanese instead of allowing those later modules to fall back to German.
-v2.18: unifies floating-window stacking across every workspace. Selecting a
-window or restoring it from a title card moves it above the others; minimizing
-a window moves its title card behind open windows. The coordinator also
-normalizes the formerly competing keyboard, analysis, and quick-translate
-z-index ranges while preserving Ask Tutor's mutation-safe body-owned layer.
-Ask Tutor also gains a Transcripts shortcut that opens Saved Tutor Transcripts
-and promotes that window through the same stacking coordinator.
-v2.19: changes the German Special Characters window from conversation blue to
-a distinct teal identity, separating it visually from Chat with Tutor while
-leaving its German-specific title, characters, and behavior unchanged.
-v3: promotes the complete v2.19 build to the next major-version milestone.
-This is a version-label change only; its tested behavior is otherwise identical.
-v3.01: gives Ask Tutor and Analysis Workbench distinct responsibilities. Only
-Ask Tutor's Analyze action opens the standalone workbench; Translate, Why this
-wording, and Help me reply now answer inside Ask Tutor's private thread. The
-Ask Tutor and the Analysis Workbench title bar gain Chat Transcript shortcuts
-that open the current conversation transcript through the unified front-window
-coordinator; saved transcripts remain available from that transcript window.
-v3.02: strengthens Chat Transcript's selected-line indicator with an explicit
-active-selection state, green context panel, heavier label, and larger selected
-text while keeping the transcript action buttons unchanged.
-v3.03: standardizes the selected-line context shown in Ask Tutor, Chat
-Transcript, and Analysis Workbench as a neutral inset panel with the label
-above a large, bold line. All three views use the label “Selected line.”
-v3.04: keeps the saved-transcript title and Continue Conversation, Rename,
-and Delete actions visible by grouping them with the selected-line tools in
-one sticky control region above the scrolling saved conversation.
-v3.05: expands the desktop into a vertically scrollable workspace canvas.
-Floating windows use document positions, can be arranged below the first
-screen, and retain those canvas positions. The sticky page banner remains
-above every window, and dragging cannot park a window over it.
-v3.06: makes destination-window promotion authoritative after button actions.
-Ask Tutor, Saved Tutor Transcripts, Chat Transcript, Analysis Workbench, Chat
-Settings, language tools, and character windows restore when necessary and
-come to the front after their opening control finishes.
-v3.07: replaces the remaining three selected-context variants with one
-authoritative Selected Line card shared by Ask Tutor, Chat Transcript, and
-Analysis Workbench. A small runtime normalizer prevents older rerenders from
-restoring legacy “Selected context” or “Selected utterance” labels.
-v3.08: moves the Analysis Workbench Color Legend out of the parser card and
-gives it a toggle in the selected-line action row. The same row also gains a
-Translate action for the currently selected conversation line.
-v3.09: moves the Analysis Workbench Chat Transcript shortcut from the title
-bar into the selected-line action row. The title bar now contains only its
-window minimize control.
-v3.10: removes the viewport-height ceiling from content-heavy desktop windows,
-persists taller user-resized heights, and automatically extends the scrollable
-workspace beneath their lowest edge. Compact utility windows keep their
-existing size limits.
-v3.11: reverses the desktop banner stacking constraint: floating windows may
-overlap the sticky banner and render above it, and the drag boundary now uses
-the visible page top rather than the banner's lower edge.
-v3.12: keeps Analysis grammar cards mounted when translating the selected line
-and gives Analysis and Chat Transcript a distinct reference-translation card.
-Ask Tutor shortcuts now render into persistent collapsible Translation Details,
-Why This Wording, and Reply Options sections instead of imitating transcript
-turns; its selected line is persistent and gains a Study List action. Language
-Tools is renamed Study Tools, and the unused Analysis keyboard action is removed.
-v3.13: adds a language-scoped Study Notes library inside Study Tools. Ask Tutor's
-Add to Notes action captures all generated translation details, wording guidance,
-and reply options for the selected line as one updateable reference note. Language
-switching now preserves each language's conversation while clearing incompatible
-live, Ask Tutor, selection, and Analysis state so content cannot leak across languages.
-German, Spanish, and Japanese character windows now share the Spanish peach/orange heading palette.
-v4.0: replaces the separate cycling and save-layout controls with one accessible
-Window Layout menu. It can minimize all windows, open the chat workspace, open
-all windows, save the current complete arrangement as the desktop startup
-layout, restore that saved layout, or clear it and restore a responsive factory
-layout. Saved layouts include position, expanded size, minimized state, and
-stacking order and never apply to the mobile workspace. GPT-Live WebRTC startup
-now waits for ICE candidate gathering to finish before sending the SDP offer to
-the configured gateway, matching the current OpenAI connection sequence.
+LanguageTutor — v4.11
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -15541,6 +15367,8 @@ Do not add quotation marks or labels.`;
         const addPending=(role,text)=>{
             if(!text)return;
             const last=entries[entries.length-1];
+            const latestForRole=[...entries].reverse().find(entry=>entry.role===role);
+            if(latestForRole?.text===text)return;
             if(!last || last.role!==role || last.text!==text)entries.push({role,text});
         };
         addPending("user",targetTranslation || user);
@@ -26683,6 +26511,8 @@ function setLiveHeard(){
     const addPending=(role,text)=>{
         if(!text)return;
         const last=history[history.length-1];
+        const latestForRole=[...history].reverse().find(entry=>entry.role===role);
+        if(latestForRole?.text===text)return;
         if(!last || last.role!==role || last.text!==text)history.push({role,text});
     };
     addPending("user",user);addPending("assistant",tutor);
@@ -26722,11 +26552,14 @@ function commitSegment(which){
 
     if(liveState.mode==="chat"){
         if(typeof window.recordVoiceTutorEntry==="function"){
-            window.recordVoiceTutorEntry(
-                which==="input"
+            const entry=which==="input"
                 ? {role:"user",text,inputMode:"target",liveVoice:true}
-                : {role:"assistant",text,note:"",correctionAudio:"",replyLanguage:"target",liveVoice:true}
-            );
+                : {role:"assistant",text,note:"",correctionAudio:"",replyLanguage:"target",liveVoice:true};
+            const history=typeof window.getVoiceTutorHistory==="function" ? window.getVoiceTutorHistory() : [];
+            const previous=history[history.length-1];
+            const repeated=previous?.role===entry.role &&
+                String(previous?.text||"").replace(/\s+/g," ").trim()===text;
+            if(!repeated)window.recordVoiceTutorEntry(entry);
         }
     }else if(liveState.mode==="ask"){
         window.addAskTutorLiveTurn?.(which==="input" ? "user" : "tutor",text);
@@ -30678,7 +30511,7 @@ else{bindObservers();setTimeout(bindObservers,900)}
   #language-header{
     position:sticky!important;
     top:0!important;
-    z-index:1000!important;
+    z-index:2147483500!important;
   }
   #tutor-controls-window,
   #voice-transcript-window,
@@ -30725,7 +30558,9 @@ const read=key=>{try{return JSON.parse(localStorage.getItem(key)||"{}")||{}}catc
 const write=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}};
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 function workspaceTop(){
-  return window.scrollY+8;
+  const header=document.getElementById("language-header");
+  const headerHeight=Math.max(0,Math.ceil(header?.getBoundingClientRect().height||0));
+  return window.scrollY+headerHeight+8;
 }
 function canvasHeight(){
   /* Keep a generous but finite canvas; absolutely positioned windows must not
@@ -31919,6 +31754,16 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 .lt-layout-divider{height:1px;margin:6px 4px;background:#e2e8f0}
 .lt-layout-menu-status{min-height:17px;padding:5px 9px 2px;color:#047857;font:750 9px/1.25 var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif)}
 body.lt-layout-menu-open #language-header{z-index:2147483646!important}
+body.lt-layout-tidying #tutor-controls-window,
+body.lt-layout-tidying #voice-transcript-window,
+body.lt-layout-tidying #language-coach-window,
+body.lt-layout-tidying #language-tools-window,
+body.lt-layout-tidying #quick-translate-window,
+body.lt-layout-tidying #analysis-workbench-window,
+body.lt-layout-tidying #special-character-palette,
+body.lt-layout-tidying #floating-kana-tool{
+  transition:left .22s ease,top .22s ease!important;
+}
 #save-default-window-layout{display:none!important}
 @media(max-width:900px){.lt-layout-menu{display:none!important}}
 </style>
@@ -32093,6 +31938,61 @@ function factoryLayout(){
     syncCanvasPositions();window.ensureWorkspaceCanvasHeight?.();
   }));
 }
+function tidyLayout(){
+  if(!desktop())return false;
+  const margin=12,gap=14,grid=8,rowTolerance=72;
+  const pageWidth=document.documentElement.clientWidth;
+  const rightEdge=Math.max(margin+300,pageWidth-margin);
+  const headerHeight=Math.max(76,document.getElementById("language-header")?.getBoundingClientRect().height||0);
+  const topFloor=headerHeight+14;
+  const snap=(value,origin)=>origin+Math.round((value-origin)/grid)*grid;
+  const items=Object.keys(definitions).map(name=>{
+    const item=entry(name);if(!item||item.win.hidden||getComputedStyle(item.win).display==="none")return null;
+    const rect=item.win.getBoundingClientRect(),location=point(item.win);
+    if(rect.width<1||rect.height<1)return null;
+    return {name,win:item.win,left:location.left,top:location.top,width:rect.width,height:rect.height};
+  }).filter(Boolean).sort((a,b)=>a.top-b.top||a.left-b.left);
+  if(!items.length)return false;
+
+  const rows=[];
+  items.forEach(item=>{
+    let best=null,bestDistance=Infinity;
+    rows.forEach(row=>{
+      const distance=Math.abs(item.top-row.anchor);
+      if(distance<=rowTolerance&&distance<bestDistance){best=row;bestDistance=distance}
+    });
+    if(!best){rows.push({anchor:item.top,items:[item]});return}
+    best.items.push(item);
+    best.anchor=best.items.reduce((sum,current)=>sum+current.top,0)/best.items.length;
+  });
+  rows.sort((a,b)=>a.anchor-b.anchor);
+
+  document.body.classList.add("lt-layout-tidying");
+  let nextTop=topFloor;
+  rows.forEach(row=>{
+    row.items.sort((a,b)=>a.left-b.left);
+    const originalTop=Math.max(topFloor,snap(Math.min(...row.items.map(item=>item.top)),topFloor));
+    let rowTop=Math.max(nextTop,originalTop);
+    const requiredWidth=row.items.reduce((sum,item)=>sum+item.width,0)+gap*Math.max(0,row.items.length-1);
+    let rowLeft=Math.max(margin,snap(Math.min(...row.items.map(item=>item.left)),margin));
+    if(rowLeft+requiredWidth>rightEdge)rowLeft=margin;
+    let left=rowLeft,lineHeight=0;
+
+    row.items.forEach(item=>{
+      if(left>rowLeft&&left+item.width>rightEdge){
+        rowTop+=lineHeight+gap;left=rowLeft;lineHeight=0;
+      }
+      const safeLeft=item.width>rightEdge-margin?margin:left;
+      Object.assign(item.win.style,{left:safeLeft+"px",top:rowTop+"px",right:"auto",bottom:"auto"});
+      left=safeLeft+item.width+gap;
+      lineHeight=Math.max(lineHeight,item.height);
+    });
+    nextTop=rowTop+lineHeight+gap;
+  });
+  setTimeout(()=>document.body.classList.remove("lt-layout-tidying"),260);
+  syncCanvasPositions();window.ensureWorkspaceCanvasHeight?.();
+  return true;
+}
 function status(text){
   const el=popover?.querySelector(".lt-layout-menu-status");if(!el)return;
   el.textContent=text;clearTimeout(status.timer);
@@ -32116,6 +32016,7 @@ function action(name){
   if(name==="minimize")Object.keys(definitions).forEach(key=>setMinimized(key,true));
   if(name==="chat"){core.forEach(key=>setMinimized(key,false));supporting.forEach(key=>setMinimized(key,true))}
   if(name==="all")Object.keys(definitions).forEach(key=>setMinimized(key,false));
+  if(name==="tidy"){tidyLayout();syncCanvasPositions();return}
   if(name==="save"){
     if(writeSnapshot(currentSnapshot()))status("Startup layout saved.");
     else status("The layout could not be saved.");
@@ -32152,6 +32053,7 @@ function buildMenu(){
     '<button type="button" role="menuitem" data-layout-action="chat">💬 Open chat workspace</button>'+
     '<button type="button" role="menuitem" data-layout-action="all">▣ Open all windows</button>'+
     '<button type="button" role="menuitem" data-layout-action="minimize">− Minimize all windows</button>'+
+    '<button type="button" role="menuitem" data-layout-action="tidy">⊞ Tidy current layout</button>'+
     '<div class="lt-layout-divider"></div>'+
     '<button type="button" role="menuitem" data-layout-action="restore">↶ Restore saved layout</button>'+
     '<button type="button" role="menuitem" data-layout-action="save">★ Save current layout as startup</button>'+
@@ -32245,14 +32147,506 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
 </script>
-<style id="language-tutor-v405-workspace-canvas-css">
-/* A quiet neutral canvas separates the colorful movable windows from the page. */
+<style id="language-tutor-v406-workspace-canvas-css">
+/* A stronger neutral canvas makes the white movable windows easier to distinguish. */
 html,
 body,
 body>main,
 main.conversation-first-main{
-  background-color:#eef1f4!important;
+  background-color:#d8e0e8!important;
 }
 </style>
+<style id="language-tutor-v408-fixed-banner-css">
+@media (min-width:701px){
+  body{
+    padding-top:var(--lt-fixed-banner-height,76px)!important;
+  }
+  #language-header{
+    position:fixed!important;
+    top:0!important;
+    left:0!important;
+    right:0!important;
+    width:100%!important;
+    z-index:2147483500!important;
+  }
+}
+</style>
+<script id="language-tutor-v408-fixed-banner-runtime">
+(()=>{
+"use strict";
+const DESKTOP="(min-width:701px)";
+let observer=null;
+function syncBannerHeight(){
+  if(!matchMedia(DESKTOP).matches)return;
+  const banner=document.getElementById("language-header");
+  if(!banner)return;
+  const height=Math.max(1,Math.ceil(banner.getBoundingClientRect().height));
+  document.documentElement.style.setProperty("--lt-fixed-banner-height",height+"px");
+}
+function boot(){
+  syncBannerHeight();
+  const banner=document.getElementById("language-header");
+  if(banner&&"ResizeObserver" in window){
+    observer=new ResizeObserver(syncBannerHeight);
+    observer.observe(banner);
+  }
+  addEventListener("resize",syncBannerHeight,{passive:true});
+  setTimeout(syncBannerHeight,400);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
+<script id="language-tutor-v410-transcript-auto-follow-runtime">
+(()=>{
+"use strict";
+let followTimer=0;
+function scrollToLatest(){
+  const log=document.getElementById("voice-chat-messages-log");
+  if(!log)return;
+  const apply=()=>{log.scrollTop=Math.max(0,log.scrollHeight-log.clientHeight)};
+  apply();
+  requestAnimationFrame(()=>{apply();requestAnimationFrame(apply)});
+  clearTimeout(followTimer);
+  followTimer=setTimeout(apply,90);
+  setTimeout(apply,260);
+}
+window.scrollChatTranscriptToLatest=scrollToLatest;
+function containsTurn(node){
+  return node?.nodeType===1 &&
+    (node.matches?.(".conversation-turn-card")||node.querySelector?.(".conversation-turn-card"));
+}
+function bind(){
+  const log=document.getElementById("voice-chat-messages-log");
+  if(!log||log.dataset.v410AutoFollow==="1")return Boolean(log);
+  log.dataset.v410AutoFollow="1";
+  new MutationObserver(records=>{
+    const addedTurn=records.some(record=>[...record.addedNodes].some(containsTurn));
+    if(addedTurn)scrollToLatest();
+  }).observe(log,{childList:true});
+  return true;
+}
+function boot(){
+  let attempts=0;
+  if(bind())return;
+  const timer=setInterval(()=>{attempts++;if(bind()||attempts>40)clearInterval(timer)},100);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
+<style id="language-tutor-v411-student-conversation-css">
+/* v4.11 — a focused, single-window conversation workspace for students. */
+body.lt-student-mode{
+  overflow:hidden!important;
+}
+body.lt-student-mode #tutor-controls-window,
+body.lt-student-mode #language-coach-window,
+body.lt-student-mode #language-tools-window,
+body.lt-student-mode #quick-translate-window,
+body.lt-student-mode #analysis-workbench-window,
+body.lt-student-mode #special-character-palette,
+body.lt-student-mode #floating-kana-tool,
+body.lt-student-mode #saved-transcripts-window,
+body.lt-student-mode #text-transcript-window,
+body.lt-student-mode #conversation-settings-window{
+  display:none!important;
+}
+body.lt-student-mode #voice-transcript-window{
+  display:flex!important;
+  position:fixed!important;
+  left:max(12px,calc(50vw - 590px))!important;
+  right:auto!important;
+  top:calc(var(--lt-fixed-banner-height,76px) + 12px)!important;
+  bottom:12px!important;
+  width:min(1180px,calc(100vw - 24px))!important;
+  height:auto!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  resize:none!important;
+  z-index:2147483400!important;
+  overflow:hidden!important;
+}
+body.lt-student-mode #voice-transcript-window #conversation-view{
+  display:flex!important;
+  flex:1 1 auto!important;
+  min-height:0!important;
+  height:100%!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+body.lt-student-mode #voice-transcript-window .voice-transcript-window-actions,
+body.lt-student-mode #voice-transcript-window .voice-transcript-toolbar,
+body.lt-student-mode #voice-transcript-window #transcript-selection-toolbar{
+  display:none!important;
+}
+body.lt-student-mode #voice-transcript-drag-handle{
+  cursor:default!important;
+  touch-action:auto!important;
+}
+body.lt-student-mode #voice-transcript-window .voice-transcript-body{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+body.lt-student-mode #voice-chat-messages-log{
+  height:100%!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  padding:12px!important;
+  scroll-padding-bottom:18px;
+}
+.lt-student-console{
+  flex:0 0 auto;display:flex;flex-direction:column;gap:8px;padding:10px 12px;
+  border-bottom:1px solid #cbd5e1;background:linear-gradient(180deg,#f8fbff 0%,#eef6ff 100%);
+}
+.lt-student-main-controls{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.lt-student-main-controls button,
+.lt-student-settings summary{
+  min-height:36px;padding:7px 11px;border:1px solid #b9c8dc;border-radius:9px;
+  background:#fff;color:#334155;font:800 11px/1.2 var(--lt-interface-font,"Segoe UI",sans-serif);
+  cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.05);
+}
+.lt-student-main-controls button:hover,.lt-student-settings summary:hover{border-color:#60a5fa;background:#f8fbff}
+.lt-student-main-controls button:disabled{cursor:not-allowed;opacity:.42}
+.lt-student-main-controls .lt-student-start{border-color:#059669;background:#059669;color:#fff}
+.lt-student-main-controls .lt-student-stop{border-color:#fb7185;color:#be123c;background:#fff1f2}
+.lt-student-main-controls .lt-student-english{border-color:#38bdf8;color:#0369a1;background:#f0f9ff}
+.lt-student-main-controls .lt-student-new{margin-left:auto}
+.lt-student-status{
+  min-width:160px;margin-left:auto;color:#52627a;font:750 10.5px/1.35 var(--lt-interface-font,"Segoe UI",sans-serif);
+  text-align:right;
+}
+.lt-student-settings{border:1px solid #bfdbfe;border-radius:10px;background:#fff;overflow:hidden}
+.lt-student-settings summary{display:flex;align-items:center;justify-content:space-between;border:0;border-radius:0;list-style:none}
+.lt-student-settings summary::-webkit-details-marker{display:none}
+.lt-student-settings summary::after{content:"⌄";color:#64748b;font-size:14px}
+.lt-student-settings[open] summary::after{transform:rotate(180deg)}
+.lt-student-settings-host{max-height:min(48vh,430px);overflow:auto;padding:10px;border-top:1px solid #dbeafe;background:#fff}
+.lt-student-settings-host #chat-settings-controls{display:block!important;width:100%!important}
+.lt-student-composer-host{flex:0 0 auto;padding:9px 12px;border-top:1px solid #cbd5e1;background:#f8fafc}
+body.lt-student-mode #unified-text-entry{display:block!important;margin:0!important;border:0!important;padding:0!important;box-shadow:none!important;background:transparent!important}
+body.lt-student-mode #conversation-live-voice-btn,
+body.lt-student-mode #conversation-keyboard-btn{display:none!important}
+.lt-student-turn-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(148,163,184,.28)}
+.lt-student-turn-actions button{
+  min-height:29px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;
+  color:#475569;font:800 9.5px/1.15 var(--lt-interface-font,"Segoe UI",sans-serif);cursor:pointer;
+}
+.lt-student-turn-actions button:hover{border-color:#60a5fa;color:#1d4ed8;background:#eff6ff}
+.lt-student-turn-actions button:disabled{opacity:.55;cursor:wait}
+.lt-student-turn-results{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.lt-student-result[hidden]{display:none!important}
+.lt-student-result{overflow:hidden;border:1px solid #cbd5e1;border-radius:9px;background:#fff}
+.lt-student-result summary{
+  padding:8px 10px;list-style:none;cursor:pointer;color:#334155;background:#f8fafc;
+  font:850 10px/1.25 var(--lt-interface-font,"Segoe UI",sans-serif);
+}
+.lt-student-result summary::-webkit-details-marker{display:none}
+.lt-student-result summary::after{content:"⌄";float:right;color:#64748b}
+.lt-student-result[open] summary::after{transform:rotate(180deg)}
+.lt-student-result-body{padding:10px 11px;border-top:1px solid #e2e8f0;color:#263548;font-size:11.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.lt-student-result-translation{border-color:#93c5fd}
+.lt-student-result-translation summary{background:#eff6ff;color:#1e40af}
+.lt-student-result-why{border-color:#fcd34d}
+.lt-student-result-why summary{background:#fffbeb;color:#92400e}
+.lt-student-result-replies{border-color:#6ee7b7}
+.lt-student-result-replies summary{background:#ecfdf5;color:#065f46}
+.lt-student-reply-list{display:flex;flex-direction:column;gap:8px;white-space:normal}
+.lt-student-reply-card{padding:9px;border:1px solid #bbf7d0;border-radius:8px;background:#f0fdf4}
+.lt-student-reply-label{color:#047857;font-size:8.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+.lt-student-reply-text{margin-top:3px;color:#12372a;font-size:12px;font-weight:850;line-height:1.4}
+.lt-student-reply-note{margin-top:3px;color:#64748b;font-size:9.5px;line-height:1.4}
+.lt-student-reply-translation{margin-top:7px;padding:7px 8px;border-left:3px solid #3b82f6;background:#eff6ff;color:#1e3a8a;font-size:10.5px;line-height:1.45}
+.lt-student-reply-actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.lt-student-reply-actions button{min-height:27px;padding:4px 7px;border:1px solid #a7f3d0;border-radius:7px;background:#fff;color:#166534;font-size:9px;font-weight:800;cursor:pointer}
+.lt-workspace-mode-active::after{content:" ✓";color:#059669;font-weight:900}
+@media(max-width:700px){
+  body{padding-top:var(--lt-fixed-banner-height,68px)!important}
+  #language-header{position:fixed!important;top:0!important;left:0!important;right:0!important;z-index:2147483500!important}
+  body.lt-student-mode #voice-transcript-window{
+    left:0!important;right:0!important;top:var(--lt-fixed-banner-height,68px)!important;bottom:0!important;
+    width:100vw!important;height:auto!important;border-radius:0!important;border-left:0!important;border-right:0!important;
+  }
+  body.lt-student-mode #voice-transcript-drag-handle{padding:9px 11px!important}
+  .lt-student-console{padding:8px}
+  .lt-student-main-controls{gap:5px}
+  .lt-student-main-controls button{min-height:34px;padding:6px 8px;font-size:10px}
+  .lt-student-main-controls .lt-student-new{margin-left:0}
+  .lt-student-status{order:9;width:100%;margin:0;text-align:left}
+  .lt-student-settings-host{max-height:42vh}
+  body.lt-student-mode #voice-chat-messages-log{padding:8px!important}
+  body.lt-student-mode .conversation-turn-card{max-width:100%!important}
+  .lt-student-turn-actions{gap:4px}
+  .lt-student-turn-actions button{flex:1 1 auto}
+  .lt-student-composer-host{padding:7px 8px}
+}
+</style>
+<script id="language-tutor-v411-student-conversation-runtime">
+(()=>{
+"use strict";
+const MODE_KEY="languagetutor_workspace_mode_v411";
+const MOBILE="(max-width:700px)";
+const minimizedClasses=["all-floating-minimized","voice-transcript-collapsed","conversation-shared-collapsed","is-minimized"];
+let active=false,priorTranscript=null,settingsHome=null,composerHome=null,logObserver=null,stateObserver=null,scanQueued=false;
+let headerObserver=null;
+const clean=value=>String(value||"").trim();
+const languageCode=()=>clean(document.body?.dataset?.studyLanguage)||"de";
+const languageInfo=()=>{
+  const code=languageCode();
+  return code==="es"?{code,name:"Spanish",locale:"es-ES"}:code==="ja"?{code,name:"Japanese",locale:"ja-JP"}:{code:"de",name:"German",locale:"de-DE"};
+};
+function storeMode(mode){try{localStorage.setItem(MODE_KEY,mode)}catch(_){}}
+function savedMode(){try{return localStorage.getItem(MODE_KEY)||""}catch(_){return ""}}
+function captureHome(node){return node?{node,parent:node.parentElement,next:node.nextSibling}:null}
+function restoreHome(home){
+  if(!home?.node||!home.parent?.isConnected)return;
+  if(home.next?.parentElement===home.parent)home.parent.insertBefore(home.node,home.next);else home.parent.appendChild(home.node);
+}
+function syncStudentHeader(){
+  const header=document.getElementById("language-header");if(!header)return;
+  const height=Math.max(1,Math.ceil(header.getBoundingClientRect().height));
+  document.documentElement.style.setProperty("--lt-fixed-banner-height",height+"px");
+}
+function trigger(id){const button=document.getElementById(id);if(button&&!button.disabled)button.click()}
+function ensureTranscriptOpen(){
+  const win=document.getElementById("voice-transcript-window");if(!win)return null;
+  if(!priorTranscript){
+    priorTranscript={hidden:win.hidden,classes:minimizedClasses.filter(name=>win.classList.contains(name))};
+  }
+  win.hidden=false;win.removeAttribute("hidden");minimizedClasses.forEach(name=>win.classList.remove(name));
+  window.openVoiceTranscriptWindow?.();
+  return win;
+}
+function buildConsole(){
+  let console=document.getElementById("student-conversation-console");if(console)return console;
+  const view=document.getElementById("conversation-view"),titlebar=document.getElementById("voice-transcript-drag-handle");
+  if(!view||!titlebar)return null;
+  console=document.createElement("section");console.id="student-conversation-console";console.className="lt-student-console";
+  console.innerHTML=`<div class="lt-student-main-controls">
+    <button type="button" id="student-start-chat" class="lt-student-start">🎙 Start</button>
+    <button type="button" id="student-stop-chat" class="lt-student-stop">■ Stop</button>
+    <button type="button" id="student-restate">↺ Restate</button>
+    <button type="button" id="student-reply-english" class="lt-student-english">🇺🇸 Reply in English</button>
+    <button type="button" id="student-new-chat" class="lt-student-new">＋ New Chat</button>
+    <span id="student-conversation-status" class="lt-student-status">Ready.</span>
+  </div>
+  <details id="student-conversation-settings" class="lt-student-settings">
+    <summary>⚙ Conversation settings</summary><div id="student-settings-host" class="lt-student-settings-host"></div>
+  </details>`;
+  titlebar.insertAdjacentElement("afterend",console);
+  console.querySelector("#student-start-chat")?.addEventListener("click",()=>trigger("voice-start-btn"));
+  console.querySelector("#student-stop-chat")?.addEventListener("click",()=>trigger("voice-stop-btn"));
+  console.querySelector("#student-restate")?.addEventListener("click",()=>trigger("voice-restate-btn"));
+  console.querySelector("#student-reply-english")?.addEventListener("click",()=>trigger("voice-english-turn-btn"));
+  console.querySelector("#student-new-chat")?.addEventListener("click",()=>trigger("voice-new-chat-btn"));
+  return console;
+}
+function mountSharedControls(){
+  const console=buildConsole();if(!console)return;
+  const settings=document.getElementById("chat-settings-controls");
+  if(settings){if(!settingsHome)settingsHome=captureHome(settings);console.querySelector("#student-settings-host")?.appendChild(settings)}
+  const composer=document.getElementById("unified-text-entry");
+  if(composer){
+    if(!composerHome)composerHome=captureHome(composer);
+    let host=document.getElementById("student-composer-host");
+    if(!host){host=document.createElement("div");host.id="student-composer-host";host.className="lt-student-composer-host";document.getElementById("conversation-view")?.appendChild(host)}
+    host.appendChild(composer);
+  }
+}
+function restoreSharedControls(){
+  restoreHome(settingsHome);restoreHome(composerHome);settingsHome=null;composerHome=null;
+  document.getElementById("student-composer-host")?.remove();
+  document.getElementById("student-conversation-console")?.remove();
+}
+function syncControls(){
+  if(!active)return;
+  const sourceStart=document.getElementById("voice-start-btn"),sourceStop=document.getElementById("voice-stop-btn"),sourceRestate=document.getElementById("voice-restate-btn");
+  const start=document.getElementById("student-start-chat"),stop=document.getElementById("student-stop-chat"),restate=document.getElementById("student-restate");
+  const stopHidden=!sourceStop||sourceStop.hidden||sourceStop.classList.contains("hidden");
+  const startHidden=!sourceStart||sourceStart.hidden||sourceStart.classList.contains("hidden");
+  if(start){start.disabled=startHidden||Boolean(sourceStart?.disabled);start.textContent=startHidden?"🎙 Start":"🎙 Start"}
+  if(stop)stop.disabled=stopHidden||Boolean(sourceStop?.disabled);
+  if(restate)restate.disabled=Boolean(sourceRestate?.disabled);
+  const status=document.getElementById("student-conversation-status");
+  if(status)status.textContent=clean(document.getElementById("voice-tutor-status")?.textContent)||"Ready.";
+}
+async function copyText(text,button){
+  let ok=false;try{await navigator.clipboard.writeText(text);ok=true}catch(_){
+    try{const area=document.createElement("textarea");area.value=text;area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();ok=document.execCommand("copy");area.remove()}catch(__){}
+  }
+  if(button){const old=button.textContent;button.textContent=ok?"✓ Copied":"Copy failed";setTimeout(()=>button.textContent=old,900)}
+}
+async function translateLine(text,code){
+  let value="";
+  if(typeof window.googleTranslateApiCall==="function"){
+    try{value=clean(await window.googleTranslateApiCall(text,code,"en"))}catch(_){}
+  }
+  if(!value&&typeof window.callAIJson==="function"){
+    const data=await window.callAIJson(`Translate this ${languageInfo().name} conversation line into concise, natural English. Return JSON only: {"translation":"..."}\nLine: ${text}`);
+    value=clean(data?.translation||data?.text);
+  }
+  return value;
+}
+function resultPanel(card,type,title){
+  let details=card.querySelector(`.lt-student-result[data-result="${type}"]`);
+  if(details)return details;
+  const host=card.querySelector(".lt-student-turn-results")||card.appendChild(Object.assign(document.createElement("div"),{className:"lt-student-turn-results"}));
+  details=document.createElement("details");details.className=`lt-student-result lt-student-result-${type}`;details.dataset.result=type;details.hidden=true;
+  const summary=document.createElement("summary");summary.textContent=title;
+  const body=document.createElement("div");body.className="lt-student-result-body";
+  details.append(summary,body);host.appendChild(details);return details;
+}
+function openLoading(card,type,title,message){
+  const panel=resultPanel(card,type,title),body=panel.querySelector(".lt-student-result-body");
+  panel.hidden=false;panel.open=true;body.replaceChildren();body.textContent=message;return {panel,body};
+}
+async function translate(card,text,code,button){
+  const existing=resultPanel(card,"translation","🌐 English translation");
+  if(existing.dataset.ready==="1"){existing.hidden=false;existing.open=!existing.open;return}
+  const opened=openLoading(card,"translation","🌐 English translation","Translating…");button.disabled=true;
+  try{opened.body.textContent=await translateLine(text,code)||"Translation unavailable.";opened.panel.dataset.ready="1"}
+  catch(_){opened.body.textContent="Translation unavailable. Check the translation or API settings and try again."}
+  finally{button.disabled=false}
+}
+async function explainWhy(card,text,code,button){
+  const existing=resultPanel(card,"why","❓ Why this wording?");
+  if(existing.dataset.ready==="1"){existing.hidden=false;existing.open=!existing.open;return}
+  const opened=openLoading(card,"why","❓ Why this wording?","Tutor is examining the wording…");button.disabled=true;
+  try{
+    if(typeof window.callAIJson!=="function")throw new Error("A valid API key is needed for wording help.");
+    const info=languageInfo();
+    const data=await window.callAIJson(`You are the Why This Wording tool in LanguageTutor.\nTarget language: ${info.name}\nSelected line: ${text}\nExplain in concise English why this line is worded this way. Focus on the construction, word order, idiom, or register a learner is most likely to wonder about. Compare a plausible alternative only when useful. Return JSON only: {"explanation":"learner-friendly explanation"}`);
+    opened.body.textContent=clean(data?.explanation||data?.answer)||"No explanation was returned.";opened.panel.dataset.ready="1";
+  }catch(error){opened.body.textContent=clean(error?.message)||"Wording help is unavailable."}
+  finally{button.disabled=false}
+}
+function useReply(phrase){
+  const input=document.getElementById("voice-text-input");if(!input)return;
+  input.value=phrase;input.dispatchEvent(new Event("input",{bubbles:true}));input.focus();input.scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+function replyCard(option,index,code){
+  const phrase=clean(option?.text),card=document.createElement("div");card.className="lt-student-reply-card";
+  const label=document.createElement("div");label.className="lt-student-reply-label";label.textContent=index===0?"Suggested reply":`Alternative ${index}`;
+  const text=document.createElement("div");text.className="lt-student-reply-text";text.textContent=phrase;card.append(label,text);
+  if(option?.note){const note=document.createElement("div");note.className="lt-student-reply-note";note.textContent=clean(option.note);card.appendChild(note)}
+  const translation=document.createElement("div");translation.className="lt-student-reply-translation";translation.hidden=true;card.appendChild(translation);
+  const actions=document.createElement("div");actions.className="lt-student-reply-actions";
+  const action=(label,handler)=>{const button=document.createElement("button");button.type="button";button.textContent=label;button.addEventListener("click",handler);return button};
+  actions.append(
+    action("↩ Use in reply",()=>useReply(phrase)),
+    action("🔊 Listen",()=>window.speakRawText?.(phrase,languageInfo().locale)),
+    action("⧉ Copy",event=>copyText(phrase,event.currentTarget)),
+    action("🌐 Translate",async event=>{
+      const button=event.currentTarget;
+      if(translation.dataset.ready==="1"){translation.hidden=!translation.hidden;button.textContent=translation.hidden?"🌐 Translate":"🌐 Hide translation";return}
+      translation.hidden=false;translation.textContent="Translating…";button.disabled=true;
+      try{const value=await translateLine(phrase,code);translation.textContent=value||"Translation unavailable.";translation.dataset.ready=value?"1":"";button.textContent=value?"🌐 Hide translation":"🌐 Translate"}
+      catch(_){translation.textContent="Translation unavailable."}finally{button.disabled=false}
+    })
+  );
+  card.appendChild(actions);return card;
+}
+async function helpReply(card,text,code,button){
+  const existing=resultPanel(card,"replies","↩ Reply options");
+  if(existing.dataset.ready==="1"){existing.hidden=false;existing.open=!existing.open;return}
+  const opened=openLoading(card,"replies","↩ Reply options","Tutor is preparing reply options…");button.disabled=true;
+  try{
+    if(typeof window.callAIJson!=="function")throw new Error("A valid API key is needed for reply help.");
+    const info=languageInfo();
+    const data=await window.callAIJson(`You are the reply-options tool in LanguageTutor.\nTarget language: ${info.name}\nConversation line to answer: ${text}\nCreate three short, natural replies the learner could say next. Option 1 is the simplest default, option 2 varies the wording, and option 3 may add personality or move the conversation forward. Notes are brief English guidance. Return JSON only: {"intro":"brief English guidance or empty string","options":[{"text":"target-language reply","note":"brief English note"},{"text":"target-language reply","note":"brief English note"},{"text":"target-language reply","note":"brief English note"}]}`);
+    const options=Array.isArray(data?.options)?data.options.filter(item=>clean(item?.text)).slice(0,3):[];
+    if(!options.length)throw new Error("Tutor returned no usable reply choices.");
+    opened.body.replaceChildren();opened.body.classList.add("lt-student-reply-list");
+    if(clean(data?.intro)){const intro=document.createElement("div");intro.textContent=clean(data.intro);opened.body.appendChild(intro)}
+    options.forEach((option,index)=>opened.body.appendChild(replyCard(option,index,code)));opened.panel.dataset.ready="1";
+  }catch(error){opened.body.textContent=clean(error?.message)||"Reply help is unavailable."}
+  finally{button.disabled=false}
+}
+function addTurnActions(card){
+  if(!active||card.dataset.studentActionsReady==="1"||card.dataset.transcriptSelectable!=="1")return;
+  const text=clean(card.dataset.transcriptText);if(!text)return;
+  card.dataset.studentActionsReady="1";
+  const code=clean(card.dataset.transcriptLanguage)||languageCode();
+  const actions=document.createElement("div");actions.className="lt-student-turn-actions";
+  const button=(label,handler)=>{const node=document.createElement("button");node.type="button";node.textContent=label;node.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();handler(node)});return node};
+  actions.append(
+    button("🔊 Listen",()=>window.speakRawText?.(text,languageInfo().locale)),
+    button("⧉ Copy",node=>copyText(text,node)),
+    button("🌐 Translate",node=>translate(card,text,code,node)),
+    button("❓ Why this wording?",node=>explainWhy(card,text,code,node)),
+    button("↩ Help me reply",node=>helpReply(card,text,code,node))
+  );
+  card.append(actions,Object.assign(document.createElement("div"),{className:"lt-student-turn-results"}));
+}
+function scanTurns(){
+  if(!active||scanQueued)return;scanQueued=true;
+  requestAnimationFrame(()=>{scanQueued=false;document.querySelectorAll("#voice-chat-messages-log .conversation-turn-card").forEach(addTurnActions)});
+}
+function watchTranscript(){
+  logObserver?.disconnect();const log=document.getElementById("voice-chat-messages-log");if(!log)return;
+  logObserver=new MutationObserver(scanTurns);logObserver.observe(log,{childList:true,subtree:true});scanTurns();
+}
+function watchState(){
+  stateObserver?.disconnect();stateObserver=new MutationObserver(syncControls);
+  ["voice-start-btn","voice-stop-btn","voice-restate-btn","voice-tutor-status"].forEach(id=>{const el=document.getElementById(id);if(el)stateObserver.observe(el,{attributes:true,childList:true,subtree:true,characterData:true})});
+  syncControls();
+}
+function setTitle(student){
+  const title=document.getElementById("voice-transcript-window-title"),subtitle=document.querySelector("#voice-transcript-window .voice-transcript-window-subtitle");
+  if(title)title.textContent=student?"🎓 Conversation Tutor":"📝 Chat Transcript";
+  if(subtitle)subtitle.textContent=student?"Speak, review each line, and get help replying":"Review, translate, and study conversation turns";
+}
+function refreshMenu(){
+  document.querySelectorAll("[data-workspace-mode]").forEach(button=>button.classList.toggle("lt-workspace-mode-active",button.dataset.workspaceMode===(active?"student":"advanced")));
+}
+function enterStudent(persist=true){
+  if(active){refreshMenu();return}
+  const win=ensureTranscriptOpen();if(!win)return;
+  active=true;document.body.classList.add("lt-student-mode");document.body.dataset.workspaceMode="student";
+  syncStudentHeader();
+  if(!headerObserver&&"ResizeObserver" in window){headerObserver=new ResizeObserver(syncStudentHeader);const header=document.getElementById("language-header");if(header)headerObserver.observe(header)}
+  buildConsole();mountSharedControls();setTitle(true);watchTranscript();watchState();scanTurns();
+  requestAnimationFrame(()=>{window.scrollChatTranscriptToLatest?.();syncControls()});
+  if(persist&&!matchMedia(MOBILE).matches)storeMode("student");refreshMenu();
+}
+function enterAdvanced(persist=true){
+  if(!active){if(persist)storeMode("advanced");refreshMenu();return}
+  active=false;logObserver?.disconnect();stateObserver?.disconnect();
+  document.body.classList.remove("lt-student-mode");document.body.dataset.workspaceMode="advanced";
+  restoreSharedControls();setTitle(false);
+  const win=document.getElementById("voice-transcript-window");
+  if(win&&priorTranscript){minimizedClasses.forEach(name=>win.classList.remove(name));priorTranscript.classes.forEach(name=>win.classList.add(name));win.hidden=priorTranscript.hidden;if(priorTranscript.hidden)win.setAttribute("hidden","")}
+  priorTranscript=null;if(persist)storeMode("advanced");refreshMenu();window.ensureWorkspaceCanvasHeight?.();
+}
+window.setLanguageTutorWorkspaceMode=function(mode,options={}){mode==="student"?enterStudent(options.persist!==false):enterAdvanced(options.persist!==false)};
+window.getLanguageTutorWorkspaceMode=()=>active?"student":"advanced";
+function installMenuChoices(){
+  const popover=document.querySelector(".lt-layout-popover");if(!popover||popover.querySelector("[data-workspace-mode]"))return false;
+  const title=popover.querySelector(".lt-layout-popover-title");
+  const advanced=document.createElement("button");advanced.type="button";advanced.setAttribute("role","menuitem");advanced.dataset.workspaceMode="advanced";advanced.textContent="🛠 Advanced workspace";
+  const student=document.createElement("button");student.type="button";student.setAttribute("role","menuitem");student.dataset.workspaceMode="student";student.textContent="🎓 Student conversation mode";
+  const divider=document.createElement("div");divider.className="lt-layout-divider";
+  title?.insertAdjacentElement("afterend",advanced);advanced.insertAdjacentElement("afterend",student);student.insertAdjacentElement("afterend",divider);
+  [advanced,student].forEach(button=>button.addEventListener("click",event=>{
+    event.preventDefault();event.stopPropagation();window.setLanguageTutorWorkspaceMode(button.dataset.workspaceMode);
+    popover.hidden=true;document.querySelector(".lt-layout-menu-button")?.setAttribute("aria-expanded","false");
+  }));
+  refreshMenu();return true;
+}
+function boot(){
+  let attempts=0;const timer=setInterval(()=>{
+    attempts++;installMenuChoices();
+    if((document.getElementById("voice-transcript-window")&&document.querySelector("[data-workspace-mode]"))||attempts>50)clearInterval(timer);
+  },100);
+  setTimeout(()=>{
+    const mobile=matchMedia(MOBILE).matches,preferred=savedMode();
+    if(mobile||preferred==="student")enterStudent(false);else{document.body.dataset.workspaceMode="advanced";refreshMenu()}
+  },1750);
+  addEventListener("resize",()=>{syncStudentHeader();if(matchMedia(MOBILE).matches&&!active)enterStudent(false)},{passive:true});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
 </body>
 </html>
