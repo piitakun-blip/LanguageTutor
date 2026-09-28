@@ -1,5 +1,5 @@
 <!--
-LanguageTutor — v4.07
+LanguageTutor — v4.09
 Based on Version 1 / exact user rollback baseline.
 Changes: replaces dock/close lifecycle with one persistent floating
 workspace state. Tutor Controls, Conversation Transcript, Ask Tutor, and
@@ -180,6 +180,10 @@ v4.07: adds a Tidy layout action that respects manually chosen window sizes and
 open states while aligning nearby windows, regularizing gaps, and removing overlap.
 The page banner now stays above the workspace while scrolling, and desktop drag
 boundaries keep window title bars below the visible banner.
+v4.08: changes the desktop banner from sticky to fixed positioning and reserves
+its measured height in the document so it remains visible throughout page scrolling.
+v4.09: prevents a completed live Tutor line from being echoed again as a pending
+line and rejects immediately repeated GPT-Live transcript commits.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -15547,6 +15551,8 @@ Do not add quotation marks or labels.`;
         const addPending=(role,text)=>{
             if(!text)return;
             const last=entries[entries.length-1];
+            const latestForRole=[...entries].reverse().find(entry=>entry.role===role);
+            if(latestForRole?.text===text)return;
             if(!last || last.role!==role || last.text!==text)entries.push({role,text});
         };
         addPending("user",targetTranslation || user);
@@ -26689,6 +26695,8 @@ function setLiveHeard(){
     const addPending=(role,text)=>{
         if(!text)return;
         const last=history[history.length-1];
+        const latestForRole=[...history].reverse().find(entry=>entry.role===role);
+        if(latestForRole?.text===text)return;
         if(!last || last.role!==role || last.text!==text)history.push({role,text});
     };
     addPending("user",user);addPending("assistant",tutor);
@@ -26728,11 +26736,14 @@ function commitSegment(which){
 
     if(liveState.mode==="chat"){
         if(typeof window.recordVoiceTutorEntry==="function"){
-            window.recordVoiceTutorEntry(
-                which==="input"
+            const entry=which==="input"
                 ? {role:"user",text,inputMode:"target",liveVoice:true}
-                : {role:"assistant",text,note:"",correctionAudio:"",replyLanguage:"target",liveVoice:true}
-            );
+                : {role:"assistant",text,note:"",correctionAudio:"",replyLanguage:"target",liveVoice:true};
+            const history=typeof window.getVoiceTutorHistory==="function" ? window.getVoiceTutorHistory() : [];
+            const previous=history[history.length-1];
+            const repeated=previous?.role===entry.role &&
+                String(previous?.text||"").replace(/\s+/g," ").trim()===text;
+            if(!repeated)window.recordVoiceTutorEntry(entry);
         }
     }else if(liveState.mode==="ask"){
         window.addAskTutorLiveTurn?.(which==="input" ? "user" : "tutor",text);
@@ -32329,5 +32340,45 @@ main.conversation-first-main{
   background-color:#d8e0e8!important;
 }
 </style>
+<style id="language-tutor-v408-fixed-banner-css">
+@media (min-width:701px){
+  body{
+    padding-top:var(--lt-fixed-banner-height,76px)!important;
+  }
+  #language-header{
+    position:fixed!important;
+    top:0!important;
+    left:0!important;
+    right:0!important;
+    width:100%!important;
+    z-index:2147483500!important;
+  }
+}
+</style>
+<script id="language-tutor-v408-fixed-banner-runtime">
+(()=>{
+"use strict";
+const DESKTOP="(min-width:701px)";
+let observer=null;
+function syncBannerHeight(){
+  if(!matchMedia(DESKTOP).matches)return;
+  const banner=document.getElementById("language-header");
+  if(!banner)return;
+  const height=Math.max(1,Math.ceil(banner.getBoundingClientRect().height));
+  document.documentElement.style.setProperty("--lt-fixed-banner-height",height+"px");
+}
+function boot(){
+  syncBannerHeight();
+  const banner=document.getElementById("language-header");
+  if(banner&&"ResizeObserver" in window){
+    observer=new ResizeObserver(syncBannerHeight);
+    observer.observe(banner);
+  }
+  addEventListener("resize",syncBannerHeight,{passive:true});
+  setTimeout(syncBannerHeight,400);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
 </body>
 </html>
