@@ -32192,5 +32192,68 @@ function boot(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
 </script>
+<style id="language-tutor-v402-chat-saved-transcripts-css">
+#tutor-controls-window .tutor-saved-transcripts-btn{
+  flex:0 0 auto!important;
+  min-height:32px!important;
+  margin-left:auto!important;
+  padding:6px 10px!important;
+  border:1px solid var(--lt-window-accent,#2563eb)!important;
+  border-radius:8px!important;
+  background:rgba(255,255,255,.9)!important;
+  color:var(--lt-window-title-ink,#1e3a8a)!important;
+  font:800 10px/1.15 var(--lt-interface-font,"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif)!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+  box-shadow:0 1px 3px var(--lt-window-halo,rgba(37,99,235,.16))!important;
+}
+#tutor-controls-window .tutor-saved-transcripts-btn:hover{
+  background:#fff!important;
+  box-shadow:0 0 0 3px var(--lt-window-halo,rgba(37,99,235,.16))!important;
+}
+#tutor-controls-window .tutor-saved-transcripts-btn + .all-floating-minimize{
+  margin-left:0!important;
+}
+#tutor-controls-window.all-floating-minimized .tutor-saved-transcripts-btn{
+  display:none!important;
+}
+@media(max-width:700px){
+  #tutor-controls-window .tutor-saved-transcripts-btn{padding:6px 8px!important;font-size:9px!important}
+}
+</style>
+<script id="language-tutor-v402-chat-saved-transcripts-runtime">
+(()=>{
+"use strict";
+function openSavedTranscripts(){
+  window.openSavedTutorTranscripts?.();
+  const win=document.getElementById("saved-transcripts-window");
+  if(!win)return;
+  win.hidden=false;win.removeAttribute("hidden");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>window.bringFloatingWindowToFront?.(win)));
+}
+function install(){
+  const titlebar=document.querySelector("#tutor-controls-window .primary-workspace-titlebar");
+  if(!titlebar||titlebar.querySelector(".tutor-saved-transcripts-btn"))return Boolean(titlebar);
+  const button=document.createElement("button");
+  button.type="button";
+  button.className="tutor-saved-transcripts-btn";
+  button.textContent="📁 Saved Transcripts";
+  button.title="Open saved tutor transcripts";
+  button.setAttribute("aria-label","Open saved tutor transcripts");
+  button.addEventListener("click",event=>{
+    event.preventDefault();event.stopPropagation();openSavedTranscripts();
+  });
+  const minimize=titlebar.querySelector(".all-floating-minimize");
+  titlebar.insertBefore(button,minimize||null);
+  return true;
+}
+function boot(){
+  let attempts=0;
+  const timer=setInterval(()=>{attempts++;if(install()||attempts>40)clearInterval(timer)},100);
+  setTimeout(install,1500);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+</script>
 </body>
 </html>
