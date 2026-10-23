@@ -7398,6 +7398,13 @@ body.conversation-first-layout main.conversation-first-main{gap:var(--ws-gap)!im
 
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800 lt-student-mode lt-student-starting" data-workspace-mode="student">
+<script>
+/* Mobile first paint: Advanced workspace is the default; desktop remains Student. */
+if (window.matchMedia("(max-width:700px)").matches) {
+  document.body.classList.remove("lt-student-mode", "lt-student-starting");
+  document.body.dataset.workspaceMode = "advanced";
+}
+</script>
 
     <!-- Header Section -->
     <!-- HEADER-V5-ROUNDTRIP-NORMALIZED -->
@@ -32918,7 +32925,8 @@ function boot(){
     if((document.getElementById("voice-transcript-window")&&document.querySelector("[data-workspace-mode]"))||attempts>50)clearInterval(timer);
   },100);
   setTimeout(()=>{
-    enterStudent(false);
+    if(matchMedia(MOBILE).matches)enterAdvanced(false);
+    else enterStudent(false);
   },1750);
   setTimeout(()=>document.body.classList.remove("lt-student-starting"),6000);
   document.addEventListener("pointerdown",event=>{
@@ -32930,7 +32938,7 @@ function boot(){
   document.addEventListener("pointermove",moveStudentDrag,true);
   document.addEventListener("pointerup",endStudentDrag,true);
   document.addEventListener("pointercancel",endStudentDrag,true);
-  addEventListener("resize",()=>{syncStudentHeader();if(matchMedia(MOBILE).matches&&!active)enterStudent(false)},{passive:true});
+  addEventListener("resize",()=>{syncStudentHeader()},{passive:true});
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
